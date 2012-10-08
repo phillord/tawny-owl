@@ -1,4 +1,3 @@
-
 (ns owl
   (:import
    (org.semanticweb.owlapi.model OWLOntologyManager OWLOntology IRI
@@ -9,6 +8,52 @@
    (java.io ByteArrayOutputStream)
    (java.io File)
    (org.semanticweb.owlapi.model AddAxiom)))
+
+
+;;
+;; Utillity functions for improving syntax
+;;
+(defn groupify
+  "Takes a list with keywords and values and turns all adjacent values into a single list"
+  ;; entry point
+  ([list]
+     (groupify () list nil nil))
+  ;; not an entry point!
+  ([reduced-frame long-frame-left current-keyword current-val-list]
+     (if-let [first-val (first long-frame-left)]
+       ;; the unreduced frame is not yet empty
+       (if (keyword? first-val)
+         ;; so we have a keyword as the first val
+         (if current-keyword 
+           ;; but we not have any vals -- exception
+           (if (not current-val-list)
+             (throw (IllegalArgumentException. "Cannot have two adjacent keywords"))
+             ;; and we have some existing keywords and values
+             (groupify
+              (cons current-keyword
+                    (cons current-val-list
+                          reduced-frame))
+              (rest long-frame-left) first-val nil))
+           ;; so we have a legal new keyword, so start a new list
+           (groupify
+            reduced-frame (rest long-frame-left)
+            first-val nil))
+         ;; we do not have a keyword
+         (groupify reduced-frame (rest long-frame-left)
+                             current-keyword (cons first-val current-val-list)))
+       
+       ;; else we have nothing left in the frame, so terminate
+       (cons current-keyword
+             (cons current-val-list
+                   reduced-frame)))))
+        
+
+(defn hashify
+  "Takes a list with alternating keyword values and returns a hash"
+  [list]
+  (apply
+   hash-map (groupify list)))
+
 
 (defn create-ontology
   [iri]
@@ -26,58 +71,50 @@
 
 (reset-ontology)
 
- (defn save-ontology
+(defn save-ontology
    []
    (let [file (new File "temp.omn")
          document-iri (IRI/create file)]
      (.saveOntology ontology-manager ontology
                     (new ManchesterOWLSyntaxOntologyFormat) document-iri)))
 
+(defn get-create-object-property [name]
+  (.getOWLObjectProperty ontology-data-factory
+                (IRI/create (str ontology-iri "#" name))))
+
+
 (defn get-create-class [name]
   (.getOWLClass ontology-data-factory
                 (IRI/create (str ontology-iri "#" name))))
 
+(defn ensure-class [clz]
+  (cond (instance? org.semanticweb.owlapi.model.OWLClassExpression clz)
+        clz
+        (string? clz)
+        (get-create-class clz)))
 
-(defn one-or-single [_ _ frame]
+(defn add-frame
+  [frame-adder name frame]
+  (println "frame-adder" frame-adder)
+  (println "name" name)
+  (println "frame" frame)
+  (println "frame seqp" (seq? frame))
   (cond (string? frame)
-        :string
-        (vector? frame)
-        :vector
+        (do
+          (println "string")
+          (add-frame frame-adder name (get-create-class frame)))
         (instance? org.semanticweb.owlapi.model.OWLClassExpression frame)
-        :owlclass
+        (.applyChange ontology-manager
+                      (new AddAxiom ontology
+                           (frame-adder name frame)))
+        (or (vector? frame)
+            (seq? frame))
+        (dorun (map (fn[x]
+                      (add-frame frame-adder name x))
+                    frame))
         (nil? frame)
-        :nil))
-
-
-(defmulti add-frame (fn [frame-adder name frame]
-                      (one-or-single nil nil frame)))
-
-(defmethod add-frame :owlclass
-  [frame-adder name frame]
-  (.applyChange ontology-manager
-                (new AddAxiom ontology
-                     (frame-adder name frame))))
-
-(defmethod add-frame :string
-  [frame-adder name frame]
-  (add-frame frame-adder name (get-create-class frame)))
-
-
-
-(defmethod add-frame :vector
-  [frame-adder name frame]
-  (dorun
-   (map (fn [x]
-          (add-frame frame-adder name x))
-        frame)))
-
-(defmethod add-frame :nil
-  [frame-adder name frame]
-  ;; this can happen, and it's fine
-  )
-  
-
-
+        nil))
+        
 
 (defn create-subclass-axiom [name subclass]
   (.getOWLSubClassOfAxiom
@@ -109,14 +146,26 @@
   (add-frame create-class-axiom name ""))
              
 
-(defn owlclass
+(defn owlclass-explicit
   ([name frames]
+     (println "name" name)
+     (println "frame" frames)
+     (println "subc" (:subclass frames))
+     (println "equi" (:subclass frames))
      (add-class name)
+     (println "1")
      (add-subclass name (:subclass frames))
+     (println "2")
      (add-equivalent name (:equivalent frames)))
   ([name]
-     (owlclass name {})))
-  
+     (owlclass-explicit name {})))
+
+
+(defn owlclass
+  ([name & frames]
+     (println "owlclass" (hashify frames))
+     (owlclass-explicit
+      name (hashify frames))))
 
 (defn objectproperty
   [name]
@@ -124,5 +173,18 @@
                 (new AddAxiom ontology
                      (.getOWLDeclarationAxiom
                       ontology-data-factory
-                      (.getOWLObjectProperty ontology-data-factory
-                                             (IRI/create (str ontology-iri "#" name)))))))
+                      (get-create-object-property name)))))
+
+(defn some [property class]
+  (.getOWLObjectSomeValuesFrom
+   ontology-data-factory
+   (get-create-object-property property)
+   (get-create-class class)))
+
+(defn only [property class]
+  (.getOWLObjectAllValuesFrom
+   ontology-data-factory
+   (get-create-object-property property)
+   (get-create-class class)))
+
+
