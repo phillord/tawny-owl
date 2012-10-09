@@ -1,7 +1,7 @@
 (ns owl
   (:import
    (org.semanticweb.owlapi.model OWLOntologyManager OWLOntology IRI
-                                 OWLClassExpression OWLClass)
+                                 OWLClassExpression OWLClass OWLAnnotation)
    (org.semanticweb.owlapi.apibinding OWLManager)
    (org.coode.owlapi.manchesterowlsyntax ManchesterOWLSyntaxOntologyFormat)
    (org.semanticweb.owlapi.io StreamDocumentTarget)
@@ -40,13 +40,13 @@
             first-val nil))
          ;; we do not have a keyword
          (groupify reduced-frame (rest long-frame-left)
-                             current-keyword (cons first-val current-val-list)))
+                   current-keyword (cons first-val current-val-list)))
        
        ;; else we have nothing left in the frame, so terminate
        (cons current-keyword
              (cons current-val-list
                    reduced-frame)))))
-        
+
 
 (defn hashify
   "Takes a list with alternating keyword values and returns a hash"
@@ -72,15 +72,17 @@
 (reset-ontology)
 
 (defn save-ontology
-   []
-   (let [file (new File "temp.omn")
-         document-iri (IRI/create file)]
-     (.saveOntology ontology-manager ontology
-                    (new ManchesterOWLSyntaxOntologyFormat) document-iri)))
+  ([]
+     (save-ontology "temp.omn"))
+  ([filename]
+     (let [file (new File "temp.omn")
+           document-iri (IRI/create file)]
+       (.saveOntology ontology-manager ontology
+                      (new ManchesterOWLSyntaxOntologyFormat) document-iri))))
 
 (defn get-create-object-property [name]
   (.getOWLObjectProperty ontology-data-factory
-                (IRI/create (str ontology-iri "#" name))))
+                         (IRI/create (str ontology-iri "#" name))))
 
 
 (defn get-create-class [name]
@@ -95,14 +97,8 @@
 
 (defn add-frame
   [frame-adder name frame]
-  (println "frame-adder" frame-adder)
-  (println "name" name)
-  (println "frame" frame)
-  (println "frame seqp" (seq? frame))
   (cond (string? frame)
-        (do
-          (println "string")
-          (add-frame frame-adder name (get-create-class frame)))
+        (add-frame frame-adder name (get-create-class frame))
         (instance? org.semanticweb.owlapi.model.OWLClassExpression frame)
         (.applyChange ontology-manager
                       (new AddAxiom ontology
@@ -114,7 +110,7 @@
                     frame))
         (nil? frame)
         nil))
-        
+
 
 (defn create-subclass-axiom [name subclass]
   (.getOWLSubClassOfAxiom
@@ -126,7 +122,7 @@
   ([name subclass]
      (add-frame create-subclass-axiom name
                 subclass)))
-  
+
 (defn create-equivalent-axiom [name equivalent]
   (.getOWLEquivalentClassesAxiom
    ontology-data-factory
@@ -136,7 +132,7 @@
 (defn add-equivalent
   ([name equivalent]
      (add-frame create-equivalent-axiom name equivalent)))
-      
+
 (defn create-class-axiom [name _]
   (.getOWLDeclarationAxiom
    ontology-data-factory
@@ -144,28 +140,55 @@
 
 (defn add-class[name]
   (add-frame create-class-axiom name ""))
-             
+
+(defn add-annotation
+  [name annotation-list]
+  (dorun
+   (map
+    (fn[annotation]
+      (.applyChange ontology-manager
+                    (new AddAxiom ontology
+                         (.getOWLAnnotationAssertionAxiom
+                          ontology-data-factory
+                          (.getIRI (get-create-class name))
+                          annotation))))
+    annotation-list)))
+
+(defn annotation
+  ([annotation-property literal]
+     (annotation annotation-property literal "en"))
+  ([annotation-property literal language]
+     (.getOWLAnnotation
+      ontology-data-factory
+      annotation-property 
+      (.getOWLLiteral ontology-data-factory literal language))))
+
+
+(def label
+  (partial annotation (.getRDFSLabel ontology-data-factory)))
+
+(def comment
+  (partial annotation (.getRDFSComment ontology-data-factory)))
+
+
 
 (defn owlclass-explicit
   ([name frames]
-     (println "name" name)
-     (println "frame" frames)
-     (println "subc" (:subclass frames))
-     (println "equi" (:subclass frames))
      (add-class name)
-     (println "1")
      (add-subclass name (:subclass frames))
-     (println "2")
-     (add-equivalent name (:equivalent frames)))
+     (add-equivalent name (:equivalent frames))
+     (println (:annotation frames))
+     (add-annotation name (:annotation frames)))
   ([name]
      (owlclass-explicit name {})))
 
 
 (defn owlclass
   ([name & frames]
-     (println "owlclass" (hashify frames))
      (owlclass-explicit
       name (hashify frames))))
+
+
 
 (defn objectproperty
   [name]
@@ -174,6 +197,9 @@
                      (.getOWLDeclarationAxiom
                       ontology-data-factory
                       (get-create-object-property name)))))
+
+
+
 
 (defn some [property class]
   (.getOWLObjectSomeValuesFrom
