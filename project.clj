@@ -1,4 +1,4 @@
-(defproject test "1.0.0-SNAPSHOT"
+(defproject owl "1.0.0-SNAPSHOT"
   :description "Help to define a project in OWL"
   :plugins [[lein-swank "1.4.4"]]
   :repositories [["maven" "http://repo1.maven.org/maven2"]]
