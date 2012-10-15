@@ -13,40 +13,73 @@
 
 
 
+(def ^{:dynamic true} current-ontology nil)
 
-(def ontology-data-factory (OWLManager/getOWLDataFactory))
-(def ontology-iri nil)
-(def ontology-manager nil)
-(def ontology nil)
+(defrecord Ontology [iri file manager ontology])
+(defmacro defontology [name & body]
+  `(do
+     (let [options# (apply hash-map '~body)
+           iri# (IRI/create (:iri options#))
+           manager# (OWLManager/createOWLOntologyManager)]
+       (println iri#)
+       (println manager#)
+       (def ~name
+         (Ontology.
+          iri#
+          (:file options#)
+          manager#
+          (.createOntology manager# iri#))))
+     (owl.owl/set-current-ontology ~name)))
 
-(def
 
+(defn set-current-ontology[ontology]
+  ;;check type
+  (def ^{:dynamic true} current-ontology ontology))
 
+(defn get-current-ontology[]
+  (when (nil? current-ontology)
+    (throw (IllegalStateException. "Current ontology has not been set")))
+  current-ontology)
 
+(defn get-current-jontology[]
+  (:ontology (get-current-ontology)))
 
-(defn reset-ontology []
-  (def ontology-manager (OWLManager/createOWLOntologyManager))
-  (def ontology (.createOntology ontology-manager ontology-iri)))
+(defn get-current-iri[]
+  (let [iri (:iri (get-current-ontology))]
+    (when (nil? iri)
+      (throw (IllegalStateException. "Current ontology IRI has not been set")))
+    iri))
 
-(reset-ontology)
+(defn get-current-file []
+  (let [file (:file (get-current-ontology))]
+    (when (nil? file)
+      (throw (IllegalStateException. "Current ontology file has not been set")))
+    file))
+
+(defn get-current-manager[]
+  (let [manager (:manager (get-current-ontology))]
+    (when (nil? manager)
+      (throw (IllegalStateException. "No current ontology manager")))
+    manager))
+
 
 (defn save-ontology
   ([]
-     (save-ontology "temp.omn"))
+     (save-ontology (:file (get-current-ontology))))
   ([filename]
-     (let [file (new File "temp.omn")
+     (let [file (new File filename)
            document-iri (IRI/create file)]
-       (.saveOntology ontology-manager ontology
+       (.saveOntology (get-current-manager) (get-current-jontology)
                       (new ManchesterOWLSyntaxOntologyFormat) document-iri))))
 
 (defn get-create-object-property [name]
   (.getOWLObjectProperty ontology-data-factory
-                         (IRI/create (str ontology-iri "#" name))))
+                         (IRI/create (str (get-current-iri) "#" name))))
 
 
 (defn get-create-class [name]
   (.getOWLClass ontology-data-factory
-                (IRI/create (str ontology-iri "#" name))))
+                (IRI/create (str (get-current-iri) "#" name))))
 
 (defn ensure-class [clz]
   (cond (instance? org.semanticweb.owlapi.model.OWLClassExpression clz)
@@ -56,8 +89,8 @@
 
 (defn add-one-frame
   [frame-adder name frame]
-  (.applyChange ontology-manager
-                (new AddAxiom ontology
+  (.applyChange (get-current-manager)
+                (new AddAxiom (get-current-jontology)
                      (frame-adder (ensure-class name) frame))))
   
 
@@ -101,8 +134,8 @@
 ;; object properties
 (defn objectproperty
   [name]
-  (.applyChange ontology-manager
-                (new AddAxiom ontology
+  (.applyChange (get-current-manager)
+                (new AddAxiom (get-current-jontology)
                      (.getOWLDeclarationAxiom
                       ontology-data-factory
                       (get-create-object-property name)))))
@@ -129,8 +162,8 @@
   (dorun
    (map
     (fn[annotation]
-      (.applyChange ontology-manager
-                    (new AddAxiom ontology
+      (.applyChange (get-current-manager)
+                    (new AddAxiom (get-current-jontology)
                          (.getOWLAnnotationAssertionAxiom
                           ontology-data-factory
                           (.getIRI (get-create-class name))
