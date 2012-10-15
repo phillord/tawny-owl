@@ -1,35 +1,10 @@
-(ns owl.test.owl-test
+(ns owl.test.owl
   [:require [owl [owl :as owl]]]
   [:use clojure.test])
 
 
-(deftest groupify
-  (is
-   (= (owl/groupify '(:a 1))
-      '(:a (1))))
 
-  (is
-   (thrown? IllegalArgumentException
-            (owl/groupify '(:a :b))))
-  )
-
-(deftest hashify
-  (is
-   (= (owl/hashify '(:a 1))
-      {:a '(1)}))
-   
-  (is
-   (=
-    (owl/hashify '(:a 1 :b 2))
-    {:a '(1) :b '(2)}))
-  )
-  
-
-(deftest create-ontology
-  
-  
-
-  )
-
-
-  
+(deftest defontologytest
+  (is (not (nil?
+            (owl/defontology testontology
+              :file "test.omn" :iri "http://iri/")))))

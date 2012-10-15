@@ -1,26 +1,26 @@
-(ns owl.test.util-test
-  [:require [owl [owl :as owl]]]
+(ns owl.test.util
+  [:require [owl [util :as util]]]
   [:use clojure.test])
 
 
 (deftest groupify
   (is
-   (= (owl/groupify '(:a 1))
+   (= (util/groupify '(:a 1))
       '(:a (1))))
 
   (is
    (thrown? IllegalArgumentException
-            (owl/groupify '(:a :b))))
+            (util/groupify '(:a :b))))
   )
 
 (deftest hashify
   (is
-   (= (owl/hashify '(:a 1))
+   (= (util/hashify '(:a 1))
       {:a '(1)}))
    
   (is
    (=
-    (owl/hashify '(:a 1 :b 2))
+    (util/hashify '(:a 1 :b 2))
     {:a '(1) :b '(2)}))
   )
   

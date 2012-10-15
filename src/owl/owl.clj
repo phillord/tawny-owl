@@ -11,7 +11,7 @@
    (java.io File)
    (org.semanticweb.owlapi.model AddAxiom)))
 
-
+(def ontology-data-factory (OWLManager/getOWLDataFactory))
 
 (def ^{:dynamic true} current-ontology nil)
 

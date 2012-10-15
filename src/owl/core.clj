@@ -3,10 +3,11 @@
 
 
 ;; this bit don't work yet, but I want it to!
-(defontology test-ontology
-  :file "temp.omn"
-  :iri "http://www.semanticweb.org/ontologies/ont.owl"
-  )
+
+(owl.owl/defontology test-ontology
+   :file "temp.omn"
+   :iri "http://www.semanticweb.org/ontologies/ont.owl"
+   )
 
 
 (defmacro sav [body]
@@ -29,7 +30,6 @@
 (sav (owl.owl/owlclass "test1"
                 :subclass "test2" "test3"
                 :equivalent "test6"))
-
 
 
 (sav (owl.owl/owlclass "test10"
@@ -106,23 +106,4 @@
 
 
            
-
-;; (defn temp
-;;   [name & frames]
-;;   (println name)
-;;   (binding [framemap {}
-;;             key nil
-;;             val nil]
-;;     (dorun
-;;      (map
-;;       (fn [arg]
-;;         (if (keyword? arg)
-;;           (do (set! key arg))
-;;           (do (set! val (cons arg val)))
-;;       frames))))))q
-
-
-
-;;           (cons 1 '(2))
-
 
