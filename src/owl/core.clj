@@ -1,12 +1,13 @@
 
 (require 'owl.owl)
+(use '[owl.owl :only (defontology)])
 
 
 ;; this bit don't work yet, but I want it to!
-
-(owl.owl/defontology test-ontology
+(defontology test-ontology
    :file "temp.omn"
    :iri "http://www.semanticweb.org/ontologies/ont.owl"
+   :prefix "ont:"
    )
 
 
@@ -15,8 +16,10 @@
      ~body
      (owl.owl/save-ontology)))
 
-;; this isn't working
 
+(sav (owl.owl/owlclass "test1"))
+
+;; this isn't working
 (sav (owl.owl/add-class "test1"))
 (sav (owl.owl/add-annotation "test1" (owl.owl/label "hello" "en")))
 
@@ -30,7 +33,6 @@
 (sav (owl.owl/owlclass "test1"
                 :subclass "test2" "test3"
                 :equivalent "test6"))
-
 
 (sav (owl.owl/owlclass "test10"
                    :subclass (owl.owl/some "hasPart" "test15")))
