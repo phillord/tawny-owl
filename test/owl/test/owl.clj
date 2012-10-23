@@ -63,6 +63,26 @@
   (is (instance? org.semanticweb.owlapi.model.OWLObjectProperty
                  (#'o/get-create-object-property "hello"))))
 
+
+(deftest ensure-object-property []
+  (is 
+   ;; check whether it makes an object out of a string
+   (instance? org.semanticweb.owlapi.model.OWLObjectProperty
+              (#'o/ensure-object-property "hello")))
+  (is
+   ;; check whether it makes keeps an object as an object
+   (instance? org.semanticweb.owlapi.model.OWLObjectProperty
+              (#'o/ensure-object-property
+               (#'o/get-create-object-property "hello")))))
+
+(deftest defoproperty
+  (is
+   (instance? org.semanticweb.owlapi.model.OWLObjectProperty
+              (do 
+                (o/defoproperty a)
+                a))))
+
+
 (deftest get-create-class []
   (is (instance? org.semanticweb.owlapi.model.OWLClass
                  (#'o/get-create-class "hello"))))
@@ -142,6 +162,18 @@
                      (#'o/get-current-jontology))))))
   (is (instance? org.semanticweb.owlapi.model.OWLClass
                  (o/owlclass "test"))))
+
+
+(deftest defclass
+  (is (= 1
+         (do (o/defclass a)
+             (.size (.getClassesInSignature
+                     (#'o/get-current-jontology))))))
+  (is (not
+       (nil?
+        (do (o/defclass a)
+            a)))))
+
 
 
 ;; (subclass?

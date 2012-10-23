@@ -52,7 +52,6 @@ The following keys must be supplied.
   [name & body]
   `(do
      (let [ontology# (ontology ~@body)]
-       (println "Ontology is " ontology#)
        (def ~name ontology#)
        (owl.owl/set-current-ontology ontology#)
        ontology#
@@ -138,6 +137,12 @@ or `filename' if given.
   (.getOWLObjectProperty ontology-data-factory
                          (iriforname name)))
 
+(defn- ensure-object-property [prop]
+  (cond (instance? org.semanticweb.owlapi.model.OWLObjectProperty prop)
+        prop
+        (string? prop)
+        (get-create-object-property prop)))
+
 (defn- get-create-class [name]
   (.getOWLClass ontology-data-factory
                 (iriforname name)))
@@ -219,18 +224,26 @@ class, or class expression. "
                        axiom))
     property))
 
+(defmacro defoproperty [property]
+  `(let [property-name# (name '~property)
+         property# (owl.owl/objectproperty property-name#)]
+     (def ~property property#)
+     property#))
+
+
+
 ;; restrictions!
 (defn some [property class]
   (.getOWLObjectSomeValuesFrom
    ontology-data-factory
-   (get-create-object-property property)
-   (get-create-class class)))
+   (ensure-object-property property)
+   (ensure-class class)))
 
 (defn only [property class]
   (.getOWLObjectAllValuesFrom
    ontology-data-factory
-   (get-create-object-property property)
-   (get-create-class class)))
+   (ensure-object-property property)
+   (ensure-class class)))
 
 ;; annotations
 (defn add-annotation
@@ -282,4 +295,10 @@ class, or class expression. "
   ([name & frames]
      (owlclass-explicit
       name (util/hashify frames))))
+
+(defmacro defclass [classname & frames]
+  `(let [string-name# (name '~classname)
+         class# (owl.owl/owlclass string-name# ~@frames)]
+     (def ~classname class#)
+     class#))
 

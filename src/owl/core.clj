@@ -1,6 +1,6 @@
 
 (require 'owl.owl)
-(use '[owl.owl :only (defontology)])
+(use '[owl.owl :only (defontology defclass defoproperty)])
 
 
 ;; this bit don't work yet, but I want it to!
@@ -11,12 +11,29 @@
    )
 
 
-(defmacro sav [body]
+(sav
+ ;; (defclass a)
+ ;; (defclass b :subclass a)
+ ;; (defclass c
+ ;;   :subclass a
+ ;;   :equivalent b
+ ;;   )
+
+
+ (defoproperty hasPart)
+ (defclass d
+   :subclass (owl.owl/some hasPart b)))
+ 
+(owl.owl/save-ontology)
+
+(defmacro sav [& body]
   `(do
-     ~body
+     ~@body
      (owl.owl/save-ontology)))
 
 
+
+                        
 (sav (owl.owl/owlclass "test1"))
 
 ;; this isn't working
