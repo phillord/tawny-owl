@@ -33,7 +33,6 @@ ontology is an object of OWLOntology.
     Ontology [iri file prefix manager ontology])
 
 (defn ontology [& args]
-  (println  args )
   (let [options (apply hash-map args)
         iri (IRI/create (:iri options))
         manager (OWLManager/createOWLOntologyManager)]
@@ -76,7 +75,7 @@ or set using `set-current-ontology'"
     (throw (IllegalStateException. "Current ontology has not been set")))
   current-ontology)
 
-(defn- get-current-jontology[]
+(defn get-current-jontology[]
   "Gets the object representing the current ontology"
   (:ontology (get-current-ontology)))
 
@@ -141,7 +140,10 @@ or `filename' if given.
   (cond (instance? org.semanticweb.owlapi.model.OWLObjectProperty prop)
         prop
         (string? prop)
-        (get-create-object-property prop)))
+        (get-create-object-property prop)
+        true
+        (throw (IllegalArgumentException.
+                (str "Expecting an object property. Got: " prop)))))
 
 (defn- get-create-class [name]
   (.getOWLClass ontology-data-factory
@@ -153,7 +155,14 @@ else if clz is a OWLClassExpression add that."
   (cond (instance? org.semanticweb.owlapi.model.OWLClassExpression clz)
         clz
         (string? clz)
-        (get-create-class clz)))
+        (get-create-class clz)
+        true
+        (throw (IllegalArgumentException.
+                (str "Expecting a class. Got: " clz)))))
+
+(defn- add-axiom [axiom]
+  (.applyChange (get-current-manager)
+                (AddAxiom. (get-current-jontology) axiom)))
 
 (defn- add-one-frame
   "Adds a single frame to the ontology.
@@ -164,9 +173,7 @@ but in practice this doesn't work, as not everything is an axiom.
 "
   [frame-adder name frame]
   (let [clazz (ensure-class name)]
-    (.applyChange (get-current-manager)
-                  (new AddAxiom (get-current-jontology)
-                       (frame-adder clazz frame)))
+    (add-axiom (frame-adder clazz frame))
     clazz))
   
 (defn- add-frame
@@ -216,12 +223,9 @@ class, or class expression. "
 ;; object properties
 (defn objectproperty
   [name]
-  (let [property (get-create-object-property name)
-        axiom (.getOWLDeclarationAxiom
-                      ontology-data-factory property)]
-    (.applyChange (get-current-manager)
-                  (new AddAxiom (get-current-jontology)
-                       axiom))
+  (let [property (get-create-object-property name)]
+    (add-axiom (.getOWLDeclarationAxiom
+                ontology-data-factory property) )
     property))
 
 (defmacro defoproperty [property]
@@ -251,12 +255,11 @@ class, or class expression. "
   (dorun
    (map
     (fn[annotation]
-      (.applyChange (get-current-manager)
-                    (new AddAxiom (get-current-jontology)
-                         (.getOWLAnnotationAssertionAxiom
-                          ontology-data-factory
-                          (.getIRI (get-create-class name))
-                          annotation))))
+      (add-axiom
+       (.getOWLAnnotationAssertionAxiom
+        ontology-data-factory
+        (.getIRI (get-create-class name))
+        annotation)))
     annotation-list)))
 
 (defn annotation
@@ -301,4 +304,83 @@ class, or class expression. "
          class# (owl.owl/owlclass string-name# ~@frames)]
      (def ~classname class#)
      class#))
+
+
+(defn disjointclasses [& list]
+  (let [classlist (map (fn [x] (ensure-class x)) list)]
+    (add-axiom 
+     (.getOWLDisjointClassesAxiom
+      ontology-data-factory
+      (into-array OWLClassExpression
+                  classlist)))))
+
+(defn- get-create-individual [individual]
+  (.getOWLNamedIndividual ontology-data-factory
+                          (iriforname individual)))
+
+(defn- ensure-individual [individual]
+  (cond (instance? org.semanticweb.owlapi.model.OWLIndividual )
+        individual
+        (string? individual)
+        (get-create-individual individual)
+        true
+        (throw (IllegalArgumentException.
+                (str "Expecting an Inidividual. Got: " individual)))))
+
+;; need to support all the different frames here...
+;; need to use hashify
+(defn individual [name & frames]
+  (let [hframes (util/hashify frames)]
+    (add-axiom
+     (.getOWLClassAssertionAxiom
+      ontology-data-factory
+      (ensure-class (:type hframes))
+      (ensure-individual name)))))
+
+;; predicates
+(defn- recurseclass?
+  "Determine class relationship
+
+Returns true if targetclass is directly or indirectly related to a class in
+namelist where recursefunction returns all direct relationships"
+  [namelist targetclass recursefunction]
+  (and (first namelist)
+       (or (= (first namelist)
+              targetclass)
+           (recurseclass? (recursefunction
+                           (first namelist))
+                          targetclass
+                          recursefunction)
+           (recurseclass? (rest namelist)
+                          targetclass
+                          recursefunction
+                          ))))
+
+(defn isuperclasses
+  "Returns the direct superclasses of name.
+Name can be either a class or a string name. Returns a list of classes"
+  [name]
+  (.getSuperClasses (ensure-class name)
+                    (get-current-jontology)))
+
+
+(defn superclass?
+  "Returns true is name has superclass as a superclass"
+  [name superclass]
+  (recurseclass? (list (ensure-class name))
+                 (ensure-class superclass)
+                 isuperclasses))
+
+(defn isubclasses
+  "Returns the direct subclasses of name."
+  [name]
+  (.getSubClasses (ensure-class name)
+                  (get-current-jontology)))
+
+(defn subclass?
+  "Returns true if name has subclass as a subclass"
+  [name subclass]
+  (recurseclass? (list (ensure-class name))
+               (ensure-class subclass)
+               isubclasses))
 
