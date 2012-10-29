@@ -329,13 +329,32 @@ class, or class expression. "
 
 ;; need to support all the different frames here...
 ;; need to use hashify
+(defn individual-add-types [name types]
+  (let [individual (ensure-individual name)]
+    (doall
+     (map
+      (fn [type]
+        (add-axiom
+         (.getOWLClassAssertionAxiom
+          ontology-data-factory
+          (ensure-class type)
+          individual)))
+      types))
+    individual))
+
+
 (defn individual [name & frames]
   (let [hframes (util/hashify frames)]
-    (add-axiom
-     (.getOWLClassAssertionAxiom
-      ontology-data-factory
-      (ensure-class (:type hframes))
-      (ensure-individual name)))))
+    (individual-add-types name (:types hframes))))
+
+
+;; return type of individual is buggered
+(defmacro defindividual [individualname & frames]
+  `(let [string-name# (name '~individualname)
+         individual# (owl.owl/individual string-name# ~@frames)]
+     (def ~individualname individual#)
+     individual#))
+
 
 ;; predicates
 (defn- recurseclass?
