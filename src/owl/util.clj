@@ -35,9 +35,11 @@
                    current-keyword (cons first-val current-val-list)))
        
        ;; else we have nothing left in the frame, so terminate
-       (cons current-keyword
-             (cons current-val-list
-                   reduced-frame)))))
+       (if (or current-keyword current-val-list)
+         (cons current-keyword
+               (cons current-val-list
+                     reduced-frame))
+         reduced-frame))))
 
 
 (defn hashify
@@ -45,3 +47,33 @@
   [list]
   (apply
    hash-map (groupify list)))
+
+;; contains really doesn't do what you expect
+(defn in? 
+  "true if seq contains elm"
+  [seq elm]  
+  (some #(= elm %) seq))
+
+(defn has-keys
+  "Returns true iff hash has only thekeys in hash."
+  [hash thekeys]
+  (every?
+   (fn [x]
+     (in? thekeys x))
+   (keys hash)))
+
+(defn check-keys
+  "Returns the hash or throws IllegalArgumentException if has does not have
+  only thekeys in hash"
+  [hash thekeys]
+  (when-not (has-keys hash thekeys)
+    (throw
+     (IllegalArgumentException.
+      (format "Expected only keys %s; Got %s" thekeys (keys hash)))))
+  hash)
+
+
+
+
+
+

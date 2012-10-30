@@ -3,11 +3,14 @@
   (:require [owl.owl :as o])
   [:use clojure.test])
 
-(defn createandsavefixture[test]
+(defn createtestontology[]
   (o/defontology testontology
     :file "test.omn"
     :iri "http://iri/"
-    :prefix "iri:")  
+    :prefix "iri:"))
+
+(defn createandsavefixture[test]
+  (createtestontology)
   (test)
   (o/save-ontology)
   )
@@ -85,7 +88,10 @@
 
 (deftest get-create-class []
   (is (instance? org.semanticweb.owlapi.model.OWLClass
-                 (#'o/get-create-class "hello"))))
+                 (#'o/get-create-class "hello")))
+  (is  (=  (.hashCode (#'o/get-create-class "hello"))
+           (.hashCode (#'o/get-create-class "hello")))))
+
 
 (deftest ensure-class []
   (is (instance? org.semanticweb.owlapi.model.OWLClassExpression
@@ -146,13 +152,17 @@
   (is (instance? org.semanticweb.owlapi.model.OWLObjectProperty
                  (o/objectproperty "b"))))
 
-
-
 (deftest some []
   (is (not (nil? (o/some (o/objectproperty "b") "a")))))
 
 (deftest only []
   (is (not (nil? (o/only (o/objectproperty "b") "a")))))
+
+
+
+(deftest disjointclasses []
+  (is
+   (do (o/disjointclasses "a" "b" "c"))))
 
 
 (deftest owlclass
@@ -174,6 +184,63 @@
         (do (o/defclass a)
             a)))))
 
+
+
+(defn- test-class-with-hierarchy
+  "Some test classes
+
+Assumes that fixture has been run
+"
+  []
+  
+  (o/owlclass "a")
+  (o/owlclass "b" :subclass "a")
+  (o/owlclass "c" :subclass "b")
+
+  (o/owlclass "d")
+  (o/owlclass "e" :subclass "b" "d")
+  )
+
+
+(deftest superclass? []
+  (is (not
+       (nil?
+        (do
+          (test-class-with-hierarchy)
+          (o/isuperclasses "c")))))
+  (is (do
+        (test-class-with-hierarchy)
+        (o/superclass? "e" "a")))
+  (is (not
+       (do
+         (test-class-with-hierarchy)
+         (o/superclass? "c" "e")))))
+
+
+(deftest subclass? []
+  (is
+   (do (test-class-with-hierarchy)
+       (o/subclass? "a" "c")))
+  (is
+   (not
+    (do (test-class-with-hierarchy)
+        (o/subclass? "c" "e")))))
+
+
+(deftest disjointclasses []
+  (is (not (nil? (o/disjointclasses "a" "b" "c")))))
+
+
+(deftest individual []
+  (is (o/individual "ind"))
+  (is (not (nil? (o/individual "indA" :types "a"))))
+  (is (thrown? IllegalArgumentException
+               (o/individual "indA" :nottypes "a"))))
+
+
+(deftest defindividual []
+  (is (do (o/defindividual testind)
+          testind)))
 
 
 ;; (subclass?

@@ -234,8 +234,6 @@ class, or class expression. "
      (def ~property property#)
      property#))
 
-
-
 ;; restrictions!
 (defn some [property class]
   (.getOWLObjectSomeValuesFrom
@@ -297,7 +295,11 @@ class, or class expression. "
 (defn owlclass
   ([name & frames]
      (owlclass-explicit
-      name (util/hashify frames))))
+      name
+      (util/check-keys
+       (util/hashify frames)
+       [:subclass :equivalent :annotation]
+       ))))
 
 (defmacro defclass [classname & frames]
   `(let [string-name# (name '~classname)
@@ -342,9 +344,11 @@ class, or class expression. "
       types))
     individual))
 
-
 (defn individual [name & frames]
-  (let [hframes (util/hashify frames)]
+  (let [hframes
+        (util/check-keys 
+         (util/hashify frames)
+         [:types])]
     (individual-add-types name (:types hframes))))
 
 
