@@ -80,10 +80,11 @@
 
 (deftest defoproperty
   (is
+   (instance? owl.owl.AxiomedEntity
+              (o/defoproperty a))
+   
    (instance? org.semanticweb.owlapi.model.OWLObjectProperty
-              (do 
-                (o/defoproperty a)
-                a))))
+              (:entity (o/defoproperty a)))))
 
 
 (deftest get-create-class []
@@ -109,21 +110,14 @@
        (nil?
         (#'o/add-one-frame
          #'o/create-subclass-axiom
-         (#'o/ensure-class "a") "b"))))
-  (is (instance?
-       org.semanticweb.owlapi.model.OWLClass
-       (#'o/add-one-frame
-        #'o/create-subclass-axiom
-        (#'o/ensure-class "a") "b"))))
+         (#'o/ensure-class "a") "b")))))
 
 (deftest add-frame []
   (let [frame-call
         (#'o/add-frame
          #'o/create-subclass-axiom
          (#'o/ensure-class "a") '( "b" "c" "d"))]
-    (is (not (nil? frame-call)))
-    (is (instance? org.semanticweb.owlapi.model.OWLClass
-                   frame-call))))
+    (is (not (nil? frame-call)))))
 
 
 
@@ -137,33 +131,42 @@
                (#'o/ensure-class "a")
                (list (#'o/ensure-class "b")))]
     (is (not (nil? equiv)))
-    (is (instance? org.semanticweb.owlapi.model.OWLClass
-                   equiv))))
+))
 
 (deftest create-class-axiom []
   (is (instance? org.semanticweb.owlapi.model.OWLDeclarationAxiom
                  (#'o/create-class-axiom (#'o/ensure-class "a") "b"))))
 
 (deftest add-class []
-  (is (instance? org.semanticweb.owlapi.model.OWLClass
-                 (o/add-class "a"))))
+  (is (not
+       (nil?
+        (o/add-class "a")))))
 
 (deftest objectproperty []
-  (is (instance? org.semanticweb.owlapi.model.OWLObjectProperty
-                 (o/objectproperty "b"))))
+  (is (instance? owl.owl.AxiomedEntity
+                 (o/objectproperty "b")))
 
-(deftest some []
-  (is (not (nil? (o/some (o/objectproperty "b") "a")))))
+  (is (instance?
+       org.semanticweb.owlapi.model.OWLObjectProperty
+       (:entity (o/objectproperty "b"))))
 
-(deftest only []
-  (is (not (nil? (o/only (o/objectproperty "b") "a")))))
+  
 
+  )
 
+(deftest owlsome []
+  (is (not (nil? (o/owlsome (o/objectproperty "b") "a")))))
+
+(deftest owlonly []
+  (is (not (nil? (o/owlonly (o/objectproperty "b") "a")))))
 
 (deftest disjointclasses []
   (is
-   (do (o/disjointclasses "a" "b" "c"))))
+   (do (o/disjointclasses "a" "b" "c")))
 
+  (is
+   (do (o/disjointclasses
+        (o/owlclass "a") (o/owlclass "b")))))
 
 (deftest owlclass
   (is (= 1
@@ -171,7 +174,7 @@
              (.size (.getClassesInSignature
                      (#'o/get-current-jontology))))))
   (is (instance? org.semanticweb.owlapi.model.OWLClass
-                 (o/owlclass "test"))))
+                 (:entity (o/owlclass "test")))))
 
 
 (deftest defclass
@@ -230,20 +233,38 @@ Assumes that fixture has been run
 (deftest disjointclasses []
   (is (not (nil? (o/disjointclasses "a" "b" "c")))))
 
-
 (deftest individual []
   (is (o/individual "ind"))
   (is (not (nil? (o/individual "indA" :types "a"))))
   (is (thrown? IllegalArgumentException
                (o/individual "indA" :nottypes "a"))))
 
-
 (deftest defindividual []
   (is (do (o/defindividual testind)
           testind)))
+
+(deftest remove-entity []
+  (is
+   (= 0
+      (do
+        (let [clazz (o/owlclass "a")]
+          (o/remove-entity clazz)
+          (.size (.getClassesInSignature
+                  (#'o/get-current-jontology)))))))
+  
+  (is
+   (= 0
+      (do
+        (let [prop (o/objectproperty "a")]
+          (o/remove-entity prop)
+          (.size (.getClassesInSignature
+                  (#'o/get-current-jontology))))))))
+
+
+;; TODO lots of macros are in serious need of a test
 
 
 ;; (subclass?
 ;;  (owlclass "test1")
 ;;  (owlclass "test"
-;;            :subclass "test1")))
+;;            :subclass "test1"))
