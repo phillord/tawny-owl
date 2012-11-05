@@ -19,6 +19,11 @@ environment.
 This is the first and only piece of code that I have written in clojure; it no
 doubt shows this heritage. 
 
+I discuss the development of this code base in my
+[journal](http://www.russet.org.uk/blog). Two recent posts include one on the
+[motivation] (http://www.russet.org.uk/blog/2214) and another on making the
+library more ["lispy"](http://www.russet.org.uk/blog/2254).
+
 
 == Installation
 
