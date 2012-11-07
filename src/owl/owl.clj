@@ -265,6 +265,18 @@ class, or class expression. "
    ontology-data-factory
    clazz))
 
+(defn add-disjoint-union [clazz subclasses]
+  (let [ensured-subclasses
+        (doall (map #(ensure-class %) subclasses))
+        ]
+    (list
+     (add-axiom
+      (.getOWLDisjointUnionAxiom
+       ontology-data-factory
+       (ensure-class clazz)
+       (java.util.HashSet.  ensured-subclasses))))))
+
+
 (defn add-class[name]
   (add-one-frame create-class-axiom name ""))
 
@@ -290,9 +302,73 @@ class, or class expression. "
           (ensure-class range))))
       rangelist))))
 
+(defn add-inverse [property inverselist]
+  (let [property (ensure-object-property property)]
+    (doall
+     (map
+      (fn [inverse]
+        (add-axiom
+         (.getOWLInverseObjectPropertiesAxiom
+          ontology-data-factory property
+          (ensure-object-property inverse))))
+      inverselist))))
+
+
+(defn add-superproperty [property superpropertylist]
+  (let [property (ensure-object-property property)]
+    (doall
+     (map
+      (fn [superproperty]
+        (add-axiom
+         (.getOWLSubObjectPropertyOfAxiom
+          ontology-data-factory property
+          (ensure-object-property superproperty))))
+      superpropertylist))))
+
+
+;; Really it would make more sense to use keywords, but this breaks the
+;; groupify function which expects alternative keyword value args. The
+;; approach of using strings and symbol names here is scary -- if someone does
+;; (defclass transitive) for example, it's all going to break. I don't think
+;; that the const does what might be though. 
+(def ^:const transitive "transitive")
+(def ^:const functional "functional")
+(def ^:const inversefunctional "inversefunctional")
+
+(def
+  ^{:private true}
+  charfuncs
+  {transitive #(.getOWLTransitiveObjectPropertyAxiom %1 %2)
+   functional #(.getOWLFunctionalObjectPropertyAxiom %1 %2)
+   inversefunctional #(.getOWLInverseFunctionalObjectPropertyAxiom %1 %2)
+   })
+
+(defn add-characteristics [property characteristics]
+  (doall
+   (map
+    (fn [x]
+      (when-not (get charfuncs x)
+        (throw (IllegalArgumentException. "Characteristic is not recognised:" x)))
+      (add-axiom
+       ((get charfuncs x)
+        ontology-data-factory (ensure-object-property property))))
+    characteristics)))
+
+(def
+  ^{:dynamic true}
+  default-frame nil)
+
+(def
+  ^{:doc "Axioms we have added recently"
+    :dynamic true}
+  recent-axiom-list
+  nil)
+
+
+
 ;; object properties
 (defn objectproperty-explicit
-  [name {:keys [domain range] :as all}]
+  [name {:keys [domain range inverseof subpropertyof characteristics] :as all}]
   (let [property (get-create-object-property name)
         axioms
         (concat 
@@ -301,20 +377,26 @@ class, or class expression. "
                  ontology-data-factory property)))
          (add-domain property domain)
          (add-range property range)
+         (add-inverse property inverseof)
+         (add-superproperty property subpropertyof)
+         (add-characteristics property characteristics)
          )]
-    
+    ;; store classes if we are in an inverse binding
+    (when (seq? recent-axiom-list)
+      (set! recent-axiom-list
+            (concat (list property) recent-axiom-list)))
     (AxiomedEntity. property axioms)))
 
 
 (defn objectproperty
   [name & frames]
-  (println  "name" name)
-  (println "frame" frames)
   (objectproperty-explicit
    name
    (util/check-keys
-    (util/hashify frames)
-    [:domain :range])))
+    (merge-with concat
+                (util/hashify frames)
+                default-frame)
+    [:domain :range :inverseof :subpropertyof :characteristics])))
 
 (defmacro defoproperty [property & frames]
   `(let [property-name# (name '~property)
@@ -335,6 +417,8 @@ class, or class expression. "
    (ensure-object-property property)
    (ensure-class class)))
 
+
+
 ;; annotations
 (defn add-annotation
   [name annotation-list]
@@ -350,10 +434,8 @@ class, or class expression. "
 
 (defn annotation
   ([annotation-property literal]
-     (println "property" annotation-property)
      (annotation annotation-property literal "en"))
   ([annotation-property literal language]
-     (println "property " annotation-property)
      (.getOWLAnnotation
       ontology-data-factory
       annotation-property 
@@ -373,23 +455,17 @@ class, or class expression. "
   (partial annotation (.getRDFSSeeAlso ontology-data-factory)))
 
 
-(def
-  ^{:doc "Classes we have added recently"
-    :dynamic true}
-  recent-class-list
-  nil)
-
 
 (defn owlclass-explicit
   ([name frames]
      (let [classname (or (first (:name frames)) name)
            class
            (ensure-class classname)]
-       ;; store classes if we are in a disjoint bindin
-       (when (seq? recent-class-list)
-         (set! recent-class-list
+       ;; store classes if we are in a disjoint binding
+       (when (seq? recent-axiom-list)
+         (set! recent-axiom-list
                (concat (list class)
-                       recent-class-list)))
+                       recent-axiom-list)))
        ;; generate an axiomed entity
        (AxiomedEntity.
         class 
@@ -414,10 +490,6 @@ class, or class expression. "
   ([name]
      (owlclass-explicit name {})))
 
-
-(def
-  ^{:dynamic true}
-  default-frame nil)
 
 (defn owlclass
   ([name & frames]
@@ -499,12 +571,24 @@ class, or class expression. "
 ;; convienience macros
 (defmacro as-disjoint [& body]
   `(do ;; delete all recent classes
-     (binding [owl.owl/recent-class-list '()]
+     (binding [owl.owl/recent-axiom-list '()]
        ;; do the body
        ~@body
        ;; set them disjoint
        (owl.owl/disjointclasseslist
-        owl.owl/recent-class-list))))
+        owl.owl/recent-axiom-list))))
+
+(defmacro as-inverse [& body]
+  `(do
+     (binding [owl.owl/recent-axiom-list '()]
+       ~@body
+       (when-not (= (count owl.owl/recent-axiom-list) 2)
+         (throw (IllegalArgumentException. "Can only have two properties in as-inverse")))
+       (owl.owl/add-inverse
+        (first owl.owl/recent-axiom-list)
+        (rest owl.owl/recent-axiom-list))
+       )))
+
 
 ;; not tested
 (defmacro with-ontology [ontology & body]
