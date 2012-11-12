@@ -1,10 +1,10 @@
-(defproject uk.org.russet/clojure-owl "1.0.0-SNAPSHOT"
+(defproject uk.org.russet/clojure-owl "1.0.0"
   :description "Help to define a project in OWL"
   :url "http://code.google.com/p/clojure-owl/"
   :plugins [[lein-swank "1.4.4"]]
   :repositories [["maven" "http://repo1.maven.org/maven2"]
                  ;; getting hermit from here
-                 ["berkley" "http://code.berkeleybop.org/maven/repository/"]
+                 ;; ["berkley" "http://code.berkeleybop.org/maven/repository/"]
                  ]
   :dependencies [
                  ;; owl API
