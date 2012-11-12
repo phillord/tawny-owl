@@ -74,7 +74,13 @@
   hash)
 
 
-
+(defmacro quote-word [& symbols]
+  `(do
+     (list
+      ~@(map
+         (fn [symbol]
+           (name symbol))
+         symbols))))
 
 
 
