@@ -1,6 +1,5 @@
 (ns owl.owl
   (:require [owl.util :as util])
-  (:refer-clojure :exclude [some only comment])
   (:import
    (org.semanticweb.owlapi.model OWLOntologyManager OWLOntology IRI
                                  OWLClassExpression OWLClass OWLAnnotation)
@@ -12,13 +11,25 @@
    (java.io File)
    (org.semanticweb.owlapi.model AddAxiom RemoveAxiom)))
 
+
+;; far as I can tell, we only ever need one of these.
 (def
   ^{:doc "A java object which is the main factory for all other objects"
     :private true}
   ontology-data-factory
   (OWLManager/getOWLDataFactory))
 
-(declare current-ontology)
+;; the current ontology provides our main mutable state. Strictly, we don't
+;; need to do this, but the alternative would be passing in an ontology to
+;; almost every call, or running everything inside a binding. Painful. 
+(def
+  ^{:dynamic true
+    :doc
+    "The current ontology is either the last one defined using `defontology'
+or set using `set-current-ontology'"
+}
+  current-ontology (ref nil))
+
 
 (defrecord
     ^{:doc "Key data about an ontology.
@@ -67,8 +78,6 @@ The following keys must be supplied.
   [name & body]
   `(do
      (let [ontology# (ontology ~@body)]
-       ;; this is apparently bad style, and I should be using either a ref or
-       ;; an agent, once I have found out what they are.
        (def ~name ontology#)
        (owl.owl/set-current-ontology ontology#)
        ontology#
@@ -77,21 +86,13 @@ The following keys must be supplied.
 (defn set-current-ontology
   "Sets the current ontology as defined by `defontology'"
   [ontology]
-  ;; check type
-  ;; is this really the only way to set a variable in clojure?
-  ;; do I need to do the dynamic or what?
-  (def ^{:dynamic true
-       :doc
-       "The current ontology is either the last one defined using `defontology'
-or set using `set-current-ontology'"
-}
-  current-ontology ontology))
+  (dosync (ref-set current-ontology ontology)))
 
 (defn get-current-ontology[]
   "Gets the current ontology"
-  (when (nil? current-ontology)
+  (when (nil? @current-ontology)
     (throw (IllegalStateException. "Current ontology has not been set")))
-  current-ontology)
+  @current-ontology)
 
 (defn get-current-jontology[]
   "Gets the object representing the current ontology"
@@ -132,20 +133,24 @@ or `filename' if given.
   ([]
      (save-ontology (:file (get-current-ontology))))
   ([filename]
+     (save-ontology filename (ManchesterOWLSyntaxOntologyFormat.)
+                    (str "## This file was created by Clojure-OWL\n"
+                         "## It should not be edited by hand\n" )))
+  ([filename format]
+     (save-ontology filename format ""))
+  ([filename format prepend]
      (let [file (new File filename)
            output-stream (new FileOutputStream file)
            file-writer (new PrintWriter output-stream)
-           manchester-format (ManchesterOWLSyntaxOntologyFormat.)
-           format (.getOntologyFormat (get-current-manager)
-                                      (get-current-jontology))
+           existingformat (.getOntologyFormat (get-current-manager)
+                                              (get-current-jontology))
            ]
-       (.println file-writer "## This file was created by Clojure-OWL" )
-       (.println file-writer "## It should not be edited by hand" )
+       (.print file-writer prepend)
        (.flush file-writer)
-       (.setPrefix manchester-format (get-current-prefix)
+       (.setPrefix format (get-current-prefix)
                    (str (.toString (get-current-iri)) "#"))
        (.saveOntology (get-current-manager) (get-current-jontology)
-                      manchester-format output-stream))))
+                      format output-stream))))
 
 (defn- iriforname [name]
   (IRI/create (str (get-current-iri) "#" name)))
@@ -231,7 +236,8 @@ but in practice this doesn't work, as not everything is an axiom.
   (doall
    (map (fn[x]
           (add-one-frame frame-adder name x))
-        frame)))
+        ;; owlsome, only, someonly return lists
+        (flatten frame))))
 
 (defn- create-subclass-axiom
   "Creates a subclass axiom for the given class and subclass.
@@ -247,7 +253,8 @@ class, or class expression. "
 (defn add-subclass
 "Adds a specific class to the ontology"
   ([name subclass]
-     (add-frame create-subclass-axiom name
+     (add-frame create-subclass-axiom
+                name
                 subclass)))
 
 (defn- create-equivalent-axiom [clazz equivalent]
@@ -275,7 +282,6 @@ class, or class expression. "
        ontology-data-factory
        (ensure-class clazz)
        (java.util.HashSet.  ensured-subclasses))))))
-
 
 (defn add-class[name]
   (add-one-frame create-class-axiom name ""))
@@ -405,17 +411,77 @@ class, or class expression. "
      property#))
 
 ;; restrictions!
-(defn owlsome [property class]
-  (.getOWLObjectSomeValuesFrom
+(defn owlsome [property & classes]
+  (doall
+   (map #(.getOWLObjectSomeValuesFrom
+          ontology-data-factory
+          (ensure-object-property property)
+          (ensure-class %))
+        classes)))
+
+(defn only [property & classes]
+  (doall
+   (map #(.getOWLObjectAllValuesFrom
+          ontology-data-factory
+          (ensure-object-property property)
+          (ensure-class %))
+        classes)))
+
+;; forward declaration
+(declare owlor)
+(defn someonly [property & classes]
+  (concat
+   (apply owlsome (concat (list property) classes))
+   (only property (apply owlor classes))))
+
+
+;; union, intersection
+(defn owland [& classes]
+  (.getOWLObjectIntersectionOf
    ontology-data-factory
+   (java.util.HashSet. 
+    (doall (map
+            #(ensure-class %)
+            ;; flatten list for things like owlsome which return lists
+            (flatten classes))))))
+
+(defn owlor [& classes]
+  (.getOWLObjectUnionOf
+   ontology-data-factory
+   (java.util.HashSet.
+    (doall (map #(ensure-class %)
+                (flatten classes))))))
+
+
+;; cardinality
+(defn atleast [cardinality property class]
+  (.getOWLObjectMinCardinality
+   ontology-data-factory cardinality
    (ensure-object-property property)
    (ensure-class class)))
 
-(defn owlonly [property class]
-  (.getOWLObjectAllValuesFrom
-   ontology-data-factory
+(defn atmost [cardinality property class]
+  (.getOWLObjectMaxCardinality
+   ontology-data-factory cardinality
    (ensure-object-property property)
    (ensure-class class)))
+
+(defn exactly [cardinality property class]
+  (.getOWLObjectExactCardinality
+   ontology-data-factory cardinality
+   (ensure-object-property property)
+   (ensure-class class)))
+
+(declare ensure-individual)
+(defn
+  oneof [& individuals]
+  (.getOWLObjectOneOf
+   ontology-data-factory
+   (java.util.HashSet.
+    (doall
+     (map #(ensure-individual %)
+          (flatten individuals))))))
+  
 
 
 
@@ -685,4 +751,16 @@ Name can be either a class or a string name. Returns a list of classes"
   (recurseclass? (list (ensure-class name))
                (ensure-class subclass)
                isubclasses))
+
+(defn- subclasses-1 [classlist]
+  ;; if there are no subclasses return empty list
+  (if (= 0 (count classlist))
+    (list)
+    (concat (list (first classlist))
+            ;; can't use recur, not in tail position
+            (subclasses-1 (rest classlist))
+            (subclasses-1 (isubclasses (first classlist))))))
+
+(defn subclasses [class]
+  (subclasses-1 (isubclasses class)))
 
