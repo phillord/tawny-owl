@@ -1,4 +1,4 @@
-(defproject clojure-owl "1.0.0-SNAPSHOT"
+(defproject uk.org.russet/clojure-owl "1.0.0-SNAPSHOT"
   :description "Help to define a project in OWL"
   :url "http://code.google.com/p/clojure-owl/"
   :plugins [[lein-swank "1.4.4"]]
@@ -18,7 +18,7 @@
                  ;; reasoners
                  [org.semanticweb.elk/elk-owlapi "0.3.1"]
                  ;;[org.semanticweb.hermit/HermiT "1.0-SNAPSHOT"]
-                 [org.semanticweb./HermiT "1.3.6-BBOP"]
+                 ;;[org.semanticweb./HermiT "1.3.6-BBOP"]
                  
 
                  ]
