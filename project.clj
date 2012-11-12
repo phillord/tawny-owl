@@ -1,4 +1,4 @@
-(defproject uk.org.russet/clojure-owl "1.0.0"
+(defproject uk.org.russet/clojure-owl "0.1"
   :description "Help to define a project in OWL"
   :url "http://code.google.com/p/clojure-owl/"
   :plugins [[lein-swank "1.4.4"]]
