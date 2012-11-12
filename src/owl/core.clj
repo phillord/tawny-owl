@@ -10,20 +10,30 @@
    :prefix "ont:"
    )
 
+(defclass a)
+(defclass b :subclass a)
+(defclass c :subclass b)
+(defclass d :subclass a b c)
 
-(sav
- ;; (defclass a)
- ;; (defclass b :subclass a)
- ;; (defclass c
- ;;   :subclass a
- ;;   :equivalent b
- ;;   )
+(.getIRI b)
+
+(seq (.getSuperClasses d (:ontology test-ontology)))
 
 
- (defoproperty hasPart)
- (defclass d
-   :subclass (owl.owl/some hasPart b)))
- 
+
+;; (defclass c
+;;   :subclass a
+;;   :equivalent b
+;;   )
+
+
+(defoproperty hasPart)
+(defclass d
+  :subclass (owl.owl/some hasPart b))
+
+(owl.owl/some hasPart hasPart)
+
+
 (owl.owl/save-ontology)
 
 (defmacro sav [& body]
@@ -50,6 +60,8 @@
 (sav (owl.owl/owlclass "test1"
                 :subclass "test2" "test3"
                 :equivalent "test6"))
+
+
 
 (sav (owl.owl/owlclass "test10"
                    :subclass (owl.owl/some "hasPart" "test15")))

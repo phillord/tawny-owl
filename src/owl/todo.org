@@ -2,26 +2,7 @@
 
 
 
-* Multiple ontologies
 
 
-Want something like
-
-(defontology name iri expressivity file)
-
-(defontology pizza "http://pizza.com" 
-    :OWL-DL)
-
-Maybe need to do this as a record or a hash or something. 
-
-This will set the "default" ontology. Also define a macro
-
-(with-ontology pizza
-
-   (owl/owlclass "PizzaTopping")
-   (owl/owlclass "PizzaBase")
-
-)
-
-For doing multiple ontologies, with multiple names spaces. Basically, just
-set this ontology as a local and away you go. 
+Add the ability to "import" one ontology from another. This happens
+automatically, but the imported ontology doesn't transfer it's prefix around. 
