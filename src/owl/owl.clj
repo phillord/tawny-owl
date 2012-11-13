@@ -436,7 +436,8 @@ class, or class expression. "
      (def ~property property#)
      property#))
 
-;; restrictions!
+;; restrictions! name clash -- we can do nothing about this, so accept the
+;; inconsistency and bung owl on the front.
 (defn owlsome [property & classes]
   (doall
    (map #(.getOWLObjectSomeValuesFrom
@@ -471,6 +472,7 @@ class, or class expression. "
             ;; flatten list for things like owlsome which return lists
             (flatten classes))))))
 
+;; short cuts for the terminally lazy. Still prefix!
 (def && owland)
 
 (defn owlor [& classes]
@@ -481,6 +483,13 @@ class, or class expression. "
                 (flatten classes))))))
 
 (def || owlor)
+
+(defn owlnot [& class]
+  (.getOWLObjectComplementOf
+   ontology-data-factory
+   (ensure-class class)))
+
+(def ! owlnot)
 
 ;; cardinality
 (defn atleast [cardinality property class]
