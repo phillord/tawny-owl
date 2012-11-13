@@ -15,9 +15,6 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
 
-
-
-
 (ns owl.owl
   (:require [owl.util :as util])
   (:import
@@ -45,10 +42,12 @@
 (def
   ^{:dynamic true
     :doc
-    "The current ontology is either the last one defined using `defontology'
-or set using `set-current-ontology'"
-}
-  current-ontology (ref nil))
+    "The currently bound ontology"
+    }
+  current-bound-ontology nil)
+
+(def ^{:doc "Map between namespaces and ontologies"}
+  ontology-for-namespace (ref {}))
 
 
 (defrecord
@@ -99,20 +98,27 @@ The following keys must be supplied.
   `(do
      (let [ontology# (ontology ~@body)]
        (def ~name ontology#)
-       (owl.owl/set-current-ontology ontology#)
+       (owl.owl/ontology-to-namespace ontology#)
        ontology#
        )))
 
-(defn set-current-ontology
+(defn ontology-to-namespace
   "Sets the current ontology as defined by `defontology'"
   [ontology]
-  (dosync (ref-set current-ontology ontology)))
+  (dosync (ref-set
+           ontology-for-namespace
+           (merge @ontology-for-namespace
+                  {*ns* ontology}))))
 
-(defn get-current-ontology[]
+(defn get-current-ontology []
   "Gets the current ontology"
-  (when (nil? @current-ontology)
-    (throw (IllegalStateException. "Current ontology has not been set")))
-  @current-ontology)
+  ;; if current ontology is inside a binding
+  (or current-bound-ontology
+      ;; so use the namespace bound one
+      (get @ontology-for-namespace *ns*)
+      ;; so break
+      (throw (IllegalStateException. "Current ontology has not been set"))))
+
 
 (defn get-current-jontology[]
   "Gets the object representing the current ontology"
@@ -465,6 +471,8 @@ class, or class expression. "
             ;; flatten list for things like owlsome which return lists
             (flatten classes))))))
 
+(def && owland)
+
 (defn owlor [& classes]
   (.getOWLObjectUnionOf
    ontology-data-factory
@@ -472,6 +480,7 @@ class, or class expression. "
     (doall (map #(ensure-class %)
                 (flatten classes))))))
 
+(def || owlor)
 
 ;; cardinality
 (defn atleast [cardinality property class]
@@ -539,7 +548,6 @@ class, or class expression. "
 
 (def seealso
   (partial annotation (.getRDFSSeeAlso ontology-data-factory)))
-
 
 
 (defn owlclass-explicit
@@ -676,9 +684,9 @@ class, or class expression. "
        )))
 
 
-;; not tested
+;; bind to 
 (defmacro with-ontology [ontology & body]
-  `(binding [current-ontology ontology]
+  `(binding [owl.owl/current-bound-ontology ~ontology]
      ~@body))
 
 
