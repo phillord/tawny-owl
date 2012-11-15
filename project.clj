@@ -1,6 +1,6 @@
-(defproject uk.org.russet/clojure-owl "0.1"
+(defproject uk.org.russet/clojure-owl "0.2-SNAPSHOT"
   :description "Help to define a project in OWL"
-  :url "http://code.google.com/p/clojure-owl/"
+  :url "http://www.russet.org.uk/blog/clojure-owl"
   :plugins [[lein-swank "1.4.4"]]
   :repositories [["maven" "http://repo1.maven.org/maven2"]
                  ;; getting hermit from here

@@ -388,15 +388,13 @@ class, or class expression. "
 
 (def
   ^{:dynamic true}
-  default-frame nil)
+  *default-frames* nil)
 
 (def
   ^{:doc "Axioms we have added recently"
     :dynamic true}
   recent-axiom-list
   nil)
-
-
 
 ;; object properties
 (defn objectproperty-explicit
@@ -427,7 +425,7 @@ class, or class expression. "
    (util/check-keys
     (merge-with concat
                 (util/hashify frames)
-                default-frame)
+                *default-frames*)
     [:domain :range :inverseof :subpropertyof :characteristics])))
 
 (defmacro defoproperty [property & frames]
@@ -602,7 +600,7 @@ class, or class expression. "
        (merge-with
                concat
                (util/hashify frames)
-               default-frame)
+               *default-frames*)
        [:subclass :equivalent :annotation :name :comment :label]))))
 
 (defmacro defclass [classname & frames]
@@ -703,7 +701,7 @@ class, or class expression. "
 ;; in. place into a dynamic variable and then use (merge-with concat) to do
 ;; the business
 (defmacro with-default-frames [frames & body]
-  `(binding [owl.owl/default-frame
+  `(binding [owl.owl/*default-frames*
              (owl.util/hashify ~frames)]
      ~@body))
 

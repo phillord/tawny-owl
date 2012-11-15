@@ -22,8 +22,7 @@ doubt shows this heritage.
 I discuss the development of this code base in my
 [journal](http://www.russet.org.uk/blog). Two recent posts include one on the
 [motivation] (http://www.russet.org.uk/blog/2214) and another on making the
-library more ["lispy"](http://www.russet.org.uk/blog/2254).
-
+library more ["lispy"](http://www.russet.org.uk/blog/2254). All revelevant posts are [cateogorised](http://www.russet.org.uk/blog/category/all/professional/tech/clojure-owl). 
 
 == Installation
 
