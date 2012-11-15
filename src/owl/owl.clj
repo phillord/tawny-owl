@@ -22,7 +22,7 @@
                                  OWLClassExpression OWLClass OWLAnnotation)
    (org.semanticweb.owlapi.apibinding OWLManager)
    (org.coode.owlapi.manchesterowlsyntax ManchesterOWLSyntaxOntologyFormat)
-   (org.semanticweb.owlapi.io StreamDocumentTarget)
+   (org.semanticweb.owlapi.io StreamDocumentTarget OWLXMLOntologyFormat)
    (org.semanticweb.owlapi.util DefaultPrefixManager)
    (java.io ByteArrayOutputStream FileOutputStream PrintWriter)
    (java.io File)
@@ -152,6 +152,9 @@ The following keys must be supplied.
       (throw (IllegalStateException. "No current prefix")))
     prefix))
 
+
+
+
 (defn save-ontology
   "Save the current ontology in the file returned by `get-current-file'.
 or `filename' if given. 
@@ -170,13 +173,17 @@ or `filename' if given.
            file-writer (new PrintWriter output-stream)
            existingformat (.getOntologyFormat (get-current-manager)
                                               (get-current-jontology))
-           ]
+           this-format
+           (cond
+            (= format :omn) (ManchesterOWLSyntaxOntologyFormat.)
+            (= format :owl) (OWLXMLOntologyFormat.)
+            :else format)]
        (.print file-writer prepend)
        (.flush file-writer)
-       (.setPrefix format (get-current-prefix)
+       (.setPrefix this-format (get-current-prefix)
                    (str (.toString (get-current-iri)) "#"))
        (.saveOntology (get-current-manager) (get-current-jontology)
-                      format output-stream))))
+                      this-format output-stream))))
 
 (defn- iriforname [name]
   (IRI/create (str (get-current-iri) "#" name)))
