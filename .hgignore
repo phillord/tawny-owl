@@ -1,1 +1,5 @@
-lib/
+syntax: glob
+
+lib/*
+clojure-owl-0.2-SNAPSHOT.jar
+pom.xml

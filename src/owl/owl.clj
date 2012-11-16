@@ -153,8 +153,6 @@ The following keys must be supplied.
     prefix))
 
 
-
-
 (defn save-ontology
   "Save the current ontology in the file returned by `get-current-file'.
 or `filename' if given. 
@@ -178,6 +176,11 @@ or `filename' if given.
             (= format :omn) (ManchesterOWLSyntaxOntologyFormat.)
             (= format :owl) (OWLXMLOntologyFormat.)
             :else format)]
+       (when (.isPrefixOWLOntologyFormat this-format)
+         (dorun
+          (map #(.setPrefix this-format (:prefix %)
+                            (str (.toString (:iri %)) "#"))
+               (vals @ontology-for-namespace))))
        (.print file-writer prepend)
        (.flush file-writer)
        (.setPrefix this-format (get-current-prefix)
