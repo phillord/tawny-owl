@@ -23,7 +23,7 @@
            OWLReasonerFactory SimpleConfiguration)
 
           (org.semanticweb.elk.owlapi ElkReasonerFactory)
-          
+          (org.semanticweb.HermiT Reasoner$ReasonerFactory)
           (org.semanticweb.owlapi.reasoner.structural
            StructuralReasonerFactory StructuralReasoner)))
 
@@ -37,7 +37,7 @@
      (def vreasoner-factory
        (reasoner
         {:elk (ElkReasonerFactory.)
-         ;;:hermit (org.semanticweb.HermiT.Reasoner$ReasonerFactory.)
+         :hermit (org.semanticweb.HermiT.Reasoner$ReasonerFactory.)
          }
 
         ))))

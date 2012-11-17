@@ -44,7 +44,7 @@
     :doc
     "The currently bound ontology"
     }
-  current-bound-ontology nil)
+  *current-bound-ontology* nil)
 
 (def ^{:doc "Map between namespaces and ontologies"}
   ontology-for-namespace (ref {}))
@@ -113,7 +113,7 @@ The following keys must be supplied.
 (defn get-current-ontology []
   "Gets the current ontology"
   ;; if current ontology is inside a binding
-  (or current-bound-ontology
+  (or *current-bound-ontology*
       ;; so use the namespace bound one
       (get @ontology-for-namespace *ns*)
       ;; so break
@@ -703,7 +703,7 @@ class, or class expression. "
 
 ;; bind to 
 (defmacro with-ontology [ontology & body]
-  `(binding [owl.owl/current-bound-ontology ~ontology]
+  `(binding [owl.owl/*current-bound-ontology* ~ontology]
      ~@body))
 
 

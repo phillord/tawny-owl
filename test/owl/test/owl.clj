@@ -28,9 +28,9 @@
     :prefix "iri:"))
 
 (defn createandsavefixture[test]
-  (createtestontology)
-  (test)
-  (o/save-ontology)
+  (o/with-ontology (createtestontology)
+    (test)
+    (o/save-ontology))
   )
 
 (use-fixtures :each createandsavefixture)
@@ -46,17 +46,6 @@
   (is (not (nil? (o/get-current-ontology))))
   (is (= testontology (o/get-current-ontology))))
 
-(deftest set-current-ontology
-  (is (do
-        (let [current-ont (o/get-current-ontology)
-              ;; redefines current ontology to new ont
-              newont
-              (o/defontology testontology2
-                :file "test.omn" :iri "http://iri/" :prefix "iri2:")]
-          (o/set-current-ontology current-ont)
-          ;; the actual test
-          (= current-ont (o/get-current-ontology))))))
-        
 (deftest get-current-jontology
   (is (not (nil? (#'o/get-current-jontology)))))
 

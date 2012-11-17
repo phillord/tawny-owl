@@ -24,17 +24,23 @@
 
 
 (defn createtestontology[]
-  (o/defontology testontology
-    :file "test.omn"
-    :iri "http://iri/"
-    :prefix "iri:"))
+  (o/ontology 
+   :file (str (rand 10) "test.omn")
+   :iri "http://iri/"
+   :prefix "iri:"))
 
 (defn createandsavefixture[test]
-  (createtestontology)
-  (test)
-  (o/save-ontology))
+  (o/with-ontology
+    (createtestontology)
+    (test)
+    (o/save-ontology)))
 
 (use-fixtures :each createandsavefixture)
+
+(defn with-ontology []
+  (is
+   (not
+    (nil? (o/get-current-ontology)))))
 
 (defn ontology-abc []
   (o/owlclass "a")
@@ -44,7 +50,6 @@
 (defn ontology-abc-indc []
   (ontology-abc)
   (o/individual "indC" :types "c"))
-
 
 (defn far-reasoner [func reasonerlist]
   (map
@@ -56,7 +61,7 @@
 ;; for all reasoners
 (defn far [func]
   (far-reasoner func
-                '(:elk)))
+                '(:elk :hermit)))
 
 ;; for all dl reasoners
 (defn fadlr [func]
@@ -69,39 +74,45 @@
 ;;  '(:elk :hermit))
 
 
-(deftest consistent? []
+(deftest empty-consistent? []
   ;; empty only is consistent
   (is
    (every?
     identity
-    (far #(r/consistent?))))
+    (far #(r/consistent?)))))
 
+
+(deftest ind-consistent? []
   ;; with individual
   (is
    (every?
     identity
     (do
       (ontology-abc-indc)
-      (far #(r/consistent?)))))
+      (far #(r/consistent?))))))
 
+
+(deftest simple-consistent []
   ;; simple ontology without ind
   (is
    (every?
     identity
     (do
       (ontology-abc)
-      (far #(r/consistent?)))))
+      (far #(r/consistent?))))))
 
+(deftest disjoint-consistent []
   ;; without ind -- should be incoherent
   (is
    (every?
     complement
-    (far #(do
-            (ontology-abc)
-            (o/disjointclasses "a" "b")
-            (r/consistent?))))))
+    (do
+      (ontology-abc)
+      (o/disjointclasses "a" "b")
+      (far #(r/consistent?))))))
 
   
+(deftest disjoint-and-individual []
   ;; now ontology should be inconsistent also
   (is
    (every?
@@ -109,7 +120,7 @@
     (do
       (ontology-abc-indc)
       (o/disjointclasses "a" "b")
-      (far #(r/consistent?)))))
+      (far #(r/consistent?))))))
 
 (deftest unsatisfiable []
 
