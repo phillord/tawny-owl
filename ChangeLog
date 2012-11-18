@@ -1,0 +1,13 @@
+2012-11-13  Phillip Lord  <phillip.lord@newcastle.ac.uk>
+
+	* src/owl/owl.clj: Default ontology is now bound into the
+	namespace. Modifiying ontologies in two namespaces now works as
+	expected rather than adding which ever defontology was evaled
+	last. 
+
+
+2012-11-16  Phillip Lord  <phillip.lord@newcastle.ac.uk>
+
+	* src/owl/owl.clj: Now handles prefixes for all the ontologies
+	that have been loaded. 
+
