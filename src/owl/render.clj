@@ -68,7 +68,6 @@
            (cons
             :disjoint
             (form disjoint))))))
-
        
 (defmulti form class)
 
@@ -120,9 +119,7 @@
 
 ;; OWLObjectHasSelf
 ;; OWLObjectHasValue
-;; OWLObjectIntersectionOf
 ;; OWLObjectOneOf
-;; OWLObjectUnionOf
 
 
 

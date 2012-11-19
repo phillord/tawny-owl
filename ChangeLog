@@ -1,3 +1,8 @@
+2012-11-18  Phillip Lord  <phillip.lord@newcastle.ac.uk>
+
+	* src/owl/render.clj: Start of a framework for pretty printing
+	of OWL entities
+
 2012-11-13  Phillip Lord  <phillip.lord@newcastle.ac.uk>
 
 	* src/owl/owl.clj: Default ontology is now bound into the
