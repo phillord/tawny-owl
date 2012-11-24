@@ -17,17 +17,21 @@
 
 (ns owl.reasoner
   (:require [owl.owl :as owl])
-  (import (org.semanticweb.owlapi.reasoner
+  (import
+   (javax.swing BoxLayout
+    JFrame JPanel JProgressBar JLabel WindowConstants)
+   
+   (org.semanticweb.owlapi.reasoner
            ConsoleProgressMonitor InferenceType Node
            NodeSet OWLReasoner OWLReasonerConfiguration
            OWLReasonerFactory SimpleConfiguration)
-
+          
           (org.semanticweb.elk.owlapi ElkReasonerFactory)
           (org.semanticweb.HermiT Reasoner)
           (org.semanticweb.owlapi.reasoner.structural
            StructuralReasonerFactory StructuralReasoner)))
 
-
+;; need to do this better
 (declare vreasoner-factory)
 
 (defn reasoner-factory
@@ -43,7 +47,66 @@
         ))))
 
 ;; set default
-(reasoner-factory :elk)
+;; (reasoner-factory :elk)
+
+
+(def
+  ^{:private true
+    :dynamic true}
+  *reasoner-start-time*
+  )
+
+
+(defn reasoner-progress-monitor-gui []
+  (let [progressbar (JProgressBar.)
+        frame (JFrame. "Reasoner Progress")
+        content (JPanel.)
+        label (JLabel.)
+        ]
+    (doto frame
+      (.setDefaultCloseOperation WindowConstants/HIDE_ON_CLOSE)
+      (.add content))
+
+    (doto content
+      (.setLayout (BoxLayout. content BoxLayout/Y_AXIS))
+      (.add progressbar)
+      (.add label))
+    (.setIndeterminate progressbar true)
+    
+    (proxy [org.semanticweb.owlapi.reasoner.ReasonerProgressMonitor] []
+      (reasonerTaskBusy[]
+        (println "Reasoner task busy");; stuff
+        )
+      (reasonerTaskProgressChanged [val max]
+        (println "Reasoner task changed" val ":" max)
+        (doto progressbar
+          (.setIndeterminate false)
+          (.setMaximum max)
+          (.setValue val)))
+      (reasonerTaskStarted [name]
+        (println "reasoner task started" name)
+        (.setText label name)
+        (doto frame
+          (.pack)
+          (.setVisible true)))
+      (reasonerTaskStopped []
+        (.setVisible frame false)
+        (println "reasoner task stopped")))))
+
+
+(defn reasoner-progress-monitor-text []
+  (proxy [org.semanticweb.owlapi.reasoner.ReasonerProgressMonitor] []
+    (reasonerTaskBusy[]
+      (println "Reasoner task busy");; stuff
+      )
+    (reasonerTaskProgressChanged [val max]
+      (println "Reasoner task changed" val ":" max)
+      )
+    (reasonerTaskStarted [name]
+      (println "reasoner task started" name))
+    (reasonerTaskStopped []
+      (println "reasoner task stopped"))))
+
 
 ;; we need to cache these 'cause reasoners listen to changes could just use
 ;; memoized function taking jontology as param Probably need to write a new
@@ -51,7 +114,8 @@
 (defn reasoner []
   (.createReasoner (reasoner-factory)
                    (owl/get-current-jontology)
-                   (SimpleConfiguration. (ConsoleProgressMonitor.))))
+                   (SimpleConfiguration.
+                    (reasoner-progress-monitor-gui))))
 
 (defn consistent?
   "Returns true if the ontology is consistent.
@@ -65,7 +129,6 @@ This method can throw an InconsistentOntologyException
   ;;                                    (list InferenceTyp
   ;;                                           e/CLASS_HIERARCHY)))
   (do
-    (println (reasoner))
     (.isConsistent (reasoner))))
 
 (defn unsatisfiable
