@@ -1,3 +1,11 @@
+2012-11-24  Phillip Lord  <phillip.lord@newcastle.ac.uk>
+
+	* src/owl/import.clj: Import mechanism added, reading an OWL file
+	(or stream, url or so on), and pulling all items into the current
+	namespace, so that they can be refered to by other clojure-owl
+	files. Functions can be supplied to filter the file for desired
+	entities and to transform the files into valid lisp symbols. 
+
 2012-11-18  Phillip Lord  <phillip.lord@newcastle.ac.uk>
 
 	* src/owl/render.clj: Start of a framework for pretty printing
