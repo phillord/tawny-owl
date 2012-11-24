@@ -22,7 +22,9 @@ doubt shows this heritage.
 I discuss the development of this code base in my
 [journal](http://www.russet.org.uk/blog). Two recent posts include one on the
 [motivation] (http://www.russet.org.uk/blog/2214) and another on making the
-library more ["lispy"](http://www.russet.org.uk/blog/2254). All revelevant posts are [cateogorised](http://www.russet.org.uk/blog/category/all/professional/tech/clojure-owl). 
+library more ["lispy"](http://www.russet.org.uk/blog/2254). All revelevant
+posts are
+[cateogorised](http://www.russet.org.uk/blog/category/all/professional/tech/clojure-owl).
 
 == Installation
 
@@ -41,7 +43,7 @@ http://www.russet.org.uk/blog
 
 The contents of this file are subject to the LGPL License, Version 3.0.
 
-Copyright (C) 2011, Newcastle University
+Copyright (C) 2012, Newcastle University
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
