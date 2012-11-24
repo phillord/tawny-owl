@@ -44,7 +44,12 @@
                                          )))
 
 
-(declare form)
+(def
+  ^{:dynamic true
+    :private true}
+  *iri-to-var* nil)
+
+(declare form map-iri-to-var)
 
 (defmulti as-form class)
 
@@ -75,10 +80,10 @@
   (map #(form %) s))
 
 (defmethod form OWLClass [c]
-  (.getFragment (.getIRI c)))
+  (get (map-iri-to-var) (.getIRI c)))
 
 (defmethod form OWLObjectProperty [p]
-  (.getFragment (.getIRI p)))
+  (get (map-iri-to-var) (.getIRI p)))
 
 (defmethod form OWLObjectSomeValuesFrom [s]
   (list 'owlsome
@@ -121,12 +126,10 @@
 ;; OWLObjectHasValue
 ;; OWLObjectOneOf
 
-
-
-
-
 (defmethod form :default [e]
-  `(not-sure-what-to-do))
+  (do
+    (println "what the hell is this:" e)
+    `(not-sure-what-to-do)))
 
 
 (defmulti as-text class)
@@ -190,4 +193,35 @@
 ;; OWLObjectMinCardinality
 ;; OWLObjectOneOf
 ;; OWLObjectUnionOf
-           
+
+
+
+;; map between IRIs and axioms
+;; these functions all operate on each other, and are broken out just to make
+;; things easier to debug. 
+(defn- iri-to-var [var]
+  (if (owl.owl/named-object? (var-get var))
+    (.getIRI (owl.owl/as-named-object (var-get var)))
+    nil))
+
+(defn- all-vars-in-namespace-with-ontology []
+  (vals
+   (apply
+    merge
+    (map
+     (fn [x]
+       (ns-publics x))
+     (keys @owl.owl/ontology-for-namespace)))))
+
+(defn- pairs-iri-to-var []
+  (for [k (all-vars-in-namespace-with-ontology)]
+    [(iri-to-var k) k]))
+
+(defn- filtered-iri-to-vars []
+  (filter
+   (comp not nil? first)
+   (pairs-iri-to-var)))
+
+(defn- map-iri-to-var []
+  (apply hash-map (flatten (filtered-iri-to-vars))))
+
