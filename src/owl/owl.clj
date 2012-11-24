@@ -19,14 +19,17 @@
   (:require [owl.util :as util])
   (:import
    (org.semanticweb.owlapi.model OWLOntologyManager OWLOntology IRI
-                                 OWLClassExpression OWLClass OWLAnnotation)
+                                 OWLClassExpression OWLClass OWLAnnotation
+                                 OWLNamedObject)
    (org.semanticweb.owlapi.apibinding OWLManager)
    (org.coode.owlapi.manchesterowlsyntax ManchesterOWLSyntaxOntologyFormat)
    (org.semanticweb.owlapi.io StreamDocumentTarget OWLXMLOntologyFormat)
    (org.semanticweb.owlapi.util DefaultPrefixManager)
    (java.io ByteArrayOutputStream FileOutputStream PrintWriter)
    (java.io File)
+   ()
    (org.semanticweb.owlapi.model AddAxiom RemoveAxiom)))
+
 
 
 ;; far as I can tell, we only ever need one of these.
@@ -59,7 +62,7 @@ ontology is an object of OWLOntology.
 "
       :private true
       }
-    Ontology [iri file prefix manager ontology])
+    Ontology [iri prefix manager ontology])
 
 
 (defrecord
@@ -78,12 +81,27 @@ axioms is a list of all the axioms that were used to add this entity.
       (format "AxiomedEntity( %s )" (:entity this))))
 
 
+(defn named-object? [entity]
+  (or (instance? AxiomedEntity entity)
+      (instance? OWLNamedObject entity)))
+
+(defn as-named-object [entity]
+  (or
+   (and (instance? AxiomedEntity entity)
+        (:entity entity))
+   (and (instance? OWLNamedObject entity)
+        entity)
+   (throw (IllegalArgumentException. "Expecting a named entity"))))
+
+(defn generate-ontology [iri prefix manager jontology]
+  (Ontology. iri prefix manager jontology))
+
 (defn ontology [& args]
   (let [options (apply hash-map args)
         iri (IRI/create (:iri options))
         manager (OWLManager/createOWLOntologyManager)]
-    (Ontology.
-     iri (:file options) (:prefix options) manager
+    (generate-ontology
+     iri (:prefix options) manager
      (.createOntology manager iri))))
 
 (defmacro defontology
@@ -91,7 +109,6 @@ axioms is a list of all the axioms that were used to add this entity.
 
 The following keys must be supplied. 
 :iri -- the IRI for the new ontology
-:file -- the file associated with the new ontology
 :prefix -- the prefix used in the serialised version of the ontology
 "
   [name & body]
@@ -131,13 +148,6 @@ The following keys must be supplied.
       (throw (IllegalStateException. "Current ontology IRI has not been set")))
     iri))
 
-(defn get-current-file []
-  "Gets the current file"
-  (let [file (:file (get-current-ontology))]
-    (when (nil? file)
-      (throw (IllegalStateException. "Current ontology file has not been set")))
-    file))
-
 (defn- get-current-manager[]
   "Get the OWLOntologyManager object for the current ontology"
   (let [manager (:manager (get-current-ontology))]
@@ -157,8 +167,6 @@ The following keys must be supplied.
   "Save the current ontology in the file returned by `get-current-file'.
 or `filename' if given. 
 "
-  ([]
-     (save-ontology (:file (get-current-ontology))))
   ([filename]
      (save-ontology filename (ManchesterOWLSyntaxOntologyFormat.)
                     (str "## This file was created by Clojure-OWL\n"
