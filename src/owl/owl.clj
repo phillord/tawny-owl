@@ -104,7 +104,7 @@ axioms is a list of all the axioms that were used to add this entity.
   (Ontology. iri prefix jontology))
 
 
-(defn remove-ontology-maybe [ontology ontologyid]
+(defn remove-ontology-maybe [ontologyid]
   (when (.contains owl-ontology-manager ontologyid)
     (.removeOntology
      owl-ontology-manager
@@ -115,7 +115,7 @@ axioms is a list of all the axioms that were used to add this entity.
   (let [options (apply hash-map args)
         iri (IRI/create (:iri options))]
     (remove-ontology-maybe
-     ontology (OWLOntologyID. (IRI/create  iri)))
+     (OWLOntologyID. iri))
     (generate-ontology
      iri (:prefix options) 
      (.createOntology owl-ontology-manager iri))))
