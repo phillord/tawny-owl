@@ -20,7 +20,7 @@
   (:import
    (org.semanticweb.owlapi.model OWLOntologyManager OWLOntology IRI
                                  OWLClassExpression OWLClass OWLAnnotation
-                                 OWLNamedObject)
+                                 OWLNamedObject OWLOntologyID)
    (org.semanticweb.owlapi.apibinding OWLManager)
    (org.coode.owlapi.manchesterowlsyntax ManchesterOWLSyntaxOntologyFormat)
    (org.semanticweb.owlapi.io StreamDocumentTarget OWLXMLOntologyFormat)
@@ -103,14 +103,19 @@ axioms is a list of all the axioms that were used to add this entity.
 (defn generate-ontology [iri prefix jontology]
   (Ontology. iri prefix jontology))
 
+
+(defn remove-ontology-maybe [ontology ontologyid]
+  (when (.contains owl-ontology-manager ontologyid)
+    (.removeOntology
+     owl-ontology-manager
+     (.getOntology owl-ontology-manager ontologyid))))
+
+
 (defn ontology [& args]
   (let [options (apply hash-map args)
         iri (IRI/create (:iri options))]
-    ;; blitz existing ontology or we get breakages
-    (when (.contains owl-ontology-manager iri)
-      (.removeOntology
-       owl-ontology-manager
-       (.getOntology owl-ontology-manager iri)))
+    (remove-ontology-maybe
+     ontology (OWLOntologyID. (IRI/create  iri)))
     (generate-ontology
      iri (:prefix options) 
      (.createOntology owl-ontology-manager iri))))
