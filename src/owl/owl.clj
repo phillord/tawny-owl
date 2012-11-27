@@ -28,7 +28,7 @@
    (java.io ByteArrayOutputStream FileOutputStream PrintWriter)
    (java.io File)
    ()
-   (org.semanticweb.owlapi.model AddAxiom RemoveAxiom)))
+   (org.semanticweb.owlapi.model AddAxiom RemoveAxiom AddImport)))
 
 
 
@@ -38,6 +38,13 @@
     :private true}
   ontology-data-factory
   (OWLManager/getOWLDataFactory))
+
+
+(def
+  ^{:doc "The OWLOntologyManager to use"
+   }
+  owl-ontology-manager
+  (OWLManager/createOWLOntologyManager ontology-data-factory))
 
 ;; the current ontology provides our main mutable state. Strictly, we don't
 ;; need to do this, but the alternative would be passing in an ontology to
@@ -54,7 +61,7 @@
 
 
 (defrecord
-    ^{:doc "Key data about an ontology.
+   ^{:doc "Key data about an ontology.
 iri is the IRI for the ontology
 file is the location that it will be saved in
 manager is an OWLOntologyManager from which the ontology comes
@@ -62,7 +69,7 @@ ontology is an object of OWLOntology.
 "
       :private true
       }
-    Ontology [iri prefix manager ontology])
+    Ontology [iri prefix ontology])
 
 
 (defrecord
@@ -93,16 +100,20 @@ axioms is a list of all the axioms that were used to add this entity.
         entity)
    (throw (IllegalArgumentException. "Expecting a named entity"))))
 
-(defn generate-ontology [iri prefix manager jontology]
-  (Ontology. iri prefix manager jontology))
+(defn generate-ontology [iri prefix jontology]
+  (Ontology. iri prefix jontology))
 
 (defn ontology [& args]
   (let [options (apply hash-map args)
-        iri (IRI/create (:iri options))
-        manager (OWLManager/createOWLOntologyManager)]
+        iri (IRI/create (:iri options))]
+    ;; blitz existing ontology or we get breakages
+    (when (.contains owl-ontology-manager iri)
+      (.removeOntology
+       owl-ontology-manager
+       (.getOntology owl-ontology-manager iri)))
     (generate-ontology
-     iri (:prefix options) manager
-     (.createOntology manager iri))))
+     iri (:prefix options) 
+     (.createOntology owl-ontology-manager iri))))
 
 (defmacro defontology
   "Define a new ontology with `name'. 
@@ -148,13 +159,6 @@ The following keys must be supplied.
       (throw (IllegalStateException. "Current ontology IRI has not been set")))
     iri))
 
-(defn- get-current-manager[]
-  "Get the OWLOntologyManager object for the current ontology"
-  (let [manager (:manager (get-current-ontology))]
-    (when (nil? manager)
-      (throw (IllegalStateException. "No current ontology manager")))
-    manager))
-
 (defn get-current-prefix []
   "Gets the current prefix"
   (let [prefix (:prefix (get-current-ontology))]
@@ -177,7 +181,7 @@ or `filename' if given.
      (let [file (new File filename)
            output-stream (new FileOutputStream file)
            file-writer (new PrintWriter output-stream)
-           existingformat (.getOntologyFormat (get-current-manager)
+           existingformat (.getOntologyFormat owl-ontology-manager
                                               (get-current-jontology))
            this-format
            (cond
@@ -193,7 +197,7 @@ or `filename' if given.
        (.flush file-writer)
        (.setPrefix this-format (get-current-prefix)
                    (str (.toString (get-current-iri)) "#"))
-       (.saveOntology (get-current-manager) (get-current-jontology)
+       (.saveOntology owl-ontology-manager (get-current-jontology)
                       this-format output-stream))))
 
 (defn- iriforname [name]
@@ -234,12 +238,12 @@ else if clz is a OWLClassExpression add that."
            (str "Expecting a class. Got: " clz)))))
 
 (defn- add-axiom [axiom]
-  (.applyChange (get-current-manager)
+  (.applyChange owl-ontology-manager
                 (AddAxiom. (get-current-jontology) axiom))
   axiom)
 
 (defn- remove-axiom [axiom]
-  (.applyChange (get-current-manager)
+  (.applyChange owl-ontology-manager
                 (RemoveAxiom. (get-current-jontology) axiom))
   axiom)
 
@@ -680,6 +684,17 @@ class, or class expression. "
     (individual-add-types name (:types hframes))))
 
 
+
+;; owl imports
+
+(defn addimport [ontology]
+  (.applyChange owl-ontology-manager
+                (AddImport. (get-current-jontology)
+                            (.getOWLImportsDeclaration
+                             ontology-data-factory
+                             (IRI/create (:iri ontology))))))
+
+
 ;; return type of individual is buggered
 (defmacro defindividual [individualname & frames]
   `(let [string-name# (name '~individualname)
@@ -693,9 +708,15 @@ class, or class expression. "
      (binding [owl.owl/recent-axiom-list '()]
        ;; do the body
        ~@body
-       ;; set them disjoint
-       (owl.owl/disjointclasseslist
-        owl.owl/recent-axiom-list))))
+       ;; set them disjoint if there is more than one. if there is only one
+       ;; then it would be illegal OWL2. this macro then just shields the body
+       ;; from any other as-disjoint statements.
+       (println "recent axiom list" owl.owl/recent-axiom-list)
+       (println "recent axiom list" (count owl.owl/recent-axiom-list))
+       (when (< 1 (count owl.owl/recent-axiom-list))
+         (println "Adding disjoints")
+         (owl.owl/disjointclasseslist
+          owl.owl/recent-axiom-list)))))
 
 (defmacro as-inverse [& body]
   `(do
@@ -707,6 +728,10 @@ class, or class expression. "
         (first owl.owl/recent-axiom-list)
         (rest owl.owl/recent-axiom-list))
        )))
+
+
+
+
 
 
 ;; bind to 
