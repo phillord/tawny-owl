@@ -4,7 +4,7 @@
    (java.io File)
    (java.net URL)
    (org.semanticweb.owlapi.apibinding OWLManager)
-   (org.semanticweb.owlapi.model IRI OWLNamedObject)))
+   (org.semanticweb.owlapi.model IRI OWLNamedObject OWLOntologyID)))
 
 
 
@@ -26,16 +26,29 @@
 
 
 (defn owlimport [location & rest]
-  (let [{:keys [iri file prefix filter transform]} rest
-        manager (OWLManager/createOWLOntologyManager)
+  (let [{:keys [iri file prefix filter transform version-iri]} rest
+        
+        jiri (IRI/create iri)
+        viri (IRI/create version-iri)
+
+        ontologyid
+        (OWLOntologyID. jiri viri)
         
         owlontology
-        (.loadOntologyFromOntologyDocument
-         manager
-         location)
-
+        (do
+          (when (.contains owl.owl/owl-ontology-manager
+                           ontologyid)
+            (.removeOntology
+             owl.owl/owl-ontology-manager
+             (.getOntology owl.owl/owl-ontology-manager
+                           ontologyid)))
+          
+          (.loadOntologyFromOntologyDocument
+           owl.owl/owl-ontology-manager
+           location))
+        
         ontology
-        (owl.owl/generate-ontology iri prefix manager owlontology)
+        (owl.owl/generate-ontology iri prefix owlontology)
         ]
 
     ;; this is the ontology for the namespace so stuff it place
@@ -54,7 +67,9 @@
 
       ;; filter this so that it only puts stuff with the given IRI prefix
       (clojure.core/filter (or filter default-filter)
-              (.getSignature owlontology))))))
+                           (.getSignature owlontology))))
+
+    ontology))
 
 
 
