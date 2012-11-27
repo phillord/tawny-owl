@@ -1,5 +1,3 @@
-;; The contents of this file are subject to the LGPL License, Version 3.0.
-
 ;; Copyright (C) 2011, Newcastle University
 
 ;; This program is free software: you can redistribute it and/or modify
@@ -16,22 +14,23 @@
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
 
 (ns owl.reasoner
-  (:require [owl.owl :as owl])
-  (import
-   (javax.swing BoxLayout
-    JFrame JPanel JProgressBar JLabel WindowConstants)
-   
-   (org.semanticweb.owlapi.reasoner
-           ConsoleProgressMonitor InferenceType Node
-           NodeSet OWLReasoner OWLReasonerConfiguration
-           OWLReasonerFactory SimpleConfiguration)
-          
-          (org.semanticweb.elk.owlapi ElkReasonerFactory)
-          (org.semanticweb.HermiT Reasoner)
-          (org.semanticweb.owlapi.reasoner.structural
-           StructuralReasonerFactory StructuralReasoner)))
+  (:require [owl.owl :as owl]
+            [owl.util :as util])
+  (:import
+   (java.lang.ref WeakReference)
+   (java.util WeakHashMap)
+    (javax.swing
+      BoxLayout
+      JFrame
+      JLabel
+      JPanel
+      JProgressBar
+      WindowConstants)
+    (org.semanticweb.elk.owlapi ElkReasonerFactory)
+    (org.semanticweb.owlapi.reasoner SimpleConfiguration)
+    (org.semanticweb.HermiT Reasoner)))
 
-;; need to do this better
+;; need to do this better -- with a ref
 (declare vreasoner-factory)
 
 (defn reasoner-factory
@@ -43,12 +42,13 @@
         {:elk (ElkReasonerFactory.)
          :hermit (org.semanticweb.HermiT.Reasoner$ReasonerFactory.)
          }
-
         ))))
 
 ;; set default
 ;; (reasoner-factory :elk)
 
+(def reasoner-list
+  (ref ()))
 
 (def
   ^{:private true
@@ -75,23 +75,20 @@
     
     (proxy [org.semanticweb.owlapi.reasoner.ReasonerProgressMonitor] []
       (reasonerTaskBusy[]
-        (println "Reasoner task busy");; stuff
+        ;;(println "Reasoner task busy");; stuff
         )
       (reasonerTaskProgressChanged [val max]
-        (println "Reasoner task changed" val ":" max)
         (doto progressbar
           (.setIndeterminate false)
           (.setMaximum max)
           (.setValue val)))
       (reasonerTaskStarted [name]
-        (println "reasoner task started" name)
         (.setText label name)
         (doto frame
           (.pack)
           (.setVisible true)))
       (reasonerTaskStopped []
-        (.setVisible frame false)
-        (println "reasoner task stopped")))))
+        (.setVisible frame false)))))
 
 
 (defn reasoner-progress-monitor-text []
@@ -108,14 +105,47 @@
       (println "reasoner task stopped"))))
 
 
+(defn reasoner-for-ontology [ontology]
+  (first
+   (filter
+    #(= (System/identityHashCode
+         ontology)
+        (System/identityHashCode
+         (.getRootOntology %)))
+    @reasoner-list)))
+
 ;; we need to cache these 'cause reasoners listen to changes could just use
 ;; memoized function taking jontology as param Probably need to write a new
 ;; ProgressMonitor to communicate with emacs.
 (defn reasoner []
-  (.createReasoner (reasoner-factory)
-                   (owl/get-current-jontology)
-                   (SimpleConfiguration.
-                    (reasoner-progress-monitor-gui))))
+  (let [reas (reasoner-for-ontology (owl/get-current-jontology))]
+    (if reas
+      reas
+      (let [reas
+            (.createReasoner
+             (reasoner-factory)
+             (owl/get-current-jontology)
+             (SimpleConfiguration.
+              (reasoner-progress-monitor-gui)))]
+        (dosync
+         (ref-set reasoner-list (conj @reasoner-list reas)))
+        reas))))
+
+
+(do 
+  ;; define the hook function
+  (defn discard-reasoner [ontology]
+    (dosync
+     (let [reasoner (reasoner-for-ontology ontology)]
+       (when-not (nil? reasoner)
+         (ref-set reasoner-list
+                  (remove #{reasoner} @reasoner-list))
+         (.dispose reasoner)))))
+  
+  ;; add in do, so that we can't do one without the other
+  (util/add-hook owl/remove-ontology-hook
+                 discard-reasoner))
+
 
 (defn consistent?
   "Returns true if the ontology is consistent.
