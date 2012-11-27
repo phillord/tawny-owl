@@ -692,7 +692,7 @@ class, or class expression. "
 
 ;; owl imports
 
-(defn addimport [ontology]
+(defn owlimport [ontology]
   (.applyChange owl-ontology-manager
                 (AddImport. (get-current-jontology)
                             (.getOWLImportsDeclaration

@@ -1,4 +1,4 @@
-(ns owl.import
+(ns owl.read
   (:require [owl.owl])
   (:import
    (java.io File)
@@ -25,7 +25,7 @@
       (intern *ns* (symbol name) e))))
 
 
-(defn owlimport [location & rest]
+(defn read [location & rest]
   (let [{:keys [iri file prefix filter transform version-iri]} rest
         
         jiri (IRI/create iri)
