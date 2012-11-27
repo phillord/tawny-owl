@@ -1,5 +1,6 @@
 (ns owl.read
   (:require [owl.owl])
+  (:refer-clojure :exclude [read])
   (:import
    (java.io File)
    (java.net URL)
