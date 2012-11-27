@@ -36,12 +36,7 @@
         
         owlontology
         (do
-          (when (.contains owl.owl/owl-ontology-manager
-                           ontologyid)
-            (.removeOntology
-             owl.owl/owl-ontology-manager
-             (.getOntology owl.owl/owl-ontology-manager
-                           ontologyid)))
+          (owl.owl/remove-ontology-maybe ontologyid)
           
           (.loadOntologyFromOntologyDocument
            owl.owl/owl-ontology-manager
