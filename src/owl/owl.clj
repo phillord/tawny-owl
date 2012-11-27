@@ -104,11 +104,14 @@ axioms is a list of all the axioms that were used to add this entity.
   (Ontology. iri prefix jontology))
 
 
+(def remove-ontology-hook (util/make-hook))
+
 (defn remove-ontology-maybe [ontologyid]
   (when (.contains owl-ontology-manager ontologyid)
-    (.removeOntology
-     owl-ontology-manager
-     (.getOntology owl-ontology-manager ontologyid))))
+    (let [ontology (.getOntology owl-ontology-manager ontologyid)]
+      (.removeOntology
+       owl-ontology-manager ontology)
+      (util/run-hook remove-ontology-hook ontology))))
 
 
 (defn ontology [& args]

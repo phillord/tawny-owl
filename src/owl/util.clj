@@ -100,3 +100,30 @@
 
 
 
+
+;; hook system
+(defn make-hook []
+  (atom []))
+
+(defn add-hook [hook func]
+  (do
+    (when-not
+        (some #{func} @hook)
+      (swap! hook conj func))
+    @hook))
+
+(defn remove-hook [hook func]
+  (swap! hook
+         (partial
+          remove #{func})))
+
+(defn clear-hook [hook]
+  (reset! hook []))
+
+(defn run-hook
+  ([hook]
+      (doseq [func @hook] (func)))
+  ([hook & rest]
+      (doseq [func @hook] (apply func rest))))
+
+
