@@ -1,9 +1,7 @@
 (defproject uk.org.russet/clojure-owl "0.2-SNAPSHOT"
   :description "Clojure-owl enables building OWL ontologies in a programmatic environment."
   :url "http://www.russet.org.uk/blog/clojure-owl"
-
   :plugins [[lein-swank "1.4.4"]]
-
   :repositories [["maven" "http://repo1.maven.org/maven2"]
 
                  ["phillord" "http://homepages.cs.ncl.ac.uk/phillip.lord/maven"]
@@ -11,6 +9,8 @@
                  ;; ["berkley" "http://code.berkeleybop.org/maven/repository/"]
                  ]
 
+  :resource-paths ["src/resources"]
+  
   :scm {:url "https://phil.lord.bio@code.google.com/p/clojure-owl/"
         :name "hg"} 
   
