@@ -719,10 +719,7 @@ class, or class expression. "
        ;; set them disjoint if there is more than one. if there is only one
        ;; then it would be illegal OWL2. this macro then just shields the body
        ;; from any other as-disjoint statements.
-       (println "recent axiom list" owl.owl/recent-axiom-list)
-       (println "recent axiom list" (count owl.owl/recent-axiom-list))
        (when (< 1 (count owl.owl/recent-axiom-list))
-         (println "Adding disjoints")
          (owl.owl/disjointclasseslist
           owl.owl/recent-axiom-list)))))
 
