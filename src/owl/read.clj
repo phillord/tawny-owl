@@ -26,8 +26,8 @@
       (intern *ns* (symbol name) e))))
 
 
-(defn read [location & rest]
-  (let [{:keys [iri file prefix filter transform version-iri]} rest
+(defn read [& rest]
+  (let [{:keys [location iri file prefix filter transform version-iri]} rest
         
         jiri (IRI/create iri)
         viri (IRI/create version-iri)
@@ -69,4 +69,7 @@
 
 
 
-
+(defmacro defread [symbol & rest]
+  `(do
+    (def ~symbol
+      (owl.read/read ~@rest))))
