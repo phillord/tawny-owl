@@ -30,7 +30,8 @@
   (let [{:keys [location iri file prefix filter transform version-iri]} rest
         
         jiri (IRI/create iri)
-        viri (IRI/create version-iri)
+        viri (if version-iri
+               (IRI/create version-iri))
 
         ontologyid
         (OWLOntologyID. jiri viri)
