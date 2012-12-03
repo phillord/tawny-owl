@@ -1,5 +1,6 @@
 syntax: glob
 
 lib/*
-clojure-owl-0.2-SNAPSHOT.jar
+clojure-owl*.jar
 pom.xml
+stuff/*

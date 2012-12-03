@@ -1,4 +1,4 @@
-(defproject uk.org.russet/clojure-owl "0.2-SNAPSHOT"
+(defproject uk.org.russet/clojure-owl "0.2"
   :description "Clojure-owl enables building OWL ontologies in a programmatic environment."
   :url "http://www.russet.org.uk/blog/clojure-owl"
   :plugins [[lein-swank "1.4.4"]]

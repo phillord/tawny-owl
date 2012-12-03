@@ -1,8 +1,21 @@
 
 
+(owlsome hasPart)
+
+doesn't crash -- not good -- should have arity of at least 2
 
 
+The remove axiom stuff -- there is an entity remover in TutorialSnippets
+which should work in general. This means I should be able to kill the axiomed
+entity stuff and just run in java
 
 
-Add the ability to "import" one ontology from another. This happens
-automatically, but the imported ontology doesn't transfer it's prefix around. 
+Need to fix the reasoner stuff. Create a new ref with map onto which the 
+reasoner can be put. The deference as appropriate. Actually, might make more
+sense to use java WeakHashMap, keyed on the ontology. Or we are going to keep
+everything in memory.
+
+Still need a hook for ontology disposal to throw away reasoner -- should use
+explicit dispose.
+
+Support Version ID for everything.
