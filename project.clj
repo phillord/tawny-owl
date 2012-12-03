@@ -1,4 +1,4 @@
-(defproject uk.org.russet/clojure-owl "0.2"
+(defproject uk.org.russet/clojure-owl "0.3-SNAPSHOT"
   :description "Clojure-owl enables building OWL ontologies in a programmatic environment."
   :url "http://www.russet.org.uk/blog/clojure-owl"
   :plugins [[lein-swank "1.4.4"]]
@@ -29,7 +29,7 @@
                  
                  ;; reasoners
                  [org.semanticweb.elk/elk-owlapi "0.3.1"]
-                 ;;[org.semanticweb.hermit/HermiT "1.3.7-SNAPSHOT"]
+                 [org.semanticweb.hermit/HermiT "1.3.7-SNAPSHOT"]
                  
 
                  ]
