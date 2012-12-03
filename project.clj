@@ -29,7 +29,7 @@
                  
                  ;; reasoners
                  [org.semanticweb.elk/elk-owlapi "0.3.1"]
-                 [org.semanticweb.hermit/HermiT "1.3.7-SNAPSHOT"]
+                 ;;[org.semanticweb.hermit/HermiT "1.3.7-SNAPSHOT"]
                  
 
                  ]
