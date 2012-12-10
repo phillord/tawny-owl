@@ -24,10 +24,10 @@
    (org.semanticweb.owlapi.apibinding OWLManager)
    (org.coode.owlapi.manchesterowlsyntax ManchesterOWLSyntaxOntologyFormat)
    (org.semanticweb.owlapi.io StreamDocumentTarget OWLXMLOntologyFormat)
-   (org.semanticweb.owlapi.util DefaultPrefixManager)
+   (org.semanticweb.owlapi.util DefaultPrefixManager OWLEntityRemover)
    (java.io ByteArrayOutputStream FileOutputStream PrintWriter)
    (java.io File)
-   ()
+   (java.util Collections)
    (org.semanticweb.owlapi.model AddAxiom RemoveAxiom AddImport)))
 
 
@@ -72,30 +72,11 @@ ontology is an object of OWLOntology.
     Ontology [iri prefix ontology])
 
 
-(defrecord
-    ^{:doc "Data about an ontology addition.
-
-entity is the entity (class, property, etc) that was added to the ontology
-
-axioms is a list of all the axioms that were used to add this entity. 
-"
-      :private true
-      }
-    AxiomedEntity [entity axioms]
-    Object
-    ;; prints out too much -- however this isn't working at the moment
-    (toString [this]
-      (format "AxiomedEntity( %s )" (:entity this))))
-
-
 (defn named-object? [entity]
-  (or (instance? AxiomedEntity entity)
-      (instance? OWLNamedObject entity)))
+  (instance? OWLNamedObject entity))
 
 (defn as-named-object [entity]
   (or
-   (and (instance? AxiomedEntity entity)
-        (:entity entity))
    (and (instance? OWLNamedObject entity)
         entity)
    (throw (IllegalArgumentException. "Expecting a named entity"))))
@@ -217,8 +198,6 @@ or `filename' if given.
 
 (defn- ensure-object-property [prop]
   (cond
-   (instance? owl.owl.AxiomedEntity prop)
-   (ensure-object-property (:entity prop))
    (instance? org.semanticweb.owlapi.model.OWLObjectProperty prop)
    prop
    (string? prop)
@@ -235,8 +214,6 @@ or `filename' if given.
   "If clz is a String return a class of with that name,
 else if clz is a OWLClassExpression add that."
   (cond
-   (instance? owl.owl.AxiomedEntity clz)
-   (ensure-class (:entity clz))
    (instance? org.semanticweb.owlapi.model.OWLClassExpression clz)
    clz
    (string? clz)
@@ -269,9 +246,13 @@ This removes all the axioms that were added. So, for example, a form such as
 adds three axioms -- it declares a, makes it a subclass of b, and equivalent
 of c."
   [entity]
-  (dorun
-   (map #(remove-axiom %)
-        (:axioms entity))))
+  (let [remover
+        (OWLEntityRemover. owl-ontology-manager
+                           (hash-set
+                            (get-current-jontology)))]
+    (.accept entity remover)
+    (.applyChanges owl-ontology-manager
+                   (.getChanges remover))))
 
 (defn- add-one-frame
   "Adds a single frame to the ontology.
@@ -445,7 +426,7 @@ class, or class expression. "
     (when (seq? recent-axiom-list)
       (set! recent-axiom-list
             (concat (list property) recent-axiom-list)))
-    (AxiomedEntity. property axioms)))
+    property))
 
 
 (defn objectproperty
@@ -587,6 +568,13 @@ class, or class expression. "
   (partial annotation (.getRDFSSeeAlso ontology-data-factory)))
 
 
+;; data type properties
+(defn datatypeproperty [name & frames]
+  (throw (Exception. "Not written this yet")))
+
+
+
+
 (defn owlclass-explicit
   ([name frames]
      (let [classname (or (first (:name frames)) name)
@@ -597,13 +585,10 @@ class, or class expression. "
          (set! recent-axiom-list
                (concat (list class)
                        recent-axiom-list)))
-       ;; generate an axiomed entity
-       (AxiomedEntity.
-        class 
-        (concat
-         (list
-          ;; add-class returns a single axiom -- concat balks at this
-          (add-class classname))
+       ;; create the class
+       (do
+         ;; add-class returns a single axiom -- concat balks at this
+         (add-class classname)
          (add-subclass classname (:subclass frames))
          (add-equivalent classname (:equivalent frames))
          (add-annotation classname (:annotation frames))
@@ -617,7 +602,9 @@ class, or class expression. "
            (add-annotation classname
                            (list (label
                                   (first
-                                   (:label frames))))))))))
+                                   (:label frames))))))
+         ;; return the class object
+         class)))
   ([name]
      (owlclass-explicit name {})))
 
