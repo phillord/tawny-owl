@@ -23,14 +23,13 @@
 
 (defn createtestontology[]
   (o/defontology testontology
-    :file "test.omn"
     :iri "http://iri/"
     :prefix "iri:"))
 
 (defn createandsavefixture[test]
   (o/with-ontology (createtestontology)
     (test)
-    (o/save-ontology))
+    (o/save-ontology "test.omn"))
   )
 
 (use-fixtures :each createandsavefixture)
@@ -52,17 +51,11 @@
 (deftest get-current-iri
   (is (= "http://iri/" (.toString (#'o/get-current-iri)))))
 
-(deftest get-current-file []
-  (is (= "test.omn" (o/get-current-file))))
-
-(deftest get-current-manager []
-  (is (not (nil? (#'o/get-current-manager)))))
-
 (deftest get-current-prefix []
   (is (= "iri:" (o/get-current-prefix))))
 
 (deftest save-ontology []
-  (is (do (o/save-ontology)
+  (is (do (o/save-ontology "test.omn")
           true)))
 
 (deftest iriforname []
@@ -87,11 +80,8 @@
 
 (deftest defoproperty
   (is
-   (instance? owl.owl.AxiomedEntity
-              (o/defoproperty a))
-   
    (instance? org.semanticweb.owlapi.model.OWLObjectProperty
-              (:entity (o/defoproperty a)))))
+              (o/defoproperty a))))
 
 
 (deftest get-create-class []
@@ -150,12 +140,9 @@
         (o/add-class "a")))))
 
 (deftest objectproperty []
-  (is (instance? owl.owl.AxiomedEntity
-                 (o/objectproperty "b")))
-
   (is (instance?
        org.semanticweb.owlapi.model.OWLObjectProperty
-       (:entity (o/objectproperty "b"))))
+       (o/objectproperty "b")))
   )
 
 (deftest owlsome []
@@ -178,7 +165,7 @@
              (.size (.getClassesInSignature
                      (#'o/get-current-jontology))))))
   (is (instance? org.semanticweb.owlapi.model.OWLClass
-                 (:entity (o/owlclass "test")))))
+                 (o/owlclass "test"))))
 
 
 (deftest defclass
