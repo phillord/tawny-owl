@@ -30,32 +30,33 @@
     (org.semanticweb.owlapi.reasoner SimpleConfiguration)
     (org.semanticweb.HermiT Reasoner)))
 
-;; need to do this better -- with a ref
-(declare vreasoner-factory)
-
-(defn reasoner-factory
-  ([]
-     vreasoner-factory)
-  ([reasoner]
-     (def vreasoner-factory
-       (reasoner
-        {:elk (ElkReasonerFactory.)
-         :hermit (org.semanticweb.HermiT.Reasoner$ReasonerFactory.)
-         }
-        ))))
-
-;; set default
-;; (reasoner-factory :elk)
+(def vreasoner-factory
+  (ref ()))
 
 (def reasoner-list
   (ref ()))
+
+(defn reasoner-factory
+  ([]
+     @vreasoner-factory)
+  ([reasoner]
+     (dosync
+      ;; blitz the reasoner list
+      (ref-set reasoner-list ())
+      ;; create a new reasoner
+      (ref-set vreasoner-factory
+               (reasoner
+                {:elk (ElkReasonerFactory.)
+                 :hermit (org.semanticweb.HermiT.Reasoner$ReasonerFactory.)
+                 }
+                )))))
+
 
 (def
   ^{:private true
     :dynamic true}
   *reasoner-start-time*
   )
-
 
 (defn reasoner-progress-monitor-gui []
   (let [progressbar (JProgressBar.)
@@ -104,6 +105,11 @@
     (reasonerTaskStopped []
       (println "reasoner task stopped"))))
 
+;; set up the default!
+(def
+  ^{:dynamic true}
+  *reasoner-progress-monitor*
+  reasoner-progress-monitor-gui)
 
 (defn reasoner-for-ontology [ontology]
   (first
@@ -126,7 +132,7 @@
              (reasoner-factory)
              (owl/get-current-jontology)
              (SimpleConfiguration.
-              (reasoner-progress-monitor-gui)))]
+              (*reasoner-progress-monitor*)))]
         (dosync
          (ref-set reasoner-list (conj @reasoner-list reas)))
         reas))))
