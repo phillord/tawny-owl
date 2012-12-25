@@ -14,7 +14,7 @@
         :name "hg"} 
   
   :license {:name "LGPL"
-            :url "http://www.eclipse.org/legal/epl-v10.html"
+            :url "http://www.gnu.org/licenses/lgpl-3.0.txt"
             :distribution :repo}
 
   :dependencies [
@@ -32,9 +32,5 @@
                  
 
                  ]
-
-
-
-
 
 )
