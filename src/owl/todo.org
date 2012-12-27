@@ -1,21 +1,73 @@
 
 
+* Memorise/Remember
+
+I need some functionality for remebering the mapping between IRIs and clojure
+identifiers, so that if the meaningful names
+
+(memorise)
+
+save the current IRI to identifier mapping (including old mappings already
+loaded), into a file based on the current namespace
+
+
+(remember)
+
+Load IRI mappings from a file save by memorise. This should check for IRIs
+which have changed their mappings. What happens to old mapping should depend
+on a dynamically bound variable. It should emit a warning at minimum, and bind
+the old mapping as alias, or bind the old mapping as an alias which will crash
+when used (with some suitable warning), or not bind it, in which case the
+compiler will pick up any usage (but without nice warnings). 
+
+See here -- which might be a nicer way to do the alias. Alias might want to
+come in another package, as I think I might want to use this else where. 
+
+https://github.com/technomancy/leiningen/blob/1.x/src/leiningen/core.clj#L13
+
+
+* IRI Creation
+
+Have a OBO style generator. 
+
+Initially, generate an UUID style identifer for new terms. Can use memorise to
+save and to store these in a file. Add a URI gen client which will search for
+these, and replace them with newly minted URIs. Have to add a purl creation
+client also, which will update all purls and make sure that they point to the
+correct place. 
+
+
+
+* Name change
+
+Move the entire library to a new name "tawny owl". 
+
+
+* Enhancements
+
+** Clojure IDs as annotation
+
+The identifiers used within clojure should be placed onto the ontology as
+annotations. The idea here is that someone using clojure-owl to generate an
+OWL file, should be able to read this OWL file in and recreate what they
+started with (at least in terms of ids and so on). 
+
+
+** Version ID
+
+Support Version ID for everything.
+
+
+
+* Bugs 
+
+** owlsome
+
 (owlsome hasPart)
 
 doesn't crash -- not good -- should have arity of at least 2
 
 
-The remove axiom stuff -- there is an entity remover in TutorialSnippets
-which should work in general. This means I should be able to kill the axiomed
-entity stuff and just run in java
+** transitive 
 
-
-Need to fix the reasoner stuff. Create a new ref with map onto which the 
-reasoner can be put. The deference as appropriate. Actually, might make more
-sense to use java WeakHashMap, keyed on the ontology. Or we are going to keep
-everything in memory.
-
-Still need a hook for ontology disposal to throw away reasoner -- should use
-explicit dispose.
-
-Support Version ID for everything.
+and other facets are all stored as strings which is dangerous.
