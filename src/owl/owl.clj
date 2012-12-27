@@ -373,7 +373,9 @@ class, or class expression. "
 ;; groupify function which expects alternative keyword value args. The
 ;; approach of using strings and symbol names here is scary -- if someone does
 ;; (defclass transitive) for example, it's all going to break. I don't think
-;; that the const does what might be though. 
+;; that the const does what might be though.
+
+
 (def ^:const transitive "transitive")
 (def ^:const functional "functional")
 (def ^:const inversefunctional "inversefunctional")
