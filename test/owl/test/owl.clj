@@ -16,9 +16,9 @@
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
 
 
-(ns owl.test.owl
+(ns tawny.test.owl
   (:refer-clojure :exclude [some only comment])
-  (:require [owl.owl :as o])
+  (:require [tawny.owl :as o])
   [:use clojure.test])
 
 (defn createtestontology[]

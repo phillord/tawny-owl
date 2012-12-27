@@ -18,6 +18,6 @@
 
 
 (ns tawny.core
-  (:use tawny.owl))
+  (:use [tawny.owl]))
 
 

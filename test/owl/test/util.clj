@@ -15,8 +15,8 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
 
-(ns owl.test.util
-  [:require [clojure.test :refer :all] [owl.util :as u]])
+(ns tawny.test.util
+  [:require [clojure.test :refer :all] [tawny.util :as u]])
 
 
 (deftest groupify
