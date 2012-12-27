@@ -1,4 +1,4 @@
-Clojure-OWL
+Tawny-OWL
 ===========
 :author: Phillip Lord
 
@@ -24,7 +24,9 @@ I discuss the development of this code base in my
 [motivation] (http://www.russet.org.uk/blog/2214) and another on making the
 library more ["lispy"](http://www.russet.org.uk/blog/2254). All revelevant
 posts are
-[cateogorised](http://www.russet.org.uk/blog/category/all/professional/tech/clojure-owl).
+[cateogorised](http://www.russet.org.uk/blog/category/all/professional/tech/tawny-owl).
+
+This package was previously named "Clojure-OWL".
 
 == Installation
 

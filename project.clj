@@ -1,6 +1,6 @@
-(defproject uk.org.russet/clojure-owl "0.4"
-  :description "Clojure-owl enables building OWL ontologies in a programmatic environment."
-  :url "http://www.russet.org.uk/blog/clojure-owl"
+(defproject uk.org.russet/tawny-owl "0.1-SNAPSHOT"
+  :description "tawny-owl enables building OWL ontologies in a programmatic environment."
+  :url "http://www.russet.org.uk/blog/tawny-owl"
   :plugins [[lein-swank "1.4.4"]]
   :repositories [["maven" "http://repo1.maven.org/maven2"]
 
@@ -10,7 +10,7 @@
 
   :resource-paths ["src/resources"]
   
-  :scm {:url "https://phil.lord.bio@code.google.com/p/clojure-owl/"
+  :scm {:url "https://phil.lord.bio@code.google.com/p/tawny-owl/"
         :name "hg"} 
   
   :license {:name "LGPL"
