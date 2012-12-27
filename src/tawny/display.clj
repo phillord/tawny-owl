@@ -16,8 +16,8 @@
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
 
 
-(ns owl.display
-  (:require [owl.owl :as o]))
+(ns tawny.display
+  (:require [tawny.owl :as o]))
 
 (defn pp-entity [entity]
   (str class "\n"))

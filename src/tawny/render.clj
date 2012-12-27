@@ -17,9 +17,9 @@
 
 
 
-(ns owl.render
-  (:require [owl.owl :as owl])
-  (:import (owl.owl AxiomedEntity)
+(ns tawny.render
+  (:require [tawny.owl :as owl])
+  (:import (tawny.owl AxiomedEntity)
            (java.util Set)
            (org.semanticweb.owlapi.model OWLClass
                                          OWLDataAllValuesFrom
@@ -60,7 +60,7 @@
   (let [super (.getSuperClasses c (owl/get-current-jontology))
         equiv (.getEquivalentClasses c (owl/get-current-jontology))
         disjoint (.getDisjointClasses c (owl/get-current-jontology))]
-    `(owl.owl/defclass ~(form c)
+    `(tawny.owl/defclass ~(form c)
        ~@(when (< 0 (count super))
            (cons
             :subclass
@@ -200,8 +200,8 @@
 ;; these functions all operate on each other, and are broken out just to make
 ;; things easier to debug. 
 (defn- iri-to-var [var]
-  (if (owl.owl/named-object? (var-get var))
-    (.getIRI (owl.owl/as-named-object (var-get var)))
+  (if (tawny.owl/named-object? (var-get var))
+    (.getIRI (tawny.owl/as-named-object (var-get var)))
     nil))
 
 (defn- all-vars-in-namespace-with-ontology []
@@ -211,7 +211,7 @@
     (map
      (fn [x]
        (ns-publics x))
-     (keys @owl.owl/ontology-for-namespace)))))
+     (keys @tawny.owl/ontology-for-namespace)))))
 
 (defn- pairs-iri-to-var []
   (for [k (all-vars-in-namespace-with-ontology)]

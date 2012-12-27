@@ -15,8 +15,8 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
 
-(ns owl.owl
-  (:require [owl.util :as util])
+(ns tawny.owl
+  (:require [tawny.util :as util])
   (:import
    (org.semanticweb.owlapi.model OWLOntologyManager OWLOntology IRI
                                  OWLClassExpression OWLClass OWLAnnotation
@@ -115,7 +115,7 @@ The following keys must be supplied.
   `(do
      (let [ontology# (ontology ~@body)]
        (def ~name ontology#)
-       (owl.owl/ontology-to-namespace ontology#)
+       (tawny.owl/ontology-to-namespace ontology#)
        ontology#
        )))
 
@@ -443,7 +443,7 @@ class, or class expression. "
 
 (defmacro defoproperty [property & frames]
   `(let [property-name# (name '~property)
-         property# (owl.owl/objectproperty property-name# ~@frames)]
+         property# (tawny.owl/objectproperty property-name# ~@frames)]
      (def ~property property#)
      property#))
 
@@ -624,7 +624,7 @@ class, or class expression. "
 
 (defmacro defclass [classname & frames]
   `(let [string-name# (name '~classname)
-         class# (owl.owl/owlclass string-name# ~@frames)]
+         class# (tawny.owl/owlclass string-name# ~@frames)]
      (def ~classname class#)
      class#))
 
@@ -695,32 +695,32 @@ class, or class expression. "
 ;; return type of individual is buggered
 (defmacro defindividual [individualname & frames]
   `(let [string-name# (name '~individualname)
-         individual# (owl.owl/individual string-name# ~@frames)]
+         individual# (tawny.owl/individual string-name# ~@frames)]
      (def ~individualname individual#)
      individual#))
 
 ;; convienience macros
 (defmacro as-disjoint [& body]
   `(do ;; delete all recent classes
-     (binding [owl.owl/recent-axiom-list '()]
+     (binding [tawny.owl/recent-axiom-list '()]
        ;; do the body
        ~@body
        ;; set them disjoint if there is more than one. if there is only one
        ;; then it would be illegal OWL2. this macro then just shields the body
        ;; from any other as-disjoint statements.
-       (when (< 1 (count owl.owl/recent-axiom-list))
-         (owl.owl/disjointclasseslist
-          owl.owl/recent-axiom-list)))))
+       (when (< 1 (count tawny.owl/recent-axiom-list))
+         (tawny.owl/disjointclasseslist
+          tawny.owl/recent-axiom-list)))))
 
 (defmacro as-inverse [& body]
   `(do
-     (binding [owl.owl/recent-axiom-list '()]
+     (binding [tawny.owl/recent-axiom-list '()]
        ~@body
-       (when-not (= (count owl.owl/recent-axiom-list) 2)
+       (when-not (= (count tawny.owl/recent-axiom-list) 2)
          (throw (IllegalArgumentException. "Can only have two properties in as-inverse")))
-       (owl.owl/add-inverse
-        (first owl.owl/recent-axiom-list)
-        (rest owl.owl/recent-axiom-list))
+       (tawny.owl/add-inverse
+        (first tawny.owl/recent-axiom-list)
+        (rest tawny.owl/recent-axiom-list))
        )))
 
 
@@ -730,7 +730,7 @@ class, or class expression. "
 
 ;; bind to 
 (defmacro with-ontology [ontology & body]
-  `(binding [owl.owl/*current-bound-ontology* ~ontology]
+  `(binding [tawny.owl/*current-bound-ontology* ~ontology]
      ~@body))
 
 
@@ -738,8 +738,8 @@ class, or class expression. "
 ;; in. place into a dynamic variable and then use (merge-with concat) to do
 ;; the business
 (defmacro with-default-frames [frames & body]
-  `(binding [owl.owl/*default-frames*
-             (owl.util/hashify ~frames)]
+  `(binding [tawny.owl/*default-frames*
+             (tawny.util/hashify ~frames)]
      ~@body))
 
 

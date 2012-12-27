@@ -15,8 +15,8 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
 
-(ns owl.pattern
-  (:require [owl.owl :as o]))
+(ns tawny.pattern
+  (:require [tawny.owl :as o]))
 
 
 (defmacro value-partition [& definition]

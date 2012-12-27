@@ -17,7 +17,7 @@
 
 
 
-(ns owl.core
-  (:use owl.owl))
+(ns tawny.core
+  (:use tawny.owl))
 
 

@@ -1,5 +1,5 @@
-(ns owl.read
-  (:require [owl.owl])
+(ns tawny.read
+  (:require [tawny.owl])
   (:refer-clojure :exclude [read])
   (:import
    (java.io File)
@@ -12,7 +12,7 @@
 
 (defn- default-filter [e]
   (and (instance? OWLNamedObject e)
-       (= (owl.owl/get-current-iri)
+       (= (tawny.owl/get-current-iri)
           (.getStart (.getIRI e)))))
 
 
@@ -38,18 +38,18 @@
         
         owlontology
         (do
-          (owl.owl/remove-ontology-maybe ontologyid)
+          (tawny.owl/remove-ontology-maybe ontologyid)
           
           (.loadOntologyFromOntologyDocument
-           owl.owl/owl-ontology-manager
+           tawny.owl/owl-ontology-manager
            location))
         
         ontology
-        (owl.owl/generate-ontology iri prefix owlontology)
+        (tawny.owl/generate-ontology iri prefix owlontology)
         ]
 
     ;; this is the ontology for the namespace so stuff it place
-    (owl.owl/ontology-to-namespace ontology)
+    (tawny.owl/ontology-to-namespace ontology)
 
     ;;
     (doall
@@ -73,4 +73,4 @@
 (defmacro defread [symbol & rest]
   `(do
     (def ~symbol
-      (owl.read/read ~@rest))))
+      (tawny.read/read ~@rest))))

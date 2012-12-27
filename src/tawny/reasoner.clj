@@ -13,9 +13,9 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
 
-(ns owl.reasoner
-  (:require [owl.owl :as owl]
-            [owl.util :as util])
+(ns tawny.reasoner
+  (:require [tawny.owl :as owl]
+            [tawny.util :as util])
   (:import
    (java.lang.ref WeakReference)
    (java.util WeakHashMap)
