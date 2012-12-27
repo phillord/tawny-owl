@@ -25,17 +25,34 @@
 
 (defn createtestontology[]
   (o/ontology 
-   :file (str (rand 10) "test.omn")
    :iri "http://iri/"
    :prefix "iri:"))
 
 (defn createandsavefixture[test]
-  (o/with-ontology
-    (createtestontology)
-    (test)
-    (o/save-ontology)))
+  (binding
+      [r/*reasoner-progress-monitor*
+       r/reasoner-progress-monitor-text]
+    (o/with-ontology
+      (createtestontology)
+      (test)
+      (o/save-ontology "test-reasoner.omn"))))
 
-(use-fixtures :each createandsavefixture)
+;; this isn't working and I really don't know why
+;; it seems to work on lein test but kills all tests
+;; when run in repl with clojure-test mode. 
+
+;; works fine in fixture above so leave it there
+(defn reasoner-gui-fixture [tests]
+  (binding [r/*reasoner-progress-monitor*
+            r/reasoner-progress-monitor-text]
+    (tests)))
+
+
+
+(use-fixtures
+ ;;:once reasoner-gui-fixture
+ :each createandsavefixture)
+
 
 (defn with-ontology []
   (is
@@ -77,9 +94,10 @@
 (deftest empty-consistent? []
   ;; empty only is consistent
   (is
-   (every?
-    identity
-    (far #(r/consistent?)))))
+   (do (println "hello")
+       (every?
+        identity
+        (far #(r/consistent?))))))
 
 
 (deftest ind-consistent? []
