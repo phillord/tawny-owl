@@ -1,6 +1,7 @@
 syntax: glob
 
 lib/*
-clojure-owl*.jar
+tawny-owl*.jar
 pom.xml
 stuff/*
+target/*
