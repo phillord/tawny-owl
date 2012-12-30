@@ -1,9 +1,7 @@
 Tawny-OWL
 ===========
-:author: Phillip Lord
 
-
-== Introduction
+## Introduction
 
 This package uses the clojure and the OWL API to construct OWL ontologies. 
 
@@ -28,20 +26,20 @@ posts are
 
 This package was previously named "Clojure-OWL".
 
-== Installation
+## Installation
 
 We are at too early a stage to require an installation. The project builds
 with leiningen 1.7, which is the current version on Ubuntu. I am using Emacs
 23 with clojure mode to do all the interaction, installed from the Marmalade
 repository. 
 
-== Author
+## Author
 
 Phillip Lord, Newcastle University. 
 http://www.russet.org.uk/blog
 
 
-== Licence
+## License
 
 The contents of this file are subject to the LGPL License, Version 3.0.
 
