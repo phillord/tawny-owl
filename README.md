@@ -5,17 +5,19 @@ Tawny-OWL
 
 This package uses the clojure and the OWL API to construct OWL ontologies. 
 
-At the moment it is in its very early stages and really does not do much,
-although you could use it to build an ontology. The file +owl.clj+ contains
-the library (to be!), while +core.clj+ contains some sample test code. At the
-moment, OPPL is a more complete solution. However, I want this for a number of
-other reasons: I would like to be able to interact with a reasoner in batch;
-and I want to be able to build more formal test cases over an ontology. I
-should be able to build all of this, just piggy-backing on the clojure
-environment. 
+The core library, `owl.clj` provides an API which looks similar to Manchester
+OWL syntax, but is nonetheless fully programmatically extensible. Other names
+spaces include: 
 
-This is the first and only piece of code that I have written in clojure; it no
-doubt shows this heritage. 
+* `reasoner.clj` -- provides access to reasoning services. Currently supports
+  either [ELK](http://code.google.com/p/elk-reasoner/) or
+  [HermiT](http://hermit-reasoner.com/).
+* `read.clj` -- loads a OWL file into the current clojure namespace, so that
+  it can be built against. 
+* `pattern.clj` -- start of a ontology pattern library. 
+* `render.clj` -- render an OWL class into text or a lisp form. 
+
+
 
 I discuss the development of this code base in my
 [journal](http://www.russet.org.uk/blog). Two recent posts include one on the
