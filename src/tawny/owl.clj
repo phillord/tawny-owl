@@ -127,6 +127,19 @@ The following keys must be supplied.
            (merge @ontology-for-namespace
                   {*ns* ontology}))))
 
+(defn test-ontology
+  "Define a test ontology.
+
+This function probably shouldn't be here, but one of the consequences of
+making the ontology implicit in all my functions is that playing on the repl
+is a pain, as the test ontology has to be defined first. 
+
+This defines a minimal test ontology.
+
+"
+  []
+  (defontology a-test-ontology :iri "http://iri/" :prefix "test:"))
+
 (defn get-current-ontology []
   "Gets the current ontology"
   ;; if current ontology is inside a binding
@@ -373,12 +386,13 @@ class, or class expression. "
 ;; groupify function which expects alternative keyword value args. The
 ;; approach of using strings and symbol names here is scary -- if someone does
 ;; (defclass transitive) for example, it's all going to break. I don't think
-;; that the const does what might be though.
+;; that the const does what it might
 
+;; this is my second attempt -- a enum for a dynamic world. 
 
-(def ^:const transitive "transitive")
-(def ^:const functional "functional")
-(def ^:const inversefunctional "inversefunctional")
+(def ^:const transitive (Object.))
+(def ^:const functional (Object.))
+(def ^:const inversefunctional (Object.))
 
 (def
   ^{:private true}
@@ -449,21 +463,31 @@ class, or class expression. "
 
 ;; restrictions! name clash -- we can do nothing about this, so accept the
 ;; inconsistency and bung owl on the front.
-(defn owlsome [property & classes]
-  (doall
-   (map #(.getOWLObjectSomeValuesFrom
-          ontology-data-factory
-          (ensure-object-property property)
-          (ensure-class %))
-        classes)))
 
-(defn only [property & classes]
-  (doall
-   (map #(.getOWLObjectAllValuesFrom
-          ontology-data-factory
-          (ensure-object-property property)
-          (ensure-class %))
-        classes)))
+
+(defn owlsome
+  ;; handle the single case
+  ([property class]
+     (.getOWLObjectSomeValuesFrom
+      ontology-data-factory
+      (ensure-object-property property)
+      (ensure-class class)))
+  ;; handle the many case
+  ([property class & classes]
+     (doall
+      (map (partial owlsome property)
+           (cons class classes)))))
+
+
+(defn only
+  ([property class]
+     (.getOWLObjectAllValuesFrom
+      ontology-data-factory
+      (ensure-object-property property)
+      (ensure-class class)))
+  ([property class & classes]
+     (doall (map (partial only property)
+                 (cons class classes)))))
 
 ;; forward declaration
 (declare owlor)
@@ -475,27 +499,35 @@ class, or class expression. "
 
 ;; union, intersection
 (defn owland [& classes]
-  (.getOWLObjectIntersectionOf
-   ontology-data-factory
-   (java.util.HashSet. 
-    (doall (map
-            #(ensure-class %)
-            ;; flatten list for things like owlsome which return lists
-            (flatten classes))))))
+  (let [classes (flatten classes)]
+    (when (> 1 (count classes))
+      (throw (IllegalArgumentException. "owland must have at least two classes")))
+
+    (.getOWLObjectIntersectionOf
+     ontology-data-factory
+     (java.util.HashSet. 
+      (doall (map
+              #(ensure-class %)
+              ;; flatten list for things like owlsome which return lists
+              classes))))))
 
 ;; short cuts for the terminally lazy. Still prefix!
 (def && owland)
 
 (defn owlor [& classes]
-  (.getOWLObjectUnionOf
-   ontology-data-factory
-   (java.util.HashSet.
-    (doall (map #(ensure-class %)
-                (flatten classes))))))
+  (let [classes (flatten classes)]
+    (when (> 1 (count classes))
+      (throw (IllegalArgumentException. "owlor must have at least two classes")))
+
+    (.getOWLObjectUnionOf
+     ontology-data-factory
+     (java.util.HashSet.
+      (doall (map #(ensure-class %)
+                  (flatten classes)))))))
 
 (def || owlor)
 
-(defn owlnot [& class]
+(defn owlnot [class]
   (.getOWLObjectComplementOf
    ontology-data-factory
    (ensure-class class)))
@@ -531,9 +563,6 @@ class, or class expression. "
      (map #(ensure-individual %)
           (flatten individuals))))))
   
-
-
-
 ;; annotations
 (defn add-annotation
   [name annotation-list]
@@ -625,8 +654,7 @@ class, or class expression. "
 (defmacro defclass [classname & frames]
   `(let [string-name# (name '~classname)
          class# (tawny.owl/owlclass string-name# ~@frames)]
-     (def ~classname class#)
-     class#))
+     (def ~classname class#)))
 
 
 (defn disjointclasseslist [list]
