@@ -16,7 +16,7 @@
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
 
 
-(ns tawny.test.reasoner
+(ns tawny.reasoner-test
   (:refer-clojure :exclude [some only comment])
   (:require [tawny.owl :as o]
             [tawny.reasoner :as r])

@@ -15,7 +15,7 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
 
-(ns tawny.test.util
+(ns tawny.util-test
   [:require [clojure.test :refer :all] [tawny.util :as u]])
 
 

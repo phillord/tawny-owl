@@ -16,7 +16,7 @@
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
 
 
-(ns tawny.test.owl
+(ns tawny.owl-test
   (:refer-clojure :exclude [some only comment])
   (:require [tawny.owl :as o])
   [:use clojure.test])
@@ -146,10 +146,21 @@
   )
 
 (deftest owlsome []
-  (is (not (nil? (o/owlsome (o/objectproperty "b") "a")))))
+  (is (not (nil? (o/owlsome (o/objectproperty "b") "a"))))
+  ;; failing test
+  (is (thrown? clojure.lang.ArityException
+               (o/owlsome "hasLeg"))))
 
 (deftest owlonly []
-  (is (not (nil? (o/only (o/objectproperty "b") "a")))))
+  (is (not (nil? (o/only (o/objectproperty "b") "a"))))
+  (is (thrown? clojure.lang.ArityException
+               (o/only "hasLeg"))))
+
+
+(deftest owland []
+  (is (not (nil? (o/owland "a" "b"))))
+  (is (thrown? IllegalArgumentException
+               (o/owland))))
 
 (deftest disjointclasses []
   (is
