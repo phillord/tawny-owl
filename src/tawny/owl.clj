@@ -63,13 +63,12 @@
 (defrecord
    ^{:doc "Key data about an ontology.
 iri is the IRI for the ontology
-file is the location that it will be saved in
 manager is an OWLOntologyManager from which the ontology comes
 ontology is an object of OWLOntology.
 "
       :private true
       }
-    Ontology [iri prefix ontology])
+    Ontology [iri prefix ontology options])
 
 
 (defn named-object? [entity]
@@ -82,7 +81,7 @@ ontology is an object of OWLOntology.
    (throw (IllegalArgumentException. "Expecting a named entity"))))
 
 (defn generate-ontology [iri prefix jontology]
-  (Ontology. iri prefix jontology))
+  (Ontology. iri prefix jontology (ref {})))
 
 
 (def remove-ontology-hook (util/make-hook))
@@ -211,6 +210,8 @@ or `filename' if given.
 
 (defn- ensure-object-property [prop]
   (cond
+   (ifn? prop)
+   (ensure-object-property (prop))
    (instance? org.semanticweb.owlapi.model.OWLObjectProperty prop)
    prop
    (string? prop)
@@ -227,6 +228,8 @@ or `filename' if given.
   "If clz is a String return a class of with that name,
 else if clz is a OWLClassExpression add that."
   (cond
+   (ifn? clz)
+   (ensure-class (clz))
    (instance? org.semanticweb.owlapi.model.OWLClassExpression clz)
    clz
    (string? clz)

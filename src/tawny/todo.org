@@ -37,12 +37,6 @@ client also, which will update all purls and make sure that they point to the
 correct place. 
 
 
-
-* Name change
-
-Move the entire library to a new name "tawny owl". 
-
-
 * Enhancements
 
 ** Clojure IDs as annotation
