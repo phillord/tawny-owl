@@ -1,0 +1,61 @@
+#    -*- mode: org -*-
+
+
+Archived entries from file /home/phillord/src/knowledge/tawny-owl/src/tawny/todo.org
+
+
+
+* Name change
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2012-12-30 Sun 09:13
+  :ARCHIVE_FILE: ~/src/knowledge/tawny-owl/src/tawny/todo.org
+  :ARCHIVE_CATEGORY: todo
+  :END:
+
+Move the entire library to a new name "tawny owl". 
+
+* Memorise/Remember
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2013-01-08 Tue 17:05
+  :ARCHIVE_FILE: ~/src/knowledge/tawny-owl/src/tawny/todo.org
+  :ARCHIVE_CATEGORY: todo
+  :END:
+
+I need some functionality for remebering the mapping between IRIs and clojure
+identifiers, so that if the meaningful names
+
+(memorise)
+
+save the current IRI to identifier mapping (including old mappings already
+loaded), into a file based on the current namespace
+
+
+(remember)
+
+Load IRI mappings from a file save by memorise. This should check for IRIs
+which have changed their mappings. What happens to old mapping should depend
+on a dynamically bound variable. It should emit a warning at minimum, and bind
+the old mapping as alias, or bind the old mapping as an alias which will crash
+when used (with some suitable warning), or not bind it, in which case the
+compiler will pick up any usage (but without nice warnings). 
+
+See here -- which might be a nicer way to do the alias. Alias might want to
+come in another package, as I think I might want to use this else where. 
+
+https://github.com/technomancy/leiningen/blob/1.x/src/leiningen/core.clj#L13
+
+* owlsome
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2013-01-08 Tue 17:06
+  :ARCHIVE_FILE: ~/src/knowledge/tawny-owl/src/tawny/todo.org
+  :ARCHIVE_OLPATH: Bugs
+  :ARCHIVE_CATEGORY: todo
+  :END:
+
+(owlsome hasPart)
+
+doesn't crash -- not good -- should have arity of at least 2
+
+
+
+

@@ -1,30 +1,5 @@
 
 
-* Memorise/Remember
-
-I need some functionality for remebering the mapping between IRIs and clojure
-identifiers, so that if the meaningful names
-
-(memorise)
-
-save the current IRI to identifier mapping (including old mappings already
-loaded), into a file based on the current namespace
-
-
-(remember)
-
-Load IRI mappings from a file save by memorise. This should check for IRIs
-which have changed their mappings. What happens to old mapping should depend
-on a dynamically bound variable. It should emit a warning at minimum, and bind
-the old mapping as alias, or bind the old mapping as an alias which will crash
-when used (with some suitable warning), or not bind it, in which case the
-compiler will pick up any usage (but without nice warnings). 
-
-See here -- which might be a nicer way to do the alias. Alias might want to
-come in another package, as I think I might want to use this else where. 
-
-https://github.com/technomancy/leiningen/blob/1.x/src/leiningen/core.clj#L13
-
 
 * IRI Creation
 
@@ -54,12 +29,6 @@ Support Version ID for everything.
 
 
 * Bugs 
-
-** owlsome
-
-(owlsome hasPart)
-
-doesn't crash -- not good -- should have arity of at least 2
 
 
 ** transitive 
