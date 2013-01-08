@@ -52,7 +52,7 @@ being used."
      (into {} (for [[k v] (map-iri-to-var namespace)] [k v]))))
 
 
-(declare fetch-remembered-entities)
+(declare fetch-old-and-current-entities)
 (defn memorise
    "Save current memorise information in file."
    [file]
@@ -72,6 +72,10 @@ being used."
   (into {}
         (for [[k v] (memorise-map)]
           [k [(str (:name (meta v)))]])))
+
+(defn fetch-remembered-entities []
+  (:remember (deref (:options (tawny.owl/get-current-ontology)))))
+
 
 (defn fetch-old-and-current-entities []
   ;; sort so the print order is defined
@@ -96,9 +100,6 @@ being used."
        merge {:remember iri-to-name-mapping}))
      (check-old-mappings iri-to-name-mapping (memorise-map))))
 
-
-(defn fetch-remembered-entities []
-  (:remember (deref (:options (tawny.owl/get-current-ontology)))))
 
 (defn generate-obsolete-mapping
   [old-mappings mapping]
