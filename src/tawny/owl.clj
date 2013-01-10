@@ -210,7 +210,7 @@ or `filename' if given.
 
 (defn- ensure-object-property [prop]
   (cond
-   (ifn? prop)
+   (fn? prop)
    (ensure-object-property (prop))
    (instance? org.semanticweb.owlapi.model.OWLObjectProperty prop)
    prop
@@ -228,7 +228,7 @@ or `filename' if given.
   "If clz is a String return a class of with that name,
 else if clz is a OWLClassExpression add that."
   (cond
-   (ifn? clz)
+   (fn? clz)
    (ensure-class (clz))
    (instance? org.semanticweb.owlapi.model.OWLClassExpression clz)
    clz
