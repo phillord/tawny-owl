@@ -15,35 +15,43 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
 
-
 (ns tawny.lookup
   (:require [tawny.owl]))
 
-;; map between IRIs and axioms
-;; these functions all operate on each other, and are broken out just to make
-;; things easier to debug. 
-(defn- iri-to-var [var]
+(defn- iri-for-var
+  "Return the IRI for var if it is a named object
+or nil otherwise."
+  [var]
   (if (tawny.owl/named-object? (var-get var))
-    (.getIRI (tawny.owl/as-named-object (var-get var)))
+    (.toString (.toURI (.getIRI (tawny.owl/as-named-object (var-get var)))))
     nil))
 
-(defn- all-vars-in-namespace-with-ontology []
-  (vals
-   (apply
-    merge
-    (map
-     (fn [x]
-       (ns-publics x))
-     (keys @tawny.owl/ontology-for-namespace)))))
+(defn- vars-in-namespace [namespace]
+  (vals (ns-publics namespace)))
 
-(defn- pairs-iri-to-var []
-  (for [k (all-vars-in-namespace-with-ontology)]
-    [(iri-to-var k) k]))
+(defn iri-to-var 
+  "Return a map of IRI to var for namespaces"
+  [& namespaces]
+  (into {}
+        (for [var
+              ;; flatten down to single list
+              (flatten  
+               ;; kill namespaces with no ontology terms
+               (filter (comp not nil?)
+                       ;; list per namespace
+                       (map vars-in-namespace namespaces)))
+              :let [iri (iri-for-var var)]
+              :when (not (nil? iri))]
+          [iri var])))
 
-(defn- filtered-iri-to-vars []
-  (filter
-   (comp not nil? first)
-   (pairs-iri-to-var)))
+(defn namespace-with-ontology
+  "Returns a list of all names spaces with ontology objects"
+  []
+  (keys @tawny.owl/ontology-for-namespace))
 
-(defn map-iri-to-var []
-  (apply hash-map (flatten (filtered-iri-to-vars))))
+(defn all-iri-to-var 
+  "Returns a map keyed on IRI to var"
+  []
+  (apply iri-to-var (namespace-with-ontology)))
+
+
