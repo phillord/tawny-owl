@@ -145,10 +145,3 @@
       (m/merge-with-distinct
         {"a" #{"1"}} {"a" #{"1" "2"}}))))
 
-(m/fetch-remembered-entities)
-(m/memorise-map)
-
-(m/fetch-old-and-current-entities)
-
-(o/test-ontology)
-(bind-some-vars)
