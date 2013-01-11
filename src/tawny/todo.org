@@ -30,7 +30,9 @@ Support Version ID for everything.
 
 * Bugs 
 
-
 ** transitive 
 
 and other facets are all stored as strings which is dangerous.
+
+Fixed, this by turning them into objects, but this fails also, for reasons I
+don't quite understand yet. 
