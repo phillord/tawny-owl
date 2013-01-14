@@ -1,7 +1,6 @@
-(defproject uk.org.russet/tawny-owl "0.1-SNAPSHOT"
+(defproject uk.org.russet/tawny-owl "0.5-SNAPSHOT"
   :description "tawny-owl enables building OWL ontologies in a programmatic environment."
   :url "http://www.russet.org.uk/blog/tawny-owl"
-  :plugins [[lein-swank "1.4.4"]]
   :repositories [["maven" "http://repo1.maven.org/maven2"]
 
                  ;; hermit comes from here
@@ -10,8 +9,8 @@
 
   :resource-paths ["src/resources"]
   
-  :scm {:url "https://phil.lord.bio@code.google.com/p/tawny-owl/"
-        :name "hg"} 
+  :scm {:url "https://github.com/phillord/tawny-owl.git"
+        :name "git"} 
   
   :license {:name "LGPL"
             :url "http://www.gnu.org/licenses/lgpl-3.0.txt"
@@ -30,7 +29,8 @@
                  [org.semanticweb.elk/elk-owlapi "0.3.1"]
                  [org.semanticweb.hermit/HermiT "1.3.6.1"]
                  
-
+                 ;; internationalisation 
+                 [i18n "1.0.1"]
                  ]
 
 )
