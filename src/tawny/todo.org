@@ -28,6 +28,15 @@ Support Version ID for everything.
 
 
 
+** tawny.lookup optimisation
+
+This is potentially very slow. Add a cache to hold the map. 
+Put hooks into tawny.old macros for "new var creation". When this 
+pings, just kill the cache and start again. 
+
+Also, kill on ontology kill I think. 
+
+
 * Bugs 
 
 ** transitive 
@@ -36,3 +45,9 @@ and other facets are all stored as strings which is dangerous.
 
 Fixed, this by turning them into objects, but this fails also, for reasons I
 don't quite understand yet. 
+
+** Ontology reload
+
+Now we have tawny.lookup, it *should* be possible to unmap all vars in a
+namespace when an ontology is re-evaled. Just do "tawny.lookup", then ns-umap
+the entire lot. 
