@@ -495,7 +495,7 @@ class, or class expression. "
 ;; forward declaration
 (declare owlor)
 (defn someonly [property & classes]
-  (concat
+  (conj
    (apply owlsome (concat (list property) classes))
    (only property (apply owlor classes))))
 
