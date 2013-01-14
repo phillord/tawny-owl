@@ -393,9 +393,9 @@ class, or class expression. "
 
 ;; this is my second attempt -- a enum for a dynamic world. 
 
-(def ^:const transitive (Object.))
-(def ^:const functional (Object.))
-(def ^:const inversefunctional (Object.))
+(def ^:const transitive "transitive")
+(def ^:const functional "functional")
+(def ^:const inversefunctional "inversefunctional")
 
 (def
   ^{:private true}
