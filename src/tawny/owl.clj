@@ -575,7 +575,7 @@ class, or class expression. "
       (let [axiom
             (.getOWLAnnotationAssertionAxiom
              ontology-data-factory
-             (.getIRI (get-create-class name)) annotation)]
+             (.getIRI (ensure-class name)) annotation)]
         (add-axiom axiom)))
     annotation-list)))
 
@@ -583,7 +583,7 @@ class, or class expression. "
   ([annotation-property literal]
      (annotation annotation-property literal "en"))
   ([annotation-property literal language]
-     (.getOWLAnnotation
+     (.getOWLAnnotation 
       ontology-data-factory
       annotation-property 
       (.getOWLLiteral ontology-data-factory literal language))))

@@ -21,7 +21,7 @@
                  [net.sourceforge.owlapi/owlapi-api "3.4.2"]
                  [net.sourceforge.owlapi/owlapi-apibinding "3.4.2"]
                  [net.sourceforge.owlapi/owlapi-distribution "3.4.2"]
-
+                 
                  ;; clojure
                  [org.clojure/clojure "1.4.0"]
                  
@@ -29,8 +29,6 @@
                  [org.semanticweb.elk/elk-owlapi "0.3.1"]
                  [org.semanticweb.hermit/HermiT "1.3.6.1"]
                  
-                 ;; internationalisation 
-                 [i18n "1.0.1"]
                  ]
 
 )

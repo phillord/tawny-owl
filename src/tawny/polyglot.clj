@@ -17,8 +17,8 @@
 
 
 (ns tawny.polyglot
-  ;;(:use [i18n.core])
-  (:require [tawny.lookup]))
+  (:import [java.util ResourceBundle])
+  (:require [tawny.lookup] [tawny.owl]))
 
 
 ;; oh dear, lifted from memorise -- move to lookup I think
@@ -28,13 +28,10 @@
   (str (:name (meta var))))
 
 
-
-
 ;; function to create empty properties file
 
 (defn polyglot-create-resource [filename] 
   (with-open [w (clojure.java.io/writer filename)]
-    
     (doseq [name 
             (into (sorted-set)
                   (for [[k v] (tawny.lookup/iri-to-var *ns*)]
@@ -43,3 +40,25 @@
 
 ;; main entry function to gather add labels to all classes, given a language,
 ;; warning of missing translations.
+
+(defn polyglot-load-label [filename locale]
+  (let [props 
+        (with-open [r (clojure.java.io/reader filename)]
+          (let [props (java.util.Properties.)]
+            (.load props r)
+            props)
+          )
+        ]
+    (doseq [[k v] (tawny.lookup/name-to-var *ns*)]
+      ;; when there is a label
+      (let [label (.getProperty props k)]
+        (if (seq label)
+          (do 
+            (tawny.owl/add-annotation
+             (var-get v) 
+             (list (tawny.owl/label label locale))))
+          (println 
+           (format "Mising Label (%s:%s)"
+                   k locale))
+
+          )))))

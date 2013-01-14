@@ -44,6 +44,18 @@ or nil otherwise."
               :when (not (nil? iri))]
           [iri var])))
 
+
+;; oh dear, also in memorise
+(defn- var-str 
+  "Given a var, return a string representation of its name"
+  [var]
+  (str (:name (meta var))))
+
+(defn name-to-var [& namespaces]
+  (into {} 
+        (for [[k v] (apply iri-to-var namespaces)]
+          [(var-str v) v])))
+
 (defn namespace-with-ontology
   "Returns a list of all names spaces with ontology objects"
   []
