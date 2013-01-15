@@ -13,6 +13,7 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
 
+
 (ns tawny.reasoner
   (:require [tawny.owl :as owl]
             [tawny.util :as util])
@@ -38,6 +39,8 @@
 
 (defn reasoner-factory
   ([]
+     (when (nil? @vreasoner-factory)
+       (throw (IllegalStateException. "No reasoner has been chosen")))
      @vreasoner-factory)
   ([reasoner]
      (dosync
@@ -184,3 +187,35 @@ ontology is inconsistent"
   ;; actually implement this -- satisfiable > 0
   (zero? (count (unsatisfiable))))
 
+
+(defn- class-in-node-set? [nodeset class]
+  (util/in?
+   (.getFlattened nodeset) class))
+
+;; returns an immutable set of Nodes (including NodeSet's I think).
+(defn isuperclasses [name] 
+  (.getSuperClasses (reasoner) 
+                    (owl/ensure-class name)
+                    false))
+
+
+;; move this to using isuperclasses
+(defn isuperclass?
+  "Returns true if name has superclass as a superclass"
+  [name superclass]
+  (let [superclasses 
+        (isuperclasses name)]
+    (class-in-node-set? superclasses superclass)))
+
+
+(defn isubclasses [name]
+  (.getSubClasses (reasoner)
+                  (owl/ensure-class name)
+                  false))
+
+(defn isubclass?
+  "Returns true if name has subclass as a subclass"
+  [name subclass]
+  (let [subclasses
+        (isubclasses name)]
+    (class-in-node-set? subclasses subclass)))

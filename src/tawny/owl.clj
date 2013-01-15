@@ -224,7 +224,7 @@ or `filename' if given.
   (.getOWLClass ontology-data-factory
                 (iriforname name)))
 
-(defn- ensure-class [clz]
+(defn ensure-class [clz]
   "If clz is a String return a class of with that name,
 else if clz is a OWLClassExpression add that."
   (cond

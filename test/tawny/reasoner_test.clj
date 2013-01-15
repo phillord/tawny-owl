@@ -37,6 +37,8 @@
       (test)
       (o/save-ontology "test-reasoner.omn"))))
 
+
+
 ;; this isn't working and I really don't know why
 ;; it seems to work on lein test but kills all tests
 ;; when run in repl with clojure-test mode. 
@@ -68,6 +70,18 @@
   (ontology-abc)
   (o/individual "indC" :types "c"))
 
+
+(defn ontology-abc-reasoning []
+  ;; simple ontology -- c should be reasoned to be a subclass of a.
+  (o/owlclass "a"
+              :equivalent 
+              (o/owlsome "p" "b"))
+  (o/owlclass "b")
+  (o/owlclass "c"
+              :subclass 
+              (o/owlsome "p" "b")))
+
+
 (defn far-reasoner [func reasonerlist]
   (map
    (fn [x]
@@ -91,16 +105,15 @@
 ;;  '(:elk :hermit))
 
 
-(deftest empty-consistent? []
+(deftest empty-consistent? 
   ;; empty only is consistent
   (is
-   (do (println "hello")
-       (every?
-        identity
-        (far #(r/consistent?))))))
+   (every?
+    identity
+    (far #(r/consistent?)))))
 
 
-(deftest ind-consistent? []
+(deftest ind-consistent? 
   ;; with individual
   (is
    (every?
@@ -157,10 +170,32 @@
       (far #(r/unsatisfiable))))))
 
 
-(deftest coherent []
+(deftest coherent 
   (is
    (every?
     identity
     (do
       (ontology-abc)
       (far #(r/coherent?))))))
+
+
+(deftest isuperclass?
+  (is
+   (every? 
+    identity
+    (do 
+      (ontology-abc-reasoning)
+      (far #(r/isuperclass?
+             (o/owlclass "c") 
+             (o/owlclass "a")))))))
+
+(deftest isubclass?
+  (is
+   (every?
+    identity
+    (do
+      (ontology-abc-reasoning)
+      (far #(r/isubclass?
+             (o/owlclass "a")
+             (o/owlclass "c"))))
+    )))
