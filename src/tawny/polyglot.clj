@@ -43,7 +43,9 @@
 
 (defn polyglot-load-label [filename locale]
   (let [props 
-        (with-open [r (clojure.java.io/reader filename)]
+        (with-open 
+            [r (clojure.java.io/reader 
+                (clojure.java.io/resource filename))]
           (let [props (java.util.Properties.)]
             (.load props r)
             props)
