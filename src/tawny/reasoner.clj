@@ -108,6 +108,19 @@
     (reasonerTaskStopped []
       (println "reasoner task stopped"))))
 
+
+
+(defn reasoner-progress-monitor-silent[]
+  (proxy [org.semanticweb.owlapi.reasoner.ReasonerProgressMonitor] []
+    (reasonerTaskBusy[]
+      )
+    (reasonerTaskProgressChanged [val max]
+      )
+    (reasonerTaskStarted [name]
+      )
+    (reasonerTaskStopped []
+      )))
+
 ;; set up the default!
 (def
   ^{:dynamic true}
