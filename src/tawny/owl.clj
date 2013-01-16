@@ -568,14 +568,15 @@ class, or class expression. "
   
 ;; annotations
 (defn add-annotation
-  [name annotation-list]
+  [named-entity annotation-list]
   (doall
    (map
     (fn[annotation]
       (let [axiom
             (.getOWLAnnotationAssertionAxiom
              ontology-data-factory
-             (.getIRI (ensure-class name)) annotation)]
+             ;; have to have a named entity here or this will crash
+             (.getIRI named-entity) annotation)]
         (add-axiom axiom)))
     annotation-list)))
 
@@ -622,18 +623,18 @@ class, or class expression. "
        ;; create the class
        (do
          ;; add-class returns a single axiom -- concat balks at this
-         (add-class classname)
-         (add-subclass classname (:subclass frames))
-         (add-equivalent classname (:equivalent frames))
-         (add-annotation classname (:annotation frames))
+         (add-class class)
+         (add-subclass class (:subclass frames))
+         (add-equivalent class (:equivalent frames))
+         (add-annotation class (:annotation frames))
          ;; change these to add to the annotation frame instead perhaps?
          (when (:comment frames)
-           (add-annotation classname
+           (add-annotation class
                            (list (owlcomment
                                   (first (:comment frames))))))
 
          (when (:label frames)
-           (add-annotation classname
+           (add-annotation class
                            (list (label
                                   (first
                                    (:label frames))))))
