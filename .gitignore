@@ -1,3 +1,5 @@
 /target/*
 /.lein-failures
 /pom.xml
+test-*
+test.*
