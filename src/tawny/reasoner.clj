@@ -28,6 +28,9 @@
       JProgressBar
       WindowConstants)
     (org.semanticweb.elk.owlapi ElkReasonerFactory)
+    (org.apache.log4j 
+     Level
+     Logger)
     (org.semanticweb.owlapi.reasoner SimpleConfiguration)
     (org.semanticweb.HermiT Reasoner)))
 
@@ -49,7 +52,12 @@
       ;; create a new reasoner
       (ref-set vreasoner-factory
                (reasoner
-                {:elk (ElkReasonerFactory.)
+                {:elk 
+                 (do
+                   ;; ELK is noisy, so shut it up
+                   (-> (Logger/getLogger "org.semanticweb.elk")
+                       (.setLevel Level/ERROR));
+                   (ElkReasonerFactory.))
                  :hermit (org.semanticweb.HermiT.Reasoner$ReasonerFactory.)
                  }
                 )))))
