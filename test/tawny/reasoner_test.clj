@@ -171,6 +171,14 @@
       (o/disjointclasses "a" "b")
       (far #(r/unsatisfiable))))))
 
+;; had lots of problems getting this working so lets try with a single reasoner
+(deftest single-coherent
+  (is
+   (do 
+     (r/reasoner-factory :hermit)
+     (ontology-abc)
+     (r/coherent?))))
+
 
 (deftest coherent 
   (is
@@ -178,8 +186,11 @@
     identity
     (do
       (ontology-abc)
-      (far #(r/coherent?)))))
-  
+      (far #(do 
+              (r/coherent?)))))))
+
+
+(deftest incoherent
   (is
    (every?
     not
