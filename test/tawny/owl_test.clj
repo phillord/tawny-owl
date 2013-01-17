@@ -290,6 +290,42 @@ Assumes that fixture has been run
             (.getClassesInSignature)
             (.size))))))
 
+
+(defn ontology-c-with-two-parents []
+  (o/owlclass "a")
+  (o/owlclass "b")
+  (o/owlclass "c" :subclass "a" "b"))
+
+
+(deftest with-probe-axioms
+  ;; add a disjoint see whether it breaks
+  (is
+   (= 1
+      (do
+        (ontology-c-with-two-parents)
+        (o/with-probe-axioms
+          [a (o/disjointclasses "a" "b")]
+          (-> (#'o/get-current-jontology)
+              (.getDisjointClassesAxioms
+               (o/owlclass "a"))
+              (.size))))))
+
+  ;; add a disjoint test whether it breaks after
+  (is 
+   (= 0
+      (do 
+        (ontology-c-with-two-parents)
+        (o/with-probe-axioms
+          [a (o/disjointclasses "a" "b")])
+                  
+        (-> (#'o/get-current-jontology)
+            (.getDisjointClassesAxioms
+             (o/owlclass "a"))
+            (.size))))))
+
+
+
+
 ;; TODO lots of macros are in serious need of a test
 
 

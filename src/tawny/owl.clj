@@ -243,7 +243,7 @@ else if clz is a OWLClassExpression add that."
                 (AddAxiom. (get-current-jontology) axiom))
   axiom)
 
-(defn- remove-axiom [axiom]
+(defn remove-axiom [axiom]
   (.applyChange owl-ontology-manager
                 (RemoveAxiom. (get-current-jontology) axiom))
   axiom)
@@ -896,5 +896,44 @@ delete these entities from the ontology"
    :else
    (throw (IllegalArgumentException. 
            "with-probe-entities only allows Symbols in bindings"))))
+
+
+(defmacro with-probe-axioms
+  "Evaluate the body with a number of axioms. Then
+delete these axioms from the ontology"
+  [bindings & body]
+  (when-not (vector? bindings)
+    (IllegalArgumentException. "with-probe-axioms requires a vector"))
+  (when-not (even? (count bindings))
+    (IllegalArgumentException. 
+     "with-probe-axioms requires an even number of forms in binding vector"))
+  (cond 
+   (= (count bindings) 0)
+   `(do ~@body)
+   (symbol? (bindings 0))
+   `(let ~(subvec bindings 0 2)
+      (with-probe-axioms
+        ~(subvec bindings 2) 
+        ;; try block just so we can use finally
+        (try 
+          ~@body
+          (finally          
+            (tawny.owl/remove-axiom ~(bindings 0))))))
+   :else
+   (throw (IllegalArgumentException. 
+           "with-probe-axioms only allows Symbols in bindings"))))
+
+;; (with-probe-axioms
+;;    [a (disjointclasses (owlclass "a"))]
+;;    (println "hello"))
+
+;; (with-probe-axioms
+;;     []
+;;     (try (println "hello") (finally (remove-axiom a))))
+
+;; (let [a (disjointclasses (owlclass "a"))]
+;;   (do (try (println "hello") 
+;;            (finally (remove-axiom a)))))
+
 
 

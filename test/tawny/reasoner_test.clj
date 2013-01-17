@@ -83,11 +83,13 @@
 
 
 (defn far-reasoner [func reasonerlist]
-  (map
-   (fn [x]
-     (r/reasoner-factory x)
-     (func))
-   reasonerlist))
+  ;; lazy sequences are crazy
+  (doall
+   (map
+    (fn [x]
+      (r/reasoner-factory x)
+      (func))
+    reasonerlist)))
 
 ;; for all reasoners
 (defn far [func]
@@ -96,8 +98,8 @@
 
 ;; for all dl reasoners
 (defn fadlr [func]
-  (far-reasoner func)
-  '(:hermit))
+  (far-reasoner func
+                '(:hermit)))
 ;; (map
 ;;  (fn [x]
 ;;    (r/reasoner-factory x)
@@ -176,6 +178,14 @@
     identity
     (do
       (ontology-abc)
+      (far #(r/coherent?)))))
+  
+  (is
+   (every?
+    not
+    (do
+      (ontology-abc)
+      (o/disjointclasses "a" "b")
       (far #(r/coherent?))))))
 
 
@@ -199,3 +209,29 @@
              (o/owlclass "a")
              (o/owlclass "c"))))
     )))
+
+
+
+
+(deftest with-probe-axioms
+  ;; add a disjoint see whether it breaks
+  (is
+   (every?
+    not
+    (do
+      (ontology-abc)
+      (o/with-probe-axioms
+        [a (o/disjointclasses "a" "b")]
+        (o/save-ontology "test-probe.omn" :omn)
+        (doall (far #(r/coherent?)))))))
+
+  ;; add a disjoint test whether it breaks after
+  (is 
+   (every?
+    identity
+    (do 
+      (ontology-abc)
+      (o/with-probe-axioms
+        [a (o/disjointclasses "a" "b")])
+      (o/save-ontology "test-probe-after.omn" :omn)
+      (doall (far #(r/coherent?)))))))
