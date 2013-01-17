@@ -155,7 +155,7 @@
     (if reas
       reas
       (let [reas
-            (.createReasoner
+            (.createNonBufferingReasoner
              (reasoner-factory)
              (owl/get-current-jontology)
              (SimpleConfiguration.
