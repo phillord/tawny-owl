@@ -1,3 +1,11 @@
+2013-01-16  Phillip Lord  <phillip.lord@newcastle.ac.uk>
+
+	* src/tawny/owl.clj: with-probe-entities -- a useful macro for testing.
+
+2013-01-15  Phillip Lord  <phillip.lord@newcastle.ac.uk>
+
+	* src/tawny/reasoner.clj: Added isubclass? isuperclass? predicates
+
 2013-01-14  Phillip Lord  <phillip.lord@newcastle.ac.uk>
 
 	* src/tawny/memorise.clj: Initial implementation of library for

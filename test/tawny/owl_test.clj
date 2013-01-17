@@ -263,6 +263,33 @@ Assumes that fixture has been run
                   (#'o/get-current-jontology))))))))
 
 
+
+(deftest with-probe-entities
+  ;; are the classes created correctly
+  (is
+   (= 3
+      (o/with-probe-entities
+        [a (o/owlclass "a")
+         b (o/owlclass "b")
+         c (o/owlclass "c")]
+        (-> (#'o/get-current-jontology)
+            (.getClassesInSignature)
+            (.size))
+        )))
+
+  (is 
+   (= 0 
+      (do
+        (o/with-probe-entities
+            [a (o/owlclass "a")
+             b (o/owlclass "b")
+             c (o/owlclass "c")
+             ])
+        ;; and have they gone again afterwards
+        (-> (#'o/get-current-jontology)
+            (.getClassesInSignature)
+            (.size))))))
+
 ;; TODO lots of macros are in serious need of a test
 
 

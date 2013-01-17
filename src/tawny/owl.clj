@@ -868,3 +868,33 @@ Name can be either a class or a string name. Returns a list of classes"
 (defn subclasses [class]
   (subclasses-1 (isubclasses class)))
 
+
+;; some test useful macros
+
+;; modified from with-open
+(defmacro with-probe-entities
+  "Evaluate the body with a number of entities defined. Then 
+delete these entities from the ontology"
+  [bindings & body]
+  (when-not (vector? bindings)
+    (IllegalArgumentException. "with-probe-entities requires a vector"))
+  (when-not (even? (count bindings))
+    (IllegalArgumentException. 
+     "with-probe-entities requires an even number of forms in binding vector"))
+  (cond 
+   (= (count bindings) 0)
+   `(do ~@body)
+   (symbol? (bindings 0))
+   `(let ~(subvec bindings 0 2)
+      (with-probe-entities
+        ~(subvec bindings 2) 
+        ;; try block just so we can use finally
+        (try 
+          ~@body
+          (finally          
+            (tawny.owl/remove-entity ~(bindings 0))))))
+   :else
+   (throw (IllegalArgumentException. 
+           "with-probe-entities only allows Symbols in bindings"))))
+
+
