@@ -37,6 +37,24 @@ pings, just kill the cache and start again.
 Also, kill on ontology kill I think. 
 
 
+** add :ontology frame to all things
+
+We should be able to specify the ontology as a parameter, to 
+all things that add to an ontology -- with-ontology is a bit unwieldy. 
+Although we might want to use with-ontology to implement this, or I will have
+to pass it around a lot. 
+
+A new frame would be one option. Or the first parameter would be another. 
+
+** Autoname
+
+An autoname facility might be nice for where I can't be assed to specify a
+name. Especially good for probe classes. Easiest way is to just implement a
+new owlclass function. 
+
+
+
+
 * Bugs 
 
 ** transitive 
@@ -46,8 +64,26 @@ and other facets are all stored as strings which is dangerous.
 Fixed, this by turning them into objects, but this fails also, for reasons I
 don't quite understand yet. 
 
+
 ** Ontology reload
 
 Now we have tawny.lookup, it *should* be possible to unmap all vars in a
 namespace when an ontology is re-evaled. Just do "tawny.lookup", then ns-umap
 the entire lot. 
+
+
+** Polyglot crashes with no resource
+
+When loading polyglot crashes with this error. This happens when we can't find
+the pizzalabel file (or whatever). This happens when we are jacked into the
+wrong project and load pizza.clj manually. 
+
+Not sure what the right fix is. A nicer crash at minimum.
+
+java.lang.IllegalArgumentException: No implementation of method: :make-reader of protocol: #'clojure.java.io/IOFactory found for class: nil
+ at clojure.core$_cache_protocol_fn.invoke (core_deftype.clj:527)
+    clojure.java.io$fn__8239$G__8234__8246.invoke (io.clj:73)
+    clojure.java.io$reader.doInvoke (io.clj:106)
+    clojure.lang.RestFn.invoke (RestFn.java:410)
+    tawny.polyglot$polyglot_load_label.invoke (polyglot.clj:48)
+    user$eval2705.invoke (NO_SOURCE_FILE:1)
