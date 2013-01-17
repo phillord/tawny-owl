@@ -31,7 +31,7 @@
 (defn createandsavefixture[test]
   (binding
       [r/*reasoner-progress-monitor*
-       r/reasoner-progress-monitor-text]
+       r/reasoner-progress-monitor-silent]
     (o/with-ontology
       (createtestontology)
       (test)
