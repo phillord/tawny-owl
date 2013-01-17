@@ -222,10 +222,9 @@ ontology is inconsistent"
                     (owl/ensure-class name)
                     false))
 
-
 ;; move this to using isuperclasses
 (defn isuperclass?
-  "Returns true if name has superclass as a superclass"
+  "Returns true if name has superclass as a strict superclass"
   [name superclass]
   (let [superclasses 
         (isuperclasses name)]
@@ -238,8 +237,17 @@ ontology is inconsistent"
                   false))
 
 (defn isubclass?
-  "Returns true if name has subclass as a subclass"
+  "Returns true if name has subclass as a strict subclass"
   [name subclass]
   (let [subclasses
         (isubclasses name)]
     (class-in-node-set? subclasses subclass)))
+
+(defn iequivalent-classes [name]
+  (.getEquivalentClasses (reasoner)
+                         (owl/ensure-class name)))
+
+(defn iequivalent-class? [name equiv]
+  (util/in? 
+   (iequivalent-classes name)
+   name))
