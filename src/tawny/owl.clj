@@ -481,7 +481,6 @@ class, or class expression. "
       (map (partial owlsome property)
            (cons class classes)))))
 
-
 (defn only
   ([property class]
      (.getOWLObjectAllValuesFrom
@@ -491,6 +490,10 @@ class, or class expression. "
   ([property class & classes]
      (doall (map (partial only property)
                  (cons class classes)))))
+
+;; long shortcut -- for consistency with some
+(def owlonly only)
+
 
 ;; forward declaration
 (declare owlor)
