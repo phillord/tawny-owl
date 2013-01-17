@@ -47,6 +47,9 @@
      @vreasoner-factory)
   ([reasoner]
      (dosync
+      ;; blitz the reasoners
+      (doseq [r @reasoner-list]
+        (.dispose r))
       ;; blitz the reasoner list
       (ref-set reasoner-list ())
       ;; create a new reasoner
