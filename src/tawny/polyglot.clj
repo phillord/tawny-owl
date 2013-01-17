@@ -52,7 +52,6 @@
           )
         ]
     (doseq [[k v] (tawny.lookup/name-to-var *ns*)]
-
       ;; when there is a label
       (let [label (.getProperty props k)]
         (if (seq label)
