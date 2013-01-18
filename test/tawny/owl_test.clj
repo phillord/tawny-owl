@@ -325,11 +325,13 @@ Assumes that fixture has been run
 
 
 
+(deftest owlimport
+  (is
+   (not 
+    (nil?
+     (o/owlimport (o/get-current-ontology))))))
+
 
 ;; TODO lots of macros are in serious need of a test
 
 
-;; (subclass?
-;;  (owlclass "test1")
-;;  (owlclass "test"
-;;            :subclass "test1"))

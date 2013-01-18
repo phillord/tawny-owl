@@ -724,7 +724,7 @@ class, or class expression. "
                 (AddImport. (get-current-jontology)
                             (.getOWLImportsDeclaration
                              ontology-data-factory
-                             (IRI/create (:iri ontology))))))
+                             (:iri ontology)))))
 
 
 ;; return type of individual is buggered
