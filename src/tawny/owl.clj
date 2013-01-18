@@ -605,6 +605,23 @@ class, or class expression. "
 (def seealso
   (partial annotation (.getRDFSSeeAlso ontology-data-factory)))
 
+(def backwardcompatiblewith
+  (partial annotation (.getOWLBackwardCompatibleWith ontology-data-factory)))
+
+(def incompatiblewith
+  (partial annotation (.getOWLIncompatibleWith ontology-data-factory)))
+
+(defn annotation-property [property]
+  (.getOWLAnnotationProperty 
+   ontology-data-factory
+   (iriforname property)))
+
+(defmacro defannotationproperty
+  [property]
+  `(let [property-name# (name '~property)
+         (property# (tawny.owl/annotation-property property-name#))]
+     (def ~property property#)))
+
 
 ;; data type properties
 (defn datatypeproperty [name & frames]
@@ -937,6 +954,4 @@ delete these axioms from the ontology"
 ;; (let [a (disjointclasses (owlclass "a"))]
 ;;   (do (try (println "hello") 
 ;;            (finally (remove-axiom a)))))
-
-
 

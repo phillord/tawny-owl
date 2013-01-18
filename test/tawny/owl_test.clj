@@ -323,13 +323,48 @@ Assumes that fixture has been run
              (o/owlclass "a"))
             (.size))))))
 
-
-
 (deftest owlimport
   (is
    (not 
     (nil?
      (o/owlimport (o/get-current-ontology))))))
+
+
+(deftest annotation
+  (is
+   (instance? org.semanticweb.owlapi.model.OWLAnnotation
+              (o/label "hello")))
+
+  (is
+   (instance? org.semanticweb.owlapi.model.OWLAnnotation
+              (o/owlcomment "hello")))
+  
+  (is
+   (instance? org.semanticweb.owlapi.model.OWLAnnotation
+              (o/isdefinedby "hello")))
+  
+  (is
+   (instance? org.semanticweb.owlapi.model.OWLAnnotation
+              (o/seealso "hello")))
+  (is
+   (instance? org.semanticweb.owlapi.model.OWLAnnotation
+              (o/backwardcompatiblewith  "hello")))
+
+  (is
+   (instance? org.semanticweb.owlapi.model.OWLAnnotation
+              (o/incompatiblewith "hello")))
+
+  (is
+   (instance? org.semanticweb.owlapi.model.OWLAnnotationProperty
+              (o/annotation-property "hello")))
+  
+  (is
+   (instance? org.semanticweb.owlapi.model.OWLAnnotation
+              (o/annotation 
+               (o/annotation-property "hello")
+               "hello1"))))
+
+
 
 
 ;; TODO lots of macros are in serious need of a test
