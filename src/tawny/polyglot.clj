@@ -17,7 +17,6 @@
 
 
 (ns tawny.polyglot
-  (:import [java.util ResourceBundle])
   (:require [tawny.lookup] [tawny.owl]))
 
 
@@ -42,25 +41,29 @@
 ;; warning of missing translations.
 
 (defn polyglot-load-label [filename locale]
-  (let [props 
-        (with-open 
-            [r (clojure.java.io/reader 
-                (clojure.java.io/resource filename))]
-          (let [props (java.util.Properties.)]
-            (.load props r)
-            props)
-          )
-        ]
-    (doseq [[k v] (tawny.lookup/name-to-var *ns*)]
-      ;; when there is a label
-      (let [label (.getProperty props k)]
-        (if (seq label)
-          (do 
-            (tawny.owl/add-annotation
-             (var-get v) 
-             (list (tawny.owl/label label locale))))
-          (println 
-           (format "Mising Label (%s:%s)"
-                   k locale))
+  (if-let [resource
+           (clojure.java.io/resource filename)]
+    (let [props 
+          (with-open 
+              [r (clojure.java.io/reader 
+                  resource)]
+            (let [props (java.util.Properties.)]
+              (.load props r)
+              props)
+            )
+          ]
+      (doseq [[k v] (tawny.lookup/name-to-var *ns*)]
+        ;; when there is a label
+        (let [label (.getProperty props k)]
+          (if (seq label)
+            (do 
+              (tawny.owl/add-annotation
+               (var-get v) 
+               (list (tawny.owl/label label locale))))
+            (println 
+             (format "Missing Label (%s:%s)"
+                     k locale))))))
+    (throw (IllegalStateException. 
+            (format "Cannot find properties file: %s" filename)))))
 
-          )))))
+
