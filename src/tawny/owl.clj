@@ -943,15 +943,3 @@ delete these axioms from the ontology"
    (throw (IllegalArgumentException. 
            "with-probe-axioms only allows Symbols in bindings"))))
 
-;; (with-probe-axioms
-;;    [a (disjointclasses (owlclass "a"))]
-;;    (println "hello"))
-
-;; (with-probe-axioms
-;;     []
-;;     (try (println "hello") (finally (remove-axiom a))))
-
-;; (let [a (disjointclasses (owlclass "a"))]
-;;   (do (try (println "hello") 
-;;            (finally (remove-axiom a)))))
-
