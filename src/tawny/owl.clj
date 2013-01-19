@@ -611,6 +611,9 @@ class, or class expression. "
 (def incompatiblewith
   (partial annotation (.getOWLIncompatibleWith ontology-data-factory)))
 
+(def versioninfo
+  (partial annotation (.getOWLVersionInfo ontology-data-factory)))
+
 (defn annotation-property [property]
   (.getOWLAnnotationProperty 
    ontology-data-factory
