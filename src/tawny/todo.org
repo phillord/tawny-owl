@@ -1,4 +1,13 @@
 
+* Annotation Problems
+
+ - [] create new add-a-annotation method which adds a single annotation.
+ - [] Change add-annotation to use it.
+ - [] Change add-a-annotation to multimethod keyed on class of first entity.
+ - [] Add OWLNamedEntity should pass directly, rather than conversion of IRI.
+ - [] Add support for OWLOntology -- need different AddOntologyAnnotation
+      which we will only use in this place. 
+      
 
 
 * IRI Creation
