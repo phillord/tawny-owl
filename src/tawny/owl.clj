@@ -28,7 +28,8 @@
    (java.io ByteArrayOutputStream FileOutputStream PrintWriter)
    (java.io File)
    (java.util Collections)
-   (org.semanticweb.owlapi.model AddAxiom RemoveAxiom AddImport)))
+   (org.semanticweb.owlapi.model AddAxiom RemoveAxiom AddImport
+                                 AddOntologyAnnotation)))
 
 
 
@@ -93,15 +94,32 @@ ontology is an object of OWLOntology.
        owl-ontology-manager ontology)
       (util/run-hook remove-ontology-hook ontology))))
 
-
+(declare add-annotation)
+(declare owlcomment)
+(declare versioninfo)
 (defn ontology [& args]
   (let [options (apply hash-map args)
         iri (IRI/create (:iri options))]
     (remove-ontology-maybe
      (OWLOntologyID. iri))
-    (generate-ontology
-     iri (:prefix options) 
-     (.createOntology owl-ontology-manager iri))))
+    (let [jontology            
+          (.createOntology owl-ontology-manager iri)
+
+          ontology
+          (generate-ontology
+           iri (:prefix options) 
+           jontology)]
+      (add-annotation 
+       jontology
+       (filter (comp not nil?)
+               (flatten 
+                (list
+                 (:annotation options)
+                 (when-let [c (:comment options)]
+                   (owlcomment c))
+                 (when-let [v (:versioninfo options)]
+                   (versioninfo v))))))
+      ontology)))
 
 (defmacro defontology
   "Define a new ontology with `name'. 
@@ -570,18 +588,36 @@ class, or class expression. "
           (flatten individuals))))))
   
 ;; annotations
+(defmulti add-an-annotation (fn [named-entity _] 
+                              (class named-entity)))
+
+(defmethod add-an-annotation OWLNamedObject
+  [named-entity annotation]
+  ;; get the axiom and apply it. 
+  (let [axiom
+        (.getOWLAnnotationAssertionAxiom
+         ontology-data-factory
+         (.getIRI named-entity) annotation)]
+    (add-axiom axiom)))
+
+(defmethod add-an-annotation Ontology
+  [ontology annotation]
+  (add-an-annotation (:ontology ontology) annotation))
+
+(defmethod add-an-annotation OWLOntology
+  [ontology annotation]
+  ;; we don't appear to need an axiom to add annotation to the ontology. 
+  (.applyChange 
+   owl-ontology-manager 
+   (AddOntologyAnnotation. ontology annotation)))
+
 (defn add-annotation
   [named-entity annotation-list]
   (doall
    (map
-    (fn[annotation]
-      (let [axiom
-            (.getOWLAnnotationAssertionAxiom
-             ontology-data-factory
-             ;; have to have a named entity here or this will crash
-             (.getIRI named-entity) annotation)]
-        (add-axiom axiom)))
+    (partial add-an-annotation named-entity)
     annotation-list)))
+
 
 (defn annotation
   ([annotation-property literal]

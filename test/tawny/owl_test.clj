@@ -35,7 +35,15 @@
 (use-fixtures :each createandsavefixture)
 
 (deftest ontology
-  (is true))
+  (is true)
+  (is 
+   (not 
+    (nil?
+     (o/ontology 
+      :iri "http://iri/"
+      :prefix "iri:"
+      :comment "This is a comment"
+      :versioinfo "This is some versioninfo")))))
 
 (deftest defontology
   (is (not (nil? testontology)))
@@ -366,6 +374,19 @@ Assumes that fixture has been run
 
 
 
+(deftest add-annotation
+  (is 
+   (not
+    (nil? (o/add-annotation 
+           (o/owlclass "a")
+           (list (o/owlcomment "comment"))))))
+  
+  (is
+   (not 
+    (nil? (o/add-annotation
+           testontology 
+           (list (o/owlcomment "comment"))))))
+)
 
 ;; TODO lots of macros are in serious need of a test
 
