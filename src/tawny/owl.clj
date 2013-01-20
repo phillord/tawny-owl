@@ -63,13 +63,13 @@
 
 (defrecord
    ^{:doc "Key data about an ontology.
-iri is the IRI for the ontology
-manager is an OWLOntologyManager from which the ontology comes
 ontology is an object of OWLOntology.
+prefix is the prefix name for the ontology
+options is a map to store arbitrary associated data.
 "
       :private true
       }
-    Ontology [iri prefix ontology options])
+    Ontology [prefix ontology options])
 
 
 (defn named-object? [entity]
@@ -81,8 +81,8 @@ ontology is an object of OWLOntology.
         entity)
    (throw (IllegalArgumentException. "Expecting a named entity"))))
 
-(defn generate-ontology [iri prefix jontology]
-  (Ontology. iri prefix jontology (ref {})))
+(defn generate-ontology [prefix jontology]
+  (Ontology. prefix jontology (ref {})))
 
 
 (def remove-ontology-hook (util/make-hook))
@@ -107,7 +107,7 @@ ontology is an object of OWLOntology.
 
           ontology
           (generate-ontology
-           iri (:prefix options) 
+           (:prefix options) 
            jontology)]
       (add-annotation 
        jontology
@@ -171,12 +171,20 @@ This defines a minimal test ontology.
   "Gets the object representing the current ontology"
   (:ontology (get-current-ontology)))
 
+(defn get-iri
+  "Gets the IRI for the given ontology, or the current ontology if none is given"
+  ([]
+     (get-iri (get-current-ontology)))
+  ([ontology]
+     (.getOntologyIRI
+      (.getOntologyID (:ontology ontology)))))
+
 (defn get-current-iri[]
-  "Gets the current IRI"
-  (let [iri (:iri (get-current-ontology))]
-    (when (nil? iri)
-      (throw (IllegalStateException. "Current ontology IRI has not been set")))
-    iri))
+  "DEPRECATED: Use 'get-iri' instead. "
+  {:deprecated "0.8"}
+  (get-iri))
+
+
 
 (defn get-current-prefix []
   "Gets the current prefix"
@@ -210,7 +218,7 @@ or `filename' if given.
        (when (.isPrefixOWLOntologyFormat this-format)
          (dorun
           (map #(.setPrefix this-format (:prefix %)
-                            (str (.toString (:iri %)) "#"))
+                            (str (.toString (get-iri %)) "#"))
                (vals @ontology-for-namespace))))
        (.print file-writer prepend)
        (.flush file-writer)
@@ -780,7 +788,7 @@ class, or class expression. "
                 (AddImport. (get-current-jontology)
                             (.getOWLImportsDeclaration
                              ontology-data-factory
-                             (:iri ontology)))))
+                             (get-iri ontology)))))
 
 
 ;; return type of individual is buggered

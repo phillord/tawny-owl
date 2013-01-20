@@ -56,6 +56,14 @@
 (deftest get-current-jontology
   (is (not (nil? (#'o/get-current-jontology)))))
 
+(deftest get-iri
+  (is (= "http://iri/" 
+         (.toString (o/get-iri (o/ontology :iri "http://iri/")))))
+  (is (= "http://iri/" 
+         (.toString (o/get-iri testontology))))
+  (is (= "http://iri/" 
+         (.toString (o/get-iri)))))
+
 (deftest get-current-iri
   (is (= "http://iri/" (.toString (#'o/get-current-iri)))))
 
