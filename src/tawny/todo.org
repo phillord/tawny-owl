@@ -1,4 +1,57 @@
 
+
+* Remove the Ontology Record and use java object
+
+The existance of an Ontology record with an ontology inside it 
+is a pain in the ass for many reasons -- mostly because I have to remember the
+layer of indirection. So I want to get away from this and just use the
+underlying Java object
+
+** Get IRI from ontology
+
+(.isPrefixOWLOntologyFormat
+ (.getOntologyFormat owl-ontology-manager (#'get-current-jontology)))
+
+returns true -- so by default, we should be able to get the format. Then
+
+public java.util.Map<java.lang.String,java.lang.String> getPrefixName2PrefixMap()
+
+Description copied from interface: PrefixManager
+Gets a map that maps prefix names to prefixes.
+
+should let us get the prefix name (that is owl:) for prefix (that is url). The
+map is backward, but such is life. 
+
+Setting prefix is easy -- save-ontology has the code. 
+
+** IRI
+
+Easy to get -- from the ontology ID object which comes direct from the
+Ontology object.
+
+** Options 
+
+Just put these damn options in! Ah well. 
+
+Currently only used by memorise to store remembered entities. This can be 
+replaced by a map, with appropriate hooks. Currently, I have this for
+reasoner. This should be easy to generalise -- map from ontology to another
+map. Second map can use namespaced keywords, and we can put anything we want
+into it. 
+
+Perhaps, can use this for lookup cache also. 
+
+Maybe, a better idea here is to use the IMeta interface and extends-type
+support to add metadata to ontologies. This doesn't work for the reasoner
+however, as I need to be able to blitz all the reasoners when the factory
+changes (which doesn't affect ontologies). 
+
+Lookup cache is namespace based. I guess I could add this to the namespace
+metadata? Although, why not the ontology? Can get the ontology from the
+namespace after all. 
+
+
+
 * Annotation Problems
 
  - [] create new add-a-annotation method which adds a single annotation.
