@@ -29,7 +29,8 @@
 (defn createandsavefixture[test]
   (o/with-ontology (createtestontology)
     (test)
-    (o/save-ontology "test.omn"))
+    ;;(o/save-ontology "test.omn")
+    )
   )
 
 (use-fixtures :each createandsavefixture)

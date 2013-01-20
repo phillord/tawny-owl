@@ -64,12 +64,11 @@
 (defrecord
    ^{:doc "Key data about an ontology.
 ontology is an object of OWLOntology.
-prefix is the prefix name for the ontology
 options is a map to store arbitrary associated data.
 "
       :private true
       }
-    Ontology [prefix ontology options])
+    Ontology [ontology options])
 
 
 (defn named-object? [entity]
@@ -81,8 +80,8 @@ options is a map to store arbitrary associated data.
         entity)
    (throw (IllegalArgumentException. "Expecting a named entity"))))
 
-(defn generate-ontology [prefix jontology]
-  (Ontology. prefix jontology (ref {})))
+(defn generate-ontology [jontology]
+  (Ontology. jontology (ref {})))
 
 
 (def remove-ontology-hook (util/make-hook))
@@ -104,11 +103,26 @@ options is a map to store arbitrary associated data.
      (OWLOntologyID. iri))
     (let [jontology            
           (.createOntology owl-ontology-manager iri)
-
+          
+          ontology-format
+          (.getOntologyFormat
+           owl-ontology-manager jontology)
+          
           ontology
           (generate-ontology
-           (:prefix options) 
            jontology)]
+
+      ;; put prefix into the prefix manager
+      ;; this isn't a given -- the prefix manager being returned by default 
+      ;; returns true for isPrefixOWLOntologyFormat, so we can do this, but 
+      ;; strictly we are depending on the underlying types. 
+      (when-let [prefix (:prefix options)]
+        (.setPrefix ontology-format 
+                    prefix
+                    (.toString iri)))
+
+      
+      ;; add annotations to the ontology
       (add-annotation 
        jontology
        (filter (comp not nil?)
@@ -184,15 +198,21 @@ This defines a minimal test ontology.
   {:deprecated "0.8"}
   (get-iri))
 
-
+(defn get-prefix 
+  ([] (get-prefix (get-current-ontology)))
+  ([ontology]
+     ;; my assumption here is that there will only ever be one prefix for a given 
+     ;; ontology. If not, it's all going to go wrong.
+     (first 
+      (keys
+       (.getPrefixName2PrefixMap
+        (.getOntologyFormat owl-ontology-manager 
+                            (:ontology ontology)))))))
 
 (defn get-current-prefix []
   "Gets the current prefix"
-  (let [prefix (:prefix (get-current-ontology))]
-    (when (nil? prefix)
-      (throw (IllegalStateException. "No current prefix")))
-    prefix))
-
+  {:deprecated "0.8"}
+  (get-prefix))
 
 (defn save-ontology
   "Save the current ontology in the file returned by `get-current-file'.
@@ -217,7 +237,7 @@ or `filename' if given.
             :else format)]
        (when (.isPrefixOWLOntologyFormat this-format)
          (dorun
-          (map #(.setPrefix this-format (:prefix %)
+          (map #(.setPrefix this-format (get-prefix %)
                             (str (.toString (get-iri %)) "#"))
                (vals @ontology-for-namespace))))
        (.print file-writer prepend)
