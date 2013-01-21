@@ -178,20 +178,12 @@ The following keys must be supplied.
          ontology-options-atom assoc ontology (ref {}))
         ontology))))
 
-(defn set-ontology-options
-  "Sets the value of an ontology option hash. This must be 
-synchronised"
-  ([v]
-     (set-ontology-options v (get-current-jontology)))
-  ([o v]
-     (swap! ontology-options-atom
-            assoc o v)))
-
 
 (util/add-hook remove-ontology-hook
                (fn [ontology]
-                 (dosync (set-ontology-options ontology {}))
-                 ))
+                 (dosync 
+                  (swap! ontology-options-atom
+                         dissoc ontology))))
 
 
 (defn test-ontology
