@@ -60,16 +60,13 @@
 (def ^{:doc "Map between namespaces and ontologies"}
   ontology-for-namespace (ref {}))
 
-
 (defrecord
    ^{:doc "Key data about an ontology.
 ontology is an object of OWLOntology.
-options is a map to store arbitrary associated data.
 "
       :private true
       }
-    Ontology [ontology options])
-
+    Ontology [ontology])
 
 (defn named-object? [entity]
   (instance? OWLNamedObject entity))
@@ -81,7 +78,7 @@ options is a map to store arbitrary associated data.
    (throw (IllegalArgumentException. "Expecting a named entity"))))
 
 (defn generate-ontology [jontology]
-  (Ontology. jontology (ref {})))
+  (Ontology. jontology))
 
 
 (def remove-ontology-hook (util/make-hook))
@@ -93,6 +90,7 @@ options is a map to store arbitrary associated data.
        owl-ontology-manager ontology)
       (util/run-hook remove-ontology-hook ontology))))
 
+
 (declare add-annotation)
 (declare owlcomment)
 (declare versioninfo)
@@ -101,6 +99,7 @@ options is a map to store arbitrary associated data.
         iri (IRI/create (:iri options))]
     (remove-ontology-maybe
      (OWLOntologyID. iri))
+    
     (let [jontology            
           (.createOntology owl-ontology-manager iri)
           
@@ -157,6 +156,37 @@ The following keys must be supplied.
            ontology-for-namespace
            (merge @ontology-for-namespace
                   {*ns* ontology}))))
+
+
+;; ontology options -- additional knowledge that I want to attach to each
+;; ontology,  but which gets junked when the ontology does. 
+(def ^{:doc "Ontology options. A map on a ref for each ontology"}
+  ontology-options-atom (atom {}))
+
+(declare get-current-jontology)
+;; return options for ontology -- lazy (defn get-ontology-options [ontology])
+(defn ontology-options
+  "Returns the ontology options for an ontology"
+  ([]
+     (ontology-options (get-current-jontology)))
+  ([ontology]
+     (if-let [options
+              (get @ontology-options-atom ontology)]
+       options
+       (get 
+        (swap!
+         ontology-options-atom assoc ontology (ref {}))
+        ontology))))
+
+(defn set-ontology-options
+  "Sets the value of an ontology option hash. This must be 
+synchronised"
+  ([v]
+     (set-ontology-options v (get-current-jontology)))
+  ([o v]
+     (swap! ontology-options-atom
+            assoc o v)))
+
 
 (defn test-ontology
   "Define a test ontology.

@@ -68,8 +68,24 @@
 (deftest get-current-iri
   (is (= "http://iri/" (.toString (#'o/get-current-iri)))))
 
-(deftest get-current-prefix []
+(deftest get-current-prefix 
   (is (= "iri:" (o/get-current-prefix))))
+
+
+
+(deftest ontology-options
+ 
+  (is 
+   (instance? clojure.lang.Ref
+              (o/ontology-options testontology)))
+  
+  (is
+   (let [options {:a 1 :b 2}]
+     (dosync (o/set-ontology-options testontology options))
+     (= (o/ontology-options testontology)
+            options))))
+
+
 
 (deftest save-ontology []
   (is (do (o/save-ontology "test.omn")

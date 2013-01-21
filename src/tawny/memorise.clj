@@ -75,7 +75,7 @@ This function returns a map from the IRI to the var object(s) which hold it"
 
 (defn fetch-remembered-entities []
   (or  
-   (:remember (deref (:options (tawny.owl/get-current-ontology))))
+   (:remember (deref (tawny.owl/ontology-options)))
    {}))
 
 
@@ -152,7 +152,7 @@ same keys, as all values are represented as sets"
      ;; everything we load.
      (dosync
       (alter
-       (:options (tawny.owl/get-current-ontology))
+       (tawny.owl/ontology-options)
        merge {:remember iri-to-name-mapping}))
      (check-old-mappings iri-to-name-mapping (memorise-map))))
 
