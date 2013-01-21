@@ -60,14 +60,6 @@
 (def ^{:doc "Map between namespaces and ontologies"}
   ontology-for-namespace (ref {}))
 
-(defrecord
-   ^{:doc "Key data about an ontology.
-ontology is an object of OWLOntology.
-"
-      :private true
-      }
-    Ontology [ontology])
-
 (defn named-object? [entity]
   (instance? OWLNamedObject entity))
 
@@ -76,10 +68,6 @@ ontology is an object of OWLOntology.
    (and (instance? OWLNamedObject entity)
         entity)
    (throw (IllegalArgumentException. "Expecting a named entity"))))
-
-(defn generate-ontology [jontology]
-  (Ontology. jontology))
-
 
 (def remove-ontology-hook (util/make-hook))
 
@@ -105,11 +93,7 @@ ontology is an object of OWLOntology.
           
           ontology-format
           (.getOntologyFormat
-           owl-ontology-manager jontology)
-          
-          ontology
-          (generate-ontology
-           jontology)]
+           owl-ontology-manager jontology)]
 
       ;; put prefix into the prefix manager
       ;; this isn't a given -- the prefix manager being returned by default 
@@ -132,7 +116,7 @@ ontology is an object of OWLOntology.
                    (owlcomment c))
                  (when-let [v (:versioninfo options)]
                    (versioninfo v))))))
-      ontology)))
+      jontology)))
 
 (defmacro defontology
   "Define a new ontology with `name'. 
@@ -163,12 +147,12 @@ The following keys must be supplied.
 (def ^{:doc "Ontology options. A map on a ref for each ontology"}
   ontology-options-atom (atom {}))
 
-(declare get-current-jontology)
+(declare get-current-ontology)
 ;; return options for ontology -- lazy (defn get-ontology-options [ontology])
 (defn ontology-options
   "Returns the ontology options for an ontology"
   ([]
-     (ontology-options (get-current-jontology)))
+     (ontology-options (get-current-ontology)))
   ([ontology]
      (if-let [options
               (get @ontology-options-atom ontology)]
@@ -209,17 +193,13 @@ This defines a minimal test ontology.
       (throw (IllegalStateException. "Current ontology has not been set"))))
 
 
-(defn get-current-jontology[]
-  "Gets the object representing the current ontology"
-  (:ontology (get-current-ontology)))
-
 (defn get-iri
   "Gets the IRI for the given ontology, or the current ontology if none is given"
   ([]
      (get-iri (get-current-ontology)))
   ([ontology]
      (.getOntologyIRI
-      (.getOntologyID (:ontology ontology)))))
+      (.getOntologyID ontology))))
 
 (defn get-current-iri[]
   "DEPRECATED: Use 'get-iri' instead. "
@@ -235,7 +215,7 @@ This defines a minimal test ontology.
       (keys
        (.getPrefixName2PrefixMap
         (.getOntologyFormat owl-ontology-manager 
-                            (:ontology ontology)))))))
+                            ontology))))))
 
 (defn get-current-prefix []
   "Gets the current prefix"
@@ -257,7 +237,7 @@ or `filename' if given.
            output-stream (new FileOutputStream file)
            file-writer (new PrintWriter output-stream)
            existingformat (.getOntologyFormat owl-ontology-manager
-                                              (get-current-jontology))
+                                              (get-current-ontology))
            this-format
            (cond
             (= format :omn) (ManchesterOWLSyntaxOntologyFormat.)
@@ -272,7 +252,7 @@ or `filename' if given.
        (.flush file-writer)
        (.setPrefix this-format (get-current-prefix)
                    (str (.toString (get-current-iri)) "#"))
-       (.saveOntology owl-ontology-manager (get-current-jontology)
+       (.saveOntology owl-ontology-manager (get-current-ontology)
                       this-format output-stream))))
 
 (defn- iriforname [name]
@@ -314,12 +294,12 @@ else if clz is a OWLClassExpression add that."
 
 (defn- add-axiom [axiom]
   (.applyChange owl-ontology-manager
-                (AddAxiom. (get-current-jontology) axiom))
+                (AddAxiom. (get-current-ontology) axiom))
   axiom)
 
 (defn remove-axiom [axiom]
   (.applyChange owl-ontology-manager
-                (RemoveAxiom. (get-current-jontology) axiom))
+                (RemoveAxiom. (get-current-ontology) axiom))
   axiom)
 
 (defn remove-entity
@@ -339,7 +319,7 @@ of c."
   (let [remover
         (OWLEntityRemover. owl-ontology-manager
                            (hash-set
-                            (get-current-jontology)))]
+                            (get-current-ontology)))]
     (.accept entity remover)
     (.applyChanges owl-ontology-manager
                    (.getChanges remover))))
@@ -656,10 +636,6 @@ class, or class expression. "
          (.getIRI named-entity) annotation)]
     (add-axiom axiom)))
 
-(defmethod add-an-annotation Ontology
-  [ontology annotation]
-  (add-an-annotation (:ontology ontology) annotation))
-
 (defmethod add-an-annotation OWLOntology
   [ontology annotation]
   ;; we don't appear to need an axiom to add annotation to the ontology. 
@@ -833,7 +809,7 @@ class, or class expression. "
 
 (defn owlimport [ontology]
   (.applyChange owl-ontology-manager
-                (AddImport. (get-current-jontology)
+                (AddImport. (get-current-ontology)
                             (.getOWLImportsDeclaration
                              ontology-data-factory
                              (get-iri ontology)))))
@@ -948,7 +924,7 @@ namelist where recursefunction returns all direct relationships"
 Name can be either a class or a string name. Returns a list of classes"
   [name]
   (.getSuperClasses (ensure-class name)
-                    (get-current-jontology)))
+                    (get-current-ontology)))
 
 
 (defn superclass?
@@ -962,7 +938,7 @@ Name can be either a class or a string name. Returns a list of classes"
   "Returns the direct subclasses of name."
   [name]
   (.getSubClasses (ensure-class name)
-                  (get-current-jontology)))
+                  (get-current-ontology)))
 
 (defn subclass?
   "Returns true if name has subclass as a subclass"

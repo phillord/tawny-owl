@@ -1,5 +1,9 @@
 
 
+* Move the reasoner code into ontology options
+
+
+
 * Remove the Ontology Record and use java object
 
 The existance of an Ontology record with an ontology inside it 
@@ -7,7 +11,7 @@ is a pain in the ass for many reasons -- mostly because I have to remember the
 layer of indirection. So I want to get away from this and just use the
 underlying Java object
 
-** Get IRI from ontology
+** Get prefix from ontology
 
 (.isPrefixOWLOntologyFormat
  (.getOntologyFormat owl-ontology-manager (#'get-current-jontology)))
@@ -50,6 +54,19 @@ Lookup cache is namespace based. I guess I could add this to the namespace
 metadata? Although, why not the ontology? Can get the ontology from the
 namespace after all. 
 
+
+So, final decision. Will create a (options ontology) method in owl.clj, which
+returns a hash for each and an (update-options f ontology) which applies
+function f which updates. We store this in a ref. Then we hook into ontology
+creation/destruction code, so that we can clear things up appropriately.
+
+This means that ontologies have to be removed explicitly; but then they do
+anyway because the ontology manager holds onto them. So only a problem if
+ontologies are created with random IRIs. 
+
+Reasoner can also be updated. This will make the task of getting all reasoners
+a little harder -- we iterate through all options, get the reasoner, kill it.
+But, we can do this one after the other. 
 
 
 * Annotation Problems

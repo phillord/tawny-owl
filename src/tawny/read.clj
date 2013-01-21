@@ -43,9 +43,6 @@
           (.loadOntologyFromOntologyDocument
            tawny.owl/owl-ontology-manager
            location))
-        
-        ontology
-        (tawny.owl/generate-ontology owlontology)
         ]
 
     (when prefix
@@ -55,7 +52,7 @@
           (throw (IllegalArgumentException. "Attempt to provide a prefix to an ontology that is not using a prefix format")))))
     
     ;; this is the ontology for the namespace so stuff it place
-    (tawny.owl/ontology-to-namespace ontology)
+    (tawny.owl/ontology-to-namespace owlontology)
 
     ;;
     (doall
@@ -72,7 +69,7 @@
       (clojure.core/filter (or filter default-filter)
                            (.getSignature owlontology))))
 
-    ontology))
+    owlontology))
 
 
 

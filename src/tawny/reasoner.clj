@@ -151,13 +151,13 @@
 ;; memoized function taking jontology as param Probably need to write a new
 ;; ProgressMonitor to communicate with emacs.
 (defn reasoner []
-  (let [reas (reasoner-for-ontology (owl/get-current-jontology))]
+  (let [reas (reasoner-for-ontology (owl/get-current-ontology))]
     (if reas
       reas
       (let [reas
             (.createNonBufferingReasoner
              (reasoner-factory)
-             (owl/get-current-jontology)
+             (owl/get-current-ontology)
              (SimpleConfiguration.
               (*reasoner-progress-monitor*)))]
         (dosync

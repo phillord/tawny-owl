@@ -48,14 +48,11 @@
 
 (deftest defontology
   (is (not (nil? testontology)))
-  (is (= 0 (.getAxiomCount (#'o/get-current-jontology)))))
+  (is (= 0 (.getAxiomCount (#'o/get-current-ontology)))))
 
 (deftest get-current-ontology
   (is (not (nil? (o/get-current-ontology))))
   (is (= testontology (o/get-current-ontology))))
-
-(deftest get-current-jontology
-  (is (not (nil? (#'o/get-current-jontology)))))
 
 (deftest get-iri
   (is (= "http://iri/" 
@@ -71,6 +68,11 @@
 (deftest get-current-prefix 
   (is (= "iri:" (o/get-current-prefix))))
 
+(deftest declare-classes
+  (is 
+   (-> (o/declare-classes a)
+       (nil?)
+       (not))))
 
 
 (deftest ontology-options
@@ -220,7 +222,7 @@
   (is (= 1
          (do (o/owlclass "test")
              (.size (.getClassesInSignature
-                     (#'o/get-current-jontology))))))
+                     (o/get-current-ontology))))))
   (is (instance? org.semanticweb.owlapi.model.OWLClass
                  (o/owlclass "test"))))
 
@@ -229,7 +231,7 @@
   (is (= 1
          (do (o/defclass a)
              (.size (.getClassesInSignature
-                     (#'o/get-current-jontology))))))
+                     (o/get-current-ontology))))))
   (is (not
        (nil?
         (do (o/defclass a)
@@ -298,7 +300,7 @@ Assumes that fixture has been run
         (let [clazz (o/owlclass "a")]
           (o/remove-entity clazz)
           (.size (.getClassesInSignature
-                  (#'o/get-current-jontology)))))))
+                  (o/get-current-ontology)))))))
   
   (is
    (= 0
@@ -306,7 +308,7 @@ Assumes that fixture has been run
         (let [prop (o/objectproperty "a")]
           (o/remove-entity prop)
           (.size (.getClassesInSignature
-                  (#'o/get-current-jontology))))))))
+                  (o/get-current-ontology))))))))
 
 
 
@@ -318,7 +320,7 @@ Assumes that fixture has been run
         [a (o/owlclass "a")
          b (o/owlclass "b")
          c (o/owlclass "c")]
-        (-> (#'o/get-current-jontology)
+        (-> (o/get-current-ontology)
             (.getClassesInSignature)
             (.size))
         )))
@@ -332,7 +334,7 @@ Assumes that fixture has been run
              c (o/owlclass "c")
              ])
         ;; and have they gone again afterwards
-        (-> (#'o/get-current-jontology)
+        (-> (#'o/get-current-ontology)
             (.getClassesInSignature)
             (.size))))))
 
@@ -351,7 +353,7 @@ Assumes that fixture has been run
         (ontology-c-with-two-parents)
         (o/with-probe-axioms
           [a (o/disjointclasses "a" "b")]
-          (-> (#'o/get-current-jontology)
+          (-> (#'o/get-current-ontology)
               (.getDisjointClassesAxioms
                (o/owlclass "a"))
               (.size))))))
@@ -364,7 +366,7 @@ Assumes that fixture has been run
         (o/with-probe-axioms
           [a (o/disjointclasses "a" "b")])
                   
-        (-> (#'o/get-current-jontology)
+        (-> (#'o/get-current-ontology)
             (.getDisjointClassesAxioms
              (o/owlclass "a"))
             (.size))))))
