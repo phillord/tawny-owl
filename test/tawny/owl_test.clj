@@ -83,8 +83,11 @@
   
   (is
    (let [options {:a 1 :b 2}]
-     (dosync (o/set-ontology-options testontology options))
-     (= (o/ontology-options testontology)
+     (dosync 
+      (alter (o/ontology-options testontology)
+             merge options))
+
+     (= @(o/ontology-options testontology)
             options)))
 
   (is 
