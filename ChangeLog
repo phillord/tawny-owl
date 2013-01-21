@@ -1,3 +1,9 @@
+2013-01-21  Phillip Lord  <phillip.lord@newcastle.ac.uk>
+
+	* src/tawny/owl.clj: Ontologies are now representing purely with a
+	OWL API object without additional baggage. This simplifies the
+	code and should also improve interaction at the REPL.
+
 2013-01-16  Phillip Lord  <phillip.lord@newcastle.ac.uk>
 
 	* src/tawny/owl.clj: with-probe-entities -- a useful macro for testing.
