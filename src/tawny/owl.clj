@@ -188,6 +188,14 @@ synchronised"
             assoc o v)))
 
 
+(util/add-hook remove-ontology-hook
+               (fn [ontology]
+                 (println "removing ontology:" ontology)
+                 (dosync (set-ontology-options ontology {}))
+                 (println "options now:" @ontology-options-atom)
+                 ))
+
+
 (defn test-ontology
   "Define a test ontology.
 

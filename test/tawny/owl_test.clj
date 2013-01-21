@@ -83,7 +83,20 @@
    (let [options {:a 1 :b 2}]
      (dosync (o/set-ontology-options testontology options))
      (= (o/ontology-options testontology)
-            options))))
+            options)))
+
+  (is 
+   (do 
+     ;; need a clean slate to start with!
+     (reset! o/ontology-options-atom {})
+     (o/ontology :iri "http://iri" :prefix "dfda:")
+     (o/ontology-options)
+     (o/ontology :iri "http://iri" :prefix "dfda:")
+     (o/ontology-options)
+     (o/ontology :iri "http://iri" :prefix "dfda:")
+     (o/ontology-options)
+     (= 1
+          (count @o/ontology-options-atom)))))
 
 
 
