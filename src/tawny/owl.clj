@@ -873,6 +873,35 @@ class, or class expression. "
       ~@body)))
 
 
+(defmacro as-subclasses [superclass & body]
+  (let [options# (vec (take-while keyword? body))
+        rest# (drop-while keyword? body)]
+    `(binding [tawny.owl/recent-axiom-list '()]
+       (with-default-frames [:subclass ~superclass]
+        ~@body)
+       (tawny.owl/subclass-options 
+        ~options# 
+        ~superclass
+        tawny.owl/recent-axiom-list))))
+
+(defn subclass-options 
+  [options superclass subclasses]
+  (let [optset (into #{} options)]
+    (when (and 
+           (contains? optset :disjoint)
+           (< 1 (count tawny.owl/recent-axiom-list)))
+      (disjointclasseslist
+       recent-axiom-list))
+    (when (and 
+           (contains? optset :cover))
+      (add-equivalent
+       superclass 
+       (list (owlor recent-axiom-list))))))
+
+
+
+
+
 (defmacro declare-classes
   "Declares all the classes given in names.
 
