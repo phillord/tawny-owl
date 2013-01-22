@@ -1014,3 +1014,10 @@ delete these axioms from the ontology"
    (throw (IllegalArgumentException. 
            "with-probe-axioms only allows Symbols in bindings"))))
 
+
+
+(defn owlthing []
+  (.getOWLThing ontology-data-factory))
+
+(defn owlnothing []
+  (.getOWLNothing ontology-data-factory))
