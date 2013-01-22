@@ -46,7 +46,7 @@ or nil otherwise."
 
 
 ;; oh dear, also in memorise
-(defn- var-str 
+(defn var-str 
   "Given a var, return a string representation of its name"
   [var]
   (str (:name (meta var))))
