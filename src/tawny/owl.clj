@@ -825,6 +825,7 @@ class, or class expression. "
      individual#))
 
 ;; convienience macros
+;; is this necessary? is as-disjoint-subclasses not enough?
 (defmacro as-disjoint [& body]
   `(do ;; delete all recent classes
      (binding [tawny.owl/recent-axiom-list '()]
@@ -849,10 +850,6 @@ class, or class expression. "
        )))
 
 
-
-
-
-
 ;; bind to 
 (defmacro with-ontology [ontology & body]
   `(binding [tawny.owl/*current-bound-ontology* ~ontology]
@@ -869,10 +866,7 @@ class, or class expression. "
 
 
 (defmacro as-disjoint-subclasses [superclass & body]
-  ;; crap out badly if superclass isn't a class object
-  `(with-default-frames [:subclass ~superclass]
-     (as-disjoint
-      ~@body)))
+  `(as-subclasses ~superclass :disjoint ~@body))
 
 
 (defmacro as-subclasses [superclass & body]
@@ -891,6 +885,9 @@ class, or class expression. "
   (let [optset (into #{} options)]
     (when (and 
            (contains? optset :disjoint)
+           ;; set them disjoint if there is more than one. if there is only one
+           ;; then it would be illegal OWL2. this macro then just shields the body
+           ;; from any other as-disjoint statements.
            (< 1 (count tawny.owl/recent-axiom-list)))
       (disjointclasseslist
        recent-axiom-list))
@@ -899,10 +896,6 @@ class, or class expression. "
       (add-equivalent
        superclass 
        (list (owlor recent-axiom-list))))))
-
-
-
-
 
 (defmacro declare-classes
   "Declares all the classes given in names.

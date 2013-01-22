@@ -494,3 +494,26 @@ Assumes that fixture has been run
        (o/owlclass "x")
        (o/owlor (o/owlclass "z")
                 (o/owlclass "y")))))))
+
+
+(deftest as-disjoint-subclasses
+  (is
+   (let [x (o/owlclass "x")]
+     (o/as-disjoint-subclasses 
+      x 
+      (o/owlclass "y") 
+      (o/owlclass "z"))
+     
+     (and 
+      (o/disjoint?
+       (o/owlclass "y")
+       (o/owlclass "z"))
+      
+      (o/superclass? 
+       (o/owlclass "y")
+       x)
+      
+      (o/superclass?
+       (o/owlclass "z")
+       x)))))
+  
