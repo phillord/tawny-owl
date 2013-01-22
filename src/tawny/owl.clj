@@ -959,6 +959,22 @@ Name can be either a class or a string name. Returns a list of classes"
 (defn subclasses [class]
   (subclasses-1 (isubclasses class)))
 
+(defn disjoint? 
+  ([a b]
+     (disjoint? a b (get-current-ontology)))
+  ([a b ontology]
+     (contains?
+      (.getDisjointClasses a ontology)
+      b)))
+
+
+(defn equivalent?
+  ([a b]
+     (equivalent? a b (get-current-ontology)))
+  ([a b ontology]
+     (contains? 
+      (.getEquivalentClasses a ontology) 
+      b)))
 
 ;; some test useful macros
 
