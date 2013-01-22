@@ -37,6 +37,5 @@
   :comment "This is a comment")
 
 
-(deftest test-print
-  (is (do (re/print-doc testclass testontology)
-          1)))
+(deftest fetch-doc
+  (is (re/fetch-doc testclass testontology)))

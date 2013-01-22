@@ -67,7 +67,7 @@
 
         (.toString (.getEntityType owlobject))
         ": "
-        (tawny.lookup/var-str
+        (tawny.lookup/var-maybe-qualified-str
          (get
           (tawny.lookup/all-iri-to-var) iri)))
 

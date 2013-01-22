@@ -45,11 +45,27 @@ or nil otherwise."
           [iri var])))
 
 
-;; oh dear, also in memorise
 (defn var-str 
   "Given a var, return a string representation of its name"
   [var]
   (str (:name (meta var))))
+
+(defn var-qualified-str
+  "Given a var, return a string representation of its name
+including the name space."
+  [var]
+  (str (:ns (meta var)) "/"
+       (var-str var)))
+
+(defn var-maybe-qualified-str
+  "Given a var, return a string representation of its name
+including the name space."
+  [var]
+  (let [ns (:ns (meta var))]
+    (if (= ns *ns*)
+      (var-str var)
+      (var-qualified-str var))))
+
 
 (defn name-to-var [& namespaces]
   (into {} 
