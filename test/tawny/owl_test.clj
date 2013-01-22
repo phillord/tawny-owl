@@ -35,6 +35,7 @@
 
 (use-fixtures :each createandsavefixture)
 
+
 (deftest ontology
   (is true)
   (is 
@@ -235,10 +236,8 @@
          (do (o/defclass a)
              (.size (.getClassesInSignature
                      (o/get-current-ontology))))))
-  (is (not
-       (nil?
-        (do (o/defclass a)
-            a)))))
+  (is not
+      ))
 
 
 
@@ -431,6 +430,67 @@ Assumes that fixture has been run
            (list (o/owlcomment "comment"))))))
 )
 
+
+(deftest disjoint? 
+  (is 
+   (let [a (o/owlclass "a")
+         b (o/owlclass "b")]
+     (o/disjointclasses a b)
+     (o/disjoint? a b))))
+
 ;; TODO lots of macros are in serious need of a test
 
+(deftest as-subclasses
+  (is
+   (let [x (o/owlclass "x")]
+     (o/as-subclasses 
+      x
+      (o/owlclass "y") 
+      (o/owlclass "z"))
+     
+     ;; now for the test
+     (and (o/superclass? 
+           (o/owlclass "y")
+           x)
+          (o/superclass?
+           (o/owlclass "z")
+           x))))
+  (is
+   (let [x (o/owlclass "x")]
+     (o/as-subclasses 
+      x :disjoint
+      (o/owlclass "y") 
+      (o/owlclass "z"))
+     (o/disjoint?
+      (o/owlclass "y")
+      (o/owlclass "z"))))
+  
+  (is 
+   (let [x (o/owlclass "x")]
+        (o/as-subclasses 
+         x :cover
+         (o/owlclass "y") 
+         (o/owlclass "z"))
+        
+        (o/equivalent?
+         (o/owlclass "x")
+         (o/owlor (o/owlclass "z")
+                  (o/owlclass "y")))))
 
+  
+  (is 
+   (let [x (o/owlclass "x")]
+     (o/as-subclasses 
+      x :cover
+      (o/owlclass "y") 
+      (o/owlclass "z"))
+     
+     (and 
+      (o/disjoint?
+       (o/owlclass "y")
+       (o/owlclass "z"))
+      
+      (o/equivalent?
+       (o/owlclass "x")
+       (o/owlor (o/owlclass "z")
+                (o/owlclass "y")))))))
