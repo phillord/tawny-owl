@@ -21,7 +21,7 @@
   (:require [tawny.owl :as owl]
             [tawny.lookup]
             )
-  (:import (tawny.owl AxiomedEntity)
+  (:import 
            (java.util Set)
            (org.semanticweb.owlapi.model OWLClass
                                          OWLDataAllValuesFrom
@@ -51,13 +51,12 @@
 
 (defmulti as-form class)
 
-(defmethod as-form AxiomedEntity [e]
-  (as-form (:entity e)))
-
 (defmethod as-form OWLClass [c]
-  (let [super (.getSuperClasses c (owl/get-current-jontology))
-        equiv (.getEquivalentClasses c (owl/get-current-jontology))
-        disjoint (.getDisjointClasses c (owl/get-current-jontology))]
+  (let [super (.getSuperClasses c (owl/get-current-ontology))
+        equiv (.getEquivalentClasses c (owl/get-current-ontology))
+        disjoint (.getDisjointClasses c (owl/get-current-ontology))
+        annotation (.getAnnotations c (owl/get-current-ontology))
+        ]
     `(tawny.owl/defclass ~(form c)
        ~@(when (< 0 (count super))
            (cons
@@ -70,7 +69,12 @@
        ~@(when (< 0 (count disjoint))
            (cons
             :disjoint
-            (form disjoint))))))
+            (form disjoint)))
+       ~@(when (< 0 (count annotation))
+           (cons :annotation
+                 (form annotation)))
+
+       )))
        
 (defmulti form class)
 
@@ -132,23 +136,18 @@
 
 (defmulti as-text class)
 
-(defmethod as-text AxiomedEntity [e]
-  (as-text (:entity e)))
 
 (declare text)
 (defmethod as-text OWLClass [c]
   (str (text c)
        "\n\t:subclass\n"
-       (text (.getSuperClasses c (owl/get-current-jontology)))
+       (text (.getSuperClasses c (owl/get-current-ontology)))
        "\n\t:equivalent\n"
-       (text (.getEquivalentClasses c (owl/get-current-jontology)))
+       (text (.getEquivalentClasses c (owl/get-current-ontology)))
        "\n\t:disjoint\n"
-       (text (.getDisjointClasses c (owl/get-current-jontology)))))
+       (text (.getDisjointClasses c (owl/get-current-ontology)))))
 
 (defmulti text class)
-
-(defmethod text AxiomedEntity [e]
-  (text (:entity e)))
 
 (defmethod text Set [s]
   (clojure.string/join
@@ -195,5 +194,5 @@
 
 
 (def map-iri-to-var
-  tawny.lookup/map-iri-to-var
+  tawny.lookup/all-iri-to-var
   )
