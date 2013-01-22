@@ -46,8 +46,13 @@
                                          )))
 
 
+(defn named-entity-as-string [entity]
+  (-> entity
+      (.getIRI)
+      (.toURI)
+      (.toString)))
 
-(declare form map-iri-to-var)
+(declare form)
 
 (defmulti as-form class)
 
@@ -82,10 +87,10 @@
   (map #(form %) s))
 
 (defmethod form OWLClass [c]
-  (get (map-iri-to-var) (.getIRI c)))
+  (get (tawny.lookup/all-iri-to-var) (named-entity-as-string c)))
 
 (defmethod form OWLObjectProperty [p]
-  (get (map-iri-to-var) (.getIRI p)))
+  (get (tawny.lookup/all-iri-to-var) (named-entity-as-string p)))
 
 (defmethod form OWLObjectSomeValuesFrom [s]
   (list 'owlsome
@@ -127,6 +132,8 @@
 ;; OWLObjectHasSelf
 ;; OWLObjectHasValue
 ;; OWLObjectOneOf
+
+
 
 (defmethod form :default [e]
   (do
@@ -193,6 +200,3 @@
 
 
 
-(def map-iri-to-var
-  tawny.lookup/all-iri-to-var
-  )
