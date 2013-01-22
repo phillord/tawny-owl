@@ -371,8 +371,10 @@ class, or class expression. "
    (ensure-class equivalent)))
 
 (defn add-equivalent
-  ([name equivalent]
-     (add-frame create-equivalent-axiom name equivalent)))
+  [name equivalent]
+  {:pre [(or (nil? equivalent) 
+             (seq? equivalent))]}
+  (add-frame create-equivalent-axiom name equivalent))
 
 (defn- create-class-axiom [clazz _]
   (.getOWLDeclarationAxiom
