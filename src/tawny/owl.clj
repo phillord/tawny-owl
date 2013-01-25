@@ -16,7 +16,10 @@
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
 
 (ns tawny.owl
-  (:require [tawny.util :as util])
+  (:require 
+   [clojure.walk :only postwalk]
+   [tawny.util :as util])
+
   (:import
    (org.semanticweb.owlapi.model OWLOntologyManager OWLOntology IRI
                                  OWLClassExpression OWLClass OWLAnnotation
@@ -1063,3 +1066,43 @@ delete these axioms from the ontology"
 
 (defn owlnothing []
   (.getOWLNothing ontology-data-factory))
+
+
+
+;; add a prefix or suffix to contained defclass
+(defn- alter-symbol-after-def-form [f x]
+  (if (and (seq? x)
+           (= (first x) 'defclass))
+    `(defclass ~(f (second x))
+       ~@(drop 2 x))
+    x))
+
+(defn prefix-symbol [prefix sym]
+  (symbol
+   (str prefix (name sym))))
+
+(defn- suffix-symbol [suffix sym]
+  (symbol (str (name sym) suffix)))
+
+(defn- alter-all-symbol-after-def-form [f x]
+  (clojure.walk/postwalk
+   (partial alter-symbol-after-def-form f)
+   x
+   ))
+
+
+(defmacro with-prefix [prefix & body]
+  (let [newbody 
+        (alter-all-symbol-after-def-form
+         (partial prefix-symbol prefix)
+         body)]
+    `(do ~@newbody)))
+
+
+(defmacro with-suffix [suffix & body]
+  (let [newbody 
+        (alter-all-symbol-after-def-form
+         (partial prefix-symbol suffix)
+         body)]
+    `(do ~@newbody)))
+
