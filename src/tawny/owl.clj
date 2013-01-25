@@ -23,7 +23,8 @@
                                  OWLNamedObject OWLOntologyID)
    (org.semanticweb.owlapi.apibinding OWLManager)
    (org.coode.owlapi.manchesterowlsyntax ManchesterOWLSyntaxOntologyFormat)
-   (org.semanticweb.owlapi.io StreamDocumentTarget OWLXMLOntologyFormat)
+   (org.semanticweb.owlapi.io StreamDocumentTarget OWLXMLOntologyFormat
+                              RDFXMLOntologyFormat)
    (org.semanticweb.owlapi.util DefaultPrefixManager OWLEntityRemover)
    (java.io ByteArrayOutputStream FileOutputStream PrintWriter)
    (java.io File)
@@ -240,6 +241,7 @@ or `filename' if given.
                                               (get-current-ontology))
            this-format
            (cond
+            (= format :rdf) (RDFXMLOntologyFormat.)
             (= format :omn) (ManchesterOWLSyntaxOntologyFormat.)
             (= format :owl) (OWLXMLOntologyFormat.)
             :else format)]
