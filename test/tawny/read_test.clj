@@ -105,7 +105,7 @@
                (filter (partial r/iri-starts-with-filter 
                                 "http://purl.obolibrary.org/obo/GO")
                        (.getSignature (get-go-ontology))))]
-      (println  "Fil 1:" fil)
+      ;;(println  "Fil 1:" fil)
       fil
      )
     ))
