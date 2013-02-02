@@ -132,7 +132,11 @@ The following keys must be supplied.
   [name & body]
   `(do
      (let [ontology# (ontology ~@body)]
-       (def ~name ontology#)
+       (def 
+         ~(with-meta name
+            (assoc (meta name)
+              :owl true))
+         ontology#)
        (tawny.owl/ontology-to-namespace ontology#)
        ontology#
        )))
@@ -187,14 +191,17 @@ This defines a minimal test ontology.
   []
   (defontology a-test-ontology :iri "http://iri/" :prefix "test:"))
 
-(defn get-current-ontology []
+(defn get-current-ontology 
   "Gets the current ontology"
-  ;; if current ontology is inside a binding
-  (or *current-bound-ontology*
-      ;; so use the namespace bound one
-      (get @ontology-for-namespace *ns*)
-      ;; so break
-      (throw (IllegalStateException. "Current ontology has not been set"))))
+  ([]
+     (get-current-ontology *ns*))
+  ([ns]
+     ;; if current ontology is inside a binding
+     (or *current-bound-ontology*
+         ;; so use the namespace bound one
+         (get @ontology-for-namespace ns)
+         ;; so break
+         (throw (IllegalStateException. "Current ontology has not been set")))))
 
 
 (defn get-iri
@@ -761,7 +768,11 @@ class, or class expression. "
 (defmacro defclass [classname & frames]
   `(let [string-name# (name '~classname)
          class# (tawny.owl/owlclass string-name# ~@frames)]
-     (def ~classname class#)))
+     (def 
+      ~(with-meta classname
+         (assoc (meta classname)
+           :owl true))
+       class#)))
 
 
 (defn disjointclasseslist [list]

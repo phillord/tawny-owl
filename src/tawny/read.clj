@@ -83,7 +83,10 @@ Clojure symbol. Use this composed with a entity transform function"
       (let [name 
             (stop-characters-transform (transform e))]
         ;;(println "Name is " name)
-        (intern *ns* (symbol name) e)))
+        (intern *ns* 
+                (with-meta
+                  (symbol name)
+                  {:owl true}) e)))
     (catch IllegalArgumentException i 
       (print "Broken Intern on:" e)
       (throw i))))

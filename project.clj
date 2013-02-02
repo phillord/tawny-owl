@@ -25,9 +25,15 @@
                  ;; clojure
                  [org.clojure/clojure "1.4.0"]
                  
+                 ;; hook functions
+                 [robert/hooke "1.3.0"]
+
                  ;; reasoners
                  [org.semanticweb.elk/elk-owlapi "0.3.1"]
                  [org.semanticweb.hermit/HermiT "1.3.6.1"]
                  
+                 [org.clojure/tools.trace "0.7.5"]
+                 [org.clojure/core.incubator "0.1.2"]  
+
                  ;; need to access log4j to control elk. 
                  [log4j/log4j "1.2.14"]])

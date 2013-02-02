@@ -19,7 +19,10 @@
 (ns tawny.repl
   (:require [tawny.owl :as o]
             [tawny.lookup]
-            [tawny.render]))
+            [tawny.render]
+            [robert.hooke]
+            [clojure.repl]
+            ))
 
 
 
@@ -62,7 +65,8 @@
                    (.append buffer 
                             (str (apply str args) "\n")))]
 
-       (line "-------------------")
+       (line "")
+
        (line 
 
         (.toString (.getEntityType owlobject))
@@ -80,11 +84,10 @@
        (doseq [c comment]
          (line "\t" (.getValue c)))
        
-       (line "Full Definition:")
        
-       ;; put this back in when as-form works!
-       ;; (str
-       ;;  (tawny.render/as-form owlobject))
+       ;;(line "Full Definition:")
+       ;;       (str
+       ;; (tawny.render/as-form owlobject))
 
        (.toString buffer))))
 
@@ -96,25 +99,18 @@
   ([owlobject ontology]
      (println (fetch-doc owlobject ontology))))
 
-;; (defn- print-doc [m]
-;;   (println "-------------------------")
-;;   (println (str (when-let [ns (:ns m)] (str (ns-name ns) "/")) (:name m)))
-;;   (cond
-;;     (:forms m) (doseq [f (:forms m)]
-;;                  (print "  ")
-;;                  (prn f))
-;;     (:arglists m) (prn (:arglists m)))
-;;   (if (:special-form m)
-;;     (do
-;;       (println "Special Form")
-;;       (println " " (:doc m)) 
-;;       (if (contains? m :url)
-;;         (when (:url m)
-;;           (println (str "\n  Please see http://clojure.org/" (:url m))))
-;;         (println (str "\n  Please see http://clojure.org/special_forms#"
-;;                       (:name m)))))
-;;     (do
-;;       (when (:macro m)
-;;         (println "Macro")) 
-;;       (println " " (:doc m)))))
-;; nil
+(defn print-doc-hook-function 
+  [f m]
+  (f 
+   (if (:owl m)
+     (assoc m 
+       :doc 
+       (fetch-doc
+        (var-get 
+         (ns-resolve (:ns m) (:name m)))
+        (o/get-current-ontology (:ns m))
+        ))
+     m)))
+
+;; augment the existing print-doc with this function
+(robert.hooke/add-hook #'clojure.repl/print-doc #'print-doc-hook-function)
