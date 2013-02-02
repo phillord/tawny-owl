@@ -15,19 +15,21 @@
 ;; You should have received a copy of the GNU Lesser General Public License
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
 
-(ns tawny.read_test
+(ns tawny.read-test
   (:refer-clojure :exclude [read])
   (:use [clojure.test])
   (:require [tawny.read :as r]
             [tawny.owl :as o])
-  (:import (org.semanticweb.owlapi.model IRI OWLNamedObject))
+  (:import (org.semanticweb.owlapi.model IRI OWLNamedObject OWLOntologyID))
 
   )
 
-
-;; test the resource discovery is working!
-(deftest wine-as-resource
-  (is (clojure.java.io/resource "wine.rdf")))
+(defn get-go-ontology []
+  (tawny.owl/remove-ontology-maybe 
+   (OWLOntologyID. (IRI/create "http://purl.obolibrary.org/obo/go.owl")))
+  (.loadOntologyFromOntologyDocument
+   tawny.owl/owl-ontology-manager 
+   (IRI/create (clojure.java.io/resource "go-snippet.owl"))))
 
 
 (deftest read
@@ -38,6 +40,86 @@
               :prefix "wine:"
               ))
   )
+
+(deftest go-snippet-as-resource
+  (is (clojure.java.io/resource "go-snippet.owl")))
+
+
+
+(deftest go-snippet-filter
+  (is
+   (every?
+    (comp not nil?)
+    (filter #'r/default-filter 
+            (.getSignature (get-go-ontology)))))
+
+  (is
+   (every?
+    (comp not nil?)
+    (filter (partial r/iri-starts-with-filter 
+                     "http://purl.obolibrary.org/obo/go")
+            (.getSignature (get-go-ontology))))))
+
+
+
+;; need to test out label-transform
+;; need to test out stop-characters-transform
+(deftest go-snippet-transform
+  (is
+   (every?
+    (comp not nil?)
+    (let [fil
+          (map #'r/default-transform 
+               ;; this transform works on the anntotations which start with 
+               ;; "obo/go" rather than "obo/GO"
+               (filter (partial
+               r/iri-starts-with-filter "http://purl.obolibrary.org/obo/go")
+                       (.getSignature (get-go-ontology))))]
+      ;; let form allows me to add println -- not totally stupid
+      ;;(println "first fil:" fil)
+      fil)))
+  
+  
+  (is
+   (do
+     (let [fil 
+           (map r/label-transform
+                ;; the label transform should work on "GO" terms should return
+                ;; one annotation and one nil which it is superclass. We have
+                ;; chopped the annotation out of the snippet.
+                (filter (partial r/iri-starts-with-filter 
+                                 "http://purl.obolibrary.org/obo/GO")
+                        (.getSignature (get-go-ontology))))]
+       ;;(println "This Fil:" fil)
+       fil
+       ))
+   )
+  
+  (is
+   (thrown?
+    IllegalArgumentException
+    (let [fil 
+          (map r/exception-nil-label-transform
+               ;; this should throw an exception because we have one class without 
+               ;; annotation
+               (filter (partial r/iri-starts-with-filter 
+                                "http://purl.obolibrary.org/obo/GO")
+                       (.getSignature (get-go-ontology))))]
+      (println  "Fil 1:" fil)
+      fil
+     )
+    ))
+  
+
+  )
+
+(deftest go-snippet-read
+  (is (r/read :location 
+              (IRI/create (clojure.java.io/resource "go-snippet.owl"))
+              :iri "http://purl.obolibrary.org/obo/go.owl"
+              :prefix "go:")))
+
+
 
 
 

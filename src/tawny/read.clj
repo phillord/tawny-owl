@@ -1,13 +1,17 @@
 (ns tawny.read
-  (:require [tawny.owl])
+  (:require [tawny.owl]
+            [clojure.string :only replace]           
+            )
+
+  (:use  [clojure.core.incubator])
+
+  
   (:refer-clojure :exclude [read])
   (:import
    (java.io File)
    (java.net URL)
    (org.semanticweb.owlapi.apibinding OWLManager)
    (org.semanticweb.owlapi.model IRI OWLNamedObject OWLOntologyID)))
-
-
 
 
 (defn- default-filter [e]
@@ -19,11 +23,70 @@
 (defn- default-transform [e]
   (.. e (getIRI) (getFragment)))
 
+(defn iri-starts-with-filter 
+  "Checks e to see if it is an OWLNamedObject and has an IRI starting with
+starts-with. Use this partially applied with a filter for 'read'."
+  [starts-with e]
+  (and (instance? OWLNamedObject e)
+       (.startsWith
+        (.toString (.getIRI e))
+        starts-with)))
+
+
+(defn filter-for-labels 
+  "Filter annotations on an entity for labels"
+  [e]
+  (filter 
+   #(-?> % 
+        (.getProperty)
+        (.isLabel))
+   (.getAnnotations e (tawny.owl/get-current-ontology))))
+
+
+
+(defn label-transform 
+  "Get text from label annotation"
+  [e]
+  (-?> (filter-for-labels e)
+      (first)
+      (.getValue)
+      (.getLiteral)))4
+
+(defn noisy-nil-label-transform 
+ "Check for empty labels noisily"
+ [e]
+ (let [trans (label-transform e)]
+    (when (nil? trans)
+      (println "Unable to generate transform for:" e))
+    trans
+    ))
+
+(defn exception-nil-label-transform 
+ "Check for empty labels noisily"
+ [e]
+  (let [trans (label-transform e)]
+    (when (nil? trans)
+      (throw  (IllegalArgumentException. (str "Unable to generate transform for:" e))))
+    trans
+    ))
+
+
+(defn stop-characters-transform 
+  "Takes a string and treats characters not legal in a 
+Clojure symbol. Use this composed with a entity transform function"
+  [s]
+  (clojure.string/replace s #"[ /]" "_"))
 
 (defn- intern-entity [e transform]
-  (when (instance? OWLNamedObject e)
-    (let [name (transform e)]
-      (intern *ns* (symbol name) e))))
+  (try
+    (when (instance? OWLNamedObject e)
+      (let [name 
+            (stop-characters-transform (transform e))]
+        ;;(println "Name is " name)
+        (intern *ns* (symbol name) e)))
+    (catch IllegalArgumentException i 
+      (print "Broken Intern on:" e)
+      (throw i))))
 
 
 (defn read [& rest]
@@ -58,16 +121,16 @@
     (doall
      (map
       (fn [x]
-        ;; grab each entity, put classes, object properties and so forth into current system.
-
-        ;; define a multi method keyed on (part of a) URI which does the work. 
+        ;; grab each entity, put classes, object properties and so forth into
+        ;; current system.
         (intern-entity x
                        (or transform default-transform))
         )
 
       ;; filter this so that it only puts stuff with the given IRI prefix
-      (clojure.core/filter (or filter default-filter)
-                           (.getSignature owlontology))))
+      (doall 
+       (clojure.core/filter (or filter default-filter)
+                                   (.getSignature owlontology)))))
 
     owlontology))
 
