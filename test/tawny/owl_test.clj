@@ -214,6 +214,20 @@
   (is (thrown? IllegalArgumentException
                (o/owland))))
 
+(deftest someonly []
+  (is 
+   (not 
+    (nil?
+     (o/someonly 
+      (o/objectproperty "p") "a"))))
+  
+
+  (is 
+   (not 
+    (nil?
+     (o/someonly (o/objectproperty "p") "a" "b")))))
+
+
 (deftest disjointclasses []
   (is
    (do (o/disjointclasses "a" "b" "c")))
