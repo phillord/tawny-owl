@@ -50,7 +50,7 @@ starts-with. Use this partially applied with a filter for 'read'."
   (-?> (filter-for-labels e)
       (first)
       (.getValue)
-      (.getLiteral)))4
+      (.getLiteral)))
 
 (defn noisy-nil-label-transform 
  "Check for empty labels noisily"
@@ -66,7 +66,7 @@ starts-with. Use this partially applied with a filter for 'read'."
  [e]
   (let [trans (label-transform e)]
     (when (nil? trans)
-      (throw  (IllegalArgumentException. (str "Unable to generate transform for:" e))))
+      (throw (IllegalArgumentException. (str "Unable to generate transform for:" e))))
     trans
     ))
 
@@ -82,7 +82,6 @@ Clojure symbol. Use this composed with a entity transform function"
     (when (instance? OWLNamedObject e)
       (let [name 
             (stop-characters-transform (transform e))]
-        ;;(println "Name is " name)
         (intern *ns* 
                 (with-meta
                   (symbol name)

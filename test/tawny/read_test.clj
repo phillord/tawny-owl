@@ -69,12 +69,13 @@
    (every?
     (comp not nil?)
     (let [fil
-          (map #'r/default-transform 
-               ;; this transform works on the anntotations which start with 
-               ;; "obo/go" rather than "obo/GO"
-               (filter (partial
-               r/iri-starts-with-filter "http://purl.obolibrary.org/obo/go")
-                       (.getSignature (get-go-ontology))))]
+          (doall
+           (map #'r/default-transform 
+                ;; this transform works on the anntotations which start with 
+                ;; "obo/go" rather than "obo/GO"
+                (filter (partial
+                         r/iri-starts-with-filter "http://purl.obolibrary.org/obo/go")
+                        (.getSignature (get-go-ontology)))))]
       ;; let form allows me to add println -- not totally stupid
       ;;(println "first fil:" fil)
       fil)))
@@ -83,13 +84,14 @@
   (is
    (do
      (let [fil 
-           (map r/label-transform
-                ;; the label transform should work on "GO" terms should return
-                ;; one annotation and one nil which it is superclass. We have
-                ;; chopped the annotation out of the snippet.
-                (filter (partial r/iri-starts-with-filter 
-                                 "http://purl.obolibrary.org/obo/GO")
-                        (.getSignature (get-go-ontology))))]
+           (doall
+            (map r/label-transform
+                 ;; the label transform should work on "GO" terms should return
+                 ;; one annotation and one nil which it is superclass. We have
+                 ;; chopped the annotation out of the snippet.
+                 (filter (partial r/iri-starts-with-filter 
+                                  "http://purl.obolibrary.org/obo/GO")
+                         (.getSignature (get-go-ontology)))))]
        ;;(println "This Fil:" fil)
        fil
        ))
@@ -99,12 +101,13 @@
    (thrown?
     IllegalArgumentException
     (let [fil 
-          (map r/exception-nil-label-transform
-               ;; this should throw an exception because we have one class without 
-               ;; annotation
-               (filter (partial r/iri-starts-with-filter 
-                                "http://purl.obolibrary.org/obo/GO")
-                       (.getSignature (get-go-ontology))))]
+          (doall
+           (map r/exception-nil-label-transform
+                      ;; this should throw an exception because we have one class without 
+                      ;; annotation
+                      (filter (partial r/iri-starts-with-filter 
+                                       "http://purl.obolibrary.org/obo/GO")
+                              (.getSignature (get-go-ontology)))))]
       ;;(println  "Fil 1:" fil)
       fil
      )
