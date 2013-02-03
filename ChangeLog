@@ -1,3 +1,18 @@
+2013-02-03  Phillip Lord  <phillip.lord@newcastle.ac.uk>
+
+	* src/tawny/repl.clj: New functions for repl interaction. Now
+	hooks into native clojure.repl/doc function so that ontology
+	entities can be looked up. 
+
+	* src/tawny/read.clj: Cleaned up code, and add utility filters and
+	transform functions.
+
+	* project.clj: Updated to OWL API 3.4.3.
+
+	* src/tawny/owl.clj: Added support for options and covering axioms
+	in as-subclasses macro. Added new predicates disjoint? equivalent?
+	Support for RDF output.
+
 2013-01-21  Phillip Lord  <phillip.lord@newcastle.ac.uk>
 
 	* src/tawny/owl.clj: Ontologies are now representing purely with a
