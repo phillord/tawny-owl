@@ -22,7 +22,10 @@
             [tawny.render]
             [robert.hooke]
             [clojure.repl]
-            ))
+            [clojure.pprint]
+            )
+  (:import [java.io StringWriter PrintWriter])
+  )
 
 
 
@@ -58,12 +61,12 @@
                    (.getIRI)
                    (.toURI)
                    (.toString))
-
            
-           buffer (StringBuffer.)
+           writer (StringWriter.)
+           pwriter (PrintWriter. writer)
            line (fn [& args]
-                   (.append buffer 
-                            (str (apply str args) "\n")))]
+                  (.println pwriter 
+                            (str (apply str args))))]
 
        (line "")
 
@@ -86,10 +89,11 @@
        
        
        (line "Full Definition:")
-       (line (str
-              (tawny.render/as-form owlobject)))
+       (clojure.pprint/pprint
+        (tawny.render/as-form owlobject)
+        writer)
 
-       (.toString buffer))))
+       (.toString writer))))
 
 
 (defn print-doc
