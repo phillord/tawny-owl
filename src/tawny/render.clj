@@ -23,27 +23,31 @@
             )
   (:import 
            (java.util Set)
-           (org.semanticweb.owlapi.model OWLClass
-                                         OWLDataAllValuesFrom
-                                         OWLDataExactCardinality
-                                         OWLDataHasValue
-                                         OWLDataMaxCardinality
-                                         OWLDataMinCardinality
-                                         OWLDataSomeValuesFrom
-                                         OWLObjectAllValuesFrom
-                                         OWLObjectComplementOf
-                                         OWLObjectExactCardinality
-                                         OWLObjectHasSelf
-                                         OWLObjectHasValue
-                                         OWLObjectIntersectionOf
-                                         OWLObjectMaxCardinality
-                                         OWLObjectMinCardinality
-                                         OWLObjectOneOf
-                                         OWLObjectSomeValuesFrom
-                                         OWLObjectUnionOf
-
-                                         OWLObjectProperty
-                                         )))
+           (org.semanticweb.owlapi.model 
+            OWLAnnotation
+            OWLAnnotationProperty
+            OWLAnnotationValue
+            OWLClass
+            OWLDataAllValuesFrom
+            OWLDataExactCardinality
+            OWLDataHasValue
+            OWLDataMaxCardinality
+            OWLDataMinCardinality
+            OWLDataSomeValuesFrom
+            OWLLiteral
+            OWLObjectAllValuesFrom
+            OWLObjectComplementOf
+            OWLObjectExactCardinality
+            OWLObjectHasSelf
+            OWLObjectHasValue
+            OWLObjectIntersectionOf
+            OWLObjectMaxCardinality
+            OWLObjectMinCardinality
+            OWLObjectOneOf
+            OWLObjectSomeValuesFrom
+            OWLObjectUnionOf
+            OWLObjectProperty
+            )))
 
 
 (defn named-entity-as-string [entity]
@@ -87,10 +91,14 @@
   (map #(form %) s))
 
 (defmethod form OWLClass [c]
-  (get (tawny.lookup/all-iri-to-var) (named-entity-as-string c)))
+  (symbol
+   (tawny.lookup/var-maybe-qualified-str
+    (get (tawny.lookup/all-iri-to-var) (named-entity-as-string c)))))
 
 (defmethod form OWLObjectProperty [p]
-  (get (tawny.lookup/all-iri-to-var) (named-entity-as-string p)))
+  (symbol
+   (tawny.lookup/var-maybe-qualified-str
+    (get (tawny.lookup/all-iri-to-var) (named-entity-as-string p)))))
 
 (defmethod form OWLObjectSomeValuesFrom [s]
   (list 'owlsome
@@ -127,6 +135,23 @@
   (list 'atleast (.getCardinalty c)
         (form (.getProperty c))
         (form (.getFiller c))))
+
+(defmethod form OWLAnnotation [a]
+  (list* 'annotation
+        (form (.getProperty a))
+        (form (.getValue a))))
+
+(defmethod form OWLAnnotationProperty [p]
+  (.toString p))
+
+(defmethod form OWLAnnotationValue [v]
+  (form v))
+
+(defmethod form OWLLiteral [l]
+  (if (.hasLang l)
+    (list (.getLiteral l)
+          (.getLang l))
+    (list (.getLiteral l))))
 
 
 ;; OWLObjectHasSelf

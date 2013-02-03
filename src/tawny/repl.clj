@@ -85,9 +85,9 @@
          (line "\t" (.getValue c)))
        
        
-       ;;(line "Full Definition:")
-       ;;       (str
-       ;; (tawny.render/as-form owlobject))
+       (line "Full Definition:")
+       (line (str
+              (tawny.render/as-form owlobject)))
 
        (.toString buffer))))
 
