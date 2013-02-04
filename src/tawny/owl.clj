@@ -23,7 +23,9 @@
   (:import
    (org.semanticweb.owlapi.model OWLOntologyManager OWLOntology IRI
                                  OWLClassExpression OWLClass OWLAnnotation
-                                 OWLNamedObject OWLOntologyID)
+                                 OWLNamedObject OWLOntologyID
+                                 OWLAnnotationProperty
+                                 )
    (org.semanticweb.owlapi.apibinding OWLManager)
    (org.coode.owlapi.manchesterowlsyntax ManchesterOWLSyntaxOntologyFormat)
    (org.semanticweb.owlapi.io StreamDocumentTarget OWLXMLOntologyFormat
@@ -669,6 +671,19 @@ class, or class expression. "
     (partial add-an-annotation named-entity)
     annotation-list)))
 
+(defn ensure-annotation [property]
+  (cond 
+   (instance? OWLAnnotationProperty property)
+   property
+   (instance? IRI property)
+   (.getOWLAnnotationProperty 
+    ontology-data-factory property)
+   (instance? String property)
+   (ensure-annotation
+    (IRI/create property))
+   :default 
+   (throw (IllegalArgumentException.
+           (format "Expecting an OWL annotation property: %s" property)))))
 
 (defn annotation
   ([annotation-property literal]
