@@ -39,3 +39,13 @@
 
 (deftest fetch-doc
   (is (re/fetch-doc testclass testontology)))
+
+(defn get-go-ontology []
+  (tawny.owl/remove-ontology-maybe 
+   (OWLOntologyID. (IRI/create "http://purl.obolibrary.org/obo/go.owl")))
+  (.loadOntologyFromOntologyDocument
+   tawny.owl/owl-ontology-manager 
+   (IRI/create (clojure.java.io/resource "go-snippet.owl"))))
+
+
+
