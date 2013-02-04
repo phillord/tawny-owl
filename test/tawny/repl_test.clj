@@ -20,7 +20,9 @@
 (ns tawny.repl-test
   (:use [clojure.test])
   (:require [tawny.repl :as re]
-            [tawny.owl :as o]))
+            [tawny.owl :as o])
+  (:import (org.semanticweb.owlapi.model 
+            OWLOntologyID IRI)))
 
 
 (o/defontology testontology
