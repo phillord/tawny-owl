@@ -89,9 +89,10 @@
        
        
        (line "Full Definition:")
-       (clojure.pprint/pprint
-        (tawny.render/as-form owlobject)
-        writer)
+       (o/with-ontology ontology
+         (clojure.pprint/pprint
+          (tawny.render/as-form owlobject)
+          writer))
 
        (.toString writer))))
 
