@@ -16,6 +16,12 @@
             :url "http://www.gnu.org/licenses/lgpl-3.0.txt"
             :distribution :repo}
 
+  :repl-options {
+                 ;; This expression will run when first opening a REPL, in the
+                 ;; namespace from :init-ns or :main if specified
+                 :init (require 'tawny.repl)
+                 }
+
   :dependencies [
                  ;; owl API
                  [net.sourceforge.owlapi/owlapi-api "3.4.3"]
