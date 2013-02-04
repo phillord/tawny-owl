@@ -93,12 +93,14 @@
 (defmethod form OWLClass [c]
   (symbol
    (tawny.lookup/var-maybe-qualified-str
-    (get (tawny.lookup/all-iri-to-var) (named-entity-as-string c)))))
+    (get (tawny.lookup/all-iri-to-var) 
+         (named-entity-as-string c)))))
 
 (defmethod form OWLObjectProperty [p]
   (symbol
    (tawny.lookup/var-maybe-qualified-str
-    (get (tawny.lookup/all-iri-to-var) (named-entity-as-string p)))))
+    (get (tawny.lookup/all-iri-to-var)
+         (named-entity-as-string p)))))
 
 (defmethod form OWLObjectSomeValuesFrom [s]
   (list 'owlsome
@@ -137,15 +139,26 @@
         (form (.getFiller c))))
 
 (defmethod form OWLAnnotation [a]
-  (list* 'annotation
-        (form (.getProperty a))
-        (form (.getValue a))))
+  (concat
+   (cond 
+    (.isLabel a)
+    '(label)
+    (.isComment a)
+    '(owlcomment)
+    :default
+    (list
+     'annotation    
+     (form (.getProperty a))))
+   (form (.getValue a))))
 
 (defmethod form OWLAnnotationProperty [p]
   (.toString p))
 
+;; this can be improved somewhat -- not converting classes into something
+;; readable.
 (defmethod form OWLAnnotationValue [v]
-  (form v))
+  (list    
+   (.toString v)))
 
 (defmethod form OWLLiteral [l]
   (if (.hasLang l)
