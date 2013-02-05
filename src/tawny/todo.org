@@ -1,83 +1,7 @@
 
 
 * Move the reasoner code into ontology options
-
-
-
-* Remove the Ontology Record and use java object
-
-The existance of an Ontology record with an ontology inside it 
-is a pain in the ass for many reasons -- mostly because I have to remember the
-layer of indirection. So I want to get away from this and just use the
-underlying Java object
-
-** Get prefix from ontology
-
-(.isPrefixOWLOntologyFormat
- (.getOntologyFormat owl-ontology-manager (#'get-current-jontology)))
-
-returns true -- so by default, we should be able to get the format. Then
-
-public java.util.Map<java.lang.String,java.lang.String> getPrefixName2PrefixMap()
-
-Description copied from interface: PrefixManager
-Gets a map that maps prefix names to prefixes.
-
-should let us get the prefix name (that is owl:) for prefix (that is url). The
-map is backward, but such is life. 
-
-Setting prefix is easy -- save-ontology has the code. 
-
-** IRI
-
-Easy to get -- from the ontology ID object which comes direct from the
-Ontology object.
-
-** Options 
-
-Just put these damn options in! Ah well. 
-
-Currently only used by memorise to store remembered entities. This can be 
-replaced by a map, with appropriate hooks. Currently, I have this for
-reasoner. This should be easy to generalise -- map from ontology to another
-map. Second map can use namespaced keywords, and we can put anything we want
-into it. 
-
-Perhaps, can use this for lookup cache also. 
-
-Maybe, a better idea here is to use the IMeta interface and extends-type
-support to add metadata to ontologies. This doesn't work for the reasoner
-however, as I need to be able to blitz all the reasoners when the factory
-changes (which doesn't affect ontologies). 
-
-Lookup cache is namespace based. I guess I could add this to the namespace
-metadata? Although, why not the ontology? Can get the ontology from the
-namespace after all. 
-
-
-So, final decision. Will create a (options ontology) method in owl.clj, which
-returns a hash for each and an (update-options f ontology) which applies
-function f which updates. We store this in a ref. Then we hook into ontology
-creation/destruction code, so that we can clear things up appropriately.
-
-This means that ontologies have to be removed explicitly; but then they do
-anyway because the ontology manager holds onto them. So only a problem if
-ontologies are created with random IRIs. 
-
-Reasoner can also be updated. This will make the task of getting all reasoners
-a little harder -- we iterate through all options, get the reasoner, kill it.
-But, we can do this one after the other. 
-
-
-* Annotation Problems
-
- - [] create new add-a-annotation method which adds a single annotation.
- - [] Change add-annotation to use it.
- - [] Change add-a-annotation to multimethod keyed on class of first entity.
- - [] Add OWLNamedEntity should pass directly, rather than conversion of IRI.
- - [] Add support for OWLOntology -- need different AddOntologyAnnotation
-      which we will only use in this place. 
-      
+  
 
 
 * IRI Creation
@@ -92,6 +16,24 @@ correct place.
 
 
 * Enhancements
+
+** Interpolation for comments
+
+Would like to be able to interpolate comments and labels. Currently, we
+have no default label (not ideal), although this could be created
+automatically. 
+
+However, would be good to be able to support interpolation in comments and
+labels. So, in rdfs:comment, would be nice to be able to do
+
+"{rdfs:label} is a class which is cool" 
+
+and have {rdfs:label} interpolate. No idea how to get this to work --
+problem is that we might not have set the label yet on the object, because we
+go through a map stage (guess it's an array map).
+
+Could hook into the owlclass-explicit function and add stuff at the end. 
+
 
 ** Clojure IDs as annotation
 
@@ -125,6 +67,7 @@ to pass it around a lot.
 
 A new frame would be one option. Or the first parameter would be another. 
 
+
 ** Autoname
 
 An autoname facility might be nice for where I can't be assed to specify a
@@ -135,15 +78,7 @@ new owlclass function.
 
 
 * Bugs 
-
-** transitive 
-
-and other facets are all stored as strings which is dangerous.
-
-Fixed, this by turning them into objects, but this fails also, for reasons I
-don't quite understand yet. 
-
-
+  
 ** Ontology reload
 
 Now we have tawny.lookup, it *should* be possible to unmap all vars in a
@@ -151,18 +86,3 @@ namespace when an ontology is re-evaled. Just do "tawny.lookup", then ns-umap
 the entire lot. 
 
 
-** Polyglot crashes with no resource
-
-When loading polyglot crashes with this error. This happens when we can't find
-the pizzalabel file (or whatever). This happens when we are jacked into the
-wrong project and load pizza.clj manually. 
-
-Not sure what the right fix is. A nicer crash at minimum.
-
-java.lang.IllegalArgumentException: No implementation of method: :make-reader of protocol: #'clojure.java.io/IOFactory found for class: nil
- at clojure.core$_cache_protocol_fn.invoke (core_deftype.clj:527)
-    clojure.java.io$fn__8239$G__8234__8246.invoke (io.clj:73)
-    clojure.java.io$reader.doInvoke (io.clj:106)
-    clojure.lang.RestFn.invoke (RestFn.java:410)
-    tawny.polyglot$polyglot_load_label.invoke (polyglot.clj:48)
-    user$eval2705.invoke (NO_SOURCE_FILE:1)
