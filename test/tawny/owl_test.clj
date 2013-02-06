@@ -531,3 +531,8 @@ Assumes that fixture has been run
        (o/owlclass "z")
        x)))))
   
+(deftest prefix-suffix-symbol
+  (is (= 'helloworld
+         (#'o/prefix-symbol "hello" 'world)))
+  (is (= 'helloworld
+         (#'o/suffix-symbol "world" 'hello))))

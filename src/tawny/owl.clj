@@ -1113,14 +1113,14 @@ delete these axioms from the ontology"
    (str prefix (name sym))))
 
 (defn- suffix-symbol [suffix sym]
-  (symbol (str (name sym) suffix)))
+  (symbol 
+   (str (name sym) suffix)))
 
 (defn- alter-all-symbol-after-def-form [f x]
   (clojure.walk/postwalk
    (partial alter-symbol-after-def-form f)
    x
    ))
-
 
 (defmacro with-prefix [prefix & body]
   (let [newbody 
@@ -1133,7 +1133,7 @@ delete these axioms from the ontology"
 (defmacro with-suffix [suffix & body]
   (let [newbody 
         (alter-all-symbol-after-def-form
-         (partial prefix-symbol suffix)
+         (partial suffix-symbol suffix)
          body)]
     `(do ~@newbody)))
 
