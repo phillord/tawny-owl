@@ -127,3 +127,10 @@
       (doseq [func @hook] (apply func rest))))
 
 
+;; unlazy map function
+(defmacro dmap [& body]
+  "Unlazy map function, for when the map function has side effects.
+
+Typing (doall (map)) all the time is hard work!"
+  `(doall
+    (map ~@body)))
