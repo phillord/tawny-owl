@@ -657,6 +657,8 @@ class, or class expression. "
          (.getIRI named-entity) annotation)]
     (add-axiom axiom)))
 
+
+
 (defmethod add-an-annotation OWLOntology
   [ontology annotation]
   ;; we don't appear to need an axiom to add annotation to the ontology. 
@@ -671,7 +673,7 @@ class, or class expression. "
     (partial add-an-annotation named-entity)
     annotation-list)))
 
-(defn ensure-annotation [property]
+(defn ensure-annotation-property [property]
   (cond 
    (instance? OWLAnnotationProperty property)
    property
@@ -679,7 +681,7 @@ class, or class expression. "
    (.getOWLAnnotationProperty 
     ontology-data-factory property)
    (instance? String property)
-   (ensure-annotation
+   (ensure-annotation-property
     (IRI/create property))
    :default 
    (throw (IllegalArgumentException.
@@ -693,6 +695,7 @@ class, or class expression. "
       ontology-data-factory
       annotation-property 
       (.getOWLLiteral ontology-data-factory literal language))))
+
 
 ;; various annotation types
 (def label
@@ -716,23 +719,63 @@ class, or class expression. "
 (def versioninfo
   (partial annotation (.getOWLVersionInfo ontology-data-factory)))
 
-(defn annotation-property [property]
+
+(defn annotation-property-explicit
+  "Add this annotation property to the ontology"
+  ([property frames]
+     (let [property-object                 
+           (ensure-annotation-property property)]
+       ;; add the property
+       (.addAxiom owl-ontology-manager
+                  (get-current-ontology)
+                  (.getOWLDeclarationAxiom 
+                   ontology-data-factory 
+                   property-object))
+
+       (when (:comment frames)
+         (add-annotation property-object
+                         (list (owlcomment
+                                (first (:comment frames))))))
+       
+       (when (:label frames)
+         (add-annotation property-object
+                         (list (label
+                                (first
+                                 (:label frames))))))
+       
+       (add-annotation property-object (:annotation frames))
+       
+
+       property-object)))
+
+(defn annotation-property
+  [name & frames]
+  (annotation-property-explicit 
+   name
+   (util/check-keys 
+    (util/hashify frames)
+    [:annotation :label :comment])))
+
+(defn get-annotation-property [property]
   (.getOWLAnnotationProperty 
    ontology-data-factory
    (iriforname property)))
 
 (defmacro defannotationproperty
-  [property]
+  [property & frames]
   `(let [property-name# (name '~property)
-         (property# (tawny.owl/annotation-property property-name#))]
-     (def ~property property#)))
+         property# 
+         (tawny.owl/annotation-property property-name# ~@frames)]
+     (def 
+       ~(with-meta property
+          (assoc (meta property)
+            :owl true))
+       property#)))
 
 
 ;; data type properties
 (defn datatypeproperty [name & frames]
   (throw (Exception. "Not written this yet")))
-
-
 
 
 (defn owlclass-explicit
@@ -784,9 +827,9 @@ class, or class expression. "
   `(let [string-name# (name '~classname)
          class# (tawny.owl/owlclass string-name# ~@frames)]
      (def 
-      ~(with-meta classname
-         (assoc (meta classname)
-           :owl true))
+       ~(with-meta classname
+          (assoc (meta classname)
+            :owl true))
        class#)))
 
 
