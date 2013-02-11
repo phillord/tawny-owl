@@ -1,4 +1,4 @@
-;; The contents of this file are subject to the GPL License, Version 3.0.
+;; The contents of this file are subject to the LGPL License, Version 3.0.
 ;; 
 ;; Copyright (C) 2013, Phillip Lord, Newcastle University
 ;; 
