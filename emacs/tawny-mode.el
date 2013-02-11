@@ -52,31 +52,69 @@
 
 (defun tawny-mode-unsatisfiable ()
   (interactive)
-  (tawny-mode-nrepl-reasoner-eval-string
+  (nrepl-send-string
    (format 
     "(do (require 'tawny.emacs)(tawny.emacs/get-unsatisfiable \"%s\"))"
-    (clojure-find-ns)
-    )))
+    (clojure-find-ns))
+   (tawny-mode-unsatisfiable-response-handler (current-buffer))))
 
 
+(defvar tawny-trace-buffer (get-buffer-create "*tawny-trace*"))
 
-
+(defun tawny-message (string &rest values)
+  (let ((msg (apply 'format string values)))
+    (save-excursion
+      (set-buffer tawny-trace-buffer)
+      (goto-char (point-max))
+      (insert (format "%s: %s\n" (current-time-string) msg)))
+    (message msg)))
 
 (defun tawny-mode-nrepl-reasoner-eval-string (string)
   (nrepl-send-string string 
-   (tawny-mode-make-reasoner-response-handler (current-buffer))))
+                     (tawny-mode-make-reasoner-response-handler (current-buffer))))
+
 
 (defun tawny-mode-make-reasoner-response-handler (buffer)
   (nrepl-make-response-handler 
    buffer
    (lambda (buffer value)
-     (message "Value handler: %s %s" buffer value))
+     (tawny-message "For %s: %s" buffer value))
    (lambda (buffer value)
-     (message "stdout handler: %s %s" buffer value))
+     (tawny-message "Output: %s %s" buffer value))
    (lambda (buffer value)
-     (message "stderr handler: %s %s" buffer value))
+     (tawny-message "Error: %s %s" buffer value))
    (lambda (buffer value)
-     (message "done handler: %s %s" buffer value))))
+     (tawny-message "Complete: %s %s" buffer value))))
+
+(defvar tawny-mode-unsatisfiable-buffer
+  (get-buffer-create "*tawny-unsatisfiable*"))
+
+(defun tawny-mode-unsatisfiable-response-handler (buffer)
+  (nrepl-make-response-handler 
+   buffer
+   (lambda (buffer value)
+     (save-excursion
+       (set-buffer tawny-mode-unsatisfiable-buffer)
+       (erase-buffer)
+       (message value)
+       (insert (format "Unsatisfiable classes for %s:\n%s" buffer 
+                       (tawny-de-escape value))))
+     (display-buffer tawny-mode-unsatisfiable-buffer))
+   (lambda (buffer value)
+     (tawny-message "Output: %s %s" buffer value))
+   (lambda (buffer value)
+     (tawny-message "Error: %s %s" buffer value))
+   (lambda (buffer value)
+     (tawny-message "Complete: %s %s" buffer value))))
+
+
+
+(defun tawny-de-escape (string)
+  (replace-regexp-in-string
+   "\\\\n" "\n"
+   (replace-regexp-in-string 
+    "\\\"" ""
+    string)))
 
 ;; nrepl-make-response-handler gives me a finer response handler. 
 ;; should be able to plug this into working or equivalent, to give a nice
