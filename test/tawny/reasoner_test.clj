@@ -107,6 +107,14 @@
 ;;  '(:elk :hermit))
 
 
+(deftest no-reasoner-set
+  (is
+   (thrown? 
+    IllegalStateException
+    (dosync 
+     (ref-set r/vreasoner-factory nil)
+     (r/reasoner)))))
+
 (deftest empty-consistent? 
   ;; empty only is consistent
   (is

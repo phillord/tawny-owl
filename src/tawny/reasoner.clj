@@ -35,7 +35,7 @@
     (org.semanticweb.HermiT Reasoner)))
 
 (def vreasoner-factory
-  (ref ()))
+  (ref nil))
 
 (def reasoner-list
   (ref ()))
