@@ -108,6 +108,20 @@
      (tawny-message "Complete: %s %s" buffer value))))
 
 
+(defun tawny-doc (query)
+  "Opens a window with docstring for QUERY."
+  (interactive "P")
+  (nrepl-read-symbol-name "Term: " 'tawny-doc-handler query))
+
+(defun tawny-doc-handler (symbol)
+  (let ((form (format "(do (require 'tawny.repl)(tawny.repl/print-doc %s))" symbol))
+        (doc-buffer (nrepl-popup-buffer nrepl-doc-buffer t)))
+    (nrepl-send-string form
+                       (nrepl-popup-eval-out-handler doc-buffer)
+                       nrepl-buffer-ns
+                       (nrepl-current-tooling-session))))
+
+
 
 (defun tawny-de-escape (string)
   (replace-regexp-in-string
@@ -139,6 +153,8 @@
          ["Hermit" (tawny-mode-select-reasoner "hermit")]
          ["Elk" (tawny-mode-select-reasoner "elk")]
          )
+        ["Display Documentation" tawny-doc
+         :help "Display documentation for entity at point"]
         )
       )
 
@@ -146,6 +162,7 @@
     (define-key map (kbd "C-c s c") 'tawny-mode-is-coherent)
     (define-key map (kbd "C-c s v") 'tawny-mode-is-consistent)
     (define-key map (kbd "C-c s u") 'tawny-mode-unsatisfiable)
+    (define-key map (kbd "C-c s d") 'tawny-doc)
     map
     ))
 
