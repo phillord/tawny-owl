@@ -1,5 +1,19 @@
 
 
+* Annotation
+
+Currently 
+
+defannotationproperty 
+
+doesn't work -- the code that it calls just returns the annotation property --
+it doesn't actually stick it into the ontology. So need to make sure that this
+happens (annotation assertion axiom I think). 
+
+Also, we need to be able to add annotations (comments particularly!) to the
+annotation. 
+
+
 * Move the reasoner code into ontology options
   
 
@@ -85,4 +99,7 @@ Now we have tawny.lookup, it *should* be possible to unmap all vars in a
 namespace when an ontology is re-evaled. Just do "tawny.lookup", then ns-umap
 the entire lot. 
 
+** tawny doc
 
+Doesn't cope well when the class isn't known as a var. Should fall back to 
+http:// with special case for owl:thing. 

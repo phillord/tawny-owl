@@ -142,6 +142,44 @@ But, we can do this one after the other.
  - [] Add support for OWLOntology -- need different AddOntologyAnnotation
       which we will only use in this place. 
 
+* Ugly error when the reasoner factory has not been set.
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2013-02-12 Tue 23:20
+  :ARCHIVE_FILE: ~/src/knowledge/tawny-owl/src/tawny/todo.org
+  :ARCHIVE_OLPATH: Bugs
+  :ARCHIVE_CATEGORY: todo
+  :END: 
+java.lang.IllegalArgumentException: No matching method found: createNonBufferingReasoner for class clojure.lang.PersistentList$EmptyList
+ at clojure.lang.Reflector.invokeMatchingMethod (Reflector.java:53)
+    clojure.lang.Reflector.invokeInstanceMethod (Reflector.java:28)
+    tawny.reasoner$reasoner.invoke (reasoner.clj:162)
+    tawny.reasoner$unsatisfiable.invoke (reasoner.clj:206)
+    tawny.reasoner$coherent_QMARK_.invoke (reasoner.clj:212)
+    tawny.upper.extent$eval1980.invoke (NO_SOURCE_FILE:4)
+    clojure.lang.Compiler.eval (Compiler.java:6511)
+    clojure.lang.Compiler.eval (Compiler.java:6501)
+    clojure.lang.Compiler.eval (Compiler.java:6477)
+    clojure.core$eval.invoke (core.clj:2797)
+    clojure.main$repl$read_eval_print__6405.invoke (main.clj:245)
+    clojure.main$repl$fn__6410.invoke (main.clj:266)
+    clojure.main$repl.doInvoke (main.clj:266)
+    clojure.lang.RestFn.invoke (RestFn.java:1096)
+    clojure.tools.nrepl.middleware.interruptible_eval$evaluate$fn__544.invoke (interruptible_eval.clj:56)
+    clojure.lang.AFn.applyToHelper (AFn.java:159)
+    clojure.lang.AFn.applyTo (AFn.java:151)
+    clojure.core$apply.invoke (core.clj:601)
+    clojure.core$with_bindings_STAR_.doInvoke (core.clj:1771)
+    clojure.lang.RestFn.invoke (RestFn.java:425)
+    clojure.tools.nrepl.middleware.interruptible_eval$evaluate.invoke (interruptible_eval.clj:41)
+    clojure.tools.nrepl.middleware.interruptible_eval$interruptible_eval$fn__585$fn__587.invoke (interruptible_eval.clj:171)
+    clojure.core$comp$fn__4034.invoke (core.clj:2278)
+    clojure.tools.nrepl.middleware.interruptible_eval$run_next$fn__578.invoke (interruptible_eval.clj:138)
+    clojure.lang.AFn.run (AFn.java:24)
+    java.util.concurrent.ThreadPoolExecutor.runWorker (ThreadPoolExecutor.java:1110)
+    java.util.concurrent.ThreadPoolExecutor$Worker.run (ThreadPoolExecutor.java:603)
+    java.lang.Thread.run (Thread.java:679)
+
+
 
 
 
