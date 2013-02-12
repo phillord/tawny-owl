@@ -28,7 +28,7 @@ for your purposes.
 
 In this document, we will explore the basic usage of the library, using
 examples from the tawny-pizza -- the traditional
-[Pizza Ontology](http://robertdavidstevens.wordpress.com/2010/01/22/why-the-pizza-ontology-tutorial/)
+[Pizza Ontology](http://robertdavidstevens.wordpress.com/2010/01/22/why-the-pizza-ontology-tutorial/). 
 
 
 
