@@ -3,3 +3,4 @@
 /pom.xml
 test-*
 test.*
+docs/*html
