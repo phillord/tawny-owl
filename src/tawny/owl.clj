@@ -390,6 +390,17 @@ class, or class expression. "
              (seq? equivalent))]}
   (add-frame create-equivalent-axiom name equivalent))
 
+
+(defn- create-disjoint-axiom [clazz disjoint]
+  (.getOWLDisjointClassesAxiom 
+   ontology-data-factory
+   (into-array OWLClassExpression [clazz disjoint])))
+
+(defn add-disjoint [name disjoint]
+  {:pre [(or (nil? disjoint) 
+             (seq? disjoint))]}
+  (add-frame create-disjoint-axiom name disjoint))
+
 (defn- create-class-axiom [clazz _]
   (.getOWLDeclarationAxiom
    ontology-data-factory
@@ -794,7 +805,9 @@ class, or class expression. "
          (add-class class)
          (add-subclass class (:subclass frames))
          (add-equivalent class (:equivalent frames))
+         (add-disjoint class (:disjoint frames))
          (add-annotation class (:annotation frames))
+         
          ;; change these to add to the annotation frame instead perhaps?
          (when (:comment frames)
            (add-annotation class
@@ -821,7 +834,8 @@ class, or class expression. "
                concat
                (util/hashify frames)
                *default-frames*)
-       [:subclass :equivalent :annotation :name :comment :label]))))
+       [:subclass :equivalent :annotation 
+        :name :comment :label :disjoint]))))
 
 (defmacro defclass [classname & frames]
   `(let [string-name# (name '~classname)
