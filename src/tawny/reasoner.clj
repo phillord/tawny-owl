@@ -250,4 +250,4 @@ ontology is inconsistent"
 (defn iequivalent-class? [name equiv]
   (util/in? 
    (iequivalent-classes name)
-   name))
+   equiv))
