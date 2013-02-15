@@ -44,7 +44,6 @@ or nil otherwise."
               :when (not (nil? iri))]
           [iri var])))
 
-
 (defn var-str 
   "Given a var, return a string representation of its name"
   [var]
@@ -66,6 +65,18 @@ including the name space."
       (var-str var)
       (var-qualified-str var))))
 
+(defn named-entity-as-string [entity]
+  (-> entity
+      (.getIRI)
+      (.toURI)
+      (.toString)))
+
+(defn resolve-entity [entity iri-to-var]
+  (let [entity-str (named-entity-as-string entity)
+        var (get entity-str iri-to-var)]
+    (if (nil? var)
+      entity-str
+       (var-maybe-qualified-str var))))
 
 (defn name-to-var [& namespaces]
   (into {} 

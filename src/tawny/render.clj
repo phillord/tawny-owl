@@ -20,6 +20,7 @@
 (ns tawny.render
   (:require [tawny.owl :as owl]
             [tawny.lookup]
+            [tawny.util]
             )
   (:import 
            (java.util Set)
@@ -56,51 +57,58 @@
       (.toURI)
       (.toString)))
 
+
+(def 
+  ^{:dynamic true
+    :doc "Holds a copy of the iri-to-var map
+for the duration of the form."
+    :private true}
+  iri-to-var-cache nil)
+
 (declare form)
 
 (defmulti as-form class)
 
 (defmethod as-form OWLClass [c]
-  (let [super (.getSuperClasses c (owl/get-current-ontology))
-        equiv (.getEquivalentClasses c (owl/get-current-ontology))
-        disjoint (.getDisjointClasses c (owl/get-current-ontology))
-        annotation (.getAnnotations c (owl/get-current-ontology))
-        ]
-    `(tawny.owl/defclass ~(form c)
-       ~@(when (< 0 (count super))
-           (cons
-            :subclass
-            (form super)))
-       ~@(when (< 0 (count equiv))
-           (cons
-            :equivalent
-            (form equiv)))
-       ~@(when (< 0 (count disjoint))
-           (cons
-            :disjoint
-            (form disjoint)))
-       ~@(when (< 0 (count annotation))
-           (cons :annotation
-                 (form annotation)))
-
-       )))
+  (binding [iri-to-var-cache (tawny.lookup/all-iri-to-var)]
+    (let [super (.getSuperClasses c (owl/get-current-ontology))
+          equiv (.getEquivalentClasses c (owl/get-current-ontology))
+          disjoint (.getDisjointClasses c (owl/get-current-ontology))
+          annotation (.getAnnotations c (owl/get-current-ontology))
+          ]
+      `(tawny.owl/defclass ~(form c)
+         ~@(when (< 0 (count super))
+             (cons
+              :subclass
+              (form super)))
+         ~@(when (< 0 (count equiv))
+             (cons
+              :equivalent
+              (form equiv)))
+         ~@(when (< 0 (count disjoint))
+             (cons
+              :disjoint
+              (form disjoint)))
+         ~@(when (< 0 (count annotation))
+             (cons :annotation
+                   (form annotation)))
+         ))))
        
 (defmulti form class)
 
 (defmethod form Set [s]
-  (map #(form %) s))
+  ;; no lazy -- we are going to render the entire form anyway, and we are
+  ;; using a dynamic binding to cache the iri-to-var map. Lazy eval will break
+  ;; this big time.
+  (tawny.util/dmap #(form %) s))
 
 (defmethod form OWLClass [c]
   (symbol
-   (tawny.lookup/var-maybe-qualified-str
-    (get (tawny.lookup/all-iri-to-var) 
-         (named-entity-as-string c)))))
+   (tawny.lookup/resolve-entity c iri-to-var-cache)))
 
 (defmethod form OWLObjectProperty [p]
   (symbol
-   (tawny.lookup/var-maybe-qualified-str
-    (get (tawny.lookup/all-iri-to-var)
-         (named-entity-as-string p)))))
+   (tawny.lookup/resolve-entity p iri-to-var-cache)))
 
 (defmethod form OWLObjectSomeValuesFrom [s]
   (list 'owlsome
