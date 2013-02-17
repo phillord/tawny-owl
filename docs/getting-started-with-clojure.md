@@ -33,4 +33,22 @@ advantage.
 
 ## Building
 
-Clojure is highly-dynamic, so "build" may be the wrong term. There is not compile-test
+Clojure is highly-dynamic, so "build" may be the wrong term. There is no
+compile-test cycle with Clojure. However, Tawny-OWL uses "Leiningen" to
+perform two tasks. First, it resolves dependencies; any ontology built with
+Tawny-OWL will have a large number of these, and they can change over time, so
+not maintaining this by hand is a boon. Secondly, Lein provides an easy way to
+launch the REPL -- read-eval-print-loop. 
+
+Leiningen can be installed from a package manager, although the most release
+(Lein 2) is quite recent and many repositories have the older Lein 1. In this
+case, you need to install from the main
+[lein website](https://github.com/technomancy/leiningen). Installation is
+relatively straight-forward on both Windows and Linux. 
+
+## A project file
+
+Leiningen uses a project file to define the build. The file is called
+`project.clj` and it, itself, written in Clojure. A reasonable example for
+Tawny-OWL can be see in the
+[Tawny Pizza](https://github.com/phillord/tawny-pizza) ontology. 
