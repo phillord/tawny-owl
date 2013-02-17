@@ -20,13 +20,14 @@
   (:import
    (java.lang.ref WeakReference)
    (java.util WeakHashMap)
-    (javax.swing
+   (javax.swing
       BoxLayout
       JFrame
       JLabel
       JPanel
       JProgressBar
       WindowConstants)
+    (java.awt GraphicsEnvironment)
     (org.semanticweb.elk.owlapi ElkReasonerFactory)
     (org.apache.log4j 
      Level
@@ -120,7 +121,6 @@
       (println "reasoner task stopped"))))
 
 
-
 (defn reasoner-progress-monitor-silent[]
   (proxy [org.semanticweb.owlapi.reasoner.ReasonerProgressMonitor] []
     (reasonerTaskBusy[]
@@ -132,11 +132,16 @@
     (reasonerTaskStopped []
       )))
 
+(defn reasoner-progress-monitor-gui-maybe []
+  (if (GraphicsEnvironment/isHeadless)
+    (reasoner-progress-monitor-text)
+    (reasoner-progress-monitor-gui)))
+
 ;; set up the default!
 (def
   ^{:dynamic true}
   *reasoner-progress-monitor*
-  reasoner-progress-monitor-gui)
+  reasoner-progress-monitor-gui-maybe)
 
 (defn reasoner-for-ontology [ontology]
   (first
