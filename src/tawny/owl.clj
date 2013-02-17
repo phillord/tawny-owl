@@ -693,7 +693,7 @@ class, or class expression. "
     ontology-data-factory property)
    (instance? String property)
    (ensure-annotation-property
-    (IRI/create property))
+    (iriforname property))
    :default 
    (throw (IllegalArgumentException.
            (format "Expecting an OWL annotation property: %s" property)))))
