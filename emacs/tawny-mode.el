@@ -18,6 +18,21 @@
 (require 'nrepl)
 (require 'clojure-mode)
 (require 'easymenu)
+
+
+(defun tawny-mode-check-for-nrepl-buffer ()
+  (if (find-if
+           (lambda (buffer)
+             (lexical-let ((buffer (get-buffer buffer)))
+               (equal (nrepl-project-directory-for (nrepl-current-dir))
+                      (buffer-local-value 'nrepl-project-dir buffer))))
+           nrepl-connection-list)
+      t
+    (message 
+     "No nREPL buffer exists. Please use `nrepl-jack-in'")
+    nil
+    ))
+
 ;; select reasoner
 (defun tawny-mode-select-reasoner (reasoner)
   "Selects the current reasoner"
@@ -27,36 +42,40 @@
      "Select reasoner: "
      '("hermit" "elk")
      nil t)))
-  (if (equal "" reasoner)
-      (message "You must choose a reasoner")
-    (tawny-mode-nrepl-reasoner-eval-string
-     (format
-      "(do (require 'tawny.emacs)(tawny.emacs/set-reasoner :%s))" 
-      reasoner))))
+  (when (tawny-mode-check-for-nrepl-buffer)
+    (if (equal "" reasoner)
+        (message "You must choose a reasoner")
+      (tawny-mode-nrepl-reasoner-eval-string
+       (format
+        "(do (require 'tawny.emacs)(tawny.emacs/set-reasoner :%s))" 
+        reasoner)))))
 
 (defun tawny-mode-is-coherent ()
   (interactive)
-  (tawny-mode-nrepl-reasoner-eval-string
-   (format 
-    "(do (require 'tawny.emacs)(tawny.emacs/is-coherent \"%s\"))"
-    (clojure-find-ns)
-    )))
+  (when (tawny-mode-check-for-nrepl-buffer)
+    (tawny-mode-nrepl-reasoner-eval-string
+     (format 
+      "(do (require 'tawny.emacs)(tawny.emacs/is-coherent \"%s\"))"
+      (clojure-find-ns)
+      ))))
 
 (defun tawny-mode-is-consistent ()
   (interactive)
-  (tawny-mode-nrepl-reasoner-eval-string
-   (format 
-    "(do (require 'tawny.emacs)(tawny.emacs/is-consistent \"%s\"))"
-    (clojure-find-ns)
-    )))
+  (when (tawny-mode-check-for-nrepl-buffer)  
+    (tawny-mode-nrepl-reasoner-eval-string
+     (format 
+      "(do (require 'tawny.emacs)(tawny.emacs/is-consistent \"%s\"))"
+      (clojure-find-ns)
+      ))))
 
 (defun tawny-mode-unsatisfiable ()
   (interactive)
-  (nrepl-send-string
-   (format 
-    "(do (require 'tawny.emacs)(tawny.emacs/get-unsatisfiable \"%s\"))"
-    (clojure-find-ns))
-   (tawny-mode-unsatisfiable-response-handler (current-buffer))))
+  (when (tawny-mode-check-for-nrepl-buffer)
+    (nrepl-send-string
+     (format 
+      "(do (require 'tawny.emacs)(tawny.emacs/get-unsatisfiable \"%s\"))"
+      (clojure-find-ns))
+     (tawny-mode-unsatisfiable-response-handler (current-buffer)))))
 
 
 (defvar tawny-trace-buffer (get-buffer-create "*tawny-trace*"))
@@ -172,7 +191,19 @@
 
   )
 
+(defvar tawny-mode-block nil)
 
+(defun tawny-mode-maybe-enable ()
+  (interactive)
+  (save-excursion
+    (goto-char (point-min))
+    (unless tawny-mode-block
+      (when 
+          (re-search-forward
+           (regexp-opt 
+            '("defontology" "defoproperty" "defannotationproperty") 'symbols)
+           (point-max) t)
+        (tawny-mode 1)))))
 
 
 (provide 'tawny-mode)
