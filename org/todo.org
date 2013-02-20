@@ -1,24 +1,30 @@
 
+* Issues
 
-* Annotation
-
-Currently 
-
-defannotationproperty 
-
-doesn't work -- the code that it calls just returns the annotation property --
-it doesn't actually stick it into the ontology. So need to make sure that this
-happens (annotation assertion axiom I think). 
-
-Also, we need to be able to add annotations (comments particularly!) to the
-annotation. 
+  :PROPERTIES:
+  :status_ALL: open closed assigned inprogress
+  :type_ALL: bug feature performance refactor
+  :severity_ALL: mild medium high critical
+  :END:
 
 
-* Move the reasoner code into ontology options
-  
+** Move the reasoner code into ontology options
+   
+   :PROPERTIES:
+   :status:   open
+   :severity: mild
+   :type:     performance
+   :END:
+   
 
-
-* IRI Creation
+   
+** IRI creation needs to be generalised.
+   :PROPERTIES:
+   :type:     feature
+   :status:   open
+   :severity: medium
+   :END: 
+   
 
 Have a OBO style generator. 
 
@@ -29,9 +35,11 @@ client also, which will update all purls and make sure that they point to the
 correct place. 
 
 
-* Enhancements
-
 ** Interpolation for comments
+   :PROPERTIES:
+   :type:     feature
+   :severity: medium
+   :END:
 
 Would like to be able to interpolate comments and labels. Currently, we
 have no default label (not ideal), although this could be created
@@ -50,6 +58,10 @@ Could hook into the owlclass-explicit function and add stuff at the end.
 
 
 ** Clojure IDs as annotation
+   :PROPERTIES:
+   :type:     feature
+   :severity: medium
+   :END:
 
 The identifiers used within clojure should be placed onto the ontology as
 annotations. The idea here is that someone using clojure-owl to generate an
@@ -58,12 +70,21 @@ started with (at least in terms of ids and so on).
 
 
 ** Version ID
+   :PROPERTIES:
+   :type:     feature
+   :severity: medium
+   :END:
 
 Support Version ID for everything.
 
 
 
 ** tawny.lookup optimisation
+   :PROPERTIES:
+   :type:     performance
+   :END:
+
+*** Issue
 
 This is potentially very slow. Add a cache to hold the map. 
 Put hooks into tawny.old macros for "new var creation". When this 
@@ -72,7 +93,18 @@ pings, just kill the cache and start again.
 Also, kill on ontology kill I think. 
 
 
+*** Solution
+
+Providing a generic cache is more of a pain than it appears, as it requires
+hooks in everywhere, which potentially get called often. tawny.render was the
+biggest sufferer from this, where I have fixed it by dynamically binding a
+cache. 
+
 ** add :ontology frame to all things
+   :PROPERTIES:
+   :type:     feature
+   :severity: mild
+   :END:
 
 We should be able to specify the ontology as a parameter, to 
 all things that add to an ontology -- with-ontology is a bit unwieldy. 
@@ -83,6 +115,10 @@ A new frame would be one option. Or the first parameter would be another.
 
 
 ** Autoname
+   :PROPERTIES:
+   :type:     feature
+   :severity: mild
+   :END:
 
 An autoname facility might be nice for where I can't be assed to specify a
 name. Especially good for probe classes. Easiest way is to just implement a
@@ -91,15 +127,43 @@ new owlclass function.
 
 
 
-* Bugs 
-  
+** reasoner monitor
+   :PROPERTIES:
+   :type:     bug
+   :status:   closed
+   :END:
+
+*** Issue
+Something isn't working and the progress monitor isn't always getting set. 
+
+             (SimpleConfiguration.
+              (*reasoner-progress-monitor*)))]
+
+This *should* work. Using dynamic binding? Some laziness disaster? 
+
+Think I should extent reasoner to take this explicitly. It balks tests
+completely. 
+
+*** Closed
+
+The original issue was wrong, and this dynamic binding is working.
+
+
 ** Ontology reload
+   :PROPERTIES:
+   :type:     feature
+   :END:
 
 Now we have tawny.lookup, it *should* be possible to unmap all vars in a
 namespace when an ontology is re-evaled. Just do "tawny.lookup", then ns-umap
 the entire lot. 
 
+
 ** tawny doc
+   :PROPERTIES:
+   :type:     bug
+   :END:
 
 Doesn't cope well when the class isn't known as a var. Should fall back to 
 http:// with special case for owl:thing. 
+

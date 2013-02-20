@@ -180,6 +180,27 @@ java.lang.IllegalArgumentException: No matching method found: createNonBuffering
     java.lang.Thread.run (Thread.java:679)
 
 
+* Annotation
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2013-02-20 Wed 13:05
+  :ARCHIVE_FILE: ~/src/knowledge/tawny-owl/org/todo.org
+  :ARCHIVE_OLPATH: Issues
+  :ARCHIVE_CATEGORY: todo
+  :END:
+
+Currently 
+
+defannotationproperty 
+
+doesn't work -- the code that it calls just returns the annotation property --
+it doesn't actually stick it into the ontology. So need to make sure that this
+happens (annotation assertion axiom I think). 
+
+Also, we need to be able to add annotations (comments particularly!) to the
+annotation. 
+
+
+
 
 
 
