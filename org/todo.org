@@ -7,6 +7,12 @@
   :severity_ALL: mild medium high critical
   :END:
 
+** AnnotationProperties can't express superproperties
+   :PROPERTIES:
+   :status:   open
+   :type:     feature
+   :END:
+
 
 ** Move the reasoner code into ontology options
    
@@ -82,6 +88,7 @@ Support Version ID for everything.
 ** tawny.lookup optimisation
    :PROPERTIES:
    :type:     performance
+   :status:   closed
    :END:
 
 *** Issue
@@ -99,6 +106,7 @@ Providing a generic cache is more of a pain than it appears, as it requires
 hooks in everywhere, which potentially get called often. tawny.render was the
 biggest sufferer from this, where I have fixed it by dynamically binding a
 cache. 
+
 
 ** add :ontology frame to all things
    :PROPERTIES:
