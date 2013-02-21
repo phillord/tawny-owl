@@ -707,6 +707,22 @@ class, or class expression. "
       annotation-property 
       (.getOWLLiteral ontology-data-factory literal language))))
 
+(defn add-a-super-annotation
+  [subproperty superproperty]
+  (.applyChange owl-ontology-manager
+   (AddAxiom.
+    (get-current-ontology)
+    (.getOWLSubAnnotationPropertyOfAxiom
+     ontology-data-factory
+     subproperty 
+     (ensure-annotation-property superproperty)))))
+
+(defn add-super-annotation
+  [subproperty superpropertylist]
+  (doall
+   (map #(add-a-super-annotation subproperty %1) 
+        superpropertylist)))
+
 
 ;; various annotation types
 (def label
@@ -754,6 +770,10 @@ class, or class expression. "
                                 (first
                                  (:label frames))))))
        
+       (when-let [supers (:subclass frames)]
+         (add-super-annotation 
+          property-object supers))
+       
        (add-annotation property-object (:annotation frames))
        
 
@@ -765,7 +785,7 @@ class, or class expression. "
    name
    (util/check-keys 
     (util/hashify frames)
-    [:annotation :label :comment])))
+    [:annotation :label :comment :subclass])))
 
 (defn get-annotation-property [property]
   (.getOWLAnnotationProperty 
