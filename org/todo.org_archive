@@ -199,6 +199,17 @@ happens (annotation assertion axiom I think).
 Also, we need to be able to add annotations (comments particularly!) to the
 annotation. 
 
+* AnnotationProperties can't express superproperties
+  :PROPERTIES:
+  :status:   closed
+  :type:     feature
+  :ARCHIVE_TIME: 2013-02-22 Fri 21:20
+  :ARCHIVE_FILE: ~/src/knowledge/tawny-owl/org/todo.org
+  :ARCHIVE_OLPATH: Issues
+  :ARCHIVE_CATEGORY: todo
+  :END:
+
+
 
 
 

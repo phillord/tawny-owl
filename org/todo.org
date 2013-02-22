@@ -7,13 +7,6 @@
   :severity_ALL: mild medium high critical
   :END:
 
-** AnnotationProperties can't express superproperties
-   :PROPERTIES:
-   :status:   open
-   :type:     feature
-   :END:
-
-
 ** Move the reasoner code into ontology options
    
    :PROPERTIES:
