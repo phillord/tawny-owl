@@ -725,27 +725,46 @@ class, or class expression. "
 
 
 ;; various annotation types
+(def labelproperty
+  (.getRDFSLabel ontology-data-factory))
+
 (def label
-  (partial annotation (.getRDFSLabel ontology-data-factory)))
+  (partial annotation labelproperty))
+
+(def owlcommentproperty
+  (.getRDFSComment ontology-data-factory))
 
 (def owlcomment
-  (partial annotation (.getRDFSComment ontology-data-factory)))
+  (partial annotation owlcommentproperty))
+
+(def isdefinedbyproperty
+  (.getRDFSIsDefinedBy ontology-data-factory))
 
 (def isdefinedby
-  (partial annotation (.getRDFSIsDefinedBy ontology-data-factory)))
+  (partial annotation isdefinedbyproperty))
+
+(def seealsoproperty
+  (.getRDFSSeeAlso ontology-data-factory))
 
 (def seealso
-  (partial annotation (.getRDFSSeeAlso ontology-data-factory)))
+  (partial annotation seealsoproperty))
+
+(def backwardcompatiblewithproperty
+  (.getOWLBackwardCompatibleWith ontology-data-factory))
 
 (def backwardcompatiblewith
-  (partial annotation (.getOWLBackwardCompatibleWith ontology-data-factory)))
+  (partial annotation backwardcompatiblewithproperty))
+
+(def incompatiblewithproperty (.getOWLIncompatibleWith ontology-data-factory))
 
 (def incompatiblewith
-  (partial annotation (.getOWLIncompatibleWith ontology-data-factory)))
+  (partial annotation incompatiblewithproperty))
+
+(def versioninfoproperty
+  (.getOWLVersionInfo ontology-data-factory))
 
 (def versioninfo
-  (partial annotation (.getOWLVersionInfo ontology-data-factory)))
-
+  (partial annotation versioninfoproperty))
 
 (defn annotation-property-explicit
   "Add this annotation property to the ontology"
