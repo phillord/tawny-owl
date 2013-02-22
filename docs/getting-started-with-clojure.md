@@ -29,7 +29,7 @@ has reasonable coverage.
 For those using Emacs, if you are not familiar with lisp I would advice
 ignoring the advice of many tutorials to install paredit. It really is good
 for Lisp, but Tawny-OWL doesn't really nest very much, so it's not that big an
-advantage. 
+advantage, and can be disconcerting in first use. 
 
 ## Building
 
@@ -52,3 +52,6 @@ Leiningen uses a project file to define the build. The file is called
 `project.clj` and it, itself, written in Clojure. A reasonable example for
 Tawny-OWL can be see in the
 [Tawny Pizza](https://github.com/phillord/tawny-pizza) ontology. 
+
+
+

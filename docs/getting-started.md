@@ -29,9 +29,14 @@ for your purposes.
 In this document, we will explore the basic usage of the library, using
 examples from the tawny-pizza -- the traditional
 [Pizza Ontology](http://robertdavidstevens.wordpress.com/2010/01/22/why-the-pizza-ontology-tutorial/). 
+A working version of this ontology ported to Tawny is
+[available](https://github.com/phillord/tawny-pizza). 
 
 
+## Creating a new ontology
 
+Clojure has a namespacing mechanism which is used to prevent name clashes. A
+single declaration 
 
 
 

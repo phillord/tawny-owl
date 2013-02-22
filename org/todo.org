@@ -168,3 +168,59 @@ the entire lot.
 Doesn't cope well when the class isn't known as a var. Should fall back to 
 http:// with special case for owl:thing. 
 
+
+
+* Documentation 
+
+** Getting started with-clojure [0/6]
+ - [ ] Complete leiningen project file
+ - [ ] Namespaces, how they relate to files
+ - [ ] How to evaluate a file
+ - [ ] How to write a main method which dumps OWL files
+ - [ ] How to use Clojars.
+
+** Getting started [/]
+ - [ ] Namespace and tawny OWL imports
+ - [ ] Relationship between ontology and namespace
+ - [ ] Creating a new ontology
+ - [ ] Creating a new class
+ - [ ] Creating properties
+ - [ ] Removing classes again
+ - [ ] Saving ontologies
+ - [ ] Interaction with Protege
+
+** Reasoning [/]
+ - [ ] What is reasoning
+ - [ ] Reasoning over a single ontology
+ - [ ] Reasoning predicates
+ - [ ] Reasoning with tawny-mode
+
+** Importing and Reading external ontologies [0/5]
+ - [ ] Difference between clojure import and OWL import.
+ - [ ] Reading an OWL file into Clojure
+ - [ ] What it means, in terms of Clojure
+ - [ ] transform and filter
+ - [ ] Filter is only in namespace, not save
+
+** Tawny Repl [/]
+ - [ ] Documentation lookup
+
+** Scripting with Tawny [/]
+ - [ ] Added NamedPizza's
+
+** Polyglot
+ - [ ] Adding multi lingual labels
+
+** Memorise
+ - [ ] What is the problem with read and transform
+ - [ ] How memorise helps to solve this problem
+ - [ ] How to save a memorisation state
+ - [ ] How to load one again.
+
+** Testing
+ - [ ] What is unit testing, how does it look in Clojure
+ - [ ] How does unit testing apply to ontologies
+ - [ ] Predicates for use without reasoning
+ - [ ] How to set up reasoner in a fixture
+ - [ ] Predicates for use with reasoning
+ - [ ] probe-classes. 
