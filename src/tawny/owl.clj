@@ -1082,7 +1082,7 @@ expressions."
   [name]
   (let [clz (ensure-class name)]
     ;; general Class expressions return empty
-    (if (instance? OWLClass)
+    (if (instance? OWLClass clz)
       (.getSuperClasses clz
                         (get-current-ontology))
       ())))
@@ -1099,7 +1099,7 @@ expressions."
   "Returns the direct subclasses of name."
   [name]
   (let [clz (ensure-class name)]
-    (if (instance? OWLClass)
+    (if (instance? OWLClass clz)
       (.getSubClasses (ensure-class name)
                       (get-current-ontology))
       ())))
