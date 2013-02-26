@@ -1077,10 +1077,15 @@ namelist where recursefunction returns all direct relationships"
 
 (defn isuperclasses
   "Returns the direct superclasses of name.
-Name can be either a class or a string name. Returns a list of classes"
+Name can be either a class or a string name. Returns a list of class
+expressions."
   [name]
-  (.getSuperClasses (ensure-class name)
-                    (get-current-ontology)))
+  (let [clz (ensure-class name)]
+    ;; general Class expressions return empty
+    (if (instance? OWLClass)
+      (.getSuperClasses clz
+                        (get-current-ontology))
+      ())))
 
 
 (defn superclass?
@@ -1093,8 +1098,11 @@ Name can be either a class or a string name. Returns a list of classes"
 (defn isubclasses
   "Returns the direct subclasses of name."
   [name]
-  (.getSubClasses (ensure-class name)
-                  (get-current-ontology)))
+  (let [clz (ensure-class name)]
+    (if (instance? OWLClass)
+      (.getSubClasses (ensure-class name)
+                      (get-current-ontology))
+      ())))
 
 (defn subclass?
   "Returns true if name has subclass as a subclass"
