@@ -29,7 +29,7 @@
                  [net.sourceforge.owlapi/owlapi-distribution "3.4.3"]
                  
                  ;; clojure
-                 [org.clojure/clojure "1.4.0"]
+                 [org.clojure/clojure "1.5.0"]
                  
                  ;; hook functions
                  [robert/hooke "1.3.0"]
@@ -38,8 +38,5 @@
                  [org.semanticweb.elk/elk-owlapi "0.3.1"]
                  [org.semanticweb.hermit/HermiT "1.3.6.1"]
                  
-                 [org.clojure/tools.trace "0.7.5"]
-                 [org.clojure/core.incubator "0.1.2"]  
-
                  ;; need to access log4j to control elk. 
                  [log4j/log4j "1.2.14"]])
