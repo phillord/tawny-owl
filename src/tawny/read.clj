@@ -3,7 +3,7 @@
             [clojure.string :only replace]           
             )
 
-  (:use  [clojure.core.incubator])
+
 
   
   (:refer-clojure :exclude [read])
@@ -37,7 +37,7 @@ starts-with. Use this partially applied with a filter for 'read'."
   "Filter annotations on an entity for labels"
   [e]
   (filter 
-   #(-?> % 
+   #(some-> % 
         (.getProperty)
         (.isLabel))
    (.getAnnotations e (tawny.owl/get-current-ontology))))
@@ -47,7 +47,7 @@ starts-with. Use this partially applied with a filter for 'read'."
 (defn label-transform 
   "Get text from label annotation"
   [e]
-  (-?> (filter-for-labels e)
+  (some-> (filter-for-labels e)
       (first)
       (.getValue)
       (.getLiteral)))
