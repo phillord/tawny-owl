@@ -172,11 +172,11 @@ http:// with special case for owl:thing.
 
 * Documentation 
 
-** Getting started with-clojure [0/6]
- - [ ] Complete leiningen project file
- - [ ] Namespaces, how they relate to files
- - [ ] How to evaluate a file
- - [ ] How to write a main method which dumps OWL files
+** Getting started with-clojure [4/5]
+ - [X] Complete leiningen project file
+ - [X] Namespaces, how they relate to files
+ - [X] How to evaluate a file
+ - [X] How to write a main method which dumps OWL files
  - [ ] How to use Clojars.
 
 ** Getting started [/]

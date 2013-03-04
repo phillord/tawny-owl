@@ -53,5 +53,65 @@ Leiningen uses a project file to define the build. The file is called
 Tawny-OWL can be see in the
 [Tawny Pizza](https://github.com/phillord/tawny-pizza) ontology. 
 
+    (defproject pizza "0.1-SNAPSHOT"
+      :description "The Pizza Ontology in tawny-owl"
+      :dependencies [[org.clojure/clojure "1.4.0"]
+                     [uk.org.russet/tawny-owl "0.9"]
+                     ]
+    
+      :main pizza.core
+    )
+    
+The project definition is itself written in Clojure; in most cases Tawny
+projects will require just Clojure and Tawny as dependencies (the version
+numbers of these will change!). The description, and project name will, of
+course be unique to your project.
 
+## File Locations
 
+Clojure uses namespaces to avoid name clashes. Although less rigid than Java,
+most often a clojure namespace maps to a single file. Leiningen expects files
+at a specific location. All sources files are held in, unsurprisingly, the
+`src` directory. Directories below this create a namespace hierarchy. So, the
+main source for the pizza ontology is found at `src/pizza`. 
+
+## Evaluating a file
+
+The first thing that you need to do with a Tawny ontology is evaluate a file;
+that is, have Clojure interpret all the statements, and turn them into an
+something that you can interact with. Unfortunately, the different
+environments that you might choose do this differently. However, the are
+plenty of tutorials; for instance I use 
+[emacs](http://clojure-doc.org/articles/tutorials/emacs.html). 
+
+## Building an ontology
+
+This is the main thing that you may want to do with Tawny, and it is covered
+in its own [documentation](getting-start.md). 
+
+## A main method
+
+You don't need a main function for an ontology, but it can be useful. For
+instance, tawny-pizza includes a simple main, that writes the ontology in a
+couple of different formats. The practical upshot of this is that if you
+generate an single jar file for a project, running this file by, for instance,
+clicking on it will generate OWL files. 
+
+Previously, we saw a project definition including the statement `:main
+pizza.core`. This describes the namespace that the main method is expected to
+appear in. In this file (`src/pizza/core.clj`), we find a namespace
+declaration. 
+
+     (ns pizza.core
+       (:use [tawny.owl] 
+             [pizza.pizza])
+       (:gen-class)
+       )
+
+and a simple main method which. 
+
+     (defn -main [& args]
+       (with-ontology pizzaontology
+         (save-ontology "pizza.rdf" :rdf)
+         (save-ontology "pizza.owl" :owl)))
+     
