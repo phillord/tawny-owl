@@ -67,9 +67,6 @@
     }
   *current-bound-ontology* nil)
 
-(def ^{:doc "Map between namespaces and ontologies"}
-  ontology-for-namespace (ref {}))
-
 (defn named-object? [entity]
   (instance? OWLNamedObject entity))
 
@@ -161,20 +158,42 @@ The following keys must be supplied.
 (def ^{:doc "Ontology options. A map on a ref for each ontology"}
   ontology-options-atom (atom {}))
 
+(defmacro defontfn 
+  "Like defn but creates adds an arity one less than 'body', which
+defers to 'body' but adds the current-ontology as an argument. 
+"
+  [symbol & body]
+  (let 
+      ;; prematter is doc string and attr-map
+      [prematter (take-while (complement sequential?) body)
+       fnbody (drop-while (complement sequential?) body)
+       arglist (first fnbody)
+       butfirstarglist (drop 1 arglist)
+       bodynoargs (rest fnbody)
+       no-ont-body
+       `(~(vec butfirstarglist)
+           (~symbol (tawny.owl/get-current-ontology) ~@butfirstarglist))]
+    (when (not (vector? arglist))
+      (throw 
+       (IllegalArgumentException. "Can't deal with multiple arity functions yet")))
+    `(defn ~symbol 
+       ~@prematter
+       ~no-ont-body ~fnbody)))
+
 (declare get-current-ontology)
+
 ;; return options for ontology -- lazy (defn get-ontology-options [ontology])
-(defn ontology-options
-  "Returns the ontology options for an ontology"
-  ([]
-     (ontology-options (get-current-ontology)))
-  ([ontology]
-     (if-let [options
-              (get @ontology-options-atom ontology)]
-       options
-       (get
-        (swap!
-         ontology-options-atom assoc ontology (ref {}))
-        ontology))))
+(defontfn ontology-options
+  "Returns the ontology options for 'ontology'
+or the current-ontology"
+  [ontology]
+  (if-let [options
+           (get @ontology-options-atom ontology)]
+    options
+    (get
+     (swap!
+      ontology-options-atom assoc ontology (ref {}))
+     ontology)))
 
 
 (util/add-hook remove-ontology-hook
@@ -210,29 +229,26 @@ This defines a minimal test ontology.
          (throw (IllegalStateException. "Current ontology has not been set")))))
 
 
-(defn get-iri
+(defontfn get-iri
   "Gets the IRI for the given ontology, or the current ontology if none is given"
-  ([]
-     (get-iri (get-current-ontology)))
-  ([ontology]
-     (.getOntologyIRI
-      (.getOntologyID ontology))))
+  [ontology]
+  (.getOntologyIRI
+   (.getOntologyID ontology)))
 
 (defn get-current-iri[]
   "DEPRECATED: Use 'get-iri' instead. "
   {:deprecated "0.8"}
   (get-iri))
 
-(defn get-prefix
-  ([] (get-prefix (get-current-ontology)))
-  ([ontology]
-     ;; my assumption here is that there will only ever be one prefix for a given
-     ;; ontology. If not, it's all going to go wrong.
-     (first
-      (keys
-       (.getPrefixName2PrefixMap
-        (.getOntologyFormat owl-ontology-manager
-                            ontology))))))
+(defontfn get-prefix
+  [ontology]
+  ;; my assumption here is that there will only ever be one prefix for a given
+  ;; ontology. If not, it's all going to go wrong.
+  (first
+   (keys
+    (.getPrefixName2PrefixMap
+     (.getOntologyFormat owl-ontology-manager
+                         ontology)))))
 
 (defn get-current-prefix []
   "Gets the current prefix"
