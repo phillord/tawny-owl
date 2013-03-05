@@ -1240,3 +1240,37 @@ delete these axioms from the ontology"
          (partial suffix-symbol suffix)
          body)]
     `(do ~@newbody)))
+
+
+(defmulti refine 
+  "Takes an existing definition, adds it to the current ontology, and then
+adds more frames. owlentity is the OWLEntity to be refined, and frames are the
+additional frames. The keys to the frames must be appropriate for the type of 
+entity. See 'owlclass' or 'objectproperty' for more details. 
+
+This is useful for two main reasons. First, to build class definitions in two
+places and add frames in both of these places. For simple forward declaration
+'declare-classes' is better. The second is where the same class needs to
+appear in two ontologies, but with more axioms in the second. This can enable,
+for example, building two interlocking ontologies with different OWL profiles.
+"
+  (fn [owlentity & frames] (class owlentity)))
+
+(defmethod refine OWLClass [& args]
+  (apply owlclass args))
+
+(defmethod refine OWLObjectProperty [& args]
+  (apply objectproperty args))
+
+(defmacro defrefine 
+  "Takes an existing definition, add more frames.
+
+See also 'refine'.
+"
+
+  [symbol & args]
+  `(def 
+     ~(with-meta symbol
+        (assoc (meta symbol)
+          :owl true))
+     (tawny.owl/refine ~@args)))
