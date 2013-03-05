@@ -24,7 +24,7 @@
    (org.semanticweb.owlapi.model OWLOntologyManager OWLOntology IRI
                                  OWLClassExpression OWLClass OWLAnnotation
                                  OWLNamedObject OWLOntologyID
-                                 OWLAnnotationProperty
+                                 OWLAnnotationProperty OWLObjectProperty
                                  )
    (org.semanticweb.owlapi.apibinding OWLManager)
    (org.coode.owlapi.manchesterowlsyntax ManchesterOWLSyntaxOntologyFormat)
@@ -280,7 +280,7 @@ or `filename' if given.
   (cond
    (fn? prop)
    (ensure-object-property (prop))
-   (instance? org.semanticweb.owlapi.model.OWLObjectProperty prop)
+   (instance? OWLObjectProperty prop)
    prop
    (string? prop)
    (get-create-object-property prop)
