@@ -39,19 +39,23 @@
 
 
 
-;; far as I can tell, we only ever need one of these.
-(def
+;; The next three forms all contain values that percolate across all the
+;; namespaces that contain ontologies. Resetting all of these when owl.clj is
+;; eval'd is a pain, hence they are all defonce. 
+(defonce
   ^{:doc "A java object which is the main factory for all other objects"
     :private true}
   ontology-data-factory
   (OWLManager/getOWLDataFactory))
 
-
-(def
+(defonce
   ^{:doc "The OWLOntologyManager to use"
    }
   owl-ontology-manager
   (OWLManager/createOWLOntologyManager ontology-data-factory))
+
+(defonce ^{:doc "Map between namespaces and ontologies"}
+  ontology-for-namespace (ref {}))
 
 ;; the current ontology provides our main mutable state. Strictly, we don't
 ;; need to do this, but the alternative would be passing in an ontology to
