@@ -1226,11 +1226,13 @@ delete these axioms from the ontology"
 
 ;; add a prefix or suffix to contained defclass
 (defn- alter-symbol-after-def-form [f x]
-  (if (and (seq? x)
-           (= (first x) 'defclass))
-    `(defclass ~(f (second x))
-       ~@(drop 2 x))
-    x))
+  (cond
+   (and (seq? x)
+        (= (first x) 'defclass))
+   `(defclass ~(f (second x))
+      ~@(drop 2 x))
+   :default
+   x))
 
 (defn prefix-symbol [prefix sym]
   (symbol
