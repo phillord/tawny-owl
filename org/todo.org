@@ -170,6 +170,11 @@ http:// with special case for owl:thing.
 
 
 
+** multiple arity version of defontfn
+
+The defontfn can currently only cope with single artiy functions. 
+It should be able to cope with more. 
+
 * Documentation 
 
 ** Getting started with-clojure [4/5]
