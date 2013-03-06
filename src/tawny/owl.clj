@@ -1294,3 +1294,20 @@ See also 'refine'.
         (assoc (meta symbol)
           :owl true))
      (tawny.owl/refine ~@args)))
+
+(defmacro defrefine
+  "Takes an existing definition, add more frames.
+
+The first element should be a namespace qualified symbol. The
+unqualifed part of this will be used in the current namespace. 
+
+See also 'refine'
+"
+  [symb & args]
+  (let [newsymbol#
+        (symbol (name symb))]
+    `(def 
+       ~(with-meta newsymbol#
+          (assoc (meta newsymbol#)
+            :owl true))
+       (tawny.owl/refine ~symb ~@args))))
