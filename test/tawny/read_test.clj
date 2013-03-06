@@ -20,7 +20,8 @@
   (:use [clojure.test])
   (:require [tawny.read :as r]
             [tawny.owl :as o])
-  (:import (org.semanticweb.owlapi.model IRI OWLNamedObject OWLOntologyID))
+  (:import (org.semanticweb.owlapi.model IRI OWLNamedObject OWLOntologyID)
+           (org.semanticweb.owlapi.util SimpleIRIMapper))
 
   )
 
@@ -33,18 +34,28 @@
 
 
 (deftest read
-  (is (r/read :location 
-              (IRI/create (clojure.java.io/resource "wine.rdf"))
-              :iri "http://iri"
-              :viri "http://viri"
-              :prefix "wine:"
-              ))
-  )
+  (is 
+   (do 
+     (try
+       ;; at some point this needs support in tawny. 
+       (.addIRIMapper
+        tawny.owl/owl-ontology-manager
+        (SimpleIRIMapper.
+         (IRI/create "http://www.w3.org/TR/2003/PR-owl-guide-20031209/food")
+         (IRI/create (clojure.java.io/resource "food.rdf"))))
+       
+       (r/read :location 
+               (IRI/create (clojure.java.io/resource "wine.rdf"))
+               :iri "http://www.w3.org/TR/2003/CR-owl-guide-20030818/wine"
+               :prefix "wine:"
+               )
+       ;; we shouldn't be using this again, but clean up anyway. 
+       (finally 
+         (.clearIRIMappers tawny.owl/owl-ontology-manager))))))
+
 
 (deftest go-snippet-as-resource
   (is (clojure.java.io/resource "go-snippet.owl")))
-
-
 
 (deftest go-snippet-filter
   (is
