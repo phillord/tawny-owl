@@ -530,7 +530,7 @@ class, or class expression. "
 ;; object properties
 (defn objectproperty-explicit
   [name {:keys [domain range inverseof subpropertyof characteristics] :as all}]
-  (let [property (get-create-object-property name)
+  (let [property (ensure-object-property name)
         axioms
         (concat
          (list (add-axiom
