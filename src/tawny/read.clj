@@ -137,6 +137,14 @@ Clojure symbol. Use this composed with a entity transform function"
     owlontology))
 
 
+(defn iri-create
+  "A convienience method for creating IRIs.
+
+Most namespaces that call use 'defread' will need to create an IRI. 
+This convienience method avoids the need for importing and depending 
+directly on the OWL API."
+  [iri]
+  (IRI/create iri))
 
 (defmacro defread [symbol & rest]
   `(do
