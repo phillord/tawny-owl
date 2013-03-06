@@ -1282,8 +1282,11 @@ for example, building two interlocking ontologies with different OWL profiles.
 (defmethod refine OWLObjectProperty [& args]
   (apply objectproperty args))
 
-(defmacro defrefine 
+
+
+(defmacro defrefineto
   "Takes an existing definition, add more frames.
+The first argument should be a symbol that will hold the
 
 See also 'refine'.
 "
