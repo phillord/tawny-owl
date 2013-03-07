@@ -1316,3 +1316,23 @@ See also 'refine'
           (assoc (meta newsymbol#)
             :owl true))
        (tawny.owl/refine ~symb ~@args))))
+
+
+(defmacro defcopy
+  "Takes an existing definition from another namespace and copies it into the
+current namespace with no changes in semantics. This can be useful for
+convienience, where one namespace should contain all the OWLObjects of
+another, or for forward declaration, where entities will be refined later.
+
+This does not add the existing definition to the current ontology. In most
+cases this will have been imported."
+  [symb & args]
+  (let [newsymbol#
+        (symbol (name symb))]
+    `(def
+       ~(with-meta newsymbol#
+          (assoc (meta newsymbol#)
+            :owl true))
+       (var-get (var ~symb)))))
+
+
