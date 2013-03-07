@@ -175,14 +175,15 @@ http:// with special case for owl:thing.
 The defontfn can currently only cope with single artiy functions. 
 It should be able to cope with more. 
 
+
 * Documentation 
 
-** Getting started with-clojure [4/5]
+** Getting started with-clojure [5/5]
  - [X] Complete leiningen project file
  - [X] Namespaces, how they relate to files
  - [X] How to evaluate a file
  - [X] How to write a main method which dumps OWL files
- - [ ] How to use Clojars.
+ - [X] How to use Clojars.
 
 ** Getting started [/]
  - [ ] Namespace and tawny OWL imports

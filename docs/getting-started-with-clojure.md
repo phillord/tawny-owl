@@ -108,10 +108,30 @@ declaration.
        (:gen-class)
        )
 
-and a simple main method which. 
+and a simple main method. In practice, a main method isn't that useful, but it
+will be run whenever the project jar is clicked on. In this case, the method
+simply saves the ontology out in a couple of formats.
 
      (defn -main [& args]
        (with-ontology pizzaontology
          (save-ontology "pizza.rdf" :rdf)
          (save-ontology "pizza.owl" :owl)))
      
+     
+## Publishing an Ontology 
+
+With Tawny, there are three ways to publish an ontology. First, an ontology
+developed in Tawny can be written out as OWL, in any of many formats, using
+the `save-ontology` function, which is covered in more detail in the
+[getting-started](getting-started.md) documentation. Anyone using an OWL
+ontology will be able to consume this form, including another Tawny user.
+Secondly, it is possible to release the Tawny-OWL files themselves as source.
+This will be useful to other Tawny-OWL users, but is only really necessary if
+they wish to modify the ontology; it is best accomplished through a version
+control system. Finally, the Tawny-OWL files can be packaged as a jar file and
+published to a maven repository. This is the best way to share an ontology
+with other Tawny-OWL users who wish to use, but not change your ontology. The
+most straight-forward to do this is through the
+[Clojars](http://www.clojars.org) repository; there is a good
+[tutorial](https://github.com/ato/clojars-web/wiki/tutorial) available for
+this. 
