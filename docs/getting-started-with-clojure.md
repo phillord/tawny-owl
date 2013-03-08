@@ -44,7 +44,8 @@ Leiningen can be installed from a package manager, although the most release
 (Lein 2) is quite recent and many repositories have the older Lein 1. In this
 case, you need to install from the main
 [lein website](https://github.com/technomancy/leiningen). Installation is
-relatively straight-forward on both Windows and Linux. 
+relatively straight-forward on both Windows and Linux. Tawny-OWL will work
+with Lein 1, but the test case fail.
 
 ## A project file
 
@@ -65,7 +66,8 @@ Tawny-OWL can be see in the
 The project definition is itself written in Clojure; in most cases Tawny
 projects will require just Clojure and Tawny as dependencies (the version
 numbers of these will change!). The description, and project name will, of
-course be unique to your project.
+course be unique to your project. Leiningen will create a basic `project.clj`
+by running the `lein new` command. 
 
 ## File Locations
 
