@@ -202,3 +202,54 @@ generate the following ontology, represented in Manchester syntax:
     
     
 Tawny-OWL can be considerably more succient than Manchester OWL. 
+
+## Adding and Removing entities interactively. 
+
+As Tawny-OWL is based on Clojure, it is possible to use Tawny-OWL
+interactively, through a REPL (Read-Eval-Print-Loop). In this environment, it
+is possible to add and, also, to remove entities interactively. This can be
+useful for trying out ideas. The `defclass` and other macros shown far work
+perfectly well in this environment. It is also possible to remove statements
+that have been added. For example, consider the following statement: 
+
+    (defclass A)
+    (defclass B)
+    (remove-entity B)
+    
+After the last form, the ontology will only contain the class `A`.
+
+## Saving Ontologies
+
+Saving an ontology is simple, using the `save-ontology` form. This takes a
+filename and potentially a format. 
+
+    (save-ontology "ontology.omn" :omn)
+    (save-ontology "ontology.owl" :owl)
+    
+The file location is relative to the working directory of the current REPL; in
+practice, this means in the same directory as the `project.clj` file, rather
+than the directory of the file that contains the `save-ontology` form. 
+
+
+## Visualising 
+
+[Protege](http://protege.stanford.edu/) provides an excellent environment for
+visualisating and navigating through an ontology. It interacts quite nicely
+with Tawny-OWL, as a viewer rather like using a Web Browser while developing a
+web site, or a PDF viewer while writing LaTeX. 
+
+The best way to achieve this is with Tawny-OWL, is to add a `save-ontology`
+form to the end of each namespace containing an ontology, or alternatively add
+a main method that saves all ontologies in a project. For this use, the `:owl`
+or `:rdf` form work best. Protege can open files and view them; it also copes
+quite well with having files changes underneath it, and offers to revert to
+the saved version.
+
+A similar effect can be achieved with Emacs and omn-mode which provides syntax
+highlighting for Manchester syntax. In this case, `auto-revert-mode` works to
+handle updating. 
+
+
+## Next
+
+ - [Adding Restrictions](adding-restrictions.md)

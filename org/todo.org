@@ -185,7 +185,7 @@ It should be able to cope with more.
  - [X] How to write a main method which dumps OWL files
  - [X] How to use Clojars.
 
-** Getting started [6/9]
+** Getting started [9/9]
 
  - [X] Namespace and tawny OWL imports
  - [X] Relationship between ontology and namespace
@@ -193,9 +193,9 @@ It should be able to cope with more.
  - [X] Creating a new class
  - [X] Creating properties
  - [X] as-subclasses, as-disjoints macrs
- - [ ] Removing classes again
- - [ ] Saving ontologies
- - [ ] Interaction with Protege
+ - [X] Removing classes again
+ - [X] Saving ontologies
+ - [X] Interaction with Protege
 
 ** Adding restrictions [0/4]
  - [ ] Adding superclasses, equivalents
