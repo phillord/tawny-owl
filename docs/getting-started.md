@@ -114,7 +114,7 @@ classes at once. For example, four classes can be defined at once:
                    HotSpicedBeefTopping
                    PeperoniSausageTopping)
 
-== Creating properties
+## Creating properties
 
 Properties can be created in a similar manner to classes, using the
 `defoproperty` form. This also has a frame like syntax; a relatively complex
@@ -135,7 +135,7 @@ Annotation properties can be created similarly with `defannotationproperty`.
 Currently, creating datatype properties requires direct use of the OWL API;
 extension of Tawny-OWL to cope is planned, pull requests gratefully accepted. 
 
-== Disjoints, Inverse and subclasses
+## Disjoints, Inverse and subclasses
 
 The full use of restrictions is covered [later](adding-restrictions.md),
 however Tawny-OWL provides some easy to use macros which enable adding common
