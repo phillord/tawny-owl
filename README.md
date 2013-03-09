@@ -11,11 +11,11 @@ specific development environments, a normal programming IDE can be used;
 finally, a human readable text format means that we can integrate with the
 standard tooling for versioning and distributed development. 
 
-A longer [getting started](doc/getting-started.md) document is available, 
+A longer [getting started](docs/getting-started.md) document is available, 
 
 The core library, `owl.clj` provides an API which looks similar to Manchester
 OWL syntax, but is nonetheless fully programmatically extensible; all
-namespaces are [described](doc/namespaces.md) elsewhere. 
+namespaces are [described](docs/namespaces.md) elsewhere. 
 
 ## Motivation
 
@@ -43,8 +43,12 @@ environment, however.
 ## Author
 
 Phillip Lord, Newcastle University. 
+
 http://www.russet.org.uk/blog
 
+## Mailing List
+
+There is a [mailing list](mailto:tawny-owl@googlegroups.com)
 
 ## License
 
