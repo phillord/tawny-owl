@@ -378,7 +378,11 @@ but in practice this doesn't work, as not everything is an axiom.
    (map (fn[x]
           (add-one-frame frame-adder name x))
         ;; owlsome, only, someonly return lists
-        (flatten frame))))
+        ;; nil check as all the "add-subclass" like vars take nil and do
+        ;; nothing.
+        (filter (comp not nil?)
+                (flatten frame)))))
+
 
 (defn- create-subclass-axiom
   "Creates a subclass axiom for the given class and subclass.
@@ -393,7 +397,7 @@ class, or class expression. "
 
 (defn add-subclass
 "Adds a specific class to the ontology"
-  ([name subclass]
+  ([name & subclass]
      (add-frame create-subclass-axiom
                 name
                 subclass)))
