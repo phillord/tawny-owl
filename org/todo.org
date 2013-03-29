@@ -203,6 +203,9 @@ It should be able to cope with more.
  - [ ] And, or, not
  - [ ] Forward declaration with declare-classes
 
+** Name Clashes
+
+A seperate document describing what to do about these. 
 
 ** Reasoning [/]
  - [ ] What is reasoning
