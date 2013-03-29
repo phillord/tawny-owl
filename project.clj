@@ -8,10 +8,10 @@
                  ]
 
   :resource-paths ["src/resources"]
-  
+
   :scm {:url "https://github.com/phillord/tawny-owl.git"
-        :name "git"} 
-  
+        :name "git"}
+
   :license {:name "LGPL"
             :url "http://www.gnu.org/licenses/lgpl-3.0.txt"
             :distribution :repo}
@@ -27,16 +27,16 @@
                  [net.sourceforge.owlapi/owlapi-api "3.4.3"]
                  [net.sourceforge.owlapi/owlapi-apibinding "3.4.3"]
                  [net.sourceforge.owlapi/owlapi-distribution "3.4.3"]
-                 
+
                  ;; clojure
                  [org.clojure/clojure "1.5.0"]
-                 
+
                  ;; hook functions
                  [robert/hooke "1.3.0"]
 
                  ;; reasoners
                  [org.semanticweb.elk/elk-owlapi "0.3.1"]
                  [org.semanticweb.hermit/HermiT "1.3.6.1"]
-                 
-                 ;; need to access log4j to control elk. 
+
+                 ;; need to access log4j to control elk.
                  [log4j/log4j "1.2.14"]])
