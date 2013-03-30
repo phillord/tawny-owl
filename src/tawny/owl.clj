@@ -41,7 +41,7 @@
 
 ;; The next three forms all contain values that percolate across all the
 ;; namespaces that contain ontologies. Resetting all of these when owl.clj is
-;; eval'd is a pain, hence they are all defonce. 
+;; eval'd is a pain, hence they are all defonce.
 (defonce
   ^{:doc "A java object which is the main factory for all other objects"
     :private true}
@@ -158,12 +158,12 @@ The following keys must be supplied.
 (def ^{:doc "Ontology options. A map on a ref for each ontology"}
   ontology-options-atom (atom {}))
 
-(defmacro defontfn 
+(defmacro defontfn
   "Like defn but creates adds an arity one less than 'body', which
-defers to 'body' but adds the current-ontology as an argument. 
+defers to 'body' but adds the current-ontology as an argument.
 "
   [symbol & body]
-  (let 
+  (let
       ;; prematter is doc string and attr-map
       [prematter (take-while (complement sequential?) body)
        fnbody (drop-while (complement sequential?) body)
@@ -174,9 +174,9 @@ defers to 'body' but adds the current-ontology as an argument.
        `(~(vec butfirstarglist)
            (~symbol (tawny.owl/get-current-ontology) ~@butfirstarglist))]
     (when (not (vector? arglist))
-      (throw 
+      (throw
        (IllegalArgumentException. "Can't deal with multiple arity functions yet")))
-    `(defn ~symbol 
+    `(defn ~symbol
        ~@prematter
        ~no-ont-body ~fnbody)))
 
@@ -1268,11 +1268,11 @@ delete these axioms from the ontology"
     `(do ~@newbody)))
 
 
-(defmulti refine 
+(defmulti refine
   "Takes an existing definition, adds it to the current ontology, and then
 adds more frames. owlentity is the OWLEntity to be refined, and frames are the
-additional frames. The keys to the frames must be appropriate for the type of 
-entity. See 'owlclass' or 'objectproperty' for more details. 
+additional frames. The keys to the frames must be appropriate for the type of
+entity. See 'owlclass' or 'objectproperty' for more details.
 
 This is useful for two main reasons. First, to build class definitions in two
 places and add frames in both of these places. For simple forward declaration
@@ -1298,7 +1298,7 @@ See also 'refine'.
 "
 
   [symbol & args]
-  `(def 
+  `(def
      ~(with-meta symbol
         (assoc (meta symbol)
           :owl true))
@@ -1308,14 +1308,14 @@ See also 'refine'.
   "Takes an existing definition, add more frames.
 
 The first element should be a namespace qualified symbol. The
-unqualifed part of this will be used in the current namespace. 
+unqualifed part of this will be used in the current namespace.
 
 See also 'refine'
 "
   [symb & args]
   (let [newsymbol#
         (symbol (name symb))]
-    `(def 
+    `(def
        ~(with-meta newsymbol#
           (assoc (meta newsymbol#)
             :owl true))
@@ -1338,5 +1338,3 @@ cases this will have been imported."
           (assoc (meta newsymbol#)
             :owl true))
        (var-get (var ~symb)))))
-
-
