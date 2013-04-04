@@ -29,13 +29,13 @@ or nil otherwise."
 (defn- vars-in-namespace [namespace]
   (vals (ns-publics namespace)))
 
-(defn iri-to-var 
+(defn iri-to-var
   "Return a map of IRI to var for namespaces"
   [& namespaces]
   (into {}
         (for [var
               ;; flatten down to single list
-              (flatten  
+              (flatten
                ;; kill namespaces with no ontology terms
                (filter (comp not nil?)
                        ;; list per namespace
@@ -44,7 +44,7 @@ or nil otherwise."
               :when (not (nil? iri))]
           [iri var])))
 
-(defn var-str 
+(defn var-str
   "Given a var, return a string representation of its name"
   [var]
   (str (:name (meta var))))
@@ -79,7 +79,7 @@ including the name space."
        (var-maybe-qualified-str var))))
 
 (defn name-to-var [& namespaces]
-  (into {} 
+  (into {}
         (for [[k v] (apply iri-to-var namespaces)]
           [(var-str v) v])))
 
@@ -88,9 +88,7 @@ including the name space."
   []
   (keys @tawny.owl/ontology-for-namespace))
 
-(defn all-iri-to-var 
+(defn all-iri-to-var
   "Returns a map keyed on IRI to var"
   []
   (apply iri-to-var (namespace-with-ontology)))
-
-
