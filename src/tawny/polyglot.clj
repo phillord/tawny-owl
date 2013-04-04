@@ -56,11 +56,11 @@
         ;; when there is a label
         (let [label (.getProperty props k)]
           (if (seq label)
-            (do 
+            (do
               (tawny.owl/add-annotation
-               (var-get v) 
+               (var-get v)
                (list (tawny.owl/label label locale))))
-            (println 
+            (println
              (format "Missing Label (%s:%s)"
                      k locale))))))
     (throw (IllegalStateException. 
