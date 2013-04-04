@@ -87,3 +87,15 @@ We are still not entirely convinced that this is the correct approach; a
 boilerplate `:refer-clojure` form can be provided, and as noted the `:only`
 form is sometimes necessary anyway. We may switch to providing the bare forms
 also. Regardless, the `owl` prefixed forms will remain.
+
+For those who like this option, the `tawny.english` namespace offers
+nameclashing versions of these functions. This can be used if prefered like
+so:
+
+    (ns my.ontology
+        (:refer-clojure :exclude [and or not some])
+        (:use [tawny.owl][tawny.english]))
+
+In practice, this is likely to be easiest when tawny is being used as a "pure"
+DSL, and harder when used in combination with Clojure functions where it the
+necessity for using `clojure.core/and` frequently is likely to be a pain.

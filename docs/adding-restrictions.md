@@ -24,9 +24,12 @@ example, using a Pizza example, cheese toppings could be defined as follows:
         :subclass CheeseTopping)
 
 Likewise, equivalent and disjoint classes can be expressed in this way.
-For named classes, it is often easier to use `as-subclasses` macros. However,
-frames are at the most useful when used with arbitrary classes expressions
-which Tawny-OWL also supports.
+For named classes, it is often easier to use `as-subclasses` macros. 
+
+## Class Expressions
+
+Frames are at the most useful when used with arbitrary classes
+expressions which Tawny-OWL also supports.
 
 For example, this example creates a *defined* class called `CheesyPizza`,
 which is equivalent to a `Pizza` which `hasTopping` of `CheeseTopping`.
@@ -56,7 +59,57 @@ OWL are supported, in many cases with a [variety](nameclashes.md) of names. Thes
 - `atmost`,
 - `exactly`
 
-*Note* `hasValue` and `hasSelf` haven't been written yet. 
+*Note* `hasValue` and `hasSelf` haven't been written yet.
 
 There is also a single convienience constructor: `someonly` which combines
-both `some` and `only` property restricutions in a single step. 
+both `some` and `only` property restricutions in a single step.
+
+## Forward Declarartions
+
+Unlike OWL itself, Tawny-OWL requires symbols (i.e. classes or properties) to
+have been created before they are used. A more naturalistic interpretation of
+OWL would allow statements like so:
+
+    (defclass A
+        :subclass (owlsome hasPart B))
+    (defclass B)
+    (defoproperty hasPart)
+
+Actually, something equivalent to this is possible in Tawny-OWL as we shall
+see later. However, this exact code will return an error `Cannot find symbol
+hasPart`. Symbols must be defined before use.
+
+There are two solutions to this problem; the first, obviously, is to reorder
+your statements, which would work well in this case.
+
+    (defoproperty hasPart)
+
+    (defclass B)
+    (defclass A
+        :subclass (owlsome hasPart B))
+
+In many cases where classes need to refer to each other this is often not
+possible. For instance:
+
+    (defclass A :disjoint B)
+    (defclass B :disjoint A)
+
+The most common of these cases (disjoints as shown) can be avoided with the
+`as-disjoint` macro:
+
+    (as-disjoints
+        (defclass A)
+        (defclass B))
+
+However, when all else fails, Tawny-OWL provides a function for
+"forward-declaration".
+
+    (defoproperty hasPart)
+    (declare-classes B)
+    (defclass A
+        :subclass (owlsome hasPart B))
+    (defclass B)
+
+This has exactly the same semantics as previously. 
+    
+
