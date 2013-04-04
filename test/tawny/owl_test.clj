@@ -230,10 +230,10 @@
 
 (deftest disjointclasses []
   (is
-   (do (o/disjointclasses "a" "b" "c")))
+   (do (#'o/disjointclasses "a" "b" "c")))
 
   (is
-   (do (o/disjointclasses
+   (do (#'o/disjointclasses
         (o/owlclass "a") (o/owlclass "b")))))
 
 (deftest owlclass
@@ -297,7 +297,7 @@ Assumes that fixture has been run
 
 
 (deftest disjointclasses []
-  (is (not (nil? (o/disjointclasses "a" "b" "c")))))
+  (is (not (nil? (#'o/disjointclasses "a" "b" "c")))))
 
 (deftest individual []
   (is (o/individual "ind"))
@@ -368,7 +368,7 @@ Assumes that fixture has been run
       (do
         (ontology-c-with-two-parents)
         (o/with-probe-axioms
-          [a (o/disjointclasses "a" "b")]
+          [a (#'o/disjointclasses "a" "b")]
           (-> (#'o/get-current-ontology)
               (.getDisjointClassesAxioms
                (o/owlclass "a"))
@@ -380,7 +380,7 @@ Assumes that fixture has been run
       (do 
         (ontology-c-with-two-parents)
         (o/with-probe-axioms
-          [a (o/disjointclasses "a" "b")])
+          [a (#'o/disjointclasses "a" "b")])
                   
         (-> (#'o/get-current-ontology)
             (.getDisjointClassesAxioms
@@ -431,16 +431,16 @@ Assumes that fixture has been run
 
 
 (deftest add-annotation
-  (is 
+  (is
    (not
-    (nil? (o/add-annotation 
+    (nil? (#'o/add-annotation
            (o/owlclass "a")
            (list (o/owlcomment "comment"))))))
-  
+
   (is
-   (not 
-    (nil? (o/add-annotation
-           testontology 
+   (not
+    (nil? (#'o/add-annotation
+           testontology
            (list (o/owlcomment "comment"))))))
 )
 
@@ -449,7 +449,7 @@ Assumes that fixture has been run
   (is 
    (let [a (o/owlclass "a")
          b (o/owlclass "b")]
-     (o/disjointclasses a b)
+     (#'o/disjointclasses a b)
      (o/disjoint? a b))))
 
 ;; TODO lots of macros are in serious need of a test

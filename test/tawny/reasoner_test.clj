@@ -149,7 +149,7 @@
     complement
     (do
       (ontology-abc)
-      (o/disjointclasses "a" "b")
+      (#'o/disjointclasses "a" "b")
       (far #(r/consistent?))))))
 
   
@@ -160,7 +160,7 @@
     complement
     (do
       (ontology-abc-indc)
-      (o/disjointclasses "a" "b")
+      (#'o/disjointclasses "a" "b")
       (far #(r/consistent?))))))
 
 (deftest unsatisfiable []
@@ -176,7 +176,7 @@
     #(= 1 (count %))
     (do
       (ontology-abc)
-      (o/disjointclasses "a" "b")
+      (#'o/disjointclasses "a" "b")
       (far #(r/unsatisfiable))))))
 
 ;; had lots of problems getting this working so lets try with a single reasoner
@@ -204,7 +204,7 @@
     not
     (do
       (ontology-abc)
-      (o/disjointclasses "a" "b")
+      (#'o/disjointclasses "a" "b")
       (far #(r/coherent?))))))
 
 
@@ -240,7 +240,7 @@
     (do
       (ontology-abc)
       (o/with-probe-axioms
-        [a (o/disjointclasses "a" "b")]
+        [a (#'o/disjointclasses "a" "b")]
         (o/save-ontology "test-probe.omn" :omn)
         (doall (far #(r/coherent?)))))))
 
@@ -251,6 +251,6 @@
     (do 
       (ontology-abc)
       (o/with-probe-axioms
-        [a (o/disjointclasses "a" "b")])
+        [a (#'o/disjointclasses "a" "b")])
       (o/save-ontology "test-probe-after.omn" :omn)
       (doall (far #(r/coherent?)))))))
