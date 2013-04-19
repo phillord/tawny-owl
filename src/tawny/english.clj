@@ -23,3 +23,4 @@
 (def or tawny.owl.owlor)
 (def not tawny.owl/owlnot)
 (def some tawny.owl/owlsome)
+(def class tawny.owl/owlclass)
