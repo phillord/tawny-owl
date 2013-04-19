@@ -24,7 +24,7 @@ example, using a Pizza example, cheese toppings could be defined as follows:
         :subclass CheeseTopping)
 
 Likewise, equivalent and disjoint classes can be expressed in this way.
-For named classes, it is often easier to use `as-subclasses` macros. 
+For named classes, it is often easier to use `as-subclasses` macros.
 
 ## Class Expressions
 
@@ -48,7 +48,8 @@ function. This is semantically equivalent to this form:
             (owlsome hasTopping CheeseTopping)))
 
 which also makes use of an explicit `owland`. All of the class constructors in
-OWL are supported, in many cases with a [variety](nameclashes.md) of names. These are:
+OWL are supported, in many cases with a [variety](nameclashes.md) of names.
+These are:
 
 - `owlsome`
 - `only`,`owlonly`
@@ -110,6 +111,56 @@ However, when all else fails, Tawny-OWL provides a function for
         :subclass (owlsome hasPart B))
     (defclass B)
 
-This has exactly the same semantics as previously. 
-    
+This has exactly the same semantics as previously.
 
+## Tawny without variables
+
+So far the documentation has described the use of Tawny-OWL as a DSL. For each
+new class or property, a new Clojure variable is created also. This works well
+for ontology development, but it not so useful for use of Tawny-OWL as an API.
+This is most useful for a highly programmatic use of Tawny-OWL, so this
+section assumes a reasonable understanding of Clojure and its related
+terminology.
+
+For each of the macros described so far, there are equivalent functions. These
+simply return the OWL API objects created -- the macros forms such as `defclass`
+return the Clojure [Var](http://clojure.org/vars) object for consistency with
+the rest of Clojure. For example:
+
+    (owlclass "A" :subclass "B" "C")
+
+will return a class with name "A", a subclass of "B" and "C". If "B" and "C"
+do not exist, then these will also be created. These functions are not pure,
+they affect the current ontology even if the return values are not kept,
+affecting all subsequent calls. The function is, effectively, idempotent
+however so multiple calls will return the same class. It is possible to mix
+this form of call freely with the `defclass` forms:
+
+    (defclass A)
+    (owlclass "B" :subclass A)
+    (defclass C :subclass "B")
+
+This is not a particularly good idea from an engineering point of view. It is
+also important to note that the using strings to define classes and other
+parts of OWL will mean that some probable errors will be missed. For example,
+here we try to make a subclass `A` with a property `B`. Tawny-OWL will prevent
+this.
+
+    tawny.owl> (defoproperty B)
+    #<OWLObjectPropertyImpl <http://iri/#B>>
+    tawny.owl> (defclass A :subclass B)
+    IllegalArgumentException Expecting a class. Got: <http://iri/#B>
+        tawny.owl/ensure-class (owl.clj:356)
+
+The equivalent string based system does not:
+
+    tawny.owl> (objectproperty "B")
+    #<OWLObjectPropertyImpl <http://iri/#B>>
+    tawny.owl> (owlclass "A" :subclass "B")
+    #<OWLClassImpl <http://iri/#A>>
+
+The main advantage of this approach, though is that it's easier to code again.
+The macro forms require symbols as their first parameter, which requires the
+use of macros and back-tick unquoting to use.
+
+Performance wise, both are about the same.

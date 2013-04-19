@@ -1,5 +1,6 @@
 
-;; lets add this
+;; lets add this -- I can use this all over the plac for the "add-subclass"
+;; type functions.
 
 (defn vectorize [f]
   (fn [& args]
@@ -58,7 +59,6 @@
    :severity: medium
    :END: 
    
-
 Have a OBO style generator. 
 
 Initially, generate an UUID style identifer for new terms. Can use memorise to
@@ -66,6 +66,10 @@ save and to store these in a file. Add a URI gen client which will search for
 these, and replace them with newly minted URIs. Have to add a purl creation
 client also, which will update all purls and make sure that they point to the
 correct place. 
+
+First thing to do is to have a memorise in reverse thing which puts the IRIs
+into another file.
+
 
 
 ** Interpolation for comments
@@ -260,7 +264,6 @@ It should be able to cope with more.
 
 ** Scripting with Tawny [/]
  - [ ] Added NamedPizza's
-
 ** Polyglot [/]
  - [ ] Adding multi lingual labels
    
