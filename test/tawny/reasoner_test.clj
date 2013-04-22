@@ -68,7 +68,7 @@
 
 (defn ontology-abc-indc []
   (ontology-abc)
-  (o/individual "indC" :types "c"))
+  (o/individual "indC" :type "c"))
 
 
 (defn ontology-abc-reasoning []
