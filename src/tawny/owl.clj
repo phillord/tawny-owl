@@ -195,6 +195,32 @@ defers to 'body' but adds the current-ontology as an argument.
        ~@prematter
        ~no-ont-body ~fnbody)))
 
+;; basically, this does the same thing as defontfn, but is easier I think.
+(declare with-ontology)
+(defn ontology-first-maybe
+  "Given a function f, returns a function which if the first arg is an
+OWLOntology sets it as the current ontology, then calls f with the remain
+args, or else calls f."
+  [f]
+  (fn [& args]
+    (if (and
+         ;; balk if nil
+         (seq args)
+         ;; ontology first
+         (instance? OWLOntology
+                        (first args)))
+      (with-ontology (first args)
+        (apply f (rest args)))
+      (apply f args))))
+
+(def
+  ^{:doc "Transform a two arg function so that if the first element is an
+  ontology set it as the current, then drop this parameter. Then call the next
+  parameter repeatedly against all the remaining parameters."}
+  ontology-vectorize
+  (comp ontology-first-maybe util/vectorize))
+
+
 (declare get-current-ontology)
 
 ;; return options for ontology -- lazy (defn get-ontology-options [ontology])
@@ -627,8 +653,7 @@ value for each frame."
   [property & frames]
   `(let [property-name# (name '~property)
          property# (tawny.owl/objectproperty property-name# ~@frames)]
-     (def ~property property#)
-     property#))
+     (def ~property property#)))
 
 ;; restrictions! name clash -- we can do nothing about this, so accept the
 ;; inconsistency and bung owl on the front.
@@ -1044,44 +1069,106 @@ All arguments must be an instance of OWLClassExpression."
                           (iriforname individual)))
 
 (defn- ensure-individual [individual]
-  "Returns an individual.
-If individual is an individual return individual, else
-interpret this as a string and create a new individual."
+  "Returns an INDIVIDUAL.
+If INDIVIDUAL is an OWLIndividual return individual, else
+interpret this as a string and create a new OWLIndividual."
   (cond (instance? org.semanticweb.owlapi.model.OWLIndividual)
         individual
         (string? individual)
         (get-create-individual individual)
         true
         (throw (IllegalArgumentException.
-                (str "Expecting an Inidividual. Got: " individual)))))
+                (str "Expecting an Individual. Got: " individual)))))
+
+(def
+  ^{:doc "Adds CLAZZES as a type to individual to current ontology
+or ONTOLOGY if present."
+    :arglists '([individual & clazzes] [ontology individual & clazzes])}
+  add-type
+  (ontology-vectorize
+   (fn add-type [individual clazz]
+     (add-axiom
+      (.getOWLClassAssertionAxiom
+       ontology-data-factory
+       (ensure-class clazz)
+       individual)))))
+
+(def add-fact ^{:doc "Add FACTS to an INDIVIDUAL in the current ontology or
+  ONTOLOGY if present. Facts are produced with `fact' and `fact-not'."
+    :arglists '([individual & facts] [ontology individual & facts]) }
+  (ontology-vectorize
+   (fn add-fact [individual fact]
+     (add-axiom
+      (fact individual)))))
+
+(defn fact
+  "Returns a fact asserting a relationship with PROPERTY toward an
+individual TO."
+  [property to]
+  (fn fact [from]
+    (.getOWLObjectPropertyAssertionAxiom
+     ontology-data-factory
+     property from to)))
+
+(defn fact-not
+  "Returns a fact asserting the lack of a relationship along PROPERTY
+toward an individual TO."
+  [property to]
+  (fn fact-not [from]
+    (.getOWLNegativeObjectPropertyAssertionAxiom
+     ontology-data-factory
+     property from to)))
+
+(def
+  ^{:doc "Adds all arguments as the same individual to the current ontology
+or to ONTOLOGY if present."
+    :arglists '([ontology & individuals] [& individuals])}
+  add-same
+  (ontology-first-maybe
+   (fn add-same [& args]
+     (add-axiom
+      (.getOWLSameIndividualAxiom
+       ontology-data-factory
+       (set (flatten args)))))))
+
+(def
+  ^{:doc "Adds all arguments as different individuals to the current
+  ontology unless first arg is an ontology in which case this is used"}
+  add-different
+  (ontology-first-maybe
+   (fn add-different [& args]
+     (add-axiom
+      (.getOWLDifferentIndividualsAxiom
+       ontology-data-factory
+       (set (flatten args)))))))
 
 ;; need to support all the different frames here...
 ;; need to use hashify
-(defn- individual-add-types
-  "Adds types to an individual."
-  [name types]
-  (let [individual (ensure-individual name)]
-    (doall
-     (map
-      (fn [type]
-        (add-axiom
-         (.getOWLClassAssertionAxiom
-          ontology-data-factory
-          (ensure-class type)
-          individual)))
-      types))
-    individual))
-
 (defn individual
   "Returns a new individual."
   [name & frames]
   (let [hframes
         (util/check-keys
          (util/hashify frames)
-         [:types])]
-    (individual-add-types name (:types hframes))))
+         [:type :fact :same :different])
+        individual (ensure-individual name)]
+    (when (:type hframes)
+      (add-type individual (:type hframes)))
+    (when (:fact hframes)
+      (add-fact individual (:fact hframes)))
+    (when (:same hframes)
+      (add-same individual (:same hframes)))
+    (when (:different hframes)
+      (add-different individual (:different hframes)))
+    individual))
 
 
+(defmacro defindividual
+  "Declare a new individual."
+  [individualname & frames]
+  `(let [string-name# (name '~individualname)
+         individual# (tawny.owl/individual string-name# ~@frames)]
+     (def ~individualname individual#)))
 
 ;; owl imports
 (defn owlimport
@@ -1094,14 +1181,7 @@ interpret this as a string and create a new individual."
                              (get-iri ontology)))))
 
 
-;; return type of individual is buggered
-(defmacro defindividual
-  "Declare a new individual."
-  [individualname & frames]
-  `(let [string-name# (name '~individualname)
-         individual# (tawny.owl/individual string-name# ~@frames)]
-     (def ~individualname individual#)
-     individual#))
+
 
 ;; convienience macros
 ;; is this necessary? is as-disjoint-subclasses not enough?
