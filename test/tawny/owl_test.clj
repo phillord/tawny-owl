@@ -132,8 +132,8 @@
 
 (deftest defoproperty
   (is
-   (instance? org.semanticweb.owlapi.model.OWLObjectProperty
-              (o/defoproperty a))))
+   (var?
+    (o/defoproperty a))))
 
 
 (deftest get-create-class []
@@ -301,7 +301,7 @@ Assumes that fixture has been run
 
 (deftest individual []
   (is (o/individual "ind"))
-  (is (not (nil? (o/individual "indA" :types "a"))))
+  (is (not (nil? (o/individual "indA" :type "a"))))
   (is (thrown? IllegalArgumentException
                (o/individual "indA" :nottypes "a"))))
 
