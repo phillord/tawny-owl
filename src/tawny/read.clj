@@ -32,7 +32,6 @@ starts-with. Use this partially applied with a filter for 'read'."
         (.toString (.getIRI e))
         starts-with)))
 
-
 (defn filter-for-labels 
   "Filter annotations on an entity for labels"
   [e]
@@ -41,8 +40,6 @@ starts-with. Use this partially applied with a filter for 'read'."
         (.getProperty)
         (.isLabel))
    (.getAnnotations e (tawny.owl/get-current-ontology))))
-
-
 
 (defn label-transform 
   "Get text from label annotation"
@@ -70,6 +67,12 @@ starts-with. Use this partially applied with a filter for 'read'."
     trans
     ))
 
+(defn fragment-transform
+  "Create an entity name from the IRI fragment"
+  [e]
+  (-> e
+      (.getIRI)
+      (.getFragment)))
 
 (defn stop-characters-transform 
   "Takes a string and treats characters not legal in a 
@@ -77,18 +80,21 @@ Clojure symbol. Use this composed with a entity transform function"
   [s]
   (clojure.string/replace s #"[ /]" "_"))
 
-(defn- intern-entity [e transform]
-  (try
-    (when (instance? OWLNamedObject e)
-      (let [name 
-            (stop-characters-transform (transform e))]
-        (intern *ns* 
-                (with-meta
-                  (symbol name)
-                  {:owl true}) e)))
-    (catch IllegalArgumentException i 
-      (print "Broken Intern on:" e)
-      (throw i))))
+(defn intern-entity 
+  ([e]
+     (intern-entity e fragment-transform))
+  ([e transform]
+     (try
+       (when (instance? OWLNamedObject e)
+         (let [name 
+               (stop-characters-transform (transform e))]
+           (intern *ns* 
+                   (with-meta
+                     (symbol name)
+                     {:owl true}) e)))
+       (catch IllegalArgumentException i 
+         (print "Broken Intern on:" e)
+         (throw i)))))
 
 
 (defn read [& rest]

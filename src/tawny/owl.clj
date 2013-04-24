@@ -1039,7 +1039,7 @@ combination of the two. The class object is stored in a var called classname."
        class#)))
 
 
-(defn- disjointclasseslist
+(defn disjointclasseslist
   "Makes all elements in list disjoint.
 All arguments must of an instance of OWLClassExpression"
   [list]
