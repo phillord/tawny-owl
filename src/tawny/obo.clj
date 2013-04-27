@@ -103,5 +103,3 @@
 ;; given a file, replace all the preiri's with real ones, at the repl, asking
 ;; as we go
 (defn obo-generate-iri [filename])
-
-
