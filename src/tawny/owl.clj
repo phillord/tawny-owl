@@ -102,6 +102,7 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
 (declare add-annotation)
 (declare owlcomment)
 (declare versioninfo)
+(declare ontology-options)
 (defn ontology
   "Returns a new ontology. See 'defontology' for full description."
   [& args]
@@ -116,6 +117,12 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
           ontology-format
           (.getOntologyFormat
            owl-ontology-manager jontology)]
+
+      ;; iri gen options needs to be remembered
+      (when-let [iri-gen (:iri-gen options)]
+        (dosync
+         (alter (ontology-options jontology)
+                merge {:iri-gen iri-gen})))
 
       ;; put prefix into the prefix manager
       ;; this isn't a given -- the prefix manager being returned by default
@@ -337,7 +344,9 @@ or `filename' if given.
 This is likely to become a property of the ontology at a later date, but at
 the moment it is very simple."
   [name]
-  (IRI/create (str (get-current-iri) "#" name)))
+  (if-let [iri-gen (:iri-gen (deref (ontology-options)))]
+    (iri-gen name)
+    (IRI/create (str (get-current-iri) "#" name))))
 
 (defn- get-create-object-property
   "Creates an OWLObjectProperty for the given name."
