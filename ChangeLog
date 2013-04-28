@@ -1,8 +1,15 @@
+2013-04-22  Phillip Lord  <phillip.lord@newcastle.ac.uk>
+
+	* src/tawny/owl.clj: Added full support for individual frames.
+	The :types keyword was made singular at the same time to ensure
+	consistency.
+
+
 2013-02-03  Phillip Lord  <phillip.lord@newcastle.ac.uk>
 
 	* src/tawny/repl.clj: New functions for repl interaction. Now
 	hooks into native clojure.repl/doc function so that ontology
-	entities can be looked up. 
+	entities can be looked up.
 
 	* src/tawny/read.clj: Cleaned up code, and add utility filters and
 	transform functions.
