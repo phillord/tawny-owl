@@ -29,7 +29,6 @@
    (thrown? IllegalArgumentException
             (u/groupify '(:a :b)))))
 
-
 (deftest hashify
   (is
    (= (u/hashify '(:a 1))
