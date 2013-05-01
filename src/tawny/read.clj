@@ -1,11 +1,6 @@
 (ns tawny.read
   (:require [tawny.owl]
-            [clojure.string :only replace]           
-            )
-
-
-
-  
+            [clojure.string :only replace])
   (:refer-clojure :exclude [read])
   (:import
    (java.io File)
