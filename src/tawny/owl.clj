@@ -1056,7 +1056,7 @@ All arguments must of an instance of OWLClassExpression"
       (into-array OWLClassExpression
                   classlist)))))
 
-(defn- disjointclasses
+(defn disjointclasses
   "Makes all the arguments disjoint.
 All arguments must be an instance of OWLClassExpression."
   [& list]
