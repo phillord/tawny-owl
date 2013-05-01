@@ -1,6 +1,6 @@
 /target/*
 /.lein-failures
 /pom.xml
-test-*
-test.*
+./test-*
+./test.*
 docs/*html
