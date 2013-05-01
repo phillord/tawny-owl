@@ -21,37 +21,79 @@
   (:import (org.semanticweb.owlapi.model IRI
             )))
 
-(def obo-pre-uri
+(def obo-pre-iri
   "http://purl.org/ontolink/preiri/")
+
+(defn obo-iri-generate-or-retrieve
+  [name remembered current]
+  (or (get remembered name)
+      (get current name)
+      (str obo-pre-iri "#"
+           (java.util.UUID/randomUUID))))
 
 (defn obo-iri-generate [name]
   (let [options (deref (tawny.owl/ontology-options))
-        remembered
-        (get options :name-to-iri-remembered {})
         current
-        (get options :name-to-iri-current {})]
-    (let [iri (or (get remembered name)
-                  (get current name)
-                  (str obo-pre-uri "#"
-                       (java.util.UUID/randomUUID)))]
-      (dosync
-       (alter (tawny.owl/ontology-options)
-              assoc
-              :name-to-iri-current
-              (assoc current name iri)))
-      (IRI/create iri))))
+        (get options :name-to-iri-current {})
+        iri (obo-iri-generate-or-retrieve
+             name (get options :name-to-iri-remembered {})
+             current)]
+    (dosync
+     (alter (tawny.owl/ontology-options)
+            assoc
+            :name-to-iri-current
+            (assoc current name iri)))
+    (IRI/create iri)))
 
-(defn remember
-  [& list]
-  (apply hash-map list))
+(defn obo-read-map [file]
+  (with-open [r (clojure.java.io/reader file)]
+    (apply hash-map
+           (flatten
+            (for [line (line-seq r)
+                  :let [[name iri] (clojure.string/split line #"=")]]
+              [name iri])))))
 
-;; pull everything from  file
+;; pull everything from file
 (defn obo-restore-iri [file]
   (let [name-to-iri-map
-        (load-file file)]
+        (obo-read-map file)]
     (dosync
      (alter (tawny.owl/ontology-options)
             merge {:name-to-iri-remembered name-to-iri-map}))))
+
+(defn preiri?
+  [iri]
+  (.startsWith iri obo-pre-iri))
+
+(defn obo-sort [map]
+  (sort-by second
+           (fn [x y]
+             (cond
+              ;; put "real" iris first.
+              (and (preiri? x)
+                   (not (preiri? y)))
+              false
+              (and (not (preiri? x))
+                   (preiri? y))
+              true
+              ;; both of the same type, organise alphabetically
+              :default
+              (compare x y)
+              ))
+           map))
+
+(defn obo-save-map
+  [file map]
+  (with-open [w (clojure.java.io/writer file)]
+    ;; we could probably do with sorting this.
+
+    (doseq
+        [[name iri]
+         (obo-sort map)]
+      (.write w (format "%s=%s"
+                        name
+                        iri))
+      (.newLine w))))
 
 ;; store everything to a file
 (defn obo-store-iri
@@ -59,47 +101,69 @@
   (let [options (deref (tawny.owl/ontology-options))
         remembered (:name-to-iri-remembered options)
         ;; Remove from the remembered keys any that begin
-        ;; with the obo-pre-uri. The point with this is that we should have
+        ;; with the obo-pre-iri. The point with this is that we should have
         ;; used them again anyway, so they will be in the current. If not, we
         ;; should forget about them, because they were temporary anyway.
         remembered-filtered
         (select-keys remembered
                      (for [[name iri] remembered
-                           :when (not (.startsWith iri obo-pre-uri))]
+                           :when (not (preiri? iri))]
                        name))]
-    (with-open [w (clojure.java.io/writer file)]
-      (.write w "(tawny.obo/remember\n")
-      (doseq
-          ;; the problem with this approach is that it's only going to work
-          ;; with interned things. If we have a no interned entity, then we
-          ;; have no way of getting the string back, since we have lost it
-          ;; by now. This means that it won't work with (owlclass "a") style
-          ;; calls.
-          [[name iri] (merge
-                       (:name-to-iri-current options)
-                       remembered-filtered)]
-        (.write w (format "\"%s\" \"%s\""
-                          name
-                          iri))
-        (.newLine w))
-      (.write w ")"))))
+    (obo-save-map file
+                  (merge
+                   (:name-to-iri-current options)
+                   remembered-filtered))))
 
+(defn extract-obsolete [remembered current]
+  (let
+      ;; Fetch the only the remebered keys that do not start with the
+      ;; temporary prefix. They will not be remembered next time we save
+      ;; anyway.
+      [remembered-filtered
+       (select-keys remembered
+                     (for [[name iri] remembered
+                           :when (not (preiri? iri))]
+                       name))]
+    (apply dissoc remembered-filtered (keys current))))
 
 (defn obo-report-obsolete []
-  (let [options (deref (tawny.owl/ontology-options))
-        remembered (:name-to-iri-remembered options)
-        remembered-filtered
-        (select-keys remembered
-                     (for [[name iri] remembered
-                           :when (not (.startsWith iri obo-pre-uri))]
-                       name))
-        difference
-        (clojure.set/difference remembered-filtered
-                                (:name-to-iri-current options))]
-    (doseq [[name iri] difference]
-      (printf "Remembered but not longer in ontology: %s,%s"
+  (let [options (deref (tawny.owl/ontology-options))]
+    (doseq [[name iri]
+            (extract-obsolete
+             (:name-to-iri-remembered options)
+             (:name-to-iri-current options))
+            ]
+      (printf "Remembered but not longer in ontology: %s,%s\n"
               name iri))))
+
+
+(defn update-map-with-new-iri [name-to-iri prefix]
+  (let ;; fetch the numeric part of IDs beginning with the prefix.
+      [ids
+       (map (fn [[name iri]]
+              (if (.startsWith iri prefix)
+                (Integer/parseInt (.substring iri (.length prefix)))
+                0))
+            (seq name-to-iri))
+        ;; the highest number of the current IDs
+        biggest-numeric (apply max ids)
+        ;; now get all the names that need new IDs
+        preirinames
+        (for [[name iri] name-to-iri
+              :when (preiri? iri)]
+          name)]
+    ;; and finally update the IDs
+    (merge
+     name-to-iri
+     (apply hash-map (interleave preirinames
+                                 (map #(format "%s%06d" prefix %)
+                                      (range (+ 1 biggest-numeric)
+                                             Integer/MAX_VALUE)))))))
 
 ;; given a file, replace all the preiri's with real ones, at the repl, asking
 ;; as we go
-(defn obo-generate-iri [filename])
+(defn obo-generate-permanent-iri [file prefix]
+  ;; and finally update the IDs
+  (obo-save-map
+   file
+   (update-map-with-new-iri (obo-read-map file prefix))))
