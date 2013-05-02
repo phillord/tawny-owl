@@ -166,4 +166,4 @@
   ;; and finally update the IDs
   (obo-save-map
    file
-   (update-map-with-new-iri (obo-read-map file prefix))))
+   (update-map-with-new-iri (obo-read-map file) prefix)))
