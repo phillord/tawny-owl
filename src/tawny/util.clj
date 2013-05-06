@@ -29,11 +29,11 @@
    (map
     (fn [x]
       (if (-> x (first) (keyword?))
-          (if (> (count x) 1)
-            (throw (IllegalArgumentException.
-                    "Cannot have two keywords next to each other"))
-            (first x))
-          x))
+        (if (> (count x) 1)
+          (throw (IllegalArgumentException.
+                  "Cannot have two keywords next to each other"))
+          (first x))
+        x))
     (partition-by keyword? list))))
 
 (defn hashify
@@ -43,9 +43,9 @@
    hash-map (groupify list)))
 
 ;; contains really doesn't do what you expect
-(defn in? 
+(defn in?
   "true if seq contains elm"
-  [seq elm]  
+  [seq elm]
   (some #(= elm %) seq))
 
 (defn has-keys
@@ -66,7 +66,6 @@
       (format "Expected only keys %s; Got %s" thekeys (keys hash)))))
   hash)
 
-
 (defmacro quote-word [& symbols]
   `(do
      (list
@@ -74,8 +73,6 @@
          (fn [symbol]
            (name symbol))
          symbols))))
-
-
 
 
 ;; hook system
@@ -99,9 +96,9 @@
 
 (defn run-hook
   ([hook]
-      (doseq [func @hook] (func)))
+     (doseq [func @hook] (func)))
   ([hook & rest]
-      (doseq [func @hook] (apply func rest))))
+     (doseq [func @hook] (apply func rest))))
 
 
 ;; unlazy map function
@@ -115,9 +112,9 @@ Typing (doall (map)) all the time is hard work!"
 
 
 (defn vectorize
-  "Given a function (f [x y]), return another function of form
-(g [x & rest]), where items in rest can be any tree structure,
-then, f with x and all values in rest. Returns a non-lazy list."
+  "Given a function (f [x y]), return another function of the form -- (g [x &
+rest]), where items in rest can be any tree structure, then, f with x and all
+values in rest. Returns a non-lazy list."
   [f]
   (fn [& args]
     (doall
