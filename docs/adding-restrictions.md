@@ -164,3 +164,7 @@ The macro forms require symbols as their first parameter, which requires the
 use of macros and back-tick unquoting to use.
 
 Performance wise, both are about the same.
+
+## Next
+
+ - [Reasoning](reasoning.md)

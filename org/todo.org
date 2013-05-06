@@ -1,41 +1,7 @@
 
-;; lets add this -- I can use this all over the plac for the "add-subclass"
-;; type functions.
-
-(defn vectorize [f]
-  (fn [& args]
-    (doall
-     (map
-      (partial f (first args))
-      (flatten (rest args))))))
-
-
-(def print-a-lot
-  (vectorize
-   (fn [x y]
-     (println "x,y:" x "," y))))
-
-(print-a-lot "x" "y")
-(print-a-lot "x" '("y"))
-(print-a-lot "x" 1 2 3)
-(print-a-lot "x" 1 2 [3 4 5 [6 7 8]])
-
-
-(defn ontology-first-maybe [f]
-  (fn [& args]
-    (if (instance? OWLOntology
-         (first args))
-      (with-ontology (first args)
-        (apply f (rest args)))
-      (apply f args))))
-
-(def ontology-vectorize
-  (comp ontology-first-maybe vectorize))
-
-
 
 * Issues
-
+  
   :PROPERTIES:
   :status_ALL: open closed assigned inprogress
   :type_ALL: bug feature performance refactor
@@ -245,6 +211,10 @@ It should be able to cope with more.
 ** Name Clashes [1/1]
 
  - [X] A seperate document describing what to do about these. 
+
+** Querying the Ontology [0/2]
+ - [ ] Programmatically interacting with the ontology
+ - [ ] Not asserted and reasoned
 
 ** Reasoning [/]
  - [ ] What is reasoning
