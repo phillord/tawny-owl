@@ -15,6 +15,7 @@
 
 
 (ns tawny.reasoner
+  (:use [tawny.owl :only [defontfn]])
   (:require [tawny.owl :as owl]
             [tawny.util :as util])
   (:import
@@ -155,8 +156,8 @@
 ;; we need to cache these 'cause reasoners listen to changes could just use
 ;; memoized function taking jontology as param Probably need to write a new
 ;; ProgressMonitor to communicate with emacs.
-(defn reasoner []
-  (let [reas (reasoner-for-ontology (owl/get-current-ontology))]
+(defontfn reasoner [ontology]
+  (let [reas (reasoner-for-ontology ontology)]
     (if reas
       reas
       (let [reas
@@ -185,36 +186,36 @@
                  discard-reasoner))
 
 
-(defn consistent?
+(defontfn consistent?
   "Returns true if the ontology is consistent.
 
 This method can throw an InconsistentOntologyException
 "
-  []
+  [ontology]
   ;; (.precomputeInferences (reasoner)
   ;;                        ;; vars args ugliness
   ;;                        (into-array InferenceType
   ;;                                    (list InferenceTyp
   ;;                                           e/CLASS_HIERARCHY)))
   (do
-    (.isConsistent (reasoner))))
+    (.isConsistent (reasoner ontology))))
 
-(defn unsatisfiable
+(defontfn unsatisfiable
   "Returns all unsatisfiable classes from the current ontology
 
 Throws an org.semanticweb.owlapi.reasoner.InconsistentOntologyException if the
 ontology is inconsistent"
-  []
+  [ontology]
   ;; bottom is always inconsistent!
   (.getEntitiesMinusBottom
    (.getUnsatisfiableClasses
-    (reasoner))))
+    (reasoner ontology))))
 
-(defn coherent?
+(defontfn coherent?
   "Returns true if the ontology is coherent"
-  []
+  [ontology]
   ;; actually implement this -- satisfiable > 0
-  (zero? (count (unsatisfiable))))
+  (zero? (count (unsatisfiable ontology))))
 
 
 (defn- class-in-node-set? [nodeset class]
@@ -222,37 +223,37 @@ ontology is inconsistent"
    (.getFlattened nodeset) class))
 
 ;; returns an immutable set of Nodes (including NodeSet's I think).
-(defn isuperclasses [name] 
-  (.getSuperClasses (reasoner) 
+(defontfn isuperclasses [ontology name]
+  (.getSuperClasses (reasoner ontology)
                     (owl/ensure-class name)
                     false))
 
 ;; move this to using isuperclasses
-(defn isuperclass?
+(defontfn isuperclass?
   "Returns true if name has superclass as a strict superclass"
-  [name superclass]
-  (let [superclasses 
-        (isuperclasses name)]
+  [ontology name superclass]
+  (let [superclasses
+        (isuperclasses ontology name)]
     (class-in-node-set? superclasses superclass)))
 
 
-(defn isubclasses [name]
-  (.getSubClasses (reasoner)
+(defontfn isubclasses [ontology name]
+  (.getSubClasses (reasoner ontology)
                   (owl/ensure-class name)
                   false))
 
-(defn isubclass?
+(defontfn isubclass?
   "Returns true if name has subclass as a strict subclass"
-  [name subclass]
+  [ontology name subclass]
   (let [subclasses
-        (isubclasses name)]
+        (isubclasses ontology name)]
     (class-in-node-set? subclasses subclass)))
 
-(defn iequivalent-classes [name]
-  (.getEquivalentClasses (reasoner)
+(defontfn iequivalent-classes [ontology name]
+  (.getEquivalentClasses (reasoner ontology)
                          (owl/ensure-class name)))
 
-(defn iequivalent-class? [name equiv]
-  (util/in? 
-   (iequivalent-classes name)
+(defontfn iequivalent-class? [ontology name equiv]
+  (util/in?
+   (iequivalent-classes ontology name)
    equiv))
