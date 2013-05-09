@@ -1331,7 +1331,7 @@ namelist where recursefunction returns all direct relationships"
                           recursefunction
                           ))))
 
-(defn isuperclasses
+(defn direct-superclasses
   "Returns the direct superclasses of name.
 Name can be either a class or a string name. Returns a list of class
 expressions."
@@ -1349,9 +1349,9 @@ expressions."
   [name superclass]
   (recurseclass? (list (ensure-class name))
                  (ensure-class superclass)
-                 isuperclasses))
+                 direct-superclasses))
 
-(defn isubclasses
+(defn direct-subclasses
   "Returns the direct subclasses of name."
   [name]
   (let [clz (ensure-class name)]
@@ -1365,7 +1365,7 @@ expressions."
   [name subclass]
   (recurseclass? (list (ensure-class name))
                (ensure-class subclass)
-               isubclasses))
+               direct-subclasses))
 
 (defn- subclasses-1
   "Returns all subclasses of all classes in classlist."
@@ -1376,11 +1376,11 @@ expressions."
     (concat (list (first classlist))
             ;; can't use recur, not in tail position
             (subclasses-1 (rest classlist))
-            (subclasses-1 (isubclasses (first classlist))))))
+            (subclasses-1 (direct-subclasses (first classlist))))))
 
 (defn subclasses [class]
   "Return all subclasses of class"
-  (subclasses-1 (isubclasses class)))
+  (subclasses-1 (direct-subclasses class)))
 
 (defn disjoint?
   "Returns t iff classes are asserted to be disjoint."

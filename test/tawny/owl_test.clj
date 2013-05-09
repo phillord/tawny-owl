@@ -276,7 +276,7 @@ Assumes that fixture has been run
        (nil?
         (do
           (test-class-with-hierarchy)
-          (o/isuperclasses "c")))))
+          (o/direct-superclasses "c")))))
   (is (do
         (test-class-with-hierarchy)
         (o/superclass? "e" "a")))
