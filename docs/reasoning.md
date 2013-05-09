@@ -93,8 +93,75 @@ This returns a set of unsatisifiable classes.
 ## Consistency
 
 An ontology is inconsistent if it contains any unsatisifiable classes which
-are, none-the-less asserted to have individuals.
+are, none-the-less asserted to have individuals. To check for this, simply
+call;
 
     (r/consistent?)
-    
 
+
+## Class Relationships
+
+It is also possible to infer class relationships, using a computational
+reasoner. For instance:
+
+    (defclass MargheritaPizza
+        :subclass Pizza
+            (someonly hasTopping MozzarellaTopping TomatoTopping))
+
+
+will be infered to be a subclass of `CheesyPizza` because it has a
+`MozzarellaTopping` which is, in turn, a `CheeseTopping`. These class
+relationships are *not* returned from the normal `tawny.owl` functions, such
+as `subclasses` nor their equivalent predicates `subclass?`. For these, the
+`tawny.reasoner` functions, for example `isubclasses`, `isubclass?` must be
+used instead. In all cases, these return sets which can be operated over as
+normal clojure sets.
+
+
+## tawny-mode.el
+
+For those using Emacs, tawny-mode.el comes with integrated support for
+reasoning. To enable it, add
+
+    (require 'tawny-mode)
+    (add-hook 'clojure-mode-hook 'tawny-mode-maybe-enable)
+
+to your `.emacs`. This function checks for some of the more common macros in
+`tawny.owl`, rather than turning on reasoning in all clojure buffers where it
+mostly does not make sense. This is a little cluny, but does not require a
+live nrepl buffer to operate.
+
+## Reasoning GUIs
+
+By default the reasoner class pops up a rather cheesy progress-bar when
+functional. This is useful, but can be irritating, particular when attempting
+to use tawny in headless mode, for instance, when unit testing. This behaviour
+can be changed by rebinding `tawny.reasoner/*reasoner-progress-monitor*`. For
+example, the following code is taken from the test fixture for `tawny.pizza`.
+
+    (defn ontology-reasoner-fixture [tests]
+      ;; this should kill the reasoner factory and all reasoners which is the
+      ;; safest, but slowest way to start.
+      (r/reasoner-factory :hermit)
+      ;; inject the pizzaontology into the current namespace, which saves the
+      ;; hassle of using with ontology every where. set this up each time in case
+      ;; pizzaontology has been re-evaled
+      (o/ontology-to-namespace p/pizzaontology)
+      (binding [r/*reasoner-progress-monitor*
+                r/reasoner-progress-monitor-silent]
+        (tests)))
+
+
+Currently, three GUIs are provided:
+`tawny.reasoner/reasoner-progress-monitor-gui`,
+`tawny.reasoner/reasoner-progress-monitor-text` and
+`tawny.reasoner/reasoner-progress-monitor-silent`, which use a swing GUI,
+text, or are totally silent. Note that if you use the default, GUI class, it
+will prevent the Java virtual machine terminating after, for example, running
+`lein run`.
+
+
+
+## Next
+
+ - [Querying the ontology](querying.md)

@@ -216,11 +216,11 @@ It should be able to cope with more.
  - [ ] Programmatically interacting with the ontology
  - [ ] Not asserted and reasoned
 
-** Reasoning [/]
- - [ ] What is reasoning
- - [ ] Reasoning over a single ontology
- - [ ] Reasoning predicates
- - [ ] Reasoning with tawny-mode
+** Reasoning [4/4]
+ - [X] What is reasoning
+ - [X] Reasoning over a single ontology
+ - [X] Reasoning predicates
+ - [X] Reasoning with tawny-mode
 
 ** Importing and Reading external ontologies [0/5]
  - [ ] Difference between clojure import and OWL import.
