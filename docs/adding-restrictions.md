@@ -167,4 +167,5 @@ Performance wise, both are about the same.
 
 ## Next
 
+ - [Querying](querying.md)
  - [Reasoning](reasoning.md)

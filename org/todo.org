@@ -212,9 +212,9 @@ It should be able to cope with more.
 
  - [X] A seperate document describing what to do about these. 
 
-** Querying the Ontology [0/2]
- - [ ] Programmatically interacting with the ontology
- - [ ] Not asserted and reasoned
+** Querying the Ontology [2/2]
+ - [X] Programmatically interacting with the ontology
+ - [X] Not asserted and reasoned
 
 ** Reasoning [4/4]
  - [X] What is reasoning
