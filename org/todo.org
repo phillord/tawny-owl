@@ -222,18 +222,19 @@ It should be able to cope with more.
  - [X] Reasoning predicates
  - [X] Reasoning with tawny-mode
 
-** Importing and Reading external ontologies [0/5]
- - [ ] Difference between clojure import and OWL import.
- - [ ] Reading an OWL file into Clojure
- - [ ] What it means, in terms of Clojure
- - [ ] transform and filter
- - [ ] Filter is only in namespace, not save
+** Importing and Reading external ontologies [5/5]
+ - [X] Difference between clojure import and OWL import.
+ - [X] Reading an OWL file into Clojure
+ - [X] What it means, in terms of Clojure
+ - [X] transform and filter
+ - [X] Filter is only in namespace, not save
 
-** Tawny Repl [/]
- - [ ] Documentation lookup
+** Tawny Repl [1/1]
+ - [X] Documentation lookup
 
 ** Scripting with Tawny [/]
  - [ ] Added NamedPizza's
+
 ** Polyglot [/]
  - [ ] Adding multi lingual labels
    

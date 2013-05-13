@@ -12,6 +12,13 @@ ontology.
 Tawny provides easy access to reasoning, both for consistency checking and for
 querying of the ontology.
 
+[Ontogenesis](http://ontogenesis.knowledgeblog.org) has a number of articles
+which help to describe these concepts used here:
+ - The meaning of satisfiable, coherent and inconsistent
+   (http://ontogenesis.knowledgeblog.org/1329)
+ - OWL2 and it's semantics (http://ontogenesis.knowledgeblog.org/55)
+ - Classes and their extents (http://ontogenesis.knowledgeblog.org/1004)
+
 
 ## A reasoning task
 
