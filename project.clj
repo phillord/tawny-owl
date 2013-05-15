@@ -2,7 +2,8 @@
   :description "tawny-owl enables building OWL ontologies in a programmatic environment."
   :url "http://www.russet.org.uk/blog/tawny-owl"
   :repositories [["maven" "http://repo1.maven.org/maven2"]
-
+                 ;; for when the OWL API is pre-release.
+                 ;;["snapshot" "https://oss.sonatype.org/content/repositories/snapshots"]
                  ;; hermit comes from here
                  ["phillord" "http://homepages.cs.ncl.ac.uk/phillip.lord/maven"]
                  ]
