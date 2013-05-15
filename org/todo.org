@@ -232,8 +232,8 @@ It should be able to cope with more.
 ** Tawny Repl [1/1]
  - [X] Documentation lookup
 
-** Scripting with Tawny [/]
- - [ ] Added NamedPizza's
+** Scripting with Tawny [1/1]
+ - [X] Added NamedPizza's
 
 ** Polyglot [/]
  - [ ] Adding multi lingual labels
