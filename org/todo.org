@@ -235,8 +235,8 @@ It should be able to cope with more.
 ** Scripting with Tawny [1/1]
  - [X] Added NamedPizza's
 
-** Polyglot [/]
- - [ ] Adding multi lingual labels
+** Polyglot [1/1]
+ - [X] Adding multi lingual labels
    
 ** Memorise [/]
  - [ ] What is the problem with read and transform
