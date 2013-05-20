@@ -135,14 +135,14 @@
 
 (defn reasoner-progress-monitor-gui-maybe []
   (if (GraphicsEnvironment/isHeadless)
-    (reasoner-progress-monitor-text)
-    (reasoner-progress-monitor-gui)))
+    (@reasoner-progress-monitor-text)
+    (@reasoner-progress-monitor-gui)))
 
 ;; set up the default!
 (def
   ^{:dynamic true}
   *reasoner-progress-monitor*
-  reasoner-progress-monitor-gui-maybe)
+  (atom reasoner-progress-monitor-gui-maybe))
 
 (defn reasoner-for-ontology [ontology]
   (first
@@ -165,7 +165,7 @@
              (reasoner-factory)
              (owl/get-current-ontology)
              (SimpleConfiguration.
-              (*reasoner-progress-monitor*)))]
+              ((deref *reasoner-progress-monitor*))))]
         (dosync
          (ref-set reasoner-list (conj @reasoner-list reas)))
         reas))))

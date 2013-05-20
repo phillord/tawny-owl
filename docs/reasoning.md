@@ -155,9 +155,15 @@ example, the following code is taken from the test fixture for `tawny.pizza`.
       ;; pizzaontology has been re-evaled
       (o/ontology-to-namespace p/pizzaontology)
       (binding [r/*reasoner-progress-monitor*
-                r/reasoner-progress-monitor-silent]
+                (atom r/reasoner-progress-monitor-silent)]
         (tests)))
 
+
+It is also possible to change the default using the `reset!` function, which
+will change the default; this is most useful at the REPL, or potentially in a
+`run` method.
+
+    (reset! r/*reasoner-progress-monitor* r/reasoner-progress-monitor-silent)
 
 Currently, three GUIs are provided:
 `tawny.reasoner/reasoner-progress-monitor-gui`,
