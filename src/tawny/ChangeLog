@@ -1,3 +1,9 @@
+2013-05-20  Phillip Lord  <phillip.lord@newcastle.ac.uk>
+
+	* reasoner.clj: Changed *reasoner-progress-monitor* to use an
+	atom. This is more convienient in some ways, but represents a
+	significant breaking change.
+
 2013-04-22  Phillip Lord  <phillip.lord@newcastle.ac.uk>
 
 	* src/tawny/owl.clj: Added full support for individual frames.

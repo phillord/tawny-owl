@@ -171,7 +171,7 @@
         reas))))
 
 
-(do 
+(do
   ;; define the hook function
   (defn discard-reasoner [ontology]
     (dosync
