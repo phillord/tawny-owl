@@ -244,10 +244,10 @@ It should be able to cope with more.
  - [ ] How to save a memorisation state
  - [ ] How to load one again.
 
-** Testing
- - [ ] What is unit testing, how does it look in Clojure
- - [ ] How does unit testing apply to ontologies
- - [ ] Predicates for use without reasoning
- - [ ] How to set up reasoner in a fixture
- - [ ] Predicates for use with reasoning
- - [ ] probe-classes.  [/]
+** Testing [6/6]
+ - [X] What is unit testing, how does it look in Clojure
+ - [X] How does unit testing apply to ontologies
+ - [X] Predicates for use without reasoning
+ - [X] How to set up reasoner in a fixture
+ - [X] Predicates for use with reasoning
+ - [X] probe-classes. 
