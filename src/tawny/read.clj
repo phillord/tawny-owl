@@ -105,7 +105,6 @@ Clojure symbol. Use this composed with a entity transform function"
         owlontology
         (do
           (tawny.owl/remove-ontology-maybe ontologyid)
-          
           (.loadOntologyFromOntologyDocument
            tawny.owl/owl-ontology-manager
            location))
