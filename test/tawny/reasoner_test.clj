@@ -254,3 +254,9 @@
         [a (#'o/disjointclasses "a" "b")])
       (o/save-ontology "test-probe-after.omn" :omn)
       (doall (far #(r/coherent?)))))))
+
+
+(deftest reasoner-gui-maybe
+  (is
+   (instance? org.semanticweb.owlapi.reasoner.ReasonerProgressMonitor
+              (r/reasoner-progress-monitor-gui-maybe)) ()))

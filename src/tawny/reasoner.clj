@@ -135,8 +135,8 @@
 
 (defn reasoner-progress-monitor-gui-maybe []
   (if (GraphicsEnvironment/isHeadless)
-    (@reasoner-progress-monitor-text)
-    (@reasoner-progress-monitor-gui)))
+    (reasoner-progress-monitor-text)
+    (reasoner-progress-monitor-gui)))
 
 ;; set up the default!
 (def
