@@ -112,14 +112,12 @@ Typing (doall (map)) all the time is hard work!"
 
 
 (defn vectorize
-  "Given a function (f [x y]), return another function of the form -- (g [x &
-rest]), where items in rest can be any tree structure, then, f with x and all
-values in rest. Returns a non-lazy list."
+  "Given (f [x y]), return another function (g [x & rest]), where items in
+rest can be any tree structure, then, f with x and all values in rest. Returns
+a non-lazy list."
   [f]
   (fn [& args]
     (doall
      (map
       (partial f (first args))
       (flatten (rest args))))))
-
-
