@@ -1,4 +1,4 @@
-(defproject uk.org.russet/tawny-owl "0.11"
+(defproject uk.org.russet/tawny-owl "0.12-SNAPSHOT"
   :description "tawny-owl enables building OWL ontologies in a programmatic environment."
   :url "http://www.russet.org.uk/blog/tawny-owl"
   :repositories [["maven" "http://repo1.maven.org/maven2"]
@@ -37,7 +37,7 @@
 
                  ;; reasoners
                  [org.semanticweb.elk/elk-owlapi "0.3.1"]
-                 [org.semanticweb.hermit/HermiT "1.3.6.1"]
+                 [org.semanticweb.hermit/HermiT "1.3.7.3"]
 
                  ;; need to access log4j to control elk.
                  [log4j/log4j "1.2.14"]])

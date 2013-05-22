@@ -1,6 +1,11 @@
 Release Notes
 =============
 
+# 0.12
+
+## New Features
+
+- Updated to Hermit 1.3.7.3
 
 # 0.11
 
