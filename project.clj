@@ -30,14 +30,14 @@
                  [net.sourceforge.owlapi/owlapi-distribution "3.4.4"]
 
                  ;; clojure
-                 [org.clojure/clojure "1.5.0"]
+                 [org.clojure/clojure "1.5.1"]
 
                  ;; hook functions
                  [robert/hooke "1.3.0"]
 
                  ;; reasoners
-                 [org.semanticweb.elk/elk-owlapi "0.3.1"]
+                 [org.semanticweb.elk/elk-owlapi "0.3.2"]
                  [org.semanticweb.hermit/HermiT "1.3.7.3"]
 
                  ;; need to access log4j to control elk.
-                 [log4j/log4j "1.2.14"]])
+                 [log4j/log4j "1.2.17"]])
