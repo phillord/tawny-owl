@@ -666,32 +666,27 @@ value for each frame."
 
 ;; restrictions! name clash -- we can do nothing about this, so accept the
 ;; inconsistency and bung owl on the front.
-
-
-(defn owlsome
-  "Returns an OWL some values from restriction."
-  ;; handle the single case
-  ([property class]
+(def
+  ^{:doc "Returns an OWL some values from restriction."
+    :arglists '([property & clazzes] [ontology property & clazzes])}
+  owlsome
+  (ontology-vectorize
+   (fn owlsome [property class]
      (.getOWLObjectSomeValuesFrom
       ontology-data-factory
       (ensure-object-property property)
-      (ensure-class class)))
-  ;; handle the many case
-  ([property class & classes]
-     (doall
-      (map (partial owlsome property)
-           (cons class classes)))))
+      (ensure-class class)))))
 
-(defn only
-  "Returns an OWL all values from restriction."
-  ([property class]
-     (.getOWLObjectAllValuesFrom
-      ontology-data-factory
-      (ensure-object-property property)
-      (ensure-class class)))
-  ([property class & classes]
-     (doall (map (partial only property)
-                 (cons class classes)))))
+(def
+  ^{:doc "Returns an OWL all values from restriction."
+    :arglists '([property & clazzes] [ontology property & clazzes])}
+  only
+  (ontology-vectorize
+   (fn onlymore [property class]
+      (.getOWLObjectAllValuesFrom
+       ontology-data-factory
+       (ensure-object-property property)
+       (ensure-class class)))))
 
 ;; long shortcut -- for consistency with some
 (def owlonly only)
@@ -747,39 +742,49 @@ all values from restrictions."
 
 (def || owlor)
 
+;; lots of restrictions return a list which can be of size one. so all these
+;; functions take a list but ensure that it is of size one.
 (defn owlnot
   "Returns an OWL complement of restriction."
-  [class]
+  [& class]
+  {:pre [(= 1
+            (count (flatten class)))]}
   (.getOWLObjectComplementOf
    ontology-data-factory
-   (ensure-class class)))
+   (ensure-class (first (flatten class)))))
 
 (def ! owlnot)
 
 ;; cardinality
 (defn atleast
   "Returns an OWL atleast cardinality restriction."
-  [cardinality property class]
+  [cardinality property & class]
+  {:pre [(= 1
+            (count (flatten class)))]}
   (.getOWLObjectMinCardinality
    ontology-data-factory cardinality
    (ensure-object-property property)
-   (ensure-class class)))
+   (ensure-class (first (flatten class)))))
 
 (defn atmost
   "Returns an OWL atmost cardinality restriction."
-  [cardinality property class]
+  [cardinality property & class]
+  {:pre [(= 1
+            (count (flatten class)))]}
   (.getOWLObjectMaxCardinality
    ontology-data-factory cardinality
    (ensure-object-property property)
-   (ensure-class class)))
+   (ensure-class (first (flatten class)))))
 
 (defn exactly
   "Returns an OWL exact cardinality restriction."
-  [cardinality property class]
+  [cardinality property & class]
+  {:pre [(= 1
+            (count (flatten class)))]}
   (.getOWLObjectExactCardinality
    ontology-data-factory cardinality
    (ensure-object-property property)
-   (ensure-class class)))
+   (ensure-class (first (flatten class)))))
 
 (declare ensure-individual)
 (defn oneof
