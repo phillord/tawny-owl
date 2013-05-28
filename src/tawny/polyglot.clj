@@ -28,7 +28,6 @@
 
 
 ;; function to create empty properties file
-
 (defn polyglot-create-resource [filename] 
   (with-open [w (clojure.java.io/writer filename)]
     (doseq [name 
@@ -56,10 +55,9 @@
         ;; when there is a label
         (let [label (.getProperty props k)]
           (if (seq label)
-            (do
-              (tawny.owl/add-annotation
-               (var-get v)
-               (list (tawny.owl/label label locale))))
+            (tawny.owl/add-annotation
+             (var-get v)
+             (list (tawny.owl/label label locale)))
             (println
              (format "Missing Label (%s:%s)"
                      k locale))))))

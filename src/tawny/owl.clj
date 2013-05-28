@@ -1,6 +1,6 @@
 ;; The contents of this file are subject to the LGPL License, Version 3.0.
 
-;; Copyright (C) 2012, Newcastle University
+;; Copyright (C) 2012, 2013, Newcastle University
 
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU Lesser General Public License as published by
@@ -338,20 +338,19 @@ or `filename' if given.
        (.saveOntology owl-ontology-manager (get-current-ontology)
                       this-format output-stream))))
 
-(defn- iriforname
+(defontfn iriforname
   "Returns an IRI object for the given name.
 
 This is likely to become a property of the ontology at a later date, but at
 the moment it is very simple."
-  [name]
-  (if-let [iri-gen (:iri-gen (deref (ontology-options)))]
+  [ontology name]
+  (if-let [iri-gen (:iri-gen (deref (ontology-options ontology)))]
     (iri-gen name)
-    (IRI/create (str (get-current-iri) "#" name))))
+    (IRI/create (str (get-iri ontology) "#" name))))
 
 (defn- get-create-object-property
   "Creates an OWLObjectProperty for the given name."
   [name]
-
   (.getOWLObjectProperty ontology-data-factory
                          (iriforname name)))
 
@@ -392,19 +391,19 @@ else if clz is a OWLClassExpression add that."
 
 (defontfn add-axiom
   "Adds an axiom from the given ontology, or the current one."
-  [axiom]
+  [ontology axiom]
   (.applyChange owl-ontology-manager
-                (AddAxiom. (get-current-ontology) axiom))
+                (AddAxiom. ontology axiom))
   axiom)
 
 (defontfn remove-axiom
   "Removes an axiom from the given ontology, or the current one."
-  [axiom]
+  [ontology axiom]
   (.applyChange owl-ontology-manager
-                (RemoveAxiom. (get-current-ontology) axiom))
+                (RemoveAxiom. ontology axiom))
   axiom)
 
-(defn remove-entity
+(defontfn remove-entity
   "Remove from the ontology an entity created and added by
 owlclass, defclass, objectproperty or defoproperty. Entity is the value
 returned by these functions.
@@ -417,7 +416,7 @@ This removes all the axioms that were added. So, for example, a form such as
 
 adds three axioms -- it declares a, makes it a subclass of b, and equivalent
 of c."
-  [entity]
+  [ontology entity]
   (let [remover
         (OWLEntityRemover. owl-ontology-manager
                            (hash-set
@@ -433,18 +432,18 @@ OWL isn't actually frame based, even if Manchester syntax is. My original
 intention is that this would be suitable for adding frame in to the ontology
 but in practice this doesn't work, as not everything is an axiom.
 "
-  [frame-adder name frame]
+  [ontology frame-adder name frame]
   (let [clazz (ensure-class name)
         axiom (frame-adder clazz frame)]
-    (add-axiom axiom)
+    (add-axiom ontology axiom)
     axiom))
 
 (defn- add-frame
 "Adds frames with multiple objects to the ontology"
-  [frame-adder name frame]
+  [ontology frame-adder name frame]
   (doall
    (map (fn[x]
-          (add-one-frame frame-adder name x))
+          (add-one-frame ontology frame-adder name x))
         ;; owlsome, only, someonly return lists
         ;; nil check as all the "add-subclass" like vars take nil and do
         ;; nothing.
@@ -463,12 +462,16 @@ class, or class expression. "
    clazz
    (ensure-class subclass)))
 
-(defn add-subclass
-"Adds a specific class to the ontology"
-  ([name & subclass]
-     (add-frame create-subclass-axiom
+(def
+  ^{:doc "Adds a specific class to the ontology"
+    :arglists '([name & subclass] [ontology name & subclass])}
+  add-subclass
+  (ontology-first-maybe
+   (fn [name & subclass]
+     (add-frame (get-current-ontology)
+                create-subclass-axiom
                 name
-                subclass)))
+                subclass))))
 
 (defn- create-equivalent-axiom
   "Creates an equivalent axiom."
@@ -478,12 +481,12 @@ class, or class expression. "
    clazz
    (ensure-class equivalent)))
 
-(defn add-equivalent
+(defontfn add-equivalent
   "Adds an equivalent axiom to the ontology."
-  [name equivalent]
+  [ontology name equivalent]
   {:pre [(or (nil? equivalent)
              (seq? equivalent))]}
-  (add-frame create-equivalent-axiom name equivalent))
+  (add-frame ontology create-equivalent-axiom name equivalent))
 
 (defn- create-disjoint-axiom
   "Creates a disjoint axiom."
@@ -492,12 +495,12 @@ class, or class expression. "
    ontology-data-factory
    (into-array OWLClassExpression [clazz disjoint])))
 
-(defn add-disjoint
+(defontfn add-disjoint
   "Adds a disjoint axiom to the ontology."
-  [name disjoint]
+  [ontology name disjoint]
   {:pre [(or (nil? disjoint)
              (seq? disjoint))]}
-  (add-frame create-disjoint-axiom name disjoint))
+  (add-frame ontology create-disjoint-axiom name disjoint))
 
 (defn- create-class-axiom
   "Returns a declaration axiom"
@@ -506,9 +509,9 @@ class, or class expression. "
    ontology-data-factory
    clazz))
 
-(defn add-disjoint-union
+(defontfn add-disjoint-union
   "Adds a disjoint union axiom to all subclasses."
-  [clazz subclasses]
+  [ontology clazz subclasses]
   (let [ensured-subclasses
         (doall (map #(ensure-class %) subclasses))
         ]
@@ -519,60 +522,60 @@ class, or class expression. "
        (ensure-class clazz)
        (java.util.HashSet.  ensured-subclasses))))))
 
-(defn add-class
+(defontfn add-class
   "Adds a class to the ontology."
-  [name]
-  (add-one-frame create-class-axiom name ""))
+  [ontology name]
+  (add-one-frame ontology create-class-axiom name ""))
 
-(defn add-domain
+(defontfn add-domain
   "Adds all the entities in domainlist as domains to a property."
-  [property domainlist]
+  [ontology property domainlist]
   (let [property (ensure-object-property property)]
     (doall
      (map
       (fn [domain]
-        (add-axiom
+        (add-axiom ontology
          (.getOWLObjectPropertyDomainAxiom
           ontology-data-factory property
           (ensure-class domain))))
       domainlist))))
 
-(defn add-range
+(defontfn add-range
   "Adds all the entities in rangelist as range to a property."
-  [property rangelist]
+  [ontology property rangelist]
   (let [property (ensure-object-property property)]
     (doall
      (map
       (fn [range]
-        (add-axiom
+        (add-axiom ontology
          (.getOWLObjectPropertyRangeAxiom
           ontology-data-factory property
           (ensure-class range))))
       rangelist))))
 
-(defn add-inverse
+(defontfn add-inverse
   "Adds all the entities in inverselist as inverses to a property."
-  [property inverselist]
+  [ontology property inverselist]
   (let [property (ensure-object-property property)]
     (doall
      (map
       (fn [inverse]
-        (add-axiom
+        (add-axiom ontology
          (.getOWLInverseObjectPropertiesAxiom
           ontology-data-factory property
           (ensure-object-property inverse))))
       inverselist))))
 
 
-(defn add-superproperty
+(defontfn add-superproperty
   "Adds all items in superpropertylist to property as
 a superproperty."
-  [property superpropertylist]
+  [ontology property superpropertylist]
   (let [property (ensure-object-property property)]
     (doall
      (map
       (fn [superproperty]
-        (add-axiom
+        (add-axiom ontology
          (.getOWLSubObjectPropertyOfAxiom
           ontology-data-factory property
           (ensure-object-property superproperty))))
@@ -596,16 +599,16 @@ a superproperty."
    inversefunctional #(.getOWLInverseFunctionalObjectPropertyAxiom %1 %2)
    })
 
-(defn add-characteristics
+(defontfn add-characteristics
   "Add a list of characteristics to the property."
-  [property characteristics]
+  [ontology property characteristics]
   (doall
    (map
     (fn [x]
       (when-not (get charfuncs x)
         (throw (IllegalArgumentException.
                 "Characteristic is not recognised:" x)))
-      (add-axiom
+      (add-axiom ontology
        ((get charfuncs x)
         ontology-data-factory (ensure-object-property property))))
     characteristics)))
@@ -798,34 +801,35 @@ all values from restrictions."
           (flatten individuals))))))
 
 ;; annotations
-(defmulti add-an-annotation
-  "Add an annotation to the first parameter."
-  (fn [named-entity _]
-    (class named-entity)))
-
-(defmethod add-an-annotation OWLNamedObject
-  [named-entity annotation]
-  ;; get the axiom and apply it.
+(defn- add-a-simple-annotation
+  [ontology named-entity annotation]
   (let [axiom
         (.getOWLAnnotationAssertionAxiom
          ontology-data-factory
          (.getIRI named-entity) annotation)]
     (add-axiom axiom)))
 
-(defmethod add-an-annotation OWLOntology
+(defn- add-an-ontology-annotation
   [ontology annotation]
-  ;; we don't appear to need an axiom to add annotation to the ontology.
   (.applyChange
    owl-ontology-manager
    (AddOntologyAnnotation. ontology annotation)))
 
 (defn add-annotation
-  "Adds a number of annotations to the named entity."
-  [named-entity annotation-list]
-  (doall
-   (map
-    (partial add-an-annotation named-entity)
-    annotation-list)))
+  ([ontology named-entity annotation-list]
+     (doall
+      (for [n annotation-list]
+        (add-a-simple-annotation ontology named-entity n))))
+  ([ontology-or-named-entity annotation-list]
+     (doall
+      (for [n annotation-list]
+        (cond
+         (instance? OWLOntology ontology-or-named-entity)
+         (add-an-ontology-annotation ontology-or-named-entity n)
+         (instance? OWLNamedObject ontology-or-named-entity)
+         (add-a-simple-annotation
+          (get-current-ontology)
+          ontology-or-named-entity n))))))
 
 (defn- ensure-annotation-property [property]
   "Ensures that 'property' is an annotation property,
@@ -855,20 +859,20 @@ converting it from a string or IRI if necessary."
 
 (defn- add-a-super-annotation
   "Adds a single superproperty to subproperty."
-  [subproperty superproperty]
+  [ontology subproperty superproperty]
   (.applyChange owl-ontology-manager
    (AddAxiom.
-    (get-current-ontology)
+    ontology
     (.getOWLSubAnnotationPropertyOfAxiom
      ontology-data-factory
      subproperty
      (ensure-annotation-property superproperty)))))
 
-(defn add-super-annotation
+(defontfn add-super-annotation
   "Adds a set of superproperties to the given subproperty."
-  [subproperty superpropertylist]
+  [ontology subproperty superpropertylist]
   (doall
-   (map #(add-a-super-annotation subproperty %1)
+   (map #(add-a-super-annotation ontology subproperty %1)
         superpropertylist)))
 
 
@@ -916,12 +920,12 @@ converting it from a string or IRI if necessary."
 
 (defn annotation-property-explicit
   "Add this annotation property to the ontology"
-  ([property frames]
+  ([ontology property frames]
      (let [property-object
            (ensure-annotation-property property)]
        ;; add the property
        (.addAxiom owl-ontology-manager
-                  (get-current-ontology)
+                  ontology
                   (.getOWLDeclarationAxiom
                    ontology-data-factory
                    property-object))
@@ -950,6 +954,7 @@ converting it from a string or IRI if necessary."
   "Creates a new annotation property."
   [name & frames]
   (annotation-property-explicit
+   (get-current-ontology)
    name
    (util/check-keys
     (util/hashify frames)
@@ -1187,16 +1192,14 @@ or to ONTOLOGY if present."
 ;; owl imports
 (defn owlimport
   "Adds a new import to the current ontology."
-  [ontology]
-  (.applyChange owl-ontology-manager
-                (AddImport. (get-current-ontology)
-                            (.getOWLImportsDeclaration
-                             ontology-data-factory
-                             (get-iri ontology)))))
-
-
-
-
+  ([ontology]
+     (owlimport (get-current-ontology) ontology))
+  ([ontology-into ontology]
+     (.applyChange owl-ontology-manager
+                   (AddImport. ontology-into
+                               (.getOWLImportsDeclaration
+                                ontology-data-factory
+                                (get-iri ontology))))))
 ;; convienience macros
 ;; is this necessary? is as-disjoint-subclasses not enough?
 (defmacro as-disjoint [& body]
@@ -1336,19 +1339,19 @@ namelist where recursefunction returns all direct relationships"
                           recursefunction
                           ))))
 
-(defn direct-superclasses
+(defontfn direct-superclasses
   "Returns the direct superclasses of name.
 Name can be either a class or a string name. Returns a list of class
 expressions."
-  [name]
+  [ontology name]
   (let [clz (ensure-class name)]
     ;; general Class expressions return empty
     (if (instance? OWLClass clz)
       (.getSuperClasses clz
-                        (get-current-ontology))
+                        ontology)
       ())))
 
-
+;; need to support ontology here!
 (defn superclass?
   "Returns true is name has superclass as a superclass"
   [name superclass]
@@ -1356,13 +1359,13 @@ expressions."
                  (ensure-class superclass)
                  direct-superclasses))
 
-(defn direct-subclasses
+(defontfn direct-subclasses
   "Returns the direct subclasses of name."
-  [name]
+  [ontology name]
   (let [clz (ensure-class name)]
     (if (instance? OWLClass clz)
       (.getSubClasses (ensure-class name)
-                      (get-current-ontology))
+                      ontology)
       ())))
 
 (defn subclass?
@@ -1387,24 +1390,20 @@ expressions."
   "Return all subclasses of class"
   (subclasses-1 (direct-subclasses class)))
 
-(defn disjoint?
+(defontfn disjoint?
   "Returns t iff classes are asserted to be disjoint."
-  ([a b]
-     (disjoint? a b (get-current-ontology)))
-  ([a b ontology]
-     (contains?
-      (.getDisjointClasses a ontology)
-      b)))
+  [ontology a b]
+  (contains?
+   (.getDisjointClasses a ontology)
+   b))
 
 
-(defn equivalent?
+(defontfn equivalent?
   "Returns t iff classes are asserted to be equivalent."
-  ([a b]
-     (equivalent? a b (get-current-ontology)))
-  ([a b ontology]
-     (contains?
-      (.getEquivalentClasses a ontology)
-      b)))
+  [ontology a b]
+  (contains?
+   (.getEquivalentClasses a ontology)
+   b))
 
 ;; some test useful macros
 
@@ -1548,15 +1547,12 @@ for example, building two interlocking ontologies with different OWL profiles.
 (defmethod refine OWLObjectProperty [& args]
   (apply objectproperty args))
 
-
-
 (defmacro defrefineto
   "Takes an existing definition, add more frames.
 The first argument should be a symbol that will hold the
 
 See also 'refine'.
 "
-
   [symbol & args]
   `(def
      ~(with-meta symbol

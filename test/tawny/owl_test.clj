@@ -158,12 +158,14 @@
   (is (not
        (nil?
         (#'o/add-one-frame
+         (o/get-current-ontology)
          #'o/create-subclass-axiom
          (#'o/ensure-class "a") "b")))))
 
 (deftest add-frame []
   (let [frame-call
         (#'o/add-frame
+         (o/get-current-ontology)
          #'o/create-subclass-axiom
          (#'o/ensure-class "a") '( "b" "c" "d"))]
     (is (not (nil? frame-call)))))
@@ -174,6 +176,19 @@
   (is (instance? org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom
                  (#'o/create-equivalent-axiom
                   (#'o/ensure-class "a") "b"))))
+
+
+(deftest add-subclass
+  (is
+   (do
+     (o/add-subclass "a" "b")
+     (= 2 (.size (.getClassesInSignature
+                  (o/get-current-ontology))))))
+  (is
+   (do
+     (o/add-subclass "a" "b")
+     (o/superclass? "a" "b")))
+  )
 
 (deftest add-equivalent []
   (let [equiv (#'o/add-equivalent
@@ -269,8 +284,6 @@ Assumes that fixture has been run
   (o/owlclass "d")
   (o/owlclass "e" :subclass "b" "d")
   )
-
-
 (deftest superclass? []
   (is (not
        (nil?

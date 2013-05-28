@@ -113,10 +113,11 @@ Typing (doall (map)) all the time is hard work!"
 (defn vectorize
   "Given (f [x y]), return another function (g [x & rest]), where items in
 rest can be any tree structure, then, f with x and all values in rest. Returns
-a non-lazy list."
+a lazy list."
   [f]
-  (fn [& args]
-    (doall
-     (map
-      (partial f (first args))
-      (flatten (rest args))))))
+  (fn [x & args]
+    (when-not (seq args)
+      (throw (clojure.lang.ArityException. 1 "Expects at least 2 args")))
+    (map
+     (partial f x)
+     (flatten args))))
