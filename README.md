@@ -9,9 +9,16 @@ programmatic language to automate and abstract the ontology over the
 development process; also, rather than requiring the creation of ontology
 specific development environments, a normal programming IDE can be used;
 finally, a human readable text format means that we can integrate with the
-standard tooling for versioning and distributed development. 
+standard tooling for versioning and distributed development. A longer
+[getting started](docs/getting-started.md) document is available.
 
-A longer [getting started](docs/getting-started.md) document is available, 
+OWL is a W3C standard ontology representation language; an ontology is a fully
+computable set of statements, describing the things and their relationships.
+They are used, mostly notable in biomedicine, to describe complex areas of
+knowledge such as [genetics](http://www.geneontology.org/) or
+[clinical terminology](http://en.wikipedia.org/wiki/SNOMED_CT), but can
+describe anything, including [e-commerce](http://purl.org/goodrelations/). For
+more tutorial information, please see http://ontogenesis.knowledgeblog.org.
 
 The core library, `owl.clj` provides an API which looks similar to Manchester
 OWL syntax, but is nonetheless fully programmatically extensible; all
