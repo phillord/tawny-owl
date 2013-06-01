@@ -1269,7 +1269,7 @@ This macro is dynamically scoped."
         rest# (drop-while keyword? body)]
     `(binding [tawny.owl/recent-axiom-list '()]
        (with-default-frames [:subclass ~superclass]
-        ~@body)
+        ~@rest#)
        (#'tawny.owl/subclass-options
         ~options#
         ~superclass
