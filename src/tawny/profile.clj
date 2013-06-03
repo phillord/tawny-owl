@@ -39,7 +39,7 @@ for an ontology or the current ontology."
   "Returns true if an ontology or the current ontology is
 in the current profile"
   [ontology profile]
-  (empty? (violations ontology profile)))
+  (.isInProfile (.checkOntology profile ontology)))
 
 (defontfn axiom-violations
   "Return a list of axioms that are violation of the given profile,
