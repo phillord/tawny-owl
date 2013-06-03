@@ -73,7 +73,7 @@ including the name space."
 
 (defn resolve-entity [entity iri-to-var]
   (let [entity-str (named-entity-as-string entity)
-        var (get entity-str iri-to-var)]
+        var (get iri-to-var entity-str)]
     (if (nil? var)
       entity-str
        (var-maybe-qualified-str var))))
