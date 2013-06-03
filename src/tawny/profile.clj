@@ -30,7 +30,7 @@
   (OWL2ELProfile.))
 
 (defontfn violations
-  "Return a list of violations of the given profile, 
+  "Return a list of violations of the given profile,
 for an ontology or the current ontology."
   [ontology profile]
   (.getViolations (.checkOntology profile ontology)))
