@@ -1321,24 +1321,6 @@ See `declare-classes' where frames (or just default frames) are not needed.
             `(defclass ~@x#)) classes)))
 
 ;; predicates
-(defn- recurseclass?
-  "Determine class relationship
-
-Returns true if targetclass is directly or indirectly related to a class in
-namelist where recursefunction returns all direct relationships"
-  [namelist targetclass recursefunction]
-  (and (first namelist)
-       (or (= (first namelist)
-              targetclass)
-           (recurseclass? (recursefunction
-                           (first namelist))
-                          targetclass
-                          recursefunction)
-           (recurseclass? (rest namelist)
-                          targetclass
-                          recursefunction
-                          ))))
-
 (defontfn direct-superclasses
   "Returns the direct superclasses of name.
 Name can be either a class or a string name. Returns a list of class
@@ -1351,13 +1333,30 @@ expressions."
                         ontology)
       ())))
 
-;; need to support ontology here!
-(defn superclass?
+;; does the OWL API really not do this for me?
+(defn- superclasses-1
+  "Returns all subclasses of all classes in classlist."
+  [ontology classlist]
+  ;; if there are no subclasses return empty list
+  (if (= 0 (count classlist))
+    (list)
+    (concat (list (first classlist))
+            ;; can't use recur, not in tail position
+            (superclasses-1 ontology
+                          (rest classlist))
+            (superclasses-1 ontology
+                          (direct-superclasses ontology (first classlist))))))
+
+(defontfn superclasses [ontology class]
+  "Return all subclasses of class"
+  (superclasses-1 ontology (direct-superclasses ontology class)))
+
+(defontfn superclass?
   "Returns true is name has superclass as a superclass"
-  [name superclass]
-  (recurseclass? (list (ensure-class name))
-                 (ensure-class superclass)
-                 direct-superclasses))
+  [ontology name superclass]
+  (let [namecls (ensure-class name)
+        superclasscls (ensure-class superclass)]
+    (some #(.equals superclasscls %) (superclasses ontology name))))
 
 (defontfn direct-subclasses
   "Returns the direct subclasses of name."
@@ -1368,27 +1367,30 @@ expressions."
                       ontology)
       ())))
 
-(defn subclass?
+(declare subclasses)
+(defontfn subclass?
   "Returns true if name has subclass as a subclass"
-  [name subclass]
-  (recurseclass? (list (ensure-class name))
-               (ensure-class subclass)
-               direct-subclasses))
+  [ontology name subclass]
+  (let [namecls (ensure-class name)
+        subclasscls (ensure-class subclass)]
+    (some #(.equals subclasscls %) (subclasses ontology name))))
 
 (defn- subclasses-1
   "Returns all subclasses of all classes in classlist."
-  [classlist]
+  [ontology classlist]
   ;; if there are no subclasses return empty list
   (if (= 0 (count classlist))
     (list)
     (concat (list (first classlist))
             ;; can't use recur, not in tail position
-            (subclasses-1 (rest classlist))
-            (subclasses-1 (direct-subclasses (first classlist))))))
+            (subclasses-1 ontology
+                          (rest classlist))
+            (subclasses-1 ontology
+                          (direct-subclasses ontology (first classlist))))))
 
-(defn subclasses [class]
+(defontfn subclasses [ontology class]
   "Return all subclasses of class"
-  (subclasses-1 (direct-subclasses class)))
+  (subclasses-1 ontology (direct-subclasses ontology class)))
 
 (defontfn disjoint?
   "Returns t iff classes are asserted to be disjoint."
