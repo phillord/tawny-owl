@@ -167,6 +167,56 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
                    (meta-for-owl entity)))
           entity))
 
+;; we use intern-owl here because we need to attach the ontology to the
+;; metadata for the symbol. With def this isn't possible because we need
+;; to generate the symbol at compile time, when we don't have the
+;; ontology yet. &form is an implicit variable for macro's, and carries
+;; the line and column metadata which otherwise we loose. This is a
+;; compiler detail, but there is no other way, as far as I can tell.
+;;
+;; However, we still need to declare at this point, or we get into
+;; trouble in macros such as "as-disjoint" which check symbols at compile
+;; time, and cannot determine that the symbol will exist at run time,
+;; once the intern has run.
+;;
+;; This all seems horribly messy, and I am not sure that it is all true;
+;; after all I can do this?
+;; (let [n (tawny.owl/owlclass "y")]
+;;                 (def ^{:tmp n} g n))
+;;
+;; However, an attempt to try this using this sort of thing fails: the
+;; metadata disappears away, I think because the reader is doing something
+;; special with it. Regardless it does not appear in the expansion.
+;;
+;; (def ^{:owl true
+;;        :doc
+;;        (tawny.util.CallbackString.
+;;         (partial tawny.repl/fetch-doc ontology#))}
+;;   ~ontname ontology#)
+;;
+;; Also have tried calling the "ontology" function at compile time, and then
+;; generating the appropriate form.
+;;
+;; This sounds reasonable, but doesn't work either, because valn# is the FORM
+;; and not the evaluation of it.
+;;
+;; (defmacro defthing
+;;   [name val]
+;;   (let [valn# (identity val)]
+;;     `(def
+;;        ~(vary-meta
+;;          name
+;;          merge
+;;          {:owl true
+;;           :val valn#})
+;;        ~valn#)
+;;      ))
+;;
+;; So, I think that this is about the best I can do. The ultimate solution has
+;; to be changes to the way the doc lookup works. Putting an entity into it's
+;; own metadata makes no sense. It would be much cleaner if the doc function
+;; checked the *value* of a var, to see if it implements a documentation
+;; protocol, and if not uses the :doc metadata.
 (defmacro defontology
   "Define a new ontology with `name'.
 
@@ -176,33 +226,11 @@ The following keys must be supplied.
 "
   [ontname & body]
   `(let [ontology# (ontology ~@body)]
-     ;; we use intern-owl here because we need to attach the ontology to the
-     ;; metadata for the symbol. With def this isn't possible because we need
-     ;; to generate the symbol at compile time, when we don't have the
-     ;; ontology yet. &form is an implicit variable for macro's, and carries
-     ;; the line and column metadata which otherwise we loose. This is a
-     ;; compiler detail, but there is no other way, as far as I can tell.
-     ;;
-     ;; However, we still need to declare at this point, or we get into
-     ;; trouble in macros such as "as-disjoint" which check symbols at compile
-     ;; time, and cannot determine that the symbol will exist at run time,
-     ;; once the intern has run.
-     ;;
-     ;; This all seems horribly messy, and I am not sure that it is all true;
-     ;; after all I can do this?
-     ;; (let [n (tawny.owl/owlclass "y")]
-     ;;                 (def ^{:tmp n} g n))
-
      (tawny.owl/intern-owl
       (:ns (meta (declare ~ontname)))
       (quote ~ontname) ontology#
       ~(meta &form))
 
-     ;; (def ^{:owl true
-     ;;        :doc
-     ;;        (tawny.util.CallbackString.
-     ;;         (partial tawny.repl/fetch-doc ontology#))}
-     ;;   ~ontname ontology#)
 
      (tawny.owl/ontology-to-namespace ontology#)
      ;; this return type is wrong! we should return the var!
