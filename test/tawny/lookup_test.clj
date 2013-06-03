@@ -40,3 +40,14 @@
           (ns-unmap lookup-test-namespace 'a)
           (ns-unmap lookup-test-namespace 'b)
           (ns-unmap lookup-test-namespace 'c))))))
+
+(deftest resolve-entity
+  (is
+   (= "tawny.lookup-test/hello"
+      (try
+        (o/test-ontology)
+        (def hello (o/owlclass "test"))
+        (l/resolve-entity (o/owlclass "test")
+                        (l/iri-to-var lookup-test-namespace))
+        (finally
+          (ns-unmap lookup-test-namespace 'hello))))))
