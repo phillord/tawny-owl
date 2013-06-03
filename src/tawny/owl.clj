@@ -1675,3 +1675,5 @@ cases this will have been imported."
           (assoc (meta newsymbol#)
             :owl true))
        (var-get (var ~symb)))))
+
+(require 'tawny.repl)
