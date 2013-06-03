@@ -20,8 +20,6 @@
   (:require [tawny.owl :as o]
             [tawny.lookup]
             [tawny.render]
-            [robert.hooke]
-            [clojure.repl]
             [clojure.pprint]
             )
   (:import [java.io StringWriter PrintWriter])
@@ -104,18 +102,3 @@
   ([owlobject ontology]
      (println (fetch-doc owlobject ontology))))
 
-(defn print-doc-hook-function 
-  [f m]
-  (f 
-   (if (:owl m)
-     (assoc m 
-       :doc 
-       (fetch-doc
-        (var-get 
-         (ns-resolve (:ns m) (:name m)))
-        (o/get-current-ontology (:ns m))
-        ))
-     m)))
-
-;; augment the existing print-doc with this function
-(robert.hooke/add-hook #'clojure.repl/print-doc #'print-doc-hook-function)

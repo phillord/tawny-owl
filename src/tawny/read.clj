@@ -5,6 +5,7 @@
   (:import
    (java.io File)
    (java.net URL)
+   (tawny.util CallbackString)
    (org.semanticweb.owlapi.apibinding OWLManager)
    (org.semanticweb.owlapi.model IRI OWLNamedObject OWLOntologyID)))
 
@@ -81,12 +82,9 @@ Clojure symbol. Use this composed with a entity transform function"
   ([e transform]
      (try
        (when (instance? OWLNamedObject e)
-         (let [name 
+         (let [name
                (stop-characters-transform (transform e))]
-           (intern *ns* 
-                   (with-meta
-                     (symbol name)
-                     {:owl true}) e)))
+           (tawny.owl/intern-owl *ns* (symbol name) e {})))
        (catch IllegalArgumentException i 
          (print "Broken Intern on:" e)
          (throw i)))))

@@ -147,6 +147,26 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
                    (versioninfo v))))))
       jontology)))
 
+(intern (create-ns 'tawny.repl) 'fetch-doc)
+(defn meta-for-owl
+  [entity]
+  {:owl true
+   :file *file*
+   :doc
+   (tawny.util.CallbackString.
+    (partial tawny.repl/fetch-doc entity))
+  })
+
+(defn intern-owl
+  "Intern an entity with additional OWL metadata."
+  [namespace sym entity meta]
+  (intern namespace
+          (with-meta
+            sym
+            (merge meta
+                   (meta-for-owl entity)))
+          entity))
+
 (defmacro defontology
   "Define a new ontology with `name'.
 
@@ -154,17 +174,40 @@ The following keys must be supplied.
 :iri -- the IRI for the new ontology
 :prefix -- the prefix used in the serialised version of the ontology
 "
-  [name & body]
-  `(do
-     (let [ontology# (ontology ~@body)]
-       (def
-         ~(with-meta name
-            (assoc (meta name)
-              :owl true))
-         ontology#)
-       (tawny.owl/ontology-to-namespace ontology#)
-       ontology#
-       )))
+  [ontname & body]
+  `(let [ontology# (ontology ~@body)]
+     ;; we use intern-owl here because we need to attach the ontology to the
+     ;; metadata for the symbol. With def this isn't possible because we need
+     ;; to generate the symbol at compile time, when we don't have the
+     ;; ontology yet. &form is an implicit variable for macro's, and carries
+     ;; the line and column metadata which otherwise we loose. This is a
+     ;; compiler detail, but there is no other way, as far as I can tell.
+     ;;
+     ;; However, we still need to declare at this point, or we get into
+     ;; trouble in macros such as "as-disjoint" which check symbols at compile
+     ;; time, and cannot determine that the symbol will exist at run time,
+     ;; once the intern has run.
+     ;;
+     ;; This all seems horribly messy, and I am not sure that it is all true;
+     ;; after all I can do this?
+     ;; (let [n (tawny.owl/owlclass "y")]
+     ;;                 (def ^{:tmp n} g n))
+
+     (tawny.owl/intern-owl
+      (:ns (meta (declare ~ontname)))
+      (quote ~ontname) ontology#
+      ~(meta &form))
+
+     ;; (def ^{:owl true
+     ;;        :doc
+     ;;        (tawny.util.CallbackString.
+     ;;         (partial tawny.repl/fetch-doc ontology#))}
+     ;;   ~ontname ontology#)
+
+     (tawny.owl/ontology-to-namespace ontology#)
+     ;; this return type is wrong! we should return the var!
+     ontology#
+     ))
 
 (defn ontology-to-namespace
   "Sets the current ontology as defined by `defontology'"
@@ -665,7 +708,11 @@ value for each frame."
   [property & frames]
   `(let [property-name# (name '~property)
          property# (tawny.owl/objectproperty property-name# ~@frames)]
-     (def ~property property#)))
+     (tawny.owl/intern-owl
+      (:ns (meta (declare ~property)))
+      (quote ~property)
+      property#
+      ~(meta &form))))
 
 ;; restrictions! name clash -- we can do nothing about this, so accept the
 ;; inconsistency and bung owl on the front.
@@ -974,11 +1021,11 @@ See 'defclass' for more details on the syntax."
   `(let [property-name# (name '~property)
          property#
          (tawny.owl/annotation-property property-name# ~@frames)]
-     (def
-       ~(with-meta property
-          (assoc (meta property)
-            :owl true))
-       property#)))
+     (tawny.owl/intern-owl
+      (:ns (meta (declare ~property)))
+      (quote ~property)
+      property#
+      ~(meta &form))))
 
 
 ;; data type properties
@@ -1048,14 +1095,14 @@ full details."
 by a keyword :subclass, :equivalent, :annotation, :name, :comment,
 :label or :disjoint. Each frame can contain an item, a list of items or any
 combination of the two. The class object is stored in a var called classname."
-[classname & frames]
+  [classname & frames]
   `(let [string-name# (name '~classname)
          class# (tawny.owl/owlclass string-name# ~@frames)]
-     (def
-       ~(with-meta classname
-          (assoc (meta classname)
-            :owl true))
-       class#)))
+     (tawny.owl/intern-owl
+      (:ns (meta (declare ~classname)))
+      (quote ~classname)
+      class#
+      ~(meta &form))))
 
 
 (defn disjointclasseslist
@@ -1187,7 +1234,11 @@ or to ONTOLOGY if present."
   [individualname & frames]
   `(let [string-name# (name '~individualname)
          individual# (tawny.owl/individual string-name# ~@frames)]
-     (def ~individualname individual#)))
+     (tawny.owl/intern-owl
+      (:ns (meta (declare ~individualname)))
+      (quote ~individualname)
+      individual#
+      ~(meta &form))))
 
 ;; owl imports
 (defn owlimport

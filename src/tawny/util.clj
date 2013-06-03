@@ -15,7 +15,8 @@
 ;; You should have received a copy of the GNU Lesser General Public License
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
 
-(ns tawny.util)
+(ns tawny.util
+  (:import [java.io Writer]))
 
 
 ;;
@@ -121,3 +122,18 @@ a lazy list."
     (map
      (partial f x)
      (flatten args))))
+
+
+;; This object is used to subvert the :doc metadata system. CallbackString
+;; contains a single function that must return a string, when called.
+(defrecord CallbackString [f])
+
+;; add to the default print-method, so that the function is called, and the
+;; results are printed.
+(defmethod print-method CallbackString [o, ^Writer w]
+  (let [string
+        (try
+          ((:f o))
+          (catch Exception e
+            (str "Unable to capture doc from OWL object: " e)))]
+    (.write w string)))

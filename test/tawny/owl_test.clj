@@ -48,18 +48,15 @@
       :versioinfo "This is some versioninfo")))))
 
 (deftest defontology
-  (is (not (nil? testontology)))
+  (is (not (nil? (o/get-current-ontology))))
   (is (= 0 (.getAxiomCount (#'o/get-current-ontology)))))
 
 (deftest get-current-ontology
-  (is (not (nil? (o/get-current-ontology))))
-  (is (= testontology (o/get-current-ontology))))
+  (is (not (nil? (o/get-current-ontology)))))
 
 (deftest get-iri
   (is (= "http://iri/" 
          (.toString (o/get-iri (o/ontology :iri "http://iri/")))))
-  (is (= "http://iri/" 
-         (.toString (o/get-iri testontology))))
   (is (= "http://iri/" 
          (.toString (o/get-iri)))))
 
