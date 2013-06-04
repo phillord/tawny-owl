@@ -38,10 +38,10 @@
 
 (deftest ontology
   (is true)
-  (is 
-   (not 
+  (is
+   (not
     (nil?
-     (o/ontology 
+     (o/ontology
       :iri "http://iri/"
       :prefix "iri:"
       :comment "This is a comment"
@@ -55,41 +55,41 @@
   (is (not (nil? (o/get-current-ontology)))))
 
 (deftest get-iri
-  (is (= "http://iri/" 
+  (is (= "http://iri/"
          (.toString (o/get-iri (o/ontology :iri "http://iri/")))))
-  (is (= "http://iri/" 
+  (is (= "http://iri/"
          (.toString (o/get-iri)))))
 
 (deftest get-current-iri
   (is (= "http://iri/" (.toString (#'o/get-current-iri)))))
 
-(deftest get-current-prefix 
+(deftest get-current-prefix
   (is (= "iri:" (o/get-current-prefix))))
 
 (deftest declare-classes
-  (is 
+  (is
    (-> (o/declare-classes a)
        (nil?)
        (not))))
 
 
 (deftest ontology-options
- 
-  (is 
+
+  (is
    (instance? clojure.lang.Ref
               (o/ontology-options testontology)))
-  
+
   (is
    (let [options {:a 1 :b 2}]
-     (dosync 
+     (dosync
       (alter (o/ontology-options testontology)
              merge options))
 
      (= @(o/ontology-options testontology)
             options)))
 
-  (is 
-   (do 
+  (is
+   (do
      ;; need a clean slate to start with!
      (reset! o/ontology-options-atom {})
      (o/ontology :iri "http://iri" :prefix "dfda:")
@@ -117,7 +117,7 @@
 
 
 (deftest ensure-object-property []
-  (is 
+  (is
    ;; check whether it makes an object out of a string
    (instance? org.semanticweb.owlapi.model.OWLObjectProperty
               (#'o/ensure-object-property "hello")))
@@ -227,15 +227,15 @@
                (o/owland))))
 
 (deftest someonly []
-  (is 
-   (not 
+  (is
+   (not
     (nil?
-     (o/someonly 
+     (o/someonly
       (o/objectproperty "p") "a"))))
-  
 
-  (is 
-   (not 
+
+  (is
+   (not
     (nil?
      (o/someonly (o/objectproperty "p") "a" "b")))))
 
@@ -273,7 +273,7 @@
 Assumes that fixture has been run
 "
   []
-  
+
   (o/owlclass "a")
   (o/owlclass "b" :subclass "a")
   (o/owlclass "c" :subclass "b")
@@ -327,7 +327,7 @@ Assumes that fixture has been run
           (o/remove-entity clazz)
           (.size (.getClassesInSignature
                   (o/get-current-ontology)))))))
-  
+
   (is
    (= 0
       (do
@@ -351,8 +351,8 @@ Assumes that fixture has been run
             (.size))
         )))
 
-  (is 
-   (= 0 
+  (is
+   (= 0
       (do
         (o/with-probe-entities
             [a (o/owlclass "a")
@@ -385,13 +385,13 @@ Assumes that fixture has been run
               (.size))))))
 
   ;; add a disjoint test whether it breaks after
-  (is 
+  (is
    (= 0
-      (do 
+      (do
         (ontology-c-with-two-parents)
         (o/with-probe-axioms
           [a (#'o/disjointclasses "a" "b")])
-                  
+
         (-> (#'o/get-current-ontology)
             (.getDisjointClassesAxioms
              (o/owlclass "a"))
@@ -399,7 +399,7 @@ Assumes that fixture has been run
 
 (deftest owlimport
   (is
-   (not 
+   (not
     (nil?
      (o/owlimport (o/get-current-ontology))))))
 
@@ -412,11 +412,11 @@ Assumes that fixture has been run
   (is
    (instance? org.semanticweb.owlapi.model.OWLAnnotation
               (o/owlcomment "hello")))
-  
+
   (is
    (instance? org.semanticweb.owlapi.model.OWLAnnotation
               (o/isdefinedby "hello")))
-  
+
   (is
    (instance? org.semanticweb.owlapi.model.OWLAnnotation
               (o/seealso "hello")))
@@ -431,10 +431,10 @@ Assumes that fixture has been run
   (is
    (instance? org.semanticweb.owlapi.model.OWLAnnotationProperty
               (o/annotation-property "hello")))
-  
+
   (is
    (instance? org.semanticweb.owlapi.model.OWLAnnotation
-              (o/annotation 
+              (o/annotation
                (o/annotation-property "hello")
                "hello1"))))
 
@@ -455,8 +455,8 @@ Assumes that fixture has been run
 )
 
 
-(deftest disjoint? 
-  (is 
+(deftest disjoint?
+  (is
    (let [a (o/owlclass "a")
          b (o/owlclass "b")]
      (#'o/disjointclasses a b)
@@ -467,13 +467,13 @@ Assumes that fixture has been run
 (deftest as-subclasses
   (is
    (let [x (o/owlclass "x")]
-     (o/as-subclasses 
+     (o/as-subclasses
       x
-      (o/owlclass "y") 
+      (o/owlclass "y")
       (o/owlclass "z"))
-     
+
      ;; now for the test
-     (and (o/superclass? 
+     (and (o/superclass?
            (o/owlclass "y")
            x)
           (o/superclass?
@@ -481,39 +481,39 @@ Assumes that fixture has been run
            x))))
   (is
    (let [x (o/owlclass "x")]
-     (o/as-subclasses 
+     (o/as-subclasses
       x :disjoint
-      (o/owlclass "y") 
+      (o/owlclass "y")
       (o/owlclass "z"))
      (o/disjoint?
       (o/owlclass "y")
       (o/owlclass "z"))))
-  
-  (is 
+
+  (is
    (let [x (o/owlclass "x")]
-        (o/as-subclasses 
+        (o/as-subclasses
          x :cover
-         (o/owlclass "y") 
+         (o/owlclass "y")
          (o/owlclass "z"))
-        
+
         (o/equivalent?
          (o/owlclass "x")
          (o/owlor (o/owlclass "z")
                   (o/owlclass "y")))))
 
-  
-  (is 
+
+  (is
    (let [x (o/owlclass "x")]
-     (o/as-subclasses 
+     (o/as-subclasses
       x :cover
-      (o/owlclass "y") 
+      (o/owlclass "y")
       (o/owlclass "z"))
-     
-     (and 
+
+     (and
       (o/disjoint?
        (o/owlclass "y")
        (o/owlclass "z"))
-      
+
       (o/equivalent?
        (o/owlclass "x")
        (o/owlor (o/owlclass "z")
@@ -523,24 +523,24 @@ Assumes that fixture has been run
 (deftest as-disjoint-subclasses
   (is
    (let [x (o/owlclass "x")]
-     (o/as-disjoint-subclasses 
-      x 
-      (o/owlclass "y") 
+     (o/as-disjoint-subclasses
+      x
+      (o/owlclass "y")
       (o/owlclass "z"))
-     
-     (and 
+
+     (and
       (o/disjoint?
        (o/owlclass "y")
        (o/owlclass "z"))
-      
-      (o/superclass? 
+
+      (o/superclass?
        (o/owlclass "y")
        x)
-      
+
       (o/superclass?
        (o/owlclass "z")
        x)))))
-  
+
 (deftest prefix-suffix-symbol
   (is (= 'helloworld
          (#'o/prefix-symbol "hello" 'world)))
