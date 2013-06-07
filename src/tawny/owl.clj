@@ -20,6 +20,7 @@
     tawny.owl
   (:require
    [clojure.walk :only postwalk]
+   [clojure.set]
    [tawny.util :as util])
   (:import
    (org.semanticweb.owlapi.model OWLOntologyManager OWLOntology IRI
