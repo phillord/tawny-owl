@@ -413,7 +413,15 @@ the moment it is very simple."
   [ontology name]
   (if-let [iri-gen (:iri-gen (deref (ontology-options ontology)))]
     (iri-gen name)
-    (IRI/create (str (get-iri ontology) "#" name))))
+    (iri (str (get-iri ontology) "#" name))))
+
+
+(defn iri
+  "Returns an IRI object given a string. Does no transformation on the
+string; use 'iriforname' to perform ontology specific expansion"
+  [name]
+  (IRI/create name))
+
 
 (defn- get-create-object-property
   "Creates an OWLObjectProperty for the given name."
