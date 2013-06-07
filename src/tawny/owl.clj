@@ -1240,8 +1240,6 @@ or to ONTOLOGY if present."
                   {:owl true})
        individual#)))
 
-(load "owl_data")
-
 
 ;; owl imports
 (defn owlimport
