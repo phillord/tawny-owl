@@ -308,6 +308,14 @@ or the current-ontology"
                   (swap! ontology-options-atom
                          dissoc ontology))))
 
+(def
+  ^{:doc "Return the entities for a given IRI. One or more ontologies can
+  searched. If imports is false do not "
+    :arglists '([iri & ontology] [iri imports & ontology])
+    }
+  entity-for-iri
+  (fn entity-for-iri
+    [iri & ontology]))
 
 (defn test-ontology
   "Define a test ontology.
@@ -1249,6 +1257,7 @@ or to ONTOLOGY if present."
                   {:owl true})
        individual#)))
 
+(load "owl_data")
 
 ;; owl imports
 (defn owlimport
