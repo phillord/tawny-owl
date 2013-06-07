@@ -982,46 +982,47 @@ converting it from a string or IRI if necessary."
 
 (defn annotation-property-explicit
   "Add this annotation property to the ontology"
-  ([ontology property frames]
-     (let [property-object
-           (ensure-annotation-property property)]
-       ;; add the property
-       (.addAxiom owl-ontology-manager
-                  ontology
-                  (.getOWLDeclarationAxiom
-                   ontology-data-factory
-                   property-object))
+  [property frames]
+  (let [property-object
+        (ensure-annotation-property property)
+        ontology (get frames :ontology (get-current-ontology))
+        ]
+    ;; add the property
+    (.addAxiom owl-ontology-manager
+               ontology
+               (.getOWLDeclarationAxiom
+                ontology-data-factory
+                property-object))
 
-       (when (:comment frames)
-         (add-annotation property-object
-                         (list (owlcomment
-                                (first (:comment frames))))))
+    (when (:comment frames)
+      (add-annotation ontology
+                      property-object
+                      (list (owlcomment
+                             (first (:comment frames))))))
 
-       (when (:label frames)
-         (add-annotation property-object
-                         (list (label
-                                (first
-                                 (:label frames))))))
+    (when (:label frames)
+      (add-annotation ontology
+                      property-object
+                      (list (label
+                             (first
+                              (:label frames))))))
 
-       (when-let [supers (:subclass frames)]
-         (add-super-annotation
-          property-object supers))
+    (when-let [supers (:subproperty frames)]
+      (add-super-annotation ontology
+       property-object supers))
 
-       (add-annotation property-object (:annotation frames))
-
-
-       property-object)))
+    (add-annotation ontology property-object (:annotation frames))
+    property-object))
 
 (defn annotation-property
   "Creates a new annotation property."
   [name & frames]
   (annotation-property-explicit
-   (get-current-ontology)
    name
    (util/check-keys
     (util/hashify frames)
-    [:annotation :label :comment :subclass])))
-
+    [:annotation :label :comment :subproperty]))
+)
 (defn- get-annotation-property
   "Gets an annotation property with the given name."
   [property]
