@@ -113,27 +113,12 @@ Typing (doall (map)) all the time is hard work!"
 
 (defn vectorize
   "Given (f [x y]), return another function (g [x & rest]), where items in
-rest can be any tree structure, then, f with x and all values in rest. Returns
-a lazy list."
+rest can be any tree structure, then, f with x and all values in rest. "
   [f]
   (fn [x & args]
     (when-not (seq args)
       (throw (clojure.lang.ArityException. 1 "Expects at least 2 args")))
-    (map
-     (partial f x)
-     (flatten args))))
-
-
-;; This object is used to subvert the :doc metadata system. CallbackString
-;; contains a single function that must return a string, when called.
-(defrecord CallbackString [f])
-
-;; add to the default print-method, so that the function is called, and the
-;; results are printed.
-(defmethod print-method CallbackString [o, ^Writer w]
-  (let [string
-        (try
-          ((:f o))
-          (catch Exception e
-            (str "Unable to capture doc from OWL object: " e)))]
-    (.write w string)))
+    (doall
+     (map
+      (partial f x)
+      (filter (comp not nil?) (flatten args))))))
