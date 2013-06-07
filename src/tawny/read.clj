@@ -5,7 +5,6 @@
   (:import
    (java.io File)
    (java.net URL)
-   (tawny.util CallbackString)
    (org.semanticweb.owlapi.apibinding OWLManager)
    (org.semanticweb.owlapi.model IRI OWLNamedObject OWLOntologyID)))
 
