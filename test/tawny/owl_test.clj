@@ -451,8 +451,30 @@ Assumes that fixture has been run
    (not
     (nil? (#'o/add-annotation
            testontology
-           (list (o/owlcomment "comment"))))))
-)
+           (list (o/owlcomment "comment")))))))
+
+(deftest add-annotation2
+  (is
+   (=
+    "hello"
+    (do
+      (let [b (o/owlclass "b")]
+        (o/add-annotation
+         b (list (o/label "hello")))
+        (.getLiteral
+         (.getValue
+          (first
+           (filter
+            #(-> %
+                 (.getProperty)
+                 (.isLabel))
+            (.getAnnotations b testontology))))))))))
+
+
+(deftest dataproperty
+  (is (instance? org.semanticweb.owlapi.model.OWLDataProperty 
+                 (o/datatypeproperty "hello" :ontology testontology))))
+
 
 
 (deftest disjoint?
