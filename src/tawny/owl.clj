@@ -26,6 +26,7 @@
                                  OWLClassExpression OWLClass OWLAnnotation
                                  OWLNamedObject OWLOntologyID
                                  OWLAnnotationProperty OWLObjectProperty
+                                 OWLDataProperty
                                  )
    (org.semanticweb.owlapi.apibinding OWLManager)
    (org.coode.owlapi.manchesterowlsyntax ManchesterOWLSyntaxOntologyFormat)
@@ -45,7 +46,7 @@
 ;; eval'd is a pain, hence they are all defonce.
 (defonce
   ^{:doc "A java object which is the main factory for all other objects"
-    :private true}
+    }
   ontology-data-factory
   (OWLManager/getOWLDataFactory))
 
@@ -421,8 +422,8 @@ or throw an exception if it cannot be converted."
    (ensure-object-property (prop))
    (instance? OWLObjectProperty prop)
    prop
-   (string? prop)
-   (get-create-object-property prop)
+   (string? prop) 
+  (get-create-object-property prop)
    true
    (throw (IllegalArgumentException.
            (str "Expecting an object property. Got: " prop)))))
@@ -904,15 +905,15 @@ converting it from a string or IRI if necessary."
    (instance? String property)
    (ensure-annotation-property
     (iriforname property))
-   :default
-   (throw (IllegalArgumentException.
+   :default 
+  (throw (IllegalArgumentException.
            (format "Expecting an OWL annotation property: %s" property)))))
 
 (defn annotation
   "Creates a new annotation property."
   ([annotation-property literal]
-     (annotation annotation-property literal "en"))
-  ([annotation-property literal language]
+     (annotation annotation-property literal "en")) 
+ ([annotation-property literal language]
      (.getOWLAnnotation
       ontology-data-factory
       annotation-property
@@ -1457,6 +1458,7 @@ expressions."
   (contains?
    (.getEquivalentClasses a ontology)
    b))
+
 
 ;; some test useful macros
 
