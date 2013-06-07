@@ -18,7 +18,7 @@
 (defn- default-transform [e]
   (.. e (getIRI) (getFragment)))
 
-(defn iri-starts-with-filter 
+(defn iri-starts-with-filter
   "Checks e to see if it is an OWLNamedObject and has an IRI starting with
 starts-with. Use this partially applied with a filter for 'read'."
   [starts-with e]
@@ -27,16 +27,16 @@ starts-with. Use this partially applied with a filter for 'read'."
         (.toString (.getIRI e))
         starts-with)))
 
-(defn filter-for-labels 
+(defn filter-for-labels
   "Filter annotations on an entity for labels"
   [e]
-  (filter 
-   #(some-> % 
+  (filter
+   #(some-> %
         (.getProperty)
         (.isLabel))
    (.getAnnotations e (tawny.owl/get-current-ontology))))
 
-(defn label-transform 
+(defn label-transform
   "Get text from label annotation"
   [e]
   (some-> (filter-for-labels e)
@@ -44,7 +44,7 @@ starts-with. Use this partially applied with a filter for 'read'."
       (.getValue)
       (.getLiteral)))
 
-(defn noisy-nil-label-transform 
+(defn noisy-nil-label-transform
  "Check for empty labels noisily"
  [e]
  (let [trans (label-transform e)]
@@ -53,7 +53,7 @@ starts-with. Use this partially applied with a filter for 'read'."
     trans
     ))
 
-(defn exception-nil-label-transform 
+(defn exception-nil-label-transform
  "Check for empty labels noisily"
  [e]
   (let [trans (label-transform e)]
@@ -69,13 +69,13 @@ starts-with. Use this partially applied with a filter for 'read'."
       (.getIRI)
       (.getFragment)))
 
-(defn stop-characters-transform 
-  "Takes a string and treats characters not legal in a 
+(defn stop-characters-transform
+  "Takes a string and treats characters not legal in a
 Clojure symbol. Use this composed with a entity transform function"
   [s]
   (clojure.string/replace s #"[ /]" "_"))
 
-(defn intern-entity 
+(defn intern-entity
   ([e]
      (intern-entity e fragment-transform))
   ([e transform]
@@ -83,25 +83,25 @@ Clojure symbol. Use this composed with a entity transform function"
        (when (instance? OWLNamedObject e)
          (let [name
                (stop-characters-transform (transform e))]
-           (intern *ns* 
+           (intern *ns*
                    (with-meta
                      (symbol name)
                      {:owl true}) e)))
-       (catch IllegalArgumentException i 
+       (catch IllegalArgumentException i
          (print "Broken Intern on:" e)
          (throw i)))))
 
 
 (defn read [& rest]
   (let [{:keys [location iri file prefix filter transform version-iri]} rest
-        
+
         jiri (IRI/create iri)
         viri (if version-iri
                (IRI/create version-iri))
 
         ontologyid
         (OWLOntologyID. jiri viri)
-        
+
         owlontology
         (do
           (tawny.owl/remove-ontology-maybe ontologyid)
@@ -115,7 +115,7 @@ Clojure symbol. Use this composed with a entity transform function"
         (if (.isPrefixOWLOntologyFormat format)
           (.setPrefix format prefix (.toString iri))
           (throw (IllegalArgumentException. "Attempt to provide a prefix to an ontology that is not using a prefix format")))))
-    
+
     ;; this is the ontology for the namespace so stuff it place
     (tawny.owl/ontology-to-namespace owlontology)
 
@@ -130,7 +130,7 @@ Clojure symbol. Use this composed with a entity transform function"
         )
 
       ;; filter this so that it only puts stuff with the given IRI prefix
-      (doall 
+      (doall
        (clojure.core/filter (or filter default-filter)
                                    (.getSignature owlontology)))))
 
@@ -140,8 +140,8 @@ Clojure symbol. Use this composed with a entity transform function"
 (defn iri-create
   "A convienience method for creating IRIs.
 
-Most namespaces that call use 'defread' will need to create an IRI. 
-This convienience method avoids the need for importing and depending 
+Most namespaces that call use 'defread' will need to create an IRI.
+This convienience method avoids the need for importing and depending
 directly on the OWL API."
   [iri]
   (IRI/create iri))
