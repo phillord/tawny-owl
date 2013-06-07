@@ -84,7 +84,10 @@ Clojure symbol. Use this composed with a entity transform function"
        (when (instance? OWLNamedObject e)
          (let [name
                (stop-characters-transform (transform e))]
-           (tawny.owl/intern-owl *ns* (symbol name) e {})))
+           (intern *ns* 
+                   (with-meta
+                     (symbol name)
+                     {:owl true}) e)))
        (catch IllegalArgumentException i 
          (print "Broken Intern on:" e)
          (throw i)))))

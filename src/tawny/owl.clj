@@ -147,26 +147,7 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
                    (versioninfo v))))))
       jontology)))
 
-(intern (create-ns 'tawny.repl) 'fetch-doc)
-(defn meta-for-owl
-  [entity]
-  {:owl true
-   :file *file*
-   :doc
-   (tawny.util.CallbackString.
-    (partial tawny.repl/fetch-doc entity))
-  })
-
-(defn intern-owl
-  "Intern an entity with additional OWL metadata."
-  [namespace sym entity meta]
-  (intern namespace
-          (with-meta
-            sym
-            (merge meta
-                   (meta-for-owl entity)))
-          entity))
-
+;;
 ;; we use intern-owl here because we need to attach the ontology to the
 ;; metadata for the symbol. With def this isn't possible because we need
 ;; to generate the symbol at compile time, when we don't have the
@@ -224,18 +205,17 @@ The following keys must be supplied.
 :iri -- the IRI for the new ontology
 :prefix -- the prefix used in the serialised version of the ontology
 "
-  [ontname & body]
-  `(let [ontology# (ontology ~@body)]
-     (tawny.owl/intern-owl
-      (:ns (meta (declare ~ontname)))
-      (quote ~ontname) ontology#
-      ~(meta &form))
-
-
-     (tawny.owl/ontology-to-namespace ontology#)
-     ;; this return type is wrong! we should return the var!
-     ontology#
-     ))
+  [name & body]
+  `(do
+     (let [ontology# (ontology ~@body)]
+       (def
+         ~(with-meta name
+            (assoc (meta name)
+              :owl true))
+         ontology#)
+       (tawny.owl/ontology-to-namespace ontology#)
+       ontology#
+       )))
 
 (defn ontology-to-namespace
   "Sets the current ontology as defined by `defontology'"
@@ -736,11 +716,10 @@ value for each frame."
   [property & frames]
   `(let [property-name# (name '~property)
          property# (tawny.owl/objectproperty property-name# ~@frames)]
-     (tawny.owl/intern-owl
-      (:ns (meta (declare ~property)))
-      (quote ~property)
-      property#
-      ~(meta &form))))
+     (def ~(with-meta property
+             (assoc (meta name)
+               :owl true))
+       property#)))
 
 ;; restrictions! name clash -- we can do nothing about this, so accept the
 ;; inconsistency and bung owl on the front.
@@ -1049,18 +1028,11 @@ See 'defclass' for more details on the syntax."
   `(let [property-name# (name '~property)
          property#
          (tawny.owl/annotation-property property-name# ~@frames)]
-     (tawny.owl/intern-owl
-      (:ns (meta (declare ~property)))
-      (quote ~property)
-      property#
-      ~(meta &form))))
-
-
-;; data type properties
-(defn datatypeproperty
-  "Not implemented yet."
-  [name & frames]
-  (throw (Exception. "Not written this yet")))
+     (def
+       ~(vary-meta property
+                   merge
+                   {:owl true})
+       property#)))
 
 (defn owlclass-explicit
   "Creates a class in the current ontology.
@@ -1126,11 +1098,11 @@ combination of the two. The class object is stored in a var called classname."
   [classname & frames]
   `(let [string-name# (name '~classname)
          class# (tawny.owl/owlclass string-name# ~@frames)]
-     (tawny.owl/intern-owl
-      (:ns (meta (declare ~classname)))
-      (quote ~classname)
-      class#
-      ~(meta &form))))
+     (def
+       ~(vary-meta classname
+                   merge
+                   {:owl true})
+       class#)))
 
 
 (defn disjointclasseslist
@@ -1262,11 +1234,14 @@ or to ONTOLOGY if present."
   [individualname & frames]
   `(let [string-name# (name '~individualname)
          individual# (tawny.owl/individual string-name# ~@frames)]
-     (tawny.owl/intern-owl
-      (:ns (meta (declare ~individualname)))
-      (quote ~individualname)
-      individual#
-      ~(meta &form))))
+     (def
+       ~(vary-meta individualname
+                  merge
+                  {:owl true})
+       individual#)))
+
+(load "owl_data")
+
 
 ;; owl imports
 (defn owlimport
@@ -1675,5 +1650,3 @@ cases this will have been imported."
           (assoc (meta newsymbol#)
             :owl true))
        (var-get (var ~symb)))))
-
-(require 'tawny.repl)
