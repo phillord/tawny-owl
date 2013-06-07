@@ -18,6 +18,14 @@
 
 (ns tawny.owl-test
   (:refer-clojure :exclude [some only comment])
+  (:import
+   (org.semanticweb.owlapi.model OWLOntologyManager OWLOntology IRI
+                                 OWLClassExpression OWLClass OWLAnnotation
+                                 OWLIndividual OWLDatatype
+                                 OWLNamedObject OWLOntologyID
+                                 OWLAnnotationProperty OWLObjectProperty
+                                 OWLDataProperty
+                                 ))
   (:require [tawny.owl :as o])
   [:use clojure.test])
 
@@ -568,3 +576,27 @@ Assumes that fixture has been run
          (#'o/prefix-symbol "hello" 'world)))
   (is (= 'helloworld
          (#'o/suffix-symbol "world" 'hello))))
+
+
+(deftest guess
+  (is (= OWLClass
+         (o/guess-type
+          (o/owlclass "a"))))
+
+  (is (= OWLAnnotationProperty
+         (o/guess-type
+          (o/annotation-property "b"))))
+
+  (is (= OWLIndividual
+         (do
+           (o/individual "c")
+           (o/guess-type "c"))))
+
+
+  (is (= OWLClass
+         (o/guess-type
+          (list (o/owlclass "d") "e" "f"))))
+
+  (is (= OWLClass
+         (o/guess-type
+          (list "e" "f" (o/owlclass "d"))))))

@@ -24,6 +24,7 @@
   (:import
    (org.semanticweb.owlapi.model OWLOntologyManager OWLOntology IRI
                                  OWLClassExpression OWLClass OWLAnnotation
+                                 OWLIndividual OWLDatatype
                                  OWLNamedObject OWLOntologyID
                                  OWLAnnotationProperty OWLObjectProperty
                                  OWLDataProperty
@@ -405,6 +406,13 @@ or `filename' if given.
        (.saveOntology owl-ontology-manager (get-current-ontology)
                       this-format output-stream))))
 
+
+(defn iri
+  "Returns an IRI object given a string. Does no transformation on the
+string; use 'iriforname' to perform ontology specific expansion"
+  [name]
+  (IRI/create name))
+
 (defontfn iriforname
   "Returns an IRI object for the given name.
 
@@ -415,12 +423,73 @@ the moment it is very simple."
     (iri-gen name)
     (iri (str (get-iri ontology) "#" name))))
 
+(defn- check-entity-set
+  [entity-set iri]
+  ;; ontology could be in full, or could be punning. Either way we are
+  ;; stuffed.
+  (when (< 1 (count entity-set))
+    (throw
+     (IllegalArgumentException.
+      (format "Can not uniquely determine type of IRI: %s,%s" iri entity-set))))
+  ;; IRI appears once; happiness
+  (if (= 1 (count entity-set))
+    (first entity-set)
+    ;; IRI appears not at all
+    nil))
 
-(defn iri
-  "Returns an IRI object given a string. Does no transformation on the
-string; use 'iriforname' to perform ontology specific expansion"
-  [name]
-  (IRI/create name))
+
+(defontfn guess-type
+  "Guesses the type of the entity.
+
+What this means is, for a collection find the first entity for which we can
+guess a type for. For an OWLClass, OWLIndividual, OWLDatatype or
+OWLAnnotationProperty object return their class. For an IRI check the current
+ontology, the current ontology with its import closure, and all known
+ontologies with their import clojure. For a string convert to an IRI using the
+current ontology rules, and check again. Finally, check convert to an IRI with
+no transformation. Exceptions are thrown where the results are clearly
+ambiguous.
+"
+  [ontology entity]
+  (cond
+   ;; it's a collection -- find the first entity
+   (coll? entity)
+   (some guess-type entity)
+   ;; return if individual, class, datatype
+   (instance? OWLClass entity)
+   OWLClass
+   (instance? OWLIndividual entity)
+   OWLIndividual
+   (instance? OWLDatatype entity)
+   OWLDatatype
+   (instance? OWLAnnotationProperty entity)
+   OWLAnnotationProperty
+   ;; if an IRI, see if it is the current ontology
+   (instance? IRI entity)
+   (guess-type
+    (or
+     ;; single item in current ontology
+     (check-entity-set
+      (.getEntitiesInSignature ontology entity)
+      entity)
+     ;; single item in current or imports
+     (check-entity-set
+      (.getEntitiesInSignature ontology entity true)
+      entity)
+     ;; single item in anything we know about
+     (check-entity-set
+      (apply
+       clojure.set/union
+       (map #(.getEntitiesInSignature % entity true)
+            (vals @ontology-for-namespace)))
+      entity)))
+   (string? entity)
+   ;; string name in current ontology?
+   (or (guess-type (iriforname ontology entity))
+       ;; string name somewhere?
+       (guess-type (iri entity)))))
+
+
 
 
 (defn- get-create-object-property
@@ -1243,6 +1312,8 @@ or to ONTOLOGY if present."
          (util/hashify frames)
          [:type :fact :same :different])
         individual (ensure-individual name)]
+    (add-axiom
+     (.getOWLDeclarationAxiom ontology-data-factory individual))
     (when (:type hframes)
       (add-type individual (:type hframes)))
     (when (:fact hframes)
