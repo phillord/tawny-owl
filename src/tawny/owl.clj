@@ -254,20 +254,27 @@ defers to 'body' but adds the current-ontology as an argument.
        ~no-ont-body ~fnbody)))
 
 ;; basically, this does the same thing as defontfn, but is easier I think.
-(declare with-ontology)
+;; bind to
+(defmacro with-ontology
+  "Sets the default ontology for all operations inside its dynamic scope."
+ [ontology & body]
+  `(binding [tawny.owl/*current-bound-ontology* ~ontology]
+     ~@body))
+
 (defn ontology-first-maybe
   "Given a function f, returns a function which if the first arg is an
 OWLOntology sets it as the current ontology, then calls f with the remain
 args, or else calls f."
   [f]
-  (fn [& args]
+  (fn ontology-first-maybe
+    [& args]
     (if (and
          ;; balk if nil
          (seq args)
          ;; ontology first
          (instance? OWLOntology
                         (first args)))
-      (with-ontology (first args)
+     (with-ontology (first args)
         (apply f (rest args)))
       (apply f args))))
 
@@ -1282,14 +1289,6 @@ are declared as inverses."
         (first tawny.owl/recent-axiom-list)
         (rest tawny.owl/recent-axiom-list))
        )))
-
-
-;; bind to
-(defmacro with-ontology
-  "Sets the default ontology for all operations inside its dynamic scope."
- [ontology & body]
-  `(binding [tawny.owl/*current-bound-ontology* ~ontology]
-     ~@body))
 
 
 ;; specify default frames which should be merged with additional frames passed
