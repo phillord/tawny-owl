@@ -200,24 +200,28 @@ which is an OWLDatatype object.
                    {:owl true})
        datatype#)))
 
-
-
-(defn dataand
+(defn data-and
   [& types]
   (.getOWLDataIntersectionOf
    ontology-data-factory
    (into #{} types)))
 
-(defn dataor
+(.addMethod owland :data data-and)
+
+(defn data-or
   [& types]
   (.getOWLDataUnionOf
    ontology-data-factory
    (into #{} types)))
 
-(defn datanot
+(.addMethod owlor :data data-or)
+
+(defn data-not
   [type]
   (.getOWLDataComplementOf
    ontology-data-factory type))
+
+(.addMethod owlnot :data data-not)
 
 (defn ><
   [from to]
@@ -229,7 +233,31 @@ which is an OWLDatatype object.
   (.getOWLDatatypeMinMaxInclusiveRestriction
    ontology-data-factory from to))
 
-(defn dataoneof [& data]
+(defn data-oneof [& data]
   (.getOWLDataOneOf
    ontology-data-factory
    (into #{} data)))
+
+(.addMethod oneof :data data-oneof)
+
+
+(defn data-exactly [number property]
+  (.getOWLDataExactCardinality
+   ontology-data-factory
+   number (ensure-data-property property)))
+
+(.addMethod exactly :data data-exactly)
+
+(defn data-atmost [number property]
+  (.getOWLDataMaxCardinality
+   ontology-data-factory number
+   (ensure-data-property property)))
+
+(.addMethod atmost :data data-atmost)
+
+(defn data-atleast [number property]
+  (.getOWLDataMinCardinality
+   ontology-data-factory number
+   (ensure-data-property property)))
+
+(.addMethod atleast :data data-atleast)

@@ -221,18 +221,58 @@
   (is (not (nil? (o/owlsome (o/objectproperty "b") "a"))))
   ;; failing test
   (is (thrown? clojure.lang.ArityException
-               (o/owlsome "hasLeg"))))
+               (o/owlsome (ensure-class "hasLeg")))))
 
 (deftest owlonly []
   (is (not (nil? (o/only (o/objectproperty "b") "a"))))
   (is (thrown? clojure.lang.ArityException
-               (o/only "hasLeg"))))
+               (o/object-only "hasLeg"))))
 
 
 (deftest owland []
-  (is (not (nil? (o/owland "a" "b"))))
+  (is (not (nil? (o/object-and "a" "b"))))
+  (is (instance?
+       org.semanticweb.owlapi.model.OWLObjectIntersectionOf
+       (o/owland "c" (o/owlclass "d"))))
   (is (thrown? IllegalArgumentException
-               (o/owland))))
+               (o/owland)))
+  (is (instance?
+       org.semanticweb.owlapi.model.OWLDataIntersectionOf
+       (o/owland o/xsd:integer o/xsd:float))))
+
+(deftest owlor
+  (is (not (nil? (o/object-or "a" "b"))))
+  (is (instance?
+       org.semanticweb.owlapi.model.OWLObjectUnionOf
+       (o/owlor "c" (o/owlclass "d"))))
+  (is (thrown? IllegalArgumentException
+               (o/owlor)))
+  (is (instance?
+       org.semanticweb.owlapi.model.OWLDataUnionOf
+       (o/data-or o/xsd:integer o/xsd:float)))
+  (is (instance?
+       org.semanticweb.owlapi.model.OWLDataUnionOf
+       (o/owlor o/xsd:integer o/xsd:float))))
+
+(deftest owlnot
+  (is (instance?
+       org.semanticweb.owlapi.model.OWLObjectComplementOf
+       (do
+         (o/owlclass "b")
+         (o/owlnot "b"))))
+  (is (instance?
+       org.semanticweb.owlapi.model.OWLObjectComplementOf
+       (o/owlnot (o/owlclass "d"))))
+  (is (thrown? IllegalArgumentException
+               (o/owlnot)))
+  (is (instance?
+       org.semanticweb.owlapi.model.OWLDataComplementOf
+       (o/data-not o/xsd:integer)))
+  (is (instance?
+       org.semanticweb.owlapi.model.OWLDataComplementOf
+       (o/owlnot o/xsd:integer)))
+)
+
 
 (deftest someonly []
   (is
@@ -579,24 +619,25 @@ Assumes that fixture has been run
 
 
 (deftest guess
-  (is (= OWLClass
+  (is (= :object
          (o/guess-type
           (o/owlclass "a"))))
 
-  (is (= OWLAnnotationProperty
+  (is (= :annotation
          (o/guess-type
           (o/annotation-property "b"))))
 
-  (is (= OWLIndividual
+  (is (= :object
          (do
            (o/individual "c")
            (o/guess-type "c"))))
 
 
-  (is (= OWLClass
+  (is (= :object
          (o/guess-type
           (list (o/owlclass "d") "e" "f"))))
 
-  (is (= OWLClass
+  (is (= :object
          (o/guess-type
           (list "e" "f" (o/owlclass "d"))))))
+

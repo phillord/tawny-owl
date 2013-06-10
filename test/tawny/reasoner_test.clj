@@ -75,11 +75,11 @@
   ;; simple ontology -- c should be reasoned to be a subclass of a.
   (o/owlclass "a"
               :equivalent 
-              (o/owlsome "p" "b"))
+              (o/object-some "p" "b"))
   (o/owlclass "b")
   (o/owlclass "c"
               :subclass 
-              (o/owlsome "p" "b")))
+              (o/object-some "p" "b")))
 
 
 (defn far-reasoner [func reasonerlist]

@@ -28,7 +28,8 @@
                                  OWLIndividual OWLDatatype
                                  OWLNamedObject OWLOntologyID
                                  OWLAnnotationProperty OWLObjectProperty
-                                 OWLDataProperty
+                                 OWLDataProperty OWLDataRange
+                                 OWLDataPropertyExpression
                                  )
    (org.semanticweb.owlapi.apibinding OWLManager)
    (org.coode.owlapi.manchesterowlsyntax ManchesterOWLSyntaxOntologyFormat)
@@ -438,60 +439,66 @@ the moment it is very simple."
     ;; IRI appears not at all
     nil))
 
-
 (defontfn guess-type
-  "Guesses the type of the entity.
+  "Guesses the type of the entity. Returns :object, :data or :annotation or
+nil where the type cannot be guessed. IllegalArgumentException is thrown for
+arguments which make no sense (not an OWLObject, IRI, String or number).
 
 What this means is, for a collection find the first entity for which we can
 guess a type for. For an OWLClass, OWLIndividual, OWLDatatype or
-OWLAnnotationProperty object return their class. For an IRI check the current
-ontology, the current ontology with its import closure, and all known
-ontologies with their import clojure. For a string convert to an IRI using the
-current ontology rules, and check again. Finally, check convert to an IRI with
-no transformation. Exceptions are thrown where the results are clearly
-ambiguous.
+OWLAnnotationProperty object return the appropriate value. For an IRI check
+the current ontology, the current ontology with its import closure, and all
+known ontologies with their import clojure. For a string convert to an IRI
+using the current ontology rules, and check again. Finally, check convert to
+an IRI with no transformation. nil is returned when the result is not clear.
 "
   [ontology entity]
-  (cond
-   ;; it's a collection -- find the first entity
-   (coll? entity)
-   (some guess-type entity)
-   ;; return if individual, class, datatype
-   (instance? OWLClass entity)
-   OWLClass
-   (instance? OWLIndividual entity)
-   OWLIndividual
-   (instance? OWLDatatype entity)
-   OWLDatatype
-   (instance? OWLAnnotationProperty entity)
-   OWLAnnotationProperty
-   ;; if an IRI, see if it is the current ontology
-   (instance? IRI entity)
-   (guess-type
-    (or
-     ;; single item in current ontology
-     (check-entity-set
-      (.getEntitiesInSignature ontology entity)
-      entity)
-     ;; single item in current or imports
-     (check-entity-set
-      (.getEntitiesInSignature ontology entity true)
-      entity)
-     ;; single item in anything we know about
-     (check-entity-set
-      (apply
-       clojure.set/union
-       (map #(.getEntitiesInSignature % entity true)
-            (vals @ontology-for-namespace)))
-      entity)))
-   (string? entity)
-   ;; string name in current ontology?
-   (or (guess-type (iriforname ontology entity))
-       ;; string name somewhere?
-       (guess-type (iri entity)))))
-
-
-
+  {:pre [(instance? OWLOntology ontology)]}
+  (let [oneof? (partial some (fn[n] (instance? n entity)))]
+    (cond
+     ;; it's a collection -- find the first entity
+     (coll? entity)
+     (some guess-type entity)
+     ;; return if individual, class, datatype
+     (oneof?
+      [OWLClass OWLIndividual OWLObjectProperty])
+     :object
+     (oneof?
+      [OWLAnnotationProperty])
+     :annotation
+     (oneof?
+      [OWLDataRange OWLDataPropertyExpression])
+     :data
+     ;; if an IRI, see if it is the current ontology
+     (instance? IRI entity)
+     (guess-type
+      (or
+       ;; single item in current ontology
+       (check-entity-set
+        (.getEntitiesInSignature ontology entity)
+        entity)
+       ;; single item in current or imports
+       (check-entity-set
+        (.getEntitiesInSignature ontology entity true)
+        entity)
+       ;; single item in anything we know about
+       (check-entity-set
+        (apply
+         clojure.set/union
+         (map #(.getEntitiesInSignature % entity true)
+              (vals @ontology-for-namespace)))
+        entity)))
+     (string? entity)
+     ;; string name in current ontology?
+     (or (guess-type (iriforname ontology entity))
+         ;; string name somewhere?
+         (guess-type (iri entity)))
+     (number? entity)
+     nil
+     (nil? entity)
+     nil
+     :default
+     (throw (IllegalArgumentException. (str "Cannot guess this type:" entity))))))
 
 (defn- get-create-object-property
   "Creates an OWLObjectProperty for the given name."
@@ -815,23 +822,56 @@ value for each frame."
                :owl true))
        property#)))
 
+(defn- guess-type-args
+  [& args]
+  (guess-type args))
+
+;; multi methods for overloaded entities. We guess the type of the arguments,
+;; which can be (unambiguous) OWLObjects, potentially ambiguous IRIs or
+;; strings. If we really can tell, we guess at objects because I like objects
+;; better.
+(defmulti owlsome guess-type-args)
+(defmulti only guess-type-args)
+(defmulti someonly guess-type-args)
+(defmulti owland guess-type-args)
+(defmulti owlor guess-type-args)
+(defmulti owlnot guess-type-args)
+(defmulti exactly guess-type-args)
+(defmulti oneof guess-type-args)
+(defmulti atleast guess-type-args)
+(defmulti atmost guess-type-args)
+
+;; short cuts for the terminally lazy. Still prefix!
+(def && owland)
+(def || owlor)
+(def ! owlnot)
+
+;; "long cuts" for consistency with some
+(def owlonly only)
+
+
+
+
 ;; restrictions! name clash -- we can do nothing about this, so accept the
 ;; inconsistency and bung owl on the front.
 (def
   ^{:doc "Returns an OWL some values from restriction."
     :arglists '([property & clazzes] [ontology property & clazzes])}
-  owlsome
+  object-some
   (ontology-vectorize
-   (fn owlsome [property class]
+   (fn owlobjectsome [property class]
      (.getOWLObjectSomeValuesFrom
       ontology-data-factory
       (ensure-object-property property)
       (ensure-class class)))))
 
+(.addMethod owlsome :object object-some)
+
+
 (def
   ^{:doc "Returns an OWL all values from restriction."
     :arglists '([property & clazzes] [ontology property & clazzes])}
-  only
+  object-only
   (ontology-vectorize
    (fn onlymore [property class]
       (.getOWLObjectAllValuesFrom
@@ -839,28 +879,11 @@ value for each frame."
        (ensure-object-property property)
        (ensure-class class)))))
 
-;; long shortcut -- for consistency with some
-(def owlonly only)
-
-
-;; forward declaration
-(declare owlor)
-(defn someonly
-  "Returns an restriction combines the OWL some values from and
-all values from restrictions."
-  [property & classes]
-  (list
-   (apply
-    owlsome
-    (concat
-     (list property) classes))
-
-   (only property
-         (apply owlor classes))))
+(.addMethod only :object object-only)
 
 
 ;; union, intersection
-(defn owland
+(defn object-and
   "Returns an OWL intersection of restriction."
   [& classes]
   (let [classes (flatten classes)]
@@ -875,10 +898,10 @@ all values from restrictions."
               ;; flatten list for things like owlsome which return lists
               classes))))))
 
-;; short cuts for the terminally lazy. Still prefix!
-(def && owland)
+;; add to multi method
+(.addMethod owland :object object-and)
 
-(defn owlor
+(defn object-or
   "Returns an OWL union of restriction."
   [& classes]
   (let [classes (flatten classes)]
@@ -891,11 +914,11 @@ all values from restrictions."
       (doall (map #(ensure-class %)
                   (flatten classes)))))))
 
-(def || owlor)
+(.addMethod owlor :object object-or)
 
 ;; lots of restrictions return a list which can be of size one. so all these
 ;; functions take a list but ensure that it is of size one.
-(defn owlnot
+(defn object-not
   "Returns an OWL complement of restriction."
   [& class]
   {:pre [(= 1
@@ -904,10 +927,24 @@ all values from restrictions."
    ontology-data-factory
    (ensure-class (first (flatten class)))))
 
-(def ! owlnot)
+(.addMethod owlnot :object object-not)
+
+(defn object-someonly
+  "Returns an restriction combines the OWL some values from and
+all values from restrictions."
+  [property & classes]
+  (list
+   (apply
+    object-some
+    (concat
+     (list property) classes))
+   (object-only property
+         (apply object-or classes))))
+
+(.addMethod someonly :object object-someonly)
 
 ;; cardinality
-(defn atleast
+(defn object-atleast
   "Returns an OWL atleast cardinality restriction."
   [cardinality property & class]
   {:pre [(= 1
@@ -917,7 +954,9 @@ all values from restrictions."
    (ensure-object-property property)
    (ensure-class (first (flatten class)))))
 
-(defn atmost
+(.addMethod atleast :object object-atleast)
+
+(defn object-atmost
   "Returns an OWL atmost cardinality restriction."
   [cardinality property & class]
   {:pre [(= 1
@@ -927,7 +966,10 @@ all values from restrictions."
    (ensure-object-property property)
    (ensure-class (first (flatten class)))))
 
-(defn exactly
+(.addMethod atmost :object object-atmost)
+
+
+(defn object-exactly
   "Returns an OWL exact cardinality restriction."
   [cardinality property & class]
   {:pre [(= 1
@@ -937,8 +979,10 @@ all values from restrictions."
    (ensure-object-property property)
    (ensure-class (first (flatten class)))))
 
+(.addMethod exactly :object object-exactly)
+
 (declare ensure-individual)
-(defn oneof
+(defn object-oneof
   "Returns an OWL one of property restriction."
   [& individuals]
   (.getOWLObjectOneOf
@@ -947,6 +991,8 @@ all values from restrictions."
     (doall
      (map #(ensure-individual %)
           (flatten individuals))))))
+
+(.addMethod oneof :object object-oneof)
 
 ;; annotations
 (defn- add-a-simple-annotation
