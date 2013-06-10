@@ -641,3 +641,14 @@ Assumes that fixture has been run
          (o/guess-type
           (list "e" "f" (o/owlclass "d"))))))
 
+
+(deftest veggiepizza
+  (is (= :object
+         (do
+           (o/guess-type
+            (o/with-probe-entities
+              [r (o/objectproperty "hasTopping")
+               c (o/owlclass "MeatTopping")]
+              (o/owlnot
+               (o/owlsome r c))))))
+      "A regression tester from the pizza ontology"))

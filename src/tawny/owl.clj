@@ -461,7 +461,7 @@ an IRI with no transformation. nil is returned when the result is not clear.
      (some guess-type entity)
      ;; return if individual, class, datatype
      (oneof?
-      [OWLClass OWLIndividual OWLObjectProperty])
+      [OWLClassExpression OWLIndividual OWLObjectProperty])
      :object
      (oneof?
       [OWLAnnotationProperty])
