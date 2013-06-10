@@ -223,15 +223,20 @@ which is an OWLDatatype object.
 
 (.addMethod owlnot :data data-not)
 
-(defn ><
-  [from to]
-  (.getOWLDatatypeMinMaxExclusiveRestriction
-   ontology-data-factory from to))
+(defn data-some
+  [property datatype]
+  (.getOWLDataSomeValuesFrom ontology-data-factory
+                             property datatype))
 
-(defn >=<
-  [from to]
-  (.getOWLDatatypeMinMaxInclusiveRestriction
-   ontology-data-factory from to))
+(.addMethod owlsome :data data-some)
+
+(defn data-only
+  [property datatype]
+  (.getOWLDataAllValuesFrom ontology-data-factory
+                            property datatype))
+
+
+(.addMethod only :data data-only)
 
 (defn data-oneof [& data]
   (.getOWLDataOneOf
@@ -239,7 +244,6 @@ which is an OWLDatatype object.
    (into #{} data)))
 
 (.addMethod oneof :data data-oneof)
-
 
 (defn data-exactly [number property]
   (.getOWLDataExactCardinality
@@ -261,3 +265,63 @@ which is an OWLDatatype object.
    (ensure-data-property property)))
 
 (.addMethod atleast :data data-atleast)
+
+
+(defn owlmin [from]
+  (.getOWLDatatypeMinExclusiveRestriction
+   ontology-data-factory from))
+
+(defn owlmax [to]
+  (.getOWLDatatypeMaxExclusiveRestriction
+   ontology-data-factory to))
+
+(defn minmax
+  [from to]
+  (.getOWLDatatypeMinMaxInclusiveRestriction
+   ontology-data-factory from to))
+
+(defn mininc [from]
+  (.getOWLDatatypeMinInclusiveRestriction
+   ontology-data-factory from))
+
+(defn maxinc [to]
+  (.getOWLDatatypeMaxInclusiveRestriction
+   ontology-data-factory to))
+
+(defn minmaxinc
+  [from to]
+  (.getOWLDatatypeMinMaxExclusiveRestriction
+   ontology-data-factory from to))
+
+(defmacro span
+  [comparitor & args]
+  (cond
+   (= comparitor '<)
+   `(apply owlmax '~args)
+   (= comparitor '>)
+   `(apply owlmin '~args)
+   (= comparitor '><)
+   `(apply minmax '~args)
+   (= comparitor '=<)
+   `(apply maxinc '~args)
+   (= comparitor '>=)
+   `(apply mininc '~args)
+   (= comparitor '>=<)
+   `(apply minmaxinc '~args)
+   :default
+   (throw (IllegalArgumentException. (str "Unknown comparitor" comparitor)))))
+
+
+(defn data-getfact [property from to]
+  (.getOWLDataPropertyAssertionAxiom
+   ontology-data-factory
+   property from to))
+
+(.addMethod getfact :data data-getfact)
+
+(defn data-getfactnot [property from to]
+  (.getOWLNegativeDataPropertyAssertionAxiom
+   ontology-data-factory
+   property from to))
+
+(.addMethod getfactnot :data data-getfactnot)

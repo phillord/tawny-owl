@@ -461,7 +461,7 @@ an IRI with no transformation. nil is returned when the result is not clear.
      (some guess-type entity)
      ;; return if individual, class, datatype
      (oneof?
-      [OWLClassExpression OWLIndividual OWLObjectProperty])
+      [OWLClassExpression OWLObjectProperty])
      :object
      (oneof?
       [OWLAnnotationProperty])
@@ -493,6 +493,9 @@ an IRI with no transformation. nil is returned when the result is not clear.
      (or (guess-type (iriforname ontology entity))
          ;; string name somewhere?
          (guess-type (iri entity)))
+     ;; owl individuals tell us nothing, cause we still don't know!
+     (instance? OWLIndividual)
+     nil
      (number? entity)
      nil
      (nil? entity)
@@ -1308,23 +1311,38 @@ or ONTOLOGY if present."
      (add-axiom
       (fact individual)))))
 
+
+(defmulti getfact guess-type-args)
+(defmulti getfactnot guess-type-args)
+
 (defn fact
   "Returns a fact asserting a relationship with PROPERTY toward an
 individual TO."
   [property to]
   (fn fact [from]
-    (.getOWLObjectPropertyAssertionAxiom
-     ontology-data-factory
-     property from to)))
+    (getfact property from to)))
 
 (defn fact-not
   "Returns a fact asserting the lack of a relationship along PROPERTY
 toward an individual TO."
   [property to]
   (fn fact-not [from]
-    (.getOWLNegativeObjectPropertyAssertionAxiom
-     ontology-data-factory
-     property from to)))
+    (getfactnot property from to)))
+
+
+(defn object-getfact [property from to]
+  (.getOWLObjectPropertyAssertionAxiom
+   ontology-data-factory
+   property from to))
+
+(.addMethod getfact :object object-getfact)
+
+(defn object-getfactnot [property from to]
+  (.getOWLNegativeObjectPropertyAssertionAxiom
+   ontology-data-factory
+   property from to))
+
+(.addMethod getfactnot :object object-getfactnot)
 
 (def
   ^{:doc "Adds all arguments as the same individual to the current ontology
