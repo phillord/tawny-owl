@@ -629,7 +629,7 @@ Assumes that fixture has been run
 
   (is (= :object
          (do
-           (o/individual "c")
+           (o/owlclass "c")
            (o/guess-type "c"))))
 
 
