@@ -165,7 +165,7 @@
              (reasoner-factory)
              (owl/get-current-ontology)
              (SimpleConfiguration.
-              ((deref *reasoner-progress-monitor*))))]H
+              ((deref *reasoner-progress-monitor*))))]
         (dosync
          (ref-set reasoner-list (conj @reasoner-list reas)))
         reas))))
