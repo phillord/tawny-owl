@@ -165,7 +165,7 @@
              (reasoner-factory)
              (owl/get-current-ontology)
              (SimpleConfiguration.
-              ((deref *reasoner-progress-monitor*))))]
+              ((deref *reasoner-progress-monitor*))))]H
         (dosync
          (ref-set reasoner-list (conj @reasoner-list reas)))
         reas))))
@@ -257,3 +257,8 @@ ontology is inconsistent"
   (util/in?
    (iequivalent-classes ontology name)
    equiv))
+
+
+(defontfn instances [ontology class]
+  (.getInstance (reasoner ontology)
+                class false))
