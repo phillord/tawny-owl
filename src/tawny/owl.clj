@@ -518,9 +518,9 @@ or throw an exception if it cannot be converted."
    (ensure-object-property (prop))
    (instance? OWLObjectProperty prop)
    prop
-   (string? prop) 
-  (get-create-object-property prop)
-   true
+   (string? prop)
+   (get-create-object-property prop)
+   :default
    (throw (IllegalArgumentException.
            (str "Expecting an object property. Got: " prop)))))
 
@@ -682,6 +682,25 @@ class, or class expression. "
   [ontology name]
   (add-one-frame ontology create-class-axiom name ""))
 
+(declare ensure-data-property)
+(defontfn add-haskey
+  [ontology class propertylist]
+  (let [type (guess-type propertylist)
+        propertylist
+        (cond
+         (= :object type)
+         (map ensure-object-property propertylist)
+         (= :data type)
+         (map ensure-data-property propertylist)
+         :default
+         (throw
+          (IllegalArgumentException.
+           "Unable to determine type of property")))]
+    (add-axiom
+     (.getOWLHasKeyAxiom ontology-data-factory
+                         (ensure-class class)
+                         (into #{} propertylist)))))
+
 (defontfn add-domain
   "Adds all the entities in domainlist as domains to a property."
   [ontology property domainlist]
@@ -737,6 +756,21 @@ a superproperty."
       superpropertylist))))
 
 
+(defontfn add-subpropertychain
+  [ontology property superpropertylist]
+  (let [property (ensure-object-property property)
+        lists (filter sequential? superpropertylist)
+        properties (filter (comp not sequential?) superpropertylist)
+        ]
+    (list
+     (add-axiom
+      (.getOWLSubPropertyChainOfAxiom
+       ontology-data-factory properties property))
+     (map (partial add-subpropertychain
+                ontology property)
+          lists))))
+
+
 ;; Really it would make more sense to use keywords, but this breaks the
 ;; groupify function which expects alternative keyword value args. The
 ;; approach of using strings and symbol names here is scary -- if someone does
@@ -784,7 +818,8 @@ a superproperty."
 (defn objectproperty-explicit
   "Returns an objectproperty. This requires an hash with a list
 value for each frame."
-  [name {:keys [domain range inverseof subpropertyof characteristics] :as all}]
+  [name {:keys [domain range inverseof subpropertyof
+                characteristics subpropertychain] :as all}]
   (let [property (ensure-object-property name)
         axioms
         (concat
@@ -796,6 +831,7 @@ value for each frame."
          (add-inverse property inverseof)
          (add-superproperty property subpropertyof)
          (add-characteristics property characteristics)
+         (add-subpropertychain property subpropertychain)
          )]
     ;; store classes if we are in an inverse binding
     (when (seq? recent-axiom-list)
@@ -853,8 +889,6 @@ value for each frame."
 (def owlonly only)
 
 
-
-
 ;; restrictions! name clash -- we can do nothing about this, so accept the
 ;; inconsistency and bung owl on the front.
 (def
@@ -869,7 +903,6 @@ value for each frame."
       (ensure-class class)))))
 
 (.addMethod owlsome :object object-some)
-
 
 (def
   ^{:doc "Returns an OWL all values from restriction."
@@ -1115,6 +1148,12 @@ converting it from a string or IRI if necessary."
 (def versioninfo
   (partial annotation versioninfoproperty))
 
+(def deprecatedproperty
+  (.getOWLDeprecated ontology-data-factory))
+
+(def deprecated
+  (partial annotation deprecated))
+
 (defn annotation-property-explicit
   "Add this annotation property to the ontology"
   [property frames]
@@ -1202,6 +1241,8 @@ slightly faster.
          (add-equivalent class (:equivalent frames))
          (add-disjoint class (:disjoint frames))
          (add-annotation class (:annotation frames))
+         (when (:haskey frames)
+           (add-haskey class (:haskey frames)))
 
          ;; change these to add to the annotation frame instead perhaps?
          (when (:comment frames)
@@ -1232,7 +1273,8 @@ full details."
                (util/hashify frames)
                *default-frames*)
        [:subclass :equivalent :annotation
-        :name :comment :label :disjoint]))))
+        :name :comment :label :disjoint
+        :haskey]))))
 
 (defmacro defclass
   "Define a new class. Accepts a set number of frames, each marked

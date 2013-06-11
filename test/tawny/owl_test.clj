@@ -211,6 +211,52 @@
        (nil?
         (o/add-class "a")))))
 
+(deftest add-haskey
+  (is
+   (not (nil?
+         (do
+           (o/with-probe-entities
+             [p (o/objectproperty "p")
+              c (o/owlclass "c")]
+             (o/add-haskey c (list p))))))))
+
+(deftest add-subpropertychain
+  (is
+   (not
+    (nil?
+     (do
+       (let [p1 (o/objectproperty "p1")
+             p2 (o/objectproperty "p2")
+             p3 (o/objectproperty "p3")
+             ]
+         (o/add-subpropertychain
+          p1 (list p2 p3)))))))
+
+  (is
+   (not
+    (nil?
+     (do
+       (let [p1 (o/objectproperty "p1")
+             p2 (o/objectproperty "p2")
+             p3 (o/objectproperty "p3")
+             ]
+         (o/add-subpropertychain
+          p1 (list [p2 p3])))))))
+
+  (is
+   (not
+    (nil?
+     (do (let [p1 (o/objectproperty "p1")
+               p2 (o/objectproperty "p2")
+               p3 (o/objectproperty "p3")
+               p4 (o/objectproperty "p4")
+               p5 (o/objectproperty "p5")
+             ]
+         (o/add-subpropertychain
+          p1 (list p2 p3 [p4 p5])))))))
+  )
+
+
 (deftest objectproperty []
   (is (instance?
        org.semanticweb.owlapi.model.OWLObjectProperty
