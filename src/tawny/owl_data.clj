@@ -134,7 +134,7 @@ converting it from a string or IRI if necessary."
        datatype#)))
 
 
-(defn get-literal
+(defn literal
   "Returns a OWL2 literal.
 
 `literal' is the value of the literal and must be a string or a number. Anything
@@ -243,7 +243,7 @@ which is an OWLDatatype object.
    ontology-data-factory
    (into #{} data)))
 
-(.addMethod oneof :data data-oneof)
+(.addMethod oneof :literal data-oneof)
 
 (defn data-exactly [number property]
   (.getOWLDataExactCardinality

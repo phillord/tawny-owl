@@ -698,3 +698,14 @@ Assumes that fixture has been run
               (o/owlnot
                (o/owlsome r c))))))
       "A regression tester from the pizza ontology"))
+
+(deftest oneof
+  (is
+   (instance?
+    org.semanticweb.owlapi.model.OWLObjectOneOf
+    (o/oneof (o/individual "a"))))
+
+  (is 
+   (instance?
+    org.semanticweb.owlapi.model.OWLDataOneOf
+    (o/oneof (o/literal "hello")))))
