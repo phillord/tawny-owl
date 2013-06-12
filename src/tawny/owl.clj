@@ -29,7 +29,7 @@
                                  OWLNamedObject OWLOntologyID
                                  OWLAnnotationProperty OWLObjectProperty
                                  OWLDataProperty OWLDataRange
-                                 OWLDataPropertyExpression
+                                 OWLDataPropertyExpression OWLLiteral
                                  )
    (org.semanticweb.owlapi.apibinding OWLManager)
    (org.coode.owlapi.manchesterowlsyntax ManchesterOWLSyntaxOntologyFormat)
@@ -494,7 +494,7 @@ an IRI with no transformation. nil is returned when the result is not clear.
          ;; string name somewhere?
          (guess-type (iri entity)))
      ;; owl individuals tell us nothing, cause we still don't know!
-     (instance? OWLIndividual)
+     (instance? OWLIndividual entity)
      nil
      (number? entity)
      nil
@@ -502,6 +502,43 @@ an IRI with no transformation. nil is returned when the result is not clear.
      nil
      :default
      (throw (IllegalArgumentException. (str "Cannot guess this type:" entity))))))
+
+(defontfn guess-individual-literal
+  [ontology entity]
+  (cond
+   (coll? entity)
+   (some guess-individual-literal entity)
+   (instance? OWLIndividual entity)
+   :individual
+   (instance? OWLLiteral entity)
+   :literal
+   (instance? IRI entity)
+   (guess-individual-literal
+    ;; code from guess-type -- refactor?
+    (or
+     ;; single item in current ontology
+     (check-entity-set
+      (.getEntitiesInSignature ontology entity)
+      entity)
+     ;; single item in current or imports
+     (check-entity-set
+      (.getEntitiesInSignature ontology entity true)
+      entity)
+     ;; single item in anything we know about
+     (check-entity-set
+      (apply
+       clojure.set/union
+       (map #(.getEntitiesInSignature % entity true)
+            (vals @ontology-for-namespace)))
+      entity)))
+   (string? entity)
+   (or
+    (guess-individual-literal (iriforname ontology entity))
+    (guess-individual-literal (iri entity)))
+   :default
+   (throw (IllegalArgumentException.
+           (str "Cannot tell if this is individual or literal:" entity)))))
+
 
 (defn- get-create-object-property
   "Creates an OWLObjectProperty for the given name."
@@ -866,20 +903,24 @@ value for each frame."
   [& args]
   (guess-type args))
 
+(defn- guess-individual-literal-args
+  [& args]
+  (guess-individual-literal args))
+
 ;; multi methods for overloaded entities. We guess the type of the arguments,
 ;; which can be (unambiguous) OWLObjects, potentially ambiguous IRIs or
 ;; strings. If we really can tell, we guess at objects because I like objects
 ;; better.
-(defmulti owlsome guess-type-args)
-(defmulti only guess-type-args)
-(defmulti someonly guess-type-args)
-(defmulti owland guess-type-args)
-(defmulti owlor guess-type-args)
-(defmulti owlnot guess-type-args)
-(defmulti exactly guess-type-args)
-(defmulti oneof guess-type-args)
-(defmulti atleast guess-type-args)
-(defmulti atmost guess-type-args)
+(defmulti owlsome #'guess-type-args)
+(defmulti only #'guess-type-args)
+(defmulti someonly #'guess-type-args)
+(defmulti owland #'guess-type-args)
+(defmulti owlor #'guess-type-args)
+(defmulti owlnot #'guess-type-args)
+(defmulti exactly #'guess-type-args)
+(defmulti oneof #'guess-individual-literal-args)
+(defmulti atleast #'guess-type-args)
+(defmulti atmost #'guess-type-args)
 
 ;; short cuts for the terminally lazy. Still prefix!
 (def && owland)
@@ -1046,7 +1087,7 @@ all values from restrictions."
         (.getOWLAnnotationAssertionAxiom
          ontology-data-factory
          (.getIRI named-entity) annotation)]
-    (add-axiom axiom)))
+    (add-axiom ontology axiom)))
 
 (defn- add-an-ontology-annotation
   [ontology annotation]
@@ -1333,7 +1374,7 @@ All arguments must be an instance of OWLClassExpression."
   "Returns an INDIVIDUAL.
 If INDIVIDUAL is an OWLIndividual return individual, else
 interpret this as a string and create a new OWLIndividual."
-  (cond (instance? org.semanticweb.owlapi.model.OWLIndividual)
+  (cond (instance? org.semanticweb.owlapi.model.OWLIndividual individual)
         individual
         (string? individual)
         (get-create-individual individual)
