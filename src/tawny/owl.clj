@@ -1025,10 +1025,18 @@ all values from restrictions."
    ontology-data-factory
    (java.util.HashSet.
     (doall
-     (map #(ensure-individual %)
+     (map ensure-individual
           (flatten individuals))))))
 
-(.addMethod oneof :object object-oneof)
+(.addMethod oneof :individual object-oneof)
+
+
+(defn hasvalue [property individual]
+  (.getOWLObjectHasValue property individual))
+
+(defn hasself [property]
+  (.getOWLObjectHasSelf property))
+
 
 ;; annotations
 (defn- add-a-simple-annotation
