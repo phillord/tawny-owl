@@ -758,17 +758,18 @@ a superproperty."
 
 (defontfn add-subpropertychain
   [ontology property superpropertylist]
-  (let [property (ensure-object-property property)
-        lists (filter sequential? superpropertylist)
-        properties (filter (comp not sequential?) superpropertylist)
-        ]
-    (list
-     (add-axiom
-      (.getOWLSubPropertyChainOfAxiom
-       ontology-data-factory properties property))
-     (map (partial add-subpropertychain
-                ontology property)
-          lists))))
+  (when superpropertylist
+    (let [property (ensure-object-property property)
+          lists (filter sequential? superpropertylist)
+          properties (filter (comp not sequential?) superpropertylist)
+          ]
+      (list
+       (add-axiom
+        (.getOWLSubPropertyChainOfAxiom
+         ontology-data-factory properties property))
+       (map (partial add-subpropertychain
+                     ontology property)
+            lists)))))
 
 
 ;; Really it would make more sense to use keywords, but this breaks the
