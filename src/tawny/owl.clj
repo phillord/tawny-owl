@@ -338,14 +338,71 @@ or the current-ontology"
                   (swap! ontology-options-atom
                          dissoc o))))
 
-;; (def
-;;   ^{:doc "Return the entities for a given IRI. One or more ontologies can
-;;   searched. If imports is false do not "
-;;     :arglists '([iri & ontology] [iri imports & ontology])
-;;     }
-;;   entity-for-iri
-;;   (fn entity-for-iri
-;;     [iri & ontology]))
+
+(defn iri
+  "Returns an IRI object given a string. Does no transformation on the
+string; use 'iriforname' to perform ontology specific expansion"
+  [name]
+  (IRI/create name))
+
+(declare get-iri)
+(defontfn iriforname
+  "Returns an IRI object for the given name.
+
+This is likely to become a property of the ontology at a later date, but at
+the moment it is very simple."
+  [o name]
+  (if-let [iri-gen (:iri-gen (deref (ontology-options o)))]
+    (iri-gen name)
+    (iri (str (get-iri o) "#" name))))
+
+(defn check-entity-set
+  [entity-set iri]
+  ;; ontology could be in full, or could be punning. Either way we are
+  ;; stuffed.
+  (when (< 1 (count entity-set))
+    (throw
+     (IllegalArgumentException.
+      (format "Can not uniquely determine type of IRI: %s,%s" iri entity-set))))
+  ;; IRI appears once; happiness
+  (if (= 1 (count entity-set))
+    (first entity-set)
+    ;; IRI appears not at all
+    nil))
+
+(defontfn entity-for-iri
+  "Return the OWLObject for a given IRI if it exists, checking
+'ontology' first, but checking all loaded ontologies.
+
+This function uses a heuristic to find the right entity. If you want
+more control use 'check-entity-set' and the '.getEntitiesInSignature'
+method of OWLOntology."
+  [o iri]
+  (or
+   ;; single item in current ontology
+   (check-entity-set
+    (.getEntitiesInSignature o iri)
+    iri)
+   ;; single item in current or imports
+   (check-entity-set
+    (.getEntitiesInSignature o iri true)
+    iri)
+   ;; single item in anything we know about
+   (check-entity-set
+    (apply
+     clojure.set/union
+     (map #(.getEntitiesInSignature % iri true)
+          (vals @ontology-for-namespace)))
+    iri)))
+
+(defontfn entity-for-string
+  "Returns the OWLObject for a given string.
+
+See 'entity-for-iri' for more details."
+  [o string]
+  (or (entity-for-iri o (iriforname o string))
+      ;; string name somewhere?
+      (entity-for-iri o (iri string))))
 
 (defn test-ontology
   "Define a test ontology.
@@ -434,37 +491,6 @@ If no ontology is given, use the current-ontology"
        (.saveOntology owl-ontology-manager o
                       this-format output-stream))))
 
-
-(defn iri
-  "Returns an IRI object given a string. Does no transformation on the
-string; use 'iriforname' to perform ontology specific expansion"
-  [name]
-  (IRI/create name))
-
-(defontfn iriforname
-  "Returns an IRI object for the given name.
-
-This is likely to become a property of the ontology at a later date, but at
-the moment it is very simple."
-  [o name]
-  (if-let [iri-gen (:iri-gen (deref (ontology-options o)))]
-    (iri-gen name)
-    (iri (str (get-iri o) "#" name))))
-
-(defn- check-entity-set
-  [entity-set iri]
-  ;; ontology could be in full, or could be punning. Either way we are
-  ;; stuffed.
-  (when (< 1 (count entity-set))
-    (throw
-     (IllegalArgumentException.
-      (format "Can not uniquely determine type of IRI: %s,%s" iri entity-set))))
-  ;; IRI appears once; happiness
-  (if (= 1 (count entity-set))
-    (first entity-set)
-    ;; IRI appears not at all
-    nil))
-
 (defontfn guess-type
   "Guesses the type of the entity. Returns :object, :data or :annotation or
 nil where the type cannot be guessed. IllegalArgumentException is thrown for
@@ -497,28 +523,10 @@ an IRI with no transformation. nil is returned when the result is not clear.
      :data
      ;; if an IRI, see if it is the current ontology
      (instance? IRI entity)
-     (guess-type o
-      (or
-       ;; single item in current ontology
-       (check-entity-set
-        (.getEntitiesInSignature o entity)
-        entity)
-       ;; single item in current or imports
-       (check-entity-set
-        (.getEntitiesInSignature o entity true)
-        entity)
-       ;; single item in anything we know about
-       (check-entity-set
-        (apply
-         clojure.set/union
-         (map #(.getEntitiesInSignature % entity true)
-              (vals @ontology-for-namespace)))
-        entity)))
-     (string? entity)
+     (guess-type o (entity-for-iri o entity))
      ;; string name in current ontology?
-     (or (guess-type o (iriforname o entity))
-         ;; string name somewhere?
-         (guess-type o (iri entity)))
+     (string? entity)
+     (guess-type o (entity-for-string o entity))
      ;; owl individuals tell us nothing, cause we still don't know!
      (instance? OWLIndividual entity)
      nil
@@ -527,7 +535,8 @@ an IRI with no transformation. nil is returned when the result is not clear.
      (nil? entity)
      nil
      :default
-     (throw (IllegalArgumentException. (str "Cannot guess this type:" entity))))))
+     (throw (IllegalArgumentException.
+             (str "Cannot guess this type:" entity))))))
 
 (defontfn guess-individual-literal
   [o entity]
@@ -540,27 +549,10 @@ an IRI with no transformation. nil is returned when the result is not clear.
    :literal
    (instance? IRI entity)
    (guess-individual-literal
-    ;; code from guess-type -- refactor?
-    (or
-     ;; single item in current ontology
-     (check-entity-set
-      (.getEntitiesInSignature o entity)
-      entity)
-     ;; single item in current or imports
-     (check-entity-set
-      (.getEntitiesInSignature o entity true)
-      entity)
-     ;; single item in anything we know about
-     (check-entity-set
-      (apply
-       clojure.set/union
-       (map #(.getEntitiesInSignature % entity true)
-            (vals @ontology-for-namespace)))
-      entity)))
+    (entity-for-iri o entity))
    (string? entity)
-   (or
-    (guess-individual-literal (iriforname o entity))
-    (guess-individual-literal (iri entity)))
+   (guess-individual-literal
+    (entity-for-string o entity))
    :default
    (throw (IllegalArgumentException.
            (str "Cannot tell if this is individual or literal:" entity)))))
