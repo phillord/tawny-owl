@@ -53,3 +53,19 @@
   (is
    (thrown? IllegalArgumentException
                (u/check-keys {:a 1 :b 2 :c 3} [:a :b]))))
+
+(deftest on
+  (is
+   (nil?
+    (u/on nil
+        (constantly true))))
+
+  (is
+   (true?
+    (u/on true
+          (constantly true))))
+  (is
+   (= 10
+      (u/on 10
+            identity)))
+  )

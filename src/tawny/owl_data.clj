@@ -18,7 +18,7 @@
 
 
 ;; data type properties
-(defn- ensure-data-property [property]
+(defn- ensure-data-property [o property]
   "Ensures that 'property' is an data property,
 converting it from a string or IRI if necessary."
   (cond
@@ -28,38 +28,31 @@ converting it from a string or IRI if necessary."
    (.getOWLDataProperty
     ontology-data-factory property)
    (instance? String property)
-   (ensure-data-property
-    (iriforname property))
+   (ensure-data-property o
+    (iriforname o property))
    :default
    (throw (IllegalArgumentException.
            (format "Expecting an OWL data property: %s" property)))))
 
-(def
-  ^{:doc "Adds a domain to a data property."
-    :arglists '([property & domains] [ontology property & domains])}
-  add-data-domain
-  (ontology-vectorize
-   (fn add-data-domain
-     [property domain]
-     (add-axiom
-      (.getOWLDataPropertyDomainAxiom
-       ontology-data-factory
-       (ensure-data-property property)
-       (ensure-class domain))))))
+(defbontfn add-data-domain
+  {:doc "Adds a domain to a data property."
+   :arglists '([property & domains] [o property & domains])}
+  [o property domain]
+  (add-axiom o
+   (.getOWLDataPropertyDomainAxiom
+    ontology-data-factory
+    (ensure-data-property o property)
+    (ensure-class o domain))))
 
-(def
-  ^{:doc "Adds a range to a data property."
-    :arglists '([property & ranges] [ontology property & ranges])}
-  add-data-range
-  (ontology-vectorize
-   (fn add-data-range
-     [property range]
-     (add-axiom
-      (.getOWLDataPropertyRangeAxiom
-       ontology-data-factory
-       (ensure-data-property property)
-       range)))))
-
+(defbontfn add-data-range
+  {:doc "Adds a range to a data property."
+   :arglists '([property & ranges] [ontology property & ranges])}
+  [o property range]
+  (add-axiom
+   (.getOWLDataPropertyRangeAxiom
+    ontology-data-factory
+    (ensure-data-property o property)
+    range)))
 
 (def xsd:float
   (.getFloatOWLDatatype ontology-data-factory))
@@ -84,25 +77,25 @@ converting it from a string or IRI if necessary."
 (defn datatypeproperty-explicit
   "Define a new datatype property with an explicit map"
   [property map]
-  (let [ontology (or (first (get map :ontology))
+  (let [o (or (first (get map :ontology))
                             (get-current-ontology))
-        dataproperty (ensure-data-property property)]
+        dataproperty (ensure-data-property o property)]
     (.addAxiom owl-ontology-manager
-               ontology
+               o
                (.getOWLDeclarationAxiom
                 ontology-data-factory
                 dataproperty))
-    (add-annotation ontology dataproperty (:annotation map))
-    (add-data-domain ontology dataproperty (:domain map))
-    (add-data-range ontology dataproperty (:range map))
+    (add-annotation o dataproperty (:annotation map))
+    (add-data-domain o dataproperty (:domain map))
+    (add-data-range o dataproperty (:range map))
     (when-let [comment (:comment map)]
-      (add-annotation ontology
+      (add-annotation o
                       dataproperty
                       (list (owlcomment (first comment)))))
 
     (when-let [labl (:label map)]
       (println labl)
-      (add-annotation ontology dataproperty
+      (add-annotation o dataproperty
                       (list (label (first labl)))))
 
     dataproperty
@@ -153,18 +146,18 @@ which is an OWLDatatype object.
 
 
 (defn datatype-explicit [name frame]
-  (let [ontology
+  (let [o
         (or (first (get frame :ontology))
             (get-current-ontology))
         datatype
         (.getOWLDatatype
          ontology-data-factory
          (iriforname name))]
-    (add-axiom ontology
+    (add-axiom o
      (.getOWLDeclarationAxiom ontology-data-factory datatype))
 
     (add-annotation
-     ontology datatype
+     o datatype
      (concat
       (:annotation frame)
       (map label (:label frame))
@@ -172,11 +165,10 @@ which is an OWLDatatype object.
 
     (doseq
         [n (:equivalent frame)]
-      (add-axiom ontology
+      (add-axiom o
        (.getOWLDatatypeDefinitionAxiom
         ontology-data-factory datatype n)))
     datatype))
-
 
 (defn datatype [name & frames]
   (datatype-explicit
@@ -200,69 +192,71 @@ which is an OWLDatatype object.
                    {:owl true})
        datatype#)))
 
-(defn data-and
-  [& types]
+(defontfn data-and
+  [_ & types]
   (.getOWLDataIntersectionOf
    ontology-data-factory
    (into #{} types)))
 
 (.addMethod owland :data data-and)
 
-(defn data-or
-  [& types]
+(defontfn data-or
+  [_ & types]
   (.getOWLDataUnionOf
    ontology-data-factory
    (into #{} types)))
 
 (.addMethod owlor :data data-or)
 
-(defn data-not
-  [type]
+(defontfn data-not
+  [_ type]
   (.getOWLDataComplementOf
    ontology-data-factory type))
 
 (.addMethod owlnot :data data-not)
 
-(defn data-some
-  [property datatype]
-  (.getOWLDataSomeValuesFrom ontology-data-factory
-                             property datatype))
+(defontfn data-some
+  [o property datatype]
+  (.getOWLDataSomeValuesFrom
+   ontology-data-factory
+   (ensure-data-property o property) datatype))
 
 (.addMethod owlsome :data data-some)
 
-(defn data-only
-  [property datatype]
-  (.getOWLDataAllValuesFrom ontology-data-factory
-                            property datatype))
+(defontfn data-only
+  [o property datatype]
+  (.getOWLDataAllValuesFrom
+   ontology-data-factory
+   (ensure-data-property o property) datatype))
 
 
 (.addMethod only :data data-only)
 
-(defn data-oneof [& data]
+(defontfn data-oneof [_ & data]
   (.getOWLDataOneOf
    ontology-data-factory
    (into #{} data)))
 
 (.addMethod oneof :literal data-oneof)
 
-(defn data-exactly [number property]
+(defontfn data-exactly [o number property]
   (.getOWLDataExactCardinality
    ontology-data-factory
-   number (ensure-data-property property)))
+   number (ensure-data-property o property)))
 
 (.addMethod exactly :data data-exactly)
 
-(defn data-atmost [number property]
+(defontfn data-atmost [o number property]
   (.getOWLDataMaxCardinality
    ontology-data-factory number
-   (ensure-data-property property)))
+   (ensure-data-property o property)))
 
 (.addMethod atmost :data data-atmost)
 
-(defn data-atleast [number property]
+(defontfn data-atleast [o number property]
   (.getOWLDataMinCardinality
    ontology-data-factory number
-   (ensure-data-property property)))
+   (ensure-data-property o property)))
 
 (.addMethod atleast :data data-atleast)
 
@@ -312,16 +306,16 @@ which is an OWLDatatype object.
    (throw (IllegalArgumentException. (str "Unknown comparitor" comparitor)))))
 
 
-(defn data-getfact [property from to]
+(defontfn data-getfact [o property from to]
   (.getOWLDataPropertyAssertionAxiom
    ontology-data-factory
-   property from to))
+   (ensure-data-property o property) from to))
 
 (.addMethod getfact :data data-getfact)
 
-(defn data-getfactnot [property from to]
+(defontfn data-getfactnot [o property from to]
   (.getOWLNegativeDataPropertyAssertionAxiom
    ontology-data-factory
-   property from to))
+   (ensure-data-property o property) from to))
 
 (.addMethod getfactnot :data data-getfactnot)

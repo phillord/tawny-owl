@@ -103,13 +103,19 @@
 
 
 ;; unlazy map function
-(defmacro dmap [& body]
+(defmacro domap [& body]
   "Unlazy map function, for when the map function has side effects.
 
 Typing (doall (map)) all the time is hard work!"
   `(doall
     (map ~@body)))
 
+
+(defmacro dofor [& body]
+  "Unlazy dofor, for when the side effects are necessary.
+Unlike doseq this holds onto the head."
+  `(doall
+    (for ~@body)))
 
 (defn vectorize
   "Given (f [x y]), return another function (g [x & rest]), where items in
@@ -122,3 +128,10 @@ rest can be any tree structure, then, f with x and all values in rest. "
      (map
       (partial f x)
       (filter (comp not nil?) (flatten args))))))
+
+
+
+;; on
+(defn on [val f]
+  (when val
+    (f val)))

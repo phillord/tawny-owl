@@ -26,15 +26,24 @@
                                  OWLAnnotationProperty OWLObjectProperty
                                  OWLDataProperty
                                  ))
-  (:require [tawny.owl :as o])
+  (:require [tawny.owl :as o]
+            [tawny.debug]
+            [tawny.util])
   [:use clojure.test])
 
+
+(def testontology nil)
+
 (defn createtestontology[]
-  (o/defontology testontology
-    :iri "http://iri/"
-    :prefix "iri:"))
+  (alter-var-root
+   #'testontology
+   (fn [x]
+     (o/ontology :iri "http://iri/" :prefix "iri"))))
 
 (defn createandsavefixture[test]
+  (reset! o/default-ontology-hook [])
+;;  (tawny.util/add-hook o/default-ontology-hook
+;;                       #(tawny.debug/tracing-println "default ontology used") )
   (o/with-ontology (createtestontology)
     (test)
     ;;(o/save-ontology "test.omn")
@@ -121,7 +130,10 @@
 
 (deftest get-create-object-property []
   (is (instance? org.semanticweb.owlapi.model.OWLObjectProperty
-                 (#'o/get-create-object-property "hello"))))
+                 (#'o/get-create-object-property "hello")))
+  (is (instance? org.semanticweb.owlapi.model.OWLObjectProperty
+                 (#'o/get-create-object-property
+                  testontology "hello"))))
 
 
 (deftest ensure-object-property []
@@ -154,34 +166,6 @@
   (is (instance? org.semanticweb.owlapi.model.OWLClassExpression
                  (#'o/ensure-class (#'o/get-create-class "hello")))))
 
-(deftest create-subclass-axiom []
-  (is (instance? org.semanticweb.owlapi.model.OWLSubClassOfAxiom
-                 (#'o/create-subclass-axiom
-                  (#'o/ensure-class "a") "b"))))
-
-(deftest add-one-frame []
-  (is (not
-       (nil?
-        (#'o/add-one-frame
-         (o/get-current-ontology)
-         #'o/create-subclass-axiom
-         (#'o/ensure-class "a") "b")))))
-
-(deftest add-frame []
-  (let [frame-call
-        (#'o/add-frame
-         (o/get-current-ontology)
-         #'o/create-subclass-axiom
-         (#'o/ensure-class "a") '( "b" "c" "d"))]
-    (is (not (nil? frame-call)))))
-
-
-
-(deftest create-equiavlent-axiom []
-  (is (instance? org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom
-                 (#'o/create-equivalent-axiom
-                  (#'o/ensure-class "a") "b"))))
-
 
 (deftest add-subclass
   (is
@@ -201,10 +185,6 @@
                (list (#'o/ensure-class "b")))]
     (is (not (nil? equiv)))
 ))
-
-(deftest create-class-axiom []
-  (is (instance? org.semanticweb.owlapi.model.OWLDeclarationAxiom
-                 (#'o/create-class-axiom (#'o/ensure-class "a") "b"))))
 
 (deftest add-class []
   (is (not
@@ -265,14 +245,14 @@
 
 (deftest owlsome []
   (is (not (nil? (o/owlsome (o/objectproperty "b") "a"))))
+  (is (o/object-some
+       testontology "has" "leg"))
   ;; failing test
   (is (thrown? clojure.lang.ArityException
                (o/owlsome (ensure-class "hasLeg")))))
 
 (deftest owlonly []
-  (is (not (nil? (o/only (o/objectproperty "b") "a"))))
-  (is (thrown? clojure.lang.ArityException
-               (o/object-only "hasLeg"))))
+  (is (not (nil? (o/only (o/objectproperty "b") "a")))))
 
 
 (deftest owland []
@@ -290,15 +270,15 @@
   (is (not (nil? (o/object-or "a" "b"))))
   (is (instance?
        org.semanticweb.owlapi.model.OWLObjectUnionOf
-       (o/owlor "c" (o/owlclass "d"))))
+       (o/owlor testontology "c" (o/owlclass "d"))))
   (is (thrown? IllegalArgumentException
                (o/owlor)))
   (is (instance?
        org.semanticweb.owlapi.model.OWLDataUnionOf
-       (o/data-or o/xsd:integer o/xsd:float)))
+       (o/data-or testontology o/xsd:integer o/xsd:float)))
   (is (instance?
        org.semanticweb.owlapi.model.OWLDataUnionOf
-       (o/owlor o/xsd:integer o/xsd:float))))
+       (o/owlor testontology o/xsd:integer o/xsd:float))))
 
 (deftest owlnot
   (is (instance?
@@ -709,3 +689,4 @@ Assumes that fixture has been run
    (instance?
     org.semanticweb.owlapi.model.OWLDataOneOf
     (o/oneof (o/literal "hello")))))
+

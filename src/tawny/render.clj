@@ -100,7 +100,7 @@ for the duration of the form."
   ;; no lazy -- we are going to render the entire form anyway, and we are
   ;; using a dynamic binding to cache the iri-to-var map. Lazy eval will break
   ;; this big time.
-  (tawny.util/dmap #(form %) s))
+  (tawny.util/domap #(form %) s))
 
 (defmethod form OWLClass [c]
   (symbol
