@@ -27,7 +27,6 @@
                                  OWLDataProperty
                                  ))
   (:require [tawny.owl :as o]
-            [tawny.debug]
             [tawny.util])
   [:use clojure.test])
 
@@ -42,6 +41,7 @@
 
 (defn createandsavefixture[test]
   (reset! o/default-ontology-hook [])
+;;             [tawny.debug]
 ;;  (tawny.util/add-hook o/default-ontology-hook
 ;;                       #(tawny.debug/tracing-println "default ontology used") )
   (o/with-ontology (createtestontology)
