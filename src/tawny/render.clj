@@ -1,6 +1,6 @@
 ;; The contents of this file are subject to the LGPL License, Version 3.0.
 
-;; Copyright (C) 2012, Newcastle University
+;; Copyright (C) 2012, 2013, Newcastle University
 
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU Lesser General Public License as published by
@@ -22,9 +22,9 @@
             [tawny.lookup]
             [tawny.util]
             )
-  (:import 
+  (:import
            (java.util Set)
-           (org.semanticweb.owlapi.model 
+           (org.semanticweb.owlapi.model
             OWLAnnotation
             OWLAnnotationProperty
             OWLAnnotationValue
@@ -34,7 +34,10 @@
             OWLDataHasValue
             OWLDataMaxCardinality
             OWLDataMinCardinality
+            OWLDataProperty
             OWLDataSomeValuesFrom
+            OWLFacetRestriction
+            OWLIndividual
             OWLLiteral
             OWLObjectAllValuesFrom
             OWLObjectComplementOf
@@ -48,7 +51,12 @@
             OWLObjectSomeValuesFrom
             OWLObjectUnionOf
             OWLObjectProperty
-            )))
+            OWLProperty
+            )
+           (org.semanticweb.owlapi.vocab
+            OWLFacet
+            OWL2Datatype)
+           ))
 
 
 (defn named-entity-as-string [entity]
@@ -57,26 +65,38 @@
       (.toURI)
       (.toString)))
 
+(defn ontologies []
+  (.getOntologies owl/owl-ontology-manager))
 
-(def 
-  ^{:dynamic true
-    :doc "Holds a copy of the iri-to-var map
-for the duration of the form."
-    :private true}
-  iri-to-var-cache nil)
+(defn setmap [f c]
+  (apply clojure.set/union (map f c)))
 
 (declare form)
 
 (defmulti as-form class)
 
 (defmethod as-form OWLClass [c]
-  (binding [iri-to-var-cache (tawny.lookup/all-iri-to-var)]
-    (let [super (.getSuperClasses c (owl/get-current-ontology))
-          equiv (.getEquivalentClasses c (owl/get-current-ontology))
-          disjoint (.getDisjointClasses c (owl/get-current-ontology))
-          annotation (.getAnnotations c (owl/get-current-ontology))
+  (binding [tawny.lookup/all-iri-to-var-cache
+            (tawny.lookup/all-iri-to-var)]
+    (let [ont (ontologies)
+          super (.getSuperClasses c ont)
+          equiv (.getEquivalentClasses c ont)
+          disjoint (.getDisjointClasses c ont)
+          annotation
+          (setmap
+           #(.getAnnotations c %) ont)
+          cls (form c)
           ]
-      `(tawny.owl/defclass ~(form c)
+     `(
+        ;; seems like a nice idea, but cls is always a symbol because form
+        ;; OWLClass makes it so. Resolve-entity always returns a string, but
+        ;; we don't know what kind -- a var string or an IRI?
+        ~(if (symbol? cls)
+           'defclass
+           'owlclass)
+
+
+         ~(form c)
          ~@(when (< 0 (count super))
              (cons
               :subclass
@@ -93,22 +113,209 @@ for the duration of the form."
              (cons :annotation
                    (form annotation)))
          ))))
-       
+
+
+;; subproperty chain from Ontology it would appear!
+;; if (!isFiltered(AxiomType.SUB_PROPERTY_CHAIN_OF)) {
+;;     for (OWLOntology ontology : getOntologies()) {
+;;         for (OWLSubPropertyChainOfAxiom ax : ontology.getAxioms(AxiomType.SUB_PROPERTY_CHAIN_OF)) {
+;;             if (ax.getSuperProperty().equals(property)) {
+;;                 if (isDisplayed(ax)) {
+;;                     SectionMap map = new SectionMap();
+;;                     map.add(ax.getPropertyChain(), ax);
+;;                     writeSection(SUB_PROPERTY_CHAIN, map, " o ", false, ontology);
+;;                     axioms.add(ax);
+;;                 }
+;;             }
+;;         }
+;;     }
+;; }
+
+
+(defmethod as-form OWLObjectProperty [p]
+  (binding [tawny.lookup/all-iri-to-var-cache
+            (tawny.lookup/all-iri-to-var)]
+    (let [ont (ontologies)
+          domain (.getDomains p ont)
+          range (.getRanges p ont)
+          inverseof (.getInverses p ont)
+          subpropertyof (.getSuperProperties p ont)
+          characteristic
+          (filter identity
+                  (list
+                   (and
+                    (.isTransitive p ont)
+                    'transitive)
+                   (and
+                    (.isFunctional p ont)
+                    'functional)
+                   (and
+                    (.isInverseFunctional p ont)
+                    'inversefunctionl)
+                   (and
+                    (.isSymmetric p ont)
+                    'symmetric)
+                   (and
+                    (.isAsymmetric p ont)
+                    'asymmetric)
+                   (and
+                    (.isIrreflexive p ont)
+                    'irreflexive)
+                   (and
+                    (.isReflexive p ont)
+                    'reflexive)
+                   ))
+          prop (form p)]
+
+      `(
+        ~(if (symbol? prop)
+           'defoproperty
+           'object-property)
+        ~prop
+         ~@(when (< 0 (count domain))
+             (cons :domain
+                   (form domain)))
+         ~@(when (< 0 (count range))
+             (cons :range
+                   (form range)))
+         ~@(when (< 0 (count inverseof))
+             (cons :inverseof
+                   (form inverseof)))
+         ~@(when (< 0 (count characteristic))
+             (cons :characteristics
+                   characteristic))))))
+
+(defmethod as-form OWLIndividual [p]
+  (binding [tawny.lookup/all-iri-to-var-cache
+            (tawny.lookup/all-iri-to-var)]
+    (let [ont (ontologies)
+          types (.getTypes p ont)
+          same (setmap #(.getSameIndividuals p %) ont)
+          diff (setmap #(.getDifferentIndividuals p %) ont)
+          fact (apply clojure.set/union
+                      (map #(.getObjectPropertyValues p %) ont))
+          factnot
+          (apply clojure.set/union
+                 (map #(.getNegativeObjectPropertyValues p %) ont))
+          ]
+      `(defindividual ~(form p)
+         ~@(when (< 0 (count types))
+             (cons :type
+                   (form types)))
+         ~@(when (< 0 (count same))
+             (cons :same
+                   (form same)))
+         ~@(when (< 0 (count diff))
+             (cons :different
+                   (form diff)))
+         ~@(when (some
+                  #(< 0 (count %))
+                  [fact factnot])
+             (concat
+              [:fact]
+              (form [:fact fact])
+              (form [:factnot factnot])
+              ))))))
+
+
+
+(defmethod as-form OWLDataProperty [p]
+  (binding [tawny.lookup/all-iri-to-var-cache
+            (tawny.lookup/all-iri-to-var)]
+    (let [ont (ontologies)
+          domain (.getDomains p ont)
+          range (.getRanges p ont)
+          subpropertyof (.getSuperProperties p ont)
+          characteristic
+          (filter identity
+                  (list
+                   (and
+                    (.isFunctional p ont)
+                    'functional)
+                   ))
+          prop (form p)]
+
+      `(
+        ~(if (symbol? prop)
+           'defdproperty
+           'data-property)
+        ~prop
+         ~@(when (< 0 (count domain))
+             (cons :domain
+                   (form domain)))
+         ~@(when (< 0 (count range))
+             (cons :range
+                   (form range)))
+         ~@(when (< 0 (count characteristic))
+             (cons :characteristics
+                   characteristic))))))
+
+(defmethod as-form OWLAnnotationProperty [p]
+    (binding [tawny.lookup/all-iri-to-var-cache
+            (tawny.lookup/all-iri-to-var)]
+    (let [ont (ontologies)
+          super
+          (setmap #(.getSuperProperties p %) ont)
+          ann
+          (setmap #(.getAnnotations p %) ont)]
+      `(defannotationproperty ~(form p)
+         ~@(when (< 0 (count super))
+             (cons :subproperty
+                   (form super)))
+         ~@(when (< 0 (count ann))
+             (cons :annotations
+                   (form ann)))))))
+
+(defmethod as-form org.semanticweb.owlapi.model.OWLDatatype [d]
+  ;; I think we can safely ignore this here -- if it declared, then it should
+  ;; be used elsewhere also. I think. Regardless, there is no read syntax in
+  ;; tawny at the moment.
+  )
+
+(defmethod as-form :default [p]
+  (println "Unknown element in signature")
+  (. Thread dumpStack)
+  '(unknown as-form))
+
+
 (defmulti form class)
+
+;; how to get from {:a {1 2}} {:b {3 4}}
+;; to [:a 1][:a 2]
+;; or support (fact I1 I2)?
+
+(defmethod form clojure.lang.IPersistentVector [v]
+  (let [f (symbol (name (first v)))]
+    (for [[ope ind]
+          (reduce
+           concat
+           (for [[k v] (second v)]
+             (for [x v]
+               [k x])))]
+      `(~f ~(form ope) ~(form ind)))))
+
 
 (defmethod form Set [s]
   ;; no lazy -- we are going to render the entire form anyway, and we are
   ;; using a dynamic binding to cache the iri-to-var map. Lazy eval will break
   ;; this big time.
-  (tawny.util/domap #(form %) s))
+  (tawny.util/domap form s))
+
+(defn- entity-or-iri [c]
+  (let [res (tawny.lookup/resolve-entity c)]
+    (if res
+      (symbol
+       (tawny.lookup/resolve-entity c))
+      `(~'iri ~(tawny.lookup/named-entity-as-string c)))))
 
 (defmethod form OWLClass [c]
-  (symbol
-   (tawny.lookup/resolve-entity c iri-to-var-cache)))
+  (entity-or-iri c))
 
-(defmethod form OWLObjectProperty [p]
-  (symbol
-   (tawny.lookup/resolve-entity p iri-to-var-cache)))
+(defmethod form OWLProperty [p]
+  (entity-or-iri p))
+
+(defmethod form OWLIndividual [i]
+  (entity-or-iri i))
 
 (defmethod form OWLObjectSomeValuesFrom [s]
   (list 'owlsome
@@ -116,10 +323,10 @@ for the duration of the form."
         (form (.getFiller s))))
 
 (defmethod form OWLObjectUnionOf [u]
-  (list 'owlor (form (.getOperands u))))
+  `(owlor ~@(form (.getOperands u))))
 
 (defmethod form OWLObjectIntersectionOf [c]
-  (list 'owland (form (.getOperands c))))
+  `(owland ~@(form (.getOperands c))))
 
 (defmethod form OWLObjectAllValuesFrom [a]
   (list 'owlall
@@ -135,97 +342,105 @@ for the duration of the form."
         (form (.getProperty c))
         (form (.getFiller c))))
 
-
 (defmethod form OWLObjectMaxCardinality [c]
   (list 'atmost (.getCardinality c)
         (form (.getProperty c))
         (form (.getFiller c))))
 
 (defmethod form OWLObjectMinCardinality [c]
-  (list 'atleast (.getCardinalty c)
+  (list 'atleast (.getCardinality c)
         (form (.getProperty c))
         (form (.getFiller c))))
 
 (defmethod form OWLAnnotation [a]
-  (concat
-   (cond 
-    (.isLabel a)
-    '(label)
-    (.isComment a)
-    '(owlcomment)
-    :default
-    (list
-     'annotation    
-     (form (.getProperty a))))
-   (form (.getValue a))))
+  (let [v (.getValue a)]
+    (cond
+     (.isLabel a)
+     (list* 'label
+           (form v))
+     (.isComment a)
+     (list* 'owlcomment
+           (form v))
+     :default
+     (list*
+      (form (.getProperty a))
+      (form v)))))
 
 (defmethod form OWLAnnotationProperty [p]
-  (.toString p))
+  (entity-or-iri p))
 
 ;; this can be improved somewhat -- not converting classes into something
 ;; readable.
 (defmethod form OWLAnnotationValue [v]
-  (list    
+  (list
    (.toString v)))
 
 (defmethod form OWLLiteral [l]
-  (if (.hasLang l)
-    (list (.getLiteral l)
-          (.getLang l))
-    (list (.getLiteral l))))
+  (cond
+   (.isInteger l)
+   (.parseInteger l)
+   (.hasLang l)
+   (list (.getLiteral l)
+         (.getLang l))
+   :default
+   (list (.getLiteral l))))
+
+
+(defmethod form OWLDataSomeValuesFrom [d]
+  `(owlsome ~(form (.getProperty d))
+            ~(form (.getFiller d))))
+
+
+(defmethod form org.semanticweb.owlapi.model.OWLDatatypeRestriction [d]
+  (for [fr (.getFacetRestrictions d)]
+    `(span ~@(form fr))))
+
+
+(defmethod form OWLFacetRestriction [d]
+  `(~(form (.getFacet d)) ~(form (.getFacetValue d))))
+
+
+(defmethod form OWLFacet [d]
+  (get
+       {OWLFacet/MAX_EXCLUSIVE '<
+        OWLFacet/MAX_INCLUSIVE '<=
+        OWLFacet/MIN_EXCLUSIVE '>
+        OWLFacet/MIN_INCLUSIVE '>=
+        }
+       d))
+
+(defmethod form org.semanticweb.owlapi.model.OWLDatatype [d]
+  (form (.getBuiltInDatatype d)))
+
+(defmethod form OWL2Datatype [d]
+  (get
+       {
+        OWL2Datatype/RDF_PLAIN_LITERAL 'rdf:plainliteral
+        OWL2Datatype/XSD_FLOAT 'xsd:float
+        OWL2Datatype/XSD_DOUBLE 'xsd:double
+        OWL2Datatype/XSD_INTEGER 'xsd:integer
+        }
+       d))
 
 
 ;; OWLObjectHasSelf
 ;; OWLObjectHasValue
 ;; OWLObjectOneOf
 
-
+(defmethod form String [e]
+  e)
 
 (defmethod form :default [e]
   (do
-    (println "what the hell is this:" e)
-    `(not-sure-what-to-do)))
-
-
-(defmulti as-text class)
-
-
-(declare text)
-(defmethod as-text OWLClass [c]
-  (str (text c)
-       "\n\t:subclass\n"
-       (text (.getSuperClasses c (owl/get-current-ontology)))
-       "\n\t:equivalent\n"
-       (text (.getEquivalentClasses c (owl/get-current-ontology)))
-       "\n\t:disjoint\n"
-       (text (.getDisjointClasses c (owl/get-current-ontology)))))
-
-(defmulti text class)
-
-(defmethod text Set [s]
-  (clojure.string/join
-   "\n"
-   (doall
-    (map #(text %) s))))
-
-(defmethod text OWLClass [c]
-  (.getFragment (.getIRI c)))
-
-(defmethod text OWLObjectProperty [p]
-  (.getFragment (.getIRI p)))
-
-(defmethod text OWLObjectSomeValuesFrom [s]
-  (str "(some "
-       (text (.getProperty s)) " "
-       (text  (.getFiller s)) ")"))
-
-(defmethod text OWLObjectUnionOf [u]
-  (str "(or " (text (.getOperands u)) ")"))
+    (println "Unknown form" (class e))
+    (. Thread dumpStack)
+    `(unknown form)))
 
 
 
-(defmethod text :default [e]
-  (str "Not sure how to handle:" e))
+
+
+
 
 ;; OWLDataAllValuesFrom
 ;; OWLDataExactCardinality
