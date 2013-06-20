@@ -71,12 +71,16 @@ including the name space."
       (.toURI)
       (.toString)))
 
-(defn resolve-entity [entity iri-to-var]
-  (let [entity-str (named-entity-as-string entity)
-        var (get iri-to-var entity-str)]
-    (if (nil? var)
-      entity-str
-       (var-maybe-qualified-str var))))
+(declare all-iri-to-var)
+(defn resolve-entity
+  ([entity]
+     (resolve-entity entity (all-iri-to-var)))
+  ([entity iri-to-var]
+      (let [entity-str (named-entity-as-string entity)
+            var (get iri-to-var entity-str)]
+        (if (nil? var)
+          nil
+          (var-maybe-qualified-str var)))))
 
 (defn name-to-var [& namespaces]
   (into {}
@@ -88,7 +92,23 @@ including the name space."
   []
   (keys @tawny.owl/ontology-for-namespace))
 
+
+;; This is an expensive operation, so we might want to cache it. However, we
+;; cannot do this sensibly, because we don't have hooks for when new vars are
+;; being created. So, instead, put all-iri-to-var-cache in a binding form for
+;; the duration of the time that you wish the cache to last. Inside that
+;; binding form, all-iri-to-var will just return the cache
+(def
+  ^{:dynamic true
+    :doc "Holds a copy of the iri-to-var map
+for the duration of the form."}
+  all-iri-to-var-cache nil)
+
+
 (defn all-iri-to-var
   "Returns a map keyed on IRI to var"
   []
-  (apply iri-to-var (namespace-with-ontology)))
+  (or all-iri-to-var-cache
+      (do
+        ;;#spy/d ^{:fs 10 :nses #"tawny"} ["calc"]
+        (apply iri-to-var (namespace-with-ontology)))))
