@@ -414,8 +414,12 @@ is a pain, as the test ontology has to be defined first.
 This defines a minimal test ontology.
 
 "
-  []
-  (defontology a-test-ontology :iri "http://iri/" :prefix "test:"))
+  ([]
+     (test-ontology *ns*))
+  ([ns]
+     (let [o (ontology :iri "http://iri/" :prefix "test:")]
+       (ontology-to-namespace o)
+       (intern ns 'a-test-ontology o))))
 
 (defn get-current-ontology
   "Gets the current ontology"
