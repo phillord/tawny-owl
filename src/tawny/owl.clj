@@ -581,6 +581,8 @@ or throw an exception if it cannot be converted."
    (ensure-object-property o (prop))
    (instance? OWLObjectProperty prop)
    prop
+   (instance? IRI prop)
+   (.getOWLObjectProperty ontology-data-factory prop)
    (string? prop)
    (get-create-object-property o prop)
    :default
@@ -603,6 +605,8 @@ else if clz is a OWLClassExpression add that."
    (ensure-class o (clz))
    (instance? org.semanticweb.owlapi.model.OWLClassExpression clz)
    clz
+   (instance? IRI clz)
+   (.getOWLClass ontology-data-factory clz)
    (string? clz)
    (get-create-class o clz)
    true
@@ -1362,6 +1366,9 @@ If INDIVIDUAL is an OWLIndividual return individual, else
 interpret this as a string and create a new OWLIndividual."
   (cond (instance? org.semanticweb.owlapi.model.OWLIndividual individual)
         individual
+        (instance? IRI individual)
+        (.getOWLNamedIndividual ontology-data-factory
+                                individual)
         (string? individual)
         (get-create-individual o individual)
         true
@@ -1380,7 +1387,6 @@ or ONTOLOGY if present."
     individual)))
 
 (defbontfn add-fact
-
   {:doc "Add FACTS to an INDIVIDUAL in the current ontology or
   ONTOLOGY if present. Facts are produced with `fact' and `fact-not'."
    :arglists '([individual & facts] [ontology individual & facts])}
@@ -1439,7 +1445,7 @@ or to ONTOLOGY if present."
   (add-axiom o
    (.getOWLDifferentIndividualsAxiom
     ontology-data-factory
-    (set (flatten o)))))
+    (set (flatten individuals)))))
 
 ;; need to support all the different frames here...
 ;; need to use hashify
