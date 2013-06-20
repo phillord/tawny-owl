@@ -138,13 +138,16 @@ Clojure symbol. Use this composed with a entity transform function"
 
 
 (defn iri-create
-  "A convienience method for creating IRIs.
+  "DEPRECATED: Use iri method in tawny.owl.
+
+A convienience method for creating IRIs.
 
 Most namespaces that call use 'defread' will need to create an IRI.
 This convienience method avoids the need for importing and depending
 directly on the OWL API."
+  {:deprecated "0.12"}
   [iri]
-  (IRI/create iri))
+  (tawny.owl/iri iri))
 
 (defmacro defread [symbol & rest]
   `(do
