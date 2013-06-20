@@ -25,8 +25,6 @@
   (:import [java.io StringWriter PrintWriter])
   )
 
-
-
 ;; do a documentation formatter first
 ;; want to have two entry points -- "update all documentation" which does 
 ;; everything in a namespace. And everything for a single symbol, which 
@@ -40,60 +38,61 @@
   ([owlobject]
      (fetch-doc owlobject (o/get-current-ontology)))
   ([owlobject ontology]
-     (let [annotation (.getAnnotations owlobject ontology)
-           label
-           (filter 
-            #(-> %
-                 (.getProperty)
-                 (.isLabel))
-            annotation)
+     (binding [tawny.lookup/all-iri-to-var-cache
+                (tawny.lookup/all-iri-to-var)]
+       (let [annotation (.getAnnotations owlobject ontology)
+             label
+             (filter 
+              #(-> %
+                   (.getProperty)
+                   (.isLabel))
+              annotation)
 
-           comment
-           (filter
-            #(-> %
-                 (.getProperty)
-                 (.isComment))
-            annotation)
-           
-           iri (-> owlobject
-                   (.getIRI)
-                   (.toURI)
-                   (.toString))
-           
-           writer (StringWriter.)
-           pwriter (PrintWriter. writer)
-           line (fn [& args]
-                  (.println pwriter 
-                            (str (apply str args))))]
+             comment
+             (filter
+              #(-> %
+                   (.getProperty)
+                   (.isComment))
+              annotation)
+             
+             iri (-> owlobject
+                     (.getIRI)
+                     (.toURI)
+                     (.toString))
+             
+             writer (StringWriter.)
+             pwriter (PrintWriter. writer)
+             line (fn [& args]
+                    (.println pwriter 
+                              (str (apply str args))))]
 
-       (line "")
+         (line "")
 
-       (line 
+         (line 
 
-        (.toString (.getEntityType owlobject))
-        ": "
-        (tawny.lookup/var-maybe-qualified-str
-         (get
-          (tawny.lookup/all-iri-to-var) iri)))
+          (.toString (.getEntityType owlobject))
+          ": "
+          (tawny.lookup/var-maybe-qualified-str
+           (get
+            (tawny.lookup/all-iri-to-var) iri)))
 
-       (line "IRI: " iri)
-       (line "Labels:")
-       (doseq [l label]
-         (line "\t" (.getValue l)))
+         (line "IRI: " iri)
+         (line "Labels:")
+         (doseq [l label]
+           (line "\t" (.getValue l)))
 
-       (line "Comments:")
-       (doseq [c comment]
-         (line "\t" (.getValue c)))
-       
-       
-       (line "Full Definition:")
-       (o/with-ontology ontology
-         (clojure.pprint/pprint
-          (tawny.render/as-form owlobject)
-          writer))
+         (line "Comments:")
+         (doseq [c comment]
+           (line "\t" (.getValue c)))
+         
+         
+         (line "Full Definition:")
+         (o/with-ontology ontology
+           (clojure.pprint/pprint
+            (tawny.render/as-form owlobject)
+            writer))
 
-       (.toString writer))))
-
+         (.toString writer)))))
 
 (defn print-doc
   ([owlobject]
@@ -102,3 +101,40 @@
   ([owlobject ontology]
      (println (fetch-doc owlobject ontology))))
 
+(defn print-ns-doc
+  ([]
+     (print-ns-doc *ns*))
+  ([ns]
+     (binding [tawny.lookup/all-iri-to-var-cache
+                (tawny.lookup/all-iri-to-var)]
+       (doseq [v
+               (vals
+                (tawny.lookup/iri-to-var ns))]
+         (println (fetch-doc (var-get v)))))))
+
+
+(defn update-var-doc
+  "Updates the documentation on a var containing a OWLObject"
+  [var]
+  (alter-meta!
+   var
+   (fn [meta var]
+     (assoc meta
+       :doc (fetch-doc
+             (var-get var))))
+   var))
+
+(defmacro update-doc
+  [name]
+  `(update-var-doc (var ~name)))
+
+(defn update-ns-doc
+  ([]
+     (update-ns-doc *ns*))
+  ([ns]
+     (binding [tawny.lookup/all-iri-to-var-cache
+                (tawny.lookup/all-iri-to-var)]
+       (doseq [v
+               (vals
+                (tawny.lookup/iri-to-var ns))]
+         (update-var-doc v)))))
