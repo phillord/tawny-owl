@@ -106,15 +106,17 @@
 
 (deftest change-values-to-string-set
   (is
-   (= {"http://iri/#a" #{"a"}, 
-       "http://iri/#c" #{"c"}, 
-       "http://iri/#b" #{"b"}}
-      (do (o/test-ontology)
-          (bind-some-vars)
-          (let [retn 
-                (#'m/change-values-to-string-set (m/memorise-map *ns*))]
-            (unbind-some-vars)
-            retn))))
+   (= {
+       "http://iri/#b" #{"b"},
+       "http://iri/#c" #{"c"},
+       "http://iri/#a" #{"a"},
+       }
+      (do
+        (bind-some-vars)
+        (let [retn
+              (#'m/change-values-to-string-set (m/memorise-map *ns*))]
+          (unbind-some-vars)
+          retn))))
 
   (is 
    (= {}
