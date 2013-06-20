@@ -215,7 +215,7 @@ which is an OWLDatatype object.
 
 (.addMethod owlnot :data data-not)
 
-(defontfn data-some
+(defbontfn data-some
   [o property datatype]
   (.getOWLDataSomeValuesFrom
    ontology-data-factory
@@ -223,7 +223,7 @@ which is an OWLDatatype object.
 
 (.addMethod owlsome :data data-some)
 
-(defontfn data-only
+(defbontfn data-only
   [o property datatype]
   (.getOWLDataAllValuesFrom
    ontology-data-factory
