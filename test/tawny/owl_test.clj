@@ -17,7 +17,6 @@
 
 
 (ns tawny.owl-test
-  (:refer-clojure :exclude [some only comment])
   (:import
    (org.semanticweb.owlapi.model OWLOntologyManager OWLOntology IRI
                                  OWLClassExpression OWLClass OWLAnnotation
@@ -690,3 +689,12 @@ Assumes that fixture has been run
     org.semanticweb.owlapi.model.OWLDataOneOf
     (o/oneof (o/literal "hello")))))
 
+
+(deftest add-different
+  (is
+   (let
+       [i1 (o/individual "i1")
+        i2 (o/individual "i2")]
+     (o/add-different i1 i2)
+     (some #{i2}
+           (.getDifferentIndividuals i1 testontology)))))
