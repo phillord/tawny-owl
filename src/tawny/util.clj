@@ -103,12 +103,11 @@
 
 
 ;; unlazy map function
-(defmacro domap [& body]
+(defn domap [& body]
   "Unlazy map function, for when the map function has side effects.
 
 Typing (doall (map)) all the time is hard work!"
-  `(doall
-    (map ~@body)))
+  (doall (apply map body)))
 
 
 (defmacro dofor [& body]
@@ -128,6 +127,7 @@ rest can be any tree structure, then, f with x and all values in rest. "
      (map
       (partial f x)
       (filter (comp not nil?) (flatten args))))))
+
 
 
 
