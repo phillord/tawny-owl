@@ -62,9 +62,9 @@
   ^{:doc "Map between namespaces and ontologies"}
   ontology-for-namespace (ref {}))
 
-;; the current ontology provides our main mutable state. Strictly, we don't
-;; need to do this, but the alternative would be passing in an ontology to
-;; almost every call, or running everything inside a binding. Painful.
+;; not sure this is necessary now as (almost) all functions now take an
+;; ontology parameter, which is generally going to be the nicer way to achieve
+;; things.
 (def
   ^{:dynamic true
     :doc "The currently bound ontology. If this is not set, then the current
