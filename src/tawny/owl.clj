@@ -490,8 +490,8 @@ If no ontology is given, use the current-ontology"
                (vals @ontology-for-namespace))))
        (.print file-writer prepend)
        (.flush file-writer)
-       (.setPrefix this-format (get-current-prefix)
-                   (str (.toString (get-current-iri)) "#"))
+       (.setPrefix this-format (get-prefix o)
+                   (str (.toString (get-iri o)) "#"))
        (.saveOntology owl-ontology-manager o
                       this-format output-stream))))
 
