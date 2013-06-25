@@ -43,7 +43,7 @@
        (o/defclass ~superclass#)
        ;; haven't added documentation to defoproperty yet
        (o/defoproperty ~propertyname#
-         :characteristics o/functional
+         :characteristic o/functional
          )
        (o/with-default-frames
          [:subclass ~superclass#
