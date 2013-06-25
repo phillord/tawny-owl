@@ -62,6 +62,15 @@
   ^{:doc "Map between namespaces and ontologies"}
   ontology-for-namespace (ref {}))
 
+(defn iri
+  "Returns an IRI object given a string. Does no transformation on the
+string; use 'iriforname' to perform ontology specific expansion"
+  [name]
+  (IRI/create name))
+
+(load "owl_self")
+
+
 ;; not sure this is necessary now as (almost) all functions now take an
 ;; ontology parameter, which is generally going to be the nicer way to achieve
 ;; things.
@@ -108,12 +117,14 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
 (declare versioninfo)
 (declare ontology-options)
 (declare seealso)
+(declare add-an-ontology-annotation)
 
 (defn ontology
   "Returns a new ontology. See 'defontology' for full description."
   [& args]
   (let [options (apply hash-map args)
-        iri (IRI/create (:iri options))]
+        iri (IRI/create (get options :iri
+                             (.toString (java.util.UUID/randomUUID))))]
     (remove-ontology-maybe
      (OWLOntologyID. iri))
 
@@ -134,11 +145,17 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
       ;; this isn't a given -- the prefix manager being returned by default
       ;; returns true for isPrefixOWLOntologyFormat, so we can do this, but
       ;; strictly we are depending on the underlying types.
-      (when-let [prefix (:prefix options)]
+      (when-let [prefix
+                 (or (:prefix options)
+                     (:name options))]
         (.setPrefix ontology-format
                     prefix
                     (.toString iri)))
 
+      (when-let [name (:name options)]
+        (add-an-ontology-annotation
+         jontology
+         (tawny-name name)))
 
       ;; add annotations to the ontology
       (add-annotation
@@ -215,7 +232,7 @@ The following keys must be supplied.
 "
   [name & body]
   `(do
-     (let [ontology# (ontology ~@body)
+     (let [ontology# (ontology :name ~(clojure.core/name name) ~@body)
            var#
            (def
              ~(with-meta name
@@ -338,12 +355,6 @@ or the current-ontology"
                   (swap! ontology-options-atom
                          dissoc o))))
 
-
-(defn iri
-  "Returns an IRI object given a string. Does no transformation on the
-string; use 'iriforname' to perform ontology specific expansion"
-  [name]
-  (IRI/create name))
 
 (declare get-iri)
 (defontfn iriforname
@@ -830,12 +841,14 @@ a superproperty."
   recent-axiom-list
   nil)
 
+(declare add-a-simple-annotation)
+
 ;; object properties
 (defn objectproperty-explicit
   "Returns an objectproperty. This requires an hash with a list
 value for each frame."
-  [name {:keys [domain range inverseof subpropertyof
-                characteristics subpropertychain ontology]}]
+  [name {:keys [domain range inverse subproperty
+                characteristic subpropertychain ontology]}]
   (let [o (or (first ontology)
               (get-current-ontology))
         property (ensure-object-property o name)
@@ -846,11 +859,15 @@ value for each frame."
                  ontology-data-factory property)))
          (add-domain o property domain)
          (add-range o property range)
-         (add-inverse o property inverseof)
-         (add-superproperty o property subpropertyof)
-         (add-characteristics o property characteristics)
+         (add-inverse o property inverse)
+         (add-superproperty o property subproperty)
+         (add-characteristics o property characteristic)
          (add-subpropertychain o property subpropertychain)
          )]
+    (when (instance? String name)
+      (add-a-simple-annotation
+       o property
+       (tawny-name name)))
     ;; store classes if we are in an inverse binding
     (when (seq? recent-axiom-list)
       (set! recent-axiom-list
@@ -867,7 +884,7 @@ value for each frame."
     (merge-with concat
                 (util/hashify frames)
                 *default-frames*)
-    [:domain :range :inverseof :subpropertyof :characteristics
+    [:domain :range :inverse :subproperty :characteristic
      :ontology])))
 
 (defmacro defoproperty
@@ -905,6 +922,7 @@ value for each frame."
 (defmulti oneof #'guess-individual-literal-args)
 (defmulti atleast #'guess-type-args)
 (defmulti atmost #'guess-type-args)
+(defmulti hasvalue #'guess-type-args)
 
 ;; short cuts for the terminally lazy. Still prefix!
 (def && owland)
@@ -1052,10 +1070,13 @@ all values from restrictions."
 
 (.addMethod oneof :individual object-oneof)
 
-(defontfn hasvalue [o property individual]
-  (.getOWLObjectHasValue
+(defontfn object-hasvalue [o property individual]
+  (.getOWLObjectHasValue ontology-data-factory
    (ensure-object-property o property)
    (ensure-individual o individual)))
+
+(.addMethod hasvalue :object object-hasvalue)
+
 
 (defontfn hasself [o property]
   (.getOWLObjectHasSelf
@@ -1292,6 +1313,9 @@ slightly faster.
         (add-annotation class
                         (list (owlcomment
                                (first comment)))))
+      (when (instance? String name)
+        (add-a-simple-annotation
+         o class (tawny-name name)))
 
       (when label
           (add-annotation class
@@ -1891,3 +1915,5 @@ cases this will have been imported."
           (assoc (meta newsymbol#)
             :owl true))
        (var-get (var ~symb)))))
+
+

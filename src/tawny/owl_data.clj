@@ -54,6 +54,14 @@ converting it from a string or IRI if necessary."
     (ensure-data-property o property)
     range)))
 
+(defbontfn add-data-superproperty
+  [o property super]
+  (add-axiom o
+             (.getOWLSubDataPropertyOfAxiom
+              ontology-data-factory
+              (ensure-data-property o property)
+              (ensure-data-property o super))))
+
 (def xsd:float
   (.getFloatOWLDatatype ontology-data-factory))
 
@@ -88,6 +96,9 @@ converting it from a string or IRI if necessary."
     (add-annotation o dataproperty (:annotation map))
     (add-data-domain o dataproperty (:domain map))
     (add-data-range o dataproperty (:range map))
+    (add-data-superproperty o dataproperty (:subproperty map))
+    ;;(add-data-characteristics o dataproperty (:characteristic map))
+
     (when-let [comment (:comment map)]
       (add-annotation o
                       dataproperty
@@ -98,8 +109,7 @@ converting it from a string or IRI if necessary."
       (add-annotation o dataproperty
                       (list (label (first labl)))))
 
-    dataproperty
-    ))
+    dataproperty))
 
 (defn datatypeproperty
   "Define a new datatype property"
@@ -111,7 +121,7 @@ converting it from a string or IRI if necessary."
                 (util/hashify
                  frames)
                 *default-frames*)
-    [:domain :range :annotation :characteristics
+    [:domain :range :annotation :characteristic
      :subproperty :equivalent :disjoint :ontology
      :label :comment])))
 
@@ -238,6 +248,16 @@ which is an OWLDatatype object.
    (into #{} data)))
 
 (.addMethod oneof :literal data-oneof)
+
+(defontfn data-hasvalue [o property literal]
+  (.getOWLDataHasValue ontology-data-factory
+   (ensure-data-property o property)
+   (if (instance? OWLLiteral literal)
+     literal
+     (tawny.owl/literal literal))))
+
+(.addMethod hasvalue :data data-hasvalue)
+
 
 (defontfn data-exactly [o number property]
   (.getOWLDataExactCardinality
