@@ -89,7 +89,6 @@
       (.add progressbar)
       (.add label))
     (.setIndeterminate progressbar true)
-    
     (proxy [org.semanticweb.owlapi.reasoner.ReasonerProgressMonitor] []
       (reasonerTaskBusy[]
         ;;(println "Reasoner task busy");; stuff
@@ -143,6 +142,9 @@
   ^{:dynamic true}
   *reasoner-progress-monitor*
   (atom reasoner-progress-monitor-gui-maybe))
+
+(defn reasoner-silent []
+  (reset! *reasoner-progress-monitor* reasoner-progress-monitor-silent))
 
 (defn reasoner-for-ontology [ontology]
   (first
@@ -248,11 +250,12 @@ ontology is inconsistent"
         (isuperclasses ontology name)]
     (class-in-node-set? superclasses superclass)))
 
-
 (defontfn isubclasses [ontology name]
-  (.getSubClasses (reasoner ontology)
-                  (owl/ensure-class name)
-                  false))
+  (no-top-bottom
+   (entities
+    (.getSubClasses (reasoner ontology)
+                    (owl/ensure-class name)
+                    false))))
 
 (defontfn isubclass?
   "Returns true if name has subclass as a strict subclass"
