@@ -698,3 +698,20 @@ Assumes that fixture has been run
      (o/add-different i1 i2)
      (some #{i2}
            (.getDifferentIndividuals i1 testontology)))))
+
+
+(deftest add-data-super
+  (is
+   (o/with-probe-entities
+     [dp (o/datatypeproperty "a")
+      sdp (o/datatypeproperty "b" :subproperty dp)]
+     true))
+  (is
+   (every? #(instance?
+             org.semanticweb.owlapi.model.OWLSubDataPropertyOfAxiom %1)
+           (o/with-probe-entities
+             [dp (o/datatypeproperty "a")
+              sdp (o/datatypeproperty "b")]
+             (o/add-data-superproperty
+              testontology
+              dp sdp)))))
