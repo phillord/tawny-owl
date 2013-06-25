@@ -217,16 +217,28 @@ ontology is inconsistent"
   ;; actually implement this -- satisfiable > 0
   (zero? (count (unsatisfiable ontology))))
 
-
 (defn- class-in-node-set? [nodeset class]
   (util/in?
    (.getFlattened nodeset) class))
 
+(defn entities [nodeset]
+  (into #{} (.getFlattened nodeset)))
+
+(defn no-top-bottom [coll]
+  (into #{}
+        (filter #(not
+                  (or (= (owl/owlthing) %1)
+                      (= (owl/owlnothing) %1)))
+                coll)))
+
+
 ;; returns an immutable set of Nodes (including NodeSet's I think).
 (defontfn isuperclasses [ontology name]
-  (.getSuperClasses (reasoner ontology)
-                    (owl/ensure-class name)
-                    false))
+  (no-top-bottom
+   (entities)
+   (.getSuperClasses (reasoner ontology)
+                     (owl/ensure-class name)
+                     false)))
 
 ;; move this to using isuperclasses
 (defontfn isuperclass?
@@ -250,15 +262,16 @@ ontology is inconsistent"
     (class-in-node-set? subclasses subclass)))
 
 (defontfn iequivalent-classes [ontology name]
-  (.getEquivalentClasses (reasoner ontology)
-                         (owl/ensure-class name)))
+  (no-top-bottom
+   (entities
+    (.getEquivalentClasses (reasoner ontology)
+                           (owl/ensure-class name)))))
 
 (defontfn iequivalent-class? [ontology name equiv]
   (util/in?
    (iequivalent-classes ontology name)
    equiv))
 
-
 (defontfn instances [ontology class]
-  (.getInstance (reasoner ontology)
+  (.getInstances (reasoner ontology)
                 class false))
