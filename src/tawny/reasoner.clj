@@ -237,10 +237,10 @@ ontology is inconsistent"
 ;; returns an immutable set of Nodes (including NodeSet's I think).
 (defontfn isuperclasses [ontology name]
   (no-top-bottom
-   (entities)
-   (.getSuperClasses (reasoner ontology)
-                     (owl/ensure-class name)
-                     false)))
+   (entities
+    (.getSuperClasses (reasoner ontology)
+                      (owl/ensure-class name)
+                      false))))
 
 ;; move this to using isuperclasses
 (defontfn isuperclass?
@@ -248,7 +248,7 @@ ontology is inconsistent"
   [ontology name superclass]
   (let [superclasses
         (isuperclasses ontology name)]
-    (class-in-node-set? superclasses superclass)))
+    (some #{superclass} superclasses)))
 
 (defontfn isubclasses [ontology name]
   (no-top-bottom
@@ -262,7 +262,7 @@ ontology is inconsistent"
   [ontology name subclass]
   (let [subclasses
         (isubclasses ontology name)]
-    (class-in-node-set? subclasses subclass)))
+    (some #{subclass} subclasses)))
 
 (defontfn iequivalent-classes [ontology name]
   (no-top-bottom
