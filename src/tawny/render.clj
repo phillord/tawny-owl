@@ -59,6 +59,17 @@
            ))
 
 
+(def
+  ^{
+    :dynamic true
+    :doc "Strategy for determining action on reaching a terminal.
+:resolve means translate into the clojure symbol.
+:object means leave as a Java object
+A set means recursively render the object unless it is the set."}
+  terminal-strategy
+  :resolve
+  )
+
 (defn named-entity-as-string [entity]
   (-> entity
       (.getIRI)
@@ -197,8 +208,12 @@
           factnot
           (apply clojure.set/union
                  (map #(.getNegativeObjectPropertyValues p %) ont))
+          ind (form p)
           ]
-      `(defindividual ~(form p)
+      `(~(if (symbol? p)
+           'defindividual
+           'individual)
+         ~(form p)
          ~@(when (< 0 (count types))
              (cons :type
                    (form types)))
@@ -257,8 +272,13 @@
           super
           (setmap #(.getSuperProperties p %) ont)
           ann
-          (setmap #(.getAnnotations p %) ont)]
-      `(defannotationproperty ~(form p)
+          (setmap #(.getAnnotations p %) ont)
+          prop (form p)]
+      `(
+        ~(if (symbol? prop)
+           'defaproperty
+           'annotation-property)
+         ~(form p)
          ~@(when (< 0 (count super))
              (cons :subproperty
                    (form super)))
@@ -302,11 +322,23 @@
   (tawny.util/domap form s))
 
 (defn- entity-or-iri [c]
-  (let [res (tawny.lookup/resolve-entity c)]
-    (if res
-      (symbol
-       (tawny.lookup/resolve-entity c))
-      `(~'iri ~(tawny.lookup/named-entity-as-string c)))))
+  (cond
+   (= :resolve terminal-strategy)
+   (let [res (tawny.lookup/resolve-entity c)]
+     (if res
+       (symbol
+        (tawny.lookup/resolve-entity c))
+       `(~'iri ~(tawny.lookup/named-entity-as-string c))))
+   (= :object terminal-strategy)
+   c
+   (instance? clojure.lang.Atom terminal-strategy)
+   (do
+     (if-not (contains? @terminal-strategy c)
+       (do
+         (as-form c)
+         (swap! terminal-strategy conj c))
+       c))
+   :default (throw (IllegalArgumentException. "Unknown strategy"))))
 
 (defmethod form OWLClass [c]
   (entity-or-iri c))
@@ -363,6 +395,7 @@
            (form v))
      :default
      (list*
+      'annotation
       (form (.getProperty a))
       (form v)))))
 
@@ -387,13 +420,13 @@
 
 
 (defmethod form OWLDataSomeValuesFrom [d]
-  `(owlsome ~(form (.getProperty d))
+  `(~'owlsome ~(form (.getProperty d))
             ~(form (.getFiller d))))
 
 
 (defmethod form org.semanticweb.owlapi.model.OWLDatatypeRestriction [d]
   (for [fr (.getFacetRestrictions d)]
-    `(span ~@(form fr))))
+    `(~'span ~@(form fr))))
 
 
 (defmethod form OWLFacetRestriction [d]
