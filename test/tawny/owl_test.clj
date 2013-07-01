@@ -27,22 +27,21 @@
                                  ))
   (:require [tawny.owl :as o]
             [tawny.util])
+  (:require [tawny.debug])
   [:use clojure.test])
 
 
-(def testontology nil)
+(def to nil)
 
 (defn createtestontology[]
   (alter-var-root
-   #'testontology
+   #'to
    (fn [x]
      (o/ontology :iri "http://iri/" :prefix "iri"))))
 
 (defn createandsavefixture[test]
-  (reset! o/default-ontology-hook [])
-;;             [tawny.debug]
-;;  (tawny.util/add-hook o/default-ontology-hook
-;;                       #(tawny.debug/tracing-println "default ontology used") )
+  (tawny.util/add-hook o/default-ontology-hook
+                       #(tawny.debug/tracing-println "default ontology used") )
   (o/with-ontology (createtestontology)
     (test)
     ;;(o/save-ontology "test.omn")
@@ -74,7 +73,7 @@
   (is (= "http://iri/"
          (.toString (o/get-iri (o/ontology :iri "http://iri/")))))
   (is (= "http://iri/"
-         (.toString (o/get-iri)))))
+         (.toString (o/get-iri to)))))
 
 (deftest get-current-iri
   (is (= "http://iri/" (.toString (#'o/get-current-iri)))))
@@ -93,15 +92,15 @@
 
   (is
    (instance? clojure.lang.Ref
-              (o/ontology-options testontology)))
+              (o/ontology-options to)))
 
   (is
    (let [options {:a 1 :b 2}]
      (dosync
-      (alter (o/ontology-options testontology)
+      (alter (o/ontology-options to)
              merge options))
 
-     (= @(o/ontology-options testontology)
+     (= @(o/ontology-options to)
             options)))
 
   (is
@@ -109,86 +108,86 @@
      ;; need a clean slate to start with!
      (reset! o/ontology-options-atom {})
      (o/ontology :iri "http://iri" :prefix "dfda:")
-     (o/ontology-options)
+     (o/ontology-options to)
      (o/ontology :iri "http://iri" :prefix "dfda:")
-     (o/ontology-options)
+     (o/ontology-options to)
      (o/ontology :iri "http://iri" :prefix "dfda:")
-     (o/ontology-options)
+     (o/ontology-options to)
      (= 1
           (count @o/ontology-options-atom)))))
 
 
 
 (deftest save-ontology []
-  (is (do (o/save-ontology "test.omn")
+  (is (do (o/save-ontology to "test.omn")
           true)))
 
 (deftest iriforname []
-  (is (= (.toString (#'o/iriforname "test"))
+  (is (= (.toString (#'o/iriforname to "test"))
          "http://iri/#test")))
 
 (deftest get-create-object-property []
   (is (instance? org.semanticweb.owlapi.model.OWLObjectProperty
-                 (#'o/get-create-object-property "hello")))
+                 (#'o/get-create-object-property to "hello")))
   (is (instance? org.semanticweb.owlapi.model.OWLObjectProperty
                  (#'o/get-create-object-property
-                  testontology "hello"))))
+                  to "hello"))))
 
 
 (deftest ensure-object-property []
   (is
    ;; check whether it makes an object out of a string
    (instance? org.semanticweb.owlapi.model.OWLObjectProperty
-              (#'o/ensure-object-property "hello")))
+              (#'o/ensure-object-property to "hello")))
   (is
    ;; check whether it makes keeps an object as an object
    (instance? org.semanticweb.owlapi.model.OWLObjectProperty
-              (#'o/ensure-object-property
-               (#'o/get-create-object-property "hello")))))
+              (#'o/ensure-object-property to
+               (#'o/get-create-object-property to "hello")))))
 
 (deftest defoproperty
   (is
    (var?
-    (o/defoproperty a))))
+    (o/defoproperty a :ontology to))))
 
 
 (deftest get-create-class []
   (is (instance? org.semanticweb.owlapi.model.OWLClass
-                 (#'o/get-create-class "hello")))
-  (is  (=  (.hashCode (#'o/get-create-class "hello"))
-           (.hashCode (#'o/get-create-class "hello")))))
+                 (#'o/get-create-class to "hello")))
+  (is  (=  (.hashCode (#'o/get-create-class to "hello"))
+           (.hashCode (#'o/get-create-class to "hello")))))
 
 
 (deftest ensure-class []
   (is (instance? org.semanticweb.owlapi.model.OWLClassExpression
-                 (#'o/ensure-class "hello")))
+                 (#'o/ensure-class to "hello")))
   (is (instance? org.semanticweb.owlapi.model.OWLClassExpression
-                 (#'o/ensure-class (#'o/get-create-class "hello")))))
+                 (#'o/ensure-class to (#'o/get-create-class to "hello")))))
 
 
 (deftest add-subclass
   (is
    (do
-     (o/add-subclass "a" "b")
+     (o/add-subclass to "a" "b")
      (= 2 (.size (.getClassesInSignature
-                  (o/get-current-ontology))))))
+                  to)))))
   (is
    (do
-     (o/add-subclass "a" "b")
-     (o/superclass? "a" "b")))
+     (o/add-subclass to "a" "b")
+     (o/superclass? to "a" "b")))
   )
 
 (deftest add-equivalent []
-  (let [equiv (#'o/add-equivalent
-               (#'o/ensure-class "a")
-               (list (#'o/ensure-class "b")))]
+  (let [equiv (#'o/add-equivalent to
+               (#'o/ensure-class to "a")
+               (list (#'o/ensure-class to "b")))]
     (is (not (nil? equiv)))
 ))
 
 (deftest add-class []
   (is (not
        (nil?
-        (o/add-class "a")))))
+        (o/add-class to "a")))))
 
 (deftest add-haskey
   (is
@@ -245,7 +244,7 @@
 (deftest owlsome []
   (is (not (nil? (o/owlsome (o/objectproperty "b") "a"))))
   (is (o/object-some
-       testontology "has" "leg"))
+       to "has" "leg"))
   ;; failing test
   (is (thrown? clojure.lang.ArityException
                (o/owlsome (ensure-class "hasLeg")))))
@@ -269,15 +268,15 @@
   (is (not (nil? (o/object-or "a" "b"))))
   (is (instance?
        org.semanticweb.owlapi.model.OWLObjectUnionOf
-       (o/owlor testontology "c" (o/owlclass "d"))))
+       (o/owlor to "c" (o/owlclass "d"))))
   (is (thrown? IllegalArgumentException
                (o/owlor)))
   (is (instance?
        org.semanticweb.owlapi.model.OWLDataUnionOf
-       (o/data-or testontology o/xsd:integer o/xsd:float)))
+       (o/data-or to o/xsd:integer o/xsd:float)))
   (is (instance?
        org.semanticweb.owlapi.model.OWLDataUnionOf
-       (o/owlor testontology o/xsd:integer o/xsd:float))))
+       (o/owlor to o/xsd:integer o/xsd:float))))
 
 (deftest owlnot
   (is (instance?
@@ -396,18 +395,16 @@ Assumes that fixture has been run
   (is
    (= 0
       (do
-        (let [clazz (o/owlclass "a")]
-          (o/remove-entity clazz)
-          (.size (.getClassesInSignature
-                  (o/get-current-ontology)))))))
+        (let [clazz (o/owlclass "a" :ontology to)]
+          (o/remove-entity to clazz)
+          (.size (.getClassesInSignature to))))))
 
   (is
    (= 0
       (do
-        (let [prop (o/objectproperty "a")]
-          (o/remove-entity prop)
-          (.size (.getClassesInSignature
-                  (o/get-current-ontology))))))))
+        (let [prop (o/objectproperty "a" :ontology to)]
+          (o/remove-entity to prop)
+          (.size (.getClassesInSignature to)))))))
 
 
 
@@ -523,7 +520,7 @@ Assumes that fixture has been run
   (is
    (not
     (nil? (#'o/add-annotation
-           testontology
+           to
            (list (o/owlcomment "comment")))))))
 
 (deftest add-annotation2
@@ -541,12 +538,12 @@ Assumes that fixture has been run
             #(-> %
                  (.getProperty)
                  (.isLabel))
-            (.getAnnotations b testontology))))))))))
+            (.getAnnotations b to))))))))))
 
 
 (deftest dataproperty
   (is (instance? org.semanticweb.owlapi.model.OWLDataProperty 
-                 (o/datatypeproperty "hello" :ontology testontology))))
+                 (o/datatypeproperty "hello" :ontology to))))
 
 
 
@@ -697,7 +694,7 @@ Assumes that fixture has been run
         i2 (o/individual "i2")]
      (o/add-different i1 i2)
      (some #{i2}
-           (.getDifferentIndividuals i1 testontology)))))
+           (.getDifferentIndividuals i1 to)))))
 
 
 (deftest add-data-super
@@ -713,5 +710,5 @@ Assumes that fixture has been run
              [dp (o/datatypeproperty "a")
               sdp (o/datatypeproperty "b")]
              (o/add-data-superproperty
-              testontology
+              to
               dp sdp)))))
