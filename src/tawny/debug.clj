@@ -1,6 +1,4 @@
-(ns tawny.debug
-  (:use [tawny.util]
-        [tawny.owl]))
+(ns tawny.debug)
 
 (defn tracing-println [& args]
   (let [e (Exception.)
@@ -13,15 +11,12 @@
                 #(not
                   (.contains
                    (.getClassName l) %))
-                ["leiningen" "clojure"])
+                [
+                 "tawny.owl$default_ontology"
+                 "tawny.util$run_hook" "tawny.owl_test$createandsavefixture$"
+                 "tawny.debug" "leiningen" "clojure"])
          ]
       (printf "\tfn:%s:cl:%s:ln:%s\n"
               (.getFileName l)
               (.getClassName l)
               (.getLineNumber l)))))
-
-(defn hook-default []
-  (reset! default-ontology-hook [])
-  (add-hook default-ontology-hook
-            #(tracing-println "default ontology used")))
-
