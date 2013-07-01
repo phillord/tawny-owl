@@ -271,10 +271,11 @@ ontology is inconsistent"
                            (owl/ensure-class name)))))
 
 (defontfn iequivalent-class? [ontology name equiv]
-  (util/in?
-   (iequivalent-classes ontology name)
-   equiv))
+  (let [equivs
+        (iequivalent-classes ontology name)]
+   (some #{equiv} equivs)))
 
 (defontfn instances [ontology class]
-  (.getInstances (reasoner ontology)
-                class false))
+  (entities
+   (.getInstances (reasoner ontology)
+                  class false)))
