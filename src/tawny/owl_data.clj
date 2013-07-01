@@ -61,6 +61,24 @@ converting it from a string or IRI if necessary."
               ontology-data-factory
               (ensure-data-property o property)
               (ensure-data-property o super))))
+(def
+  ^{:private true}
+  datacharfuncs
+  {
+   functional #(.getOWLFunctionalDataPropertyAxiom %1 %2)
+   })
+
+(defbontfn add-data-characteristics
+  "Add a list of characteristics to the property."
+  [o property characteristic]
+  (when-not (get datacharfuncs characteristic)
+    (throw (IllegalArgumentException.
+            "Characteristic is not recognised:" characteristic)))
+  (add-axiom o
+             ((get datacharfuncs characteristic)
+              ontology-data-factory (ensure-data-property o property))))
+
+
 
 (def xsd:float
   (.getFloatOWLDatatype ontology-data-factory))
@@ -97,8 +115,7 @@ converting it from a string or IRI if necessary."
     (add-data-domain o dataproperty (:domain map))
     (add-data-range o dataproperty (:range map))
     (add-data-superproperty o dataproperty (:subproperty map))
-    ;;(add-data-characteristics o dataproperty (:characteristic map))
-
+    (add-data-characteristics o dataproperty (:characteristic map))
     (when-let [comment (:comment map)]
       (add-annotation o
                       dataproperty
