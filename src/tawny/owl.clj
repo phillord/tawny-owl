@@ -44,6 +44,8 @@
 
 
 
+
+
 ;; The next three forms all contain values that percolate across all the
 ;; namespaces that contain ontologies. Resetting all of these when owl.clj is
 ;; eval'd is a pain, hence they are all defonce.
@@ -827,7 +829,7 @@ a superproperty."
             "Characteristic is not recognised:" characteristic)))
   (add-axiom o
              ((get charfuncs characteristic)
-              ontology-data-factory (ensure-object-property property))))
+              ontology-data-factory (ensure-object-property o property))))
 
 (def
   ^{:doc "Frames to add to all new classes."
@@ -1338,7 +1340,7 @@ full details."
                *default-frames*)
        [:subclass :equivalent :annotation
         :name :comment :label :disjoint
-        :haskey]))))
+        :haskey :ontology]))))
 
 (defmacro defclass
   "Define a new class. Accepts a set number of frames, each marked
@@ -1671,16 +1673,16 @@ expressions."
 (defontfn superclass?
   "Returns true is name has superclass as a superclass"
   [o name superclass]
-  (let [namecls (ensure-class name)
-        superclasscls (ensure-class superclass)]
+  (let [namecls (ensure-class o name)
+        superclasscls (ensure-class o superclass)]
     (some #(.equals superclasscls %) (superclasses o name))))
 
 (defontfn direct-subclasses
   "Returns the direct subclasses of name."
   [o name]
-  (let [clz (ensure-class name)]
+  (let [clz (ensure-class o name)]
     (if (instance? OWLClass clz)
-      (.getSubClasses (ensure-class name)
+      (.getSubClasses (ensure-class o  name)
                       o)
       ())))
 
@@ -1688,8 +1690,8 @@ expressions."
 (defontfn subclass?
   "Returns true if name has subclass as a subclass"
   [o name subclass]
-  (let [namecls (ensure-class name)
-        subclasscls (ensure-class subclass)]
+  (let [namecls (ensure-class o name)
+        subclasscls (ensure-class o subclass)]
     (some #(.equals subclasscls %) (subclasses o name))))
 
 (defn- subclasses-1
