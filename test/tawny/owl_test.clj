@@ -40,8 +40,9 @@
      (o/ontology :iri "http://iri/" :prefix "iri"))))
 
 (defn createandsavefixture[test]
-  (tawny.util/add-hook o/default-ontology-hook
-                       #(tawny.debug/tracing-println "default ontology used") )
+  (when false
+    (tawny.util/add-hook o/default-ontology-hook
+                         #(tawny.debug/tracing-println "default ontology used") ))
   (o/with-ontology (createtestontology)
     (test)
     ;;(o/save-ontology "test.omn")
