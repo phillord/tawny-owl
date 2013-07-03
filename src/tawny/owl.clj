@@ -264,7 +264,7 @@ The following keys must be supplied.
      (alter-var-root
       vr#
       (fn [f#]
-        (fn [& args#]
+        (fn ~name [& args#]
           (apply ~function f# args#))))
      vr#))
 
