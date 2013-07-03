@@ -203,14 +203,24 @@ A set means recursively render the object unless it is the set."}
           types (.getTypes p ont)
           same (setmap #(.getSameIndividuals p %) ont)
           diff (setmap #(.getDifferentIndividuals p %) ont)
-          fact (apply clojure.set/union
-                      (map #(.getObjectPropertyValues p %) ont))
-          factnot
-          (apply clojure.set/union
-                 (map #(.getNegativeObjectPropertyValues p %) ont))
+          annotation
+          (setmap
+           #(.getAnnotations p %) ont)
+          fact
+          (clojure.set/union
+           (apply clojure.set/union
+                  (map #(.getDataPropertyValues p %) ont))
+           (apply clojure.set/union
+                  (map #(.getObjectPropertyValues p %) ont)))
+         factnot
+          (clojure.set/union
+           (apply clojure.set/union
+                  (map #(.getNegativeDataPropertyValues p %) ont))
+           (apply clojure.set/union
+                  (map #(.getNegativeObjectPropertyValues p %) ont)))
           ind (form p)
           ]
-      `(~(if (symbol? p)
+      `(~(if (symbol? ind)
            'defindividual
            'individual)
          ~(form p)
@@ -223,14 +233,16 @@ A set means recursively render the object unless it is the set."}
          ~@(when (< 0 (count diff))
              (cons :different
                    (form diff)))
+         ~@(when (< 0 (count annotation))
+             (cons :annotation
+                   (form annotation)))
          ~@(when (some
                   #(< 0 (count %))
                   [fact factnot])
-             (concat
-              [:fact]
-              (form [:fact fact])
-              (form [:factnot factnot])
-              ))))))
+             (doall (concat
+                     [:fact]
+                     (form [:fact fact])
+                     (form [:factnot factnot]))))))))
 
 
 
@@ -452,6 +464,11 @@ A set means recursively render the object unless it is the set."}
         }
        d))
 
+
+(defmethod form org.semanticweb.owlapi.model.OWLDataHasValue [p]
+  (list 'hasvalue
+        (form (.getProperty p))
+        (form (.getValue p))))
 
 ;; OWLObjectHasSelf
 ;; OWLObjectHasValue
