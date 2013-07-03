@@ -35,19 +35,44 @@
    }
   )
 
-(defn- as-data-impl [strategy owlobject]
+
+(defn- list-to-set [maybelist]
+  (if (seq? maybelist)
+    (apply hash-set maybelist)
+    maybelist))
+
+(defn into-map
+  "Translates an owl object into a clojure map.
+The map is similar to the form used to define an entity. Keys are the keywords
+used by tawny.owl (:subclass, :domain, etc). Value are sets. Each element of
+the set is either an OWL object, or, if it is a restriction, similar to that
+used to define a restriction but with OWLObjects instead of clojure symbols.
+In addition a :type key is added which describes the type of the object.
+"
+  [owlobject]
   (let [render
         (binding
-            [terminal-strategy strategy
+            [terminal-strategy :object
              tawny.lookup/all-iri-to-var-cache
              (tawny.lookup/all-iri-to-var)]
           (as-form owlobject))]
-    (merge (tawny.util/hashify
-            (drop 2 render))
-           {:type (get typemap (first render))})))
+    (apply hash-map
+           (concat
+            [:type (get typemap (first render))]
+            (map list-to-set
+                 (tawny.util/groupify
+                  (drop 2 render)))))))
 
-(def as-data
-  (partial as-data-impl :object))
-
-(def as-data-recurse
-  (partial as-data-impl (atom #{})))
+(defn into-map-with
+  "As into-map but merges result from other entities retrieved by (f entity).
+For example (into-map-with superclasses A) will retrieve all data for A and
+its superclasses. No attempt is made to ensure that the semantics of this data
+makes sense; for instance, while object restrictions which apply to a
+superclass also apply to the subclass, annotations do not; both will be
+present in the final map, however."
+  [f entity]
+  (apply merge-with clojure.set/union
+         (map #(dissoc (into-map %) :type)
+              (filter named-object?
+                      (conj (f entity)
+                            entity)))))
