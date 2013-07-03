@@ -865,7 +865,7 @@ value for each frame."
          (add-superproperty o property subproperty)
          (add-characteristics o property characteristic)
          (add-subpropertychain o property subpropertychain)
-         )]
+        )]
     (when (instance? String name)
       (add-a-simple-annotation
        o property
