@@ -283,60 +283,56 @@
   (is (instance?
        org.semanticweb.owlapi.model.OWLObjectComplementOf
        (do
-         (o/owlclass "b")
-         (o/owlnot "b"))))
+         (o/owlclass "b" :ontology to)
+         (o/owlnot to "b"))))
   (is (instance?
        org.semanticweb.owlapi.model.OWLObjectComplementOf
-       (o/owlnot (o/owlclass "d"))))
+       (o/owlnot to (o/owlclass "d" :ontology to))))
   (is (thrown? IllegalArgumentException
-               (o/owlnot)))
+               (o/owlnot to)))
   (is (instance?
        org.semanticweb.owlapi.model.OWLDataComplementOf
-       (o/data-not o/xsd:integer)))
+       (o/data-not to o/xsd:integer)))
   (is (instance?
        org.semanticweb.owlapi.model.OWLDataComplementOf
-       (o/owlnot o/xsd:integer)))
+       (o/owlnot to o/xsd:integer)))
 )
-
 
 (deftest someonly []
   (is
    (not
     (nil?
-     (o/someonly
-      (o/objectproperty "p") "a"))))
+     (o/someonly to
+      (o/objectproperty "p" :ontology to) "a"))))
 
 
   (is
    (not
     (nil?
-     (o/someonly (o/objectproperty "p") "a" "b")))))
+     (o/someonly to
+                 (o/objectproperty "p" :ontology to) "a" "b")))))
 
 
 (deftest disjointclasses []
   (is
-   (do (#'o/disjointclasses "a" "b" "c")))
+   (do (#'o/disjointclasses to "a" "b" "c")))
 
   (is
-   (do (#'o/disjointclasses
-        (o/owlclass "a") (o/owlclass "b")))))
+   (do (#'o/disjointclasses to
+        (o/owlclass "a" :ontology to) (o/owlclass "b" :ontology to)))))
 
 (deftest owlclass
   (is (= 1
-         (do (o/owlclass "test")
-             (.size (.getClassesInSignature
-                     (o/get-current-ontology))))))
+         (do (o/owlclass "test" :ontology to)
+             (.size (.getClassesInSignature to)))))
   (is (instance? org.semanticweb.owlapi.model.OWLClass
-                 (o/owlclass "test"))))
+                 (o/owlclass "test" :ontology to))))
 
 
 (deftest defclass
   (is (= 1
-         (do (o/defclass a)
-             (.size (.getClassesInSignature
-                     (o/get-current-ontology))))))
-  (is not
-      ))
+         (do (o/defclass a :ontology to)
+             (.size (.getClassesInSignature to))))))
 
 
 
@@ -347,36 +343,37 @@ Assumes that fixture has been run
 "
   []
 
-  (o/owlclass "a")
-  (o/owlclass "b" :subclass "a")
-  (o/owlclass "c" :subclass "b")
+  (o/owlclass "a" :ontology to)
+  (o/owlclass "b" :subclass "a" :ontology to)
+  (o/owlclass "c" :subclass "b" :ontology to)
 
-  (o/owlclass "d")
-  (o/owlclass "e" :subclass "b" "d")
+  (o/owlclass "d" :ontology to)
+  (o/owlclass "e" :subclass "b" "d" :ontology to)
   )
+
 (deftest superclass? []
   (is (not
        (nil?
         (do
           (test-class-with-hierarchy)
-          (o/direct-superclasses "c")))))
+          (o/direct-superclasses to "c")))))
   (is (do
         (test-class-with-hierarchy)
-        (o/superclass? "e" "a")))
+        (o/superclass? to "e" "a")))
   (is (not
        (do
          (test-class-with-hierarchy)
-         (o/superclass? "c" "e")))))
+         (o/superclass? to "c" "e")))))
 
 
 (deftest subclass? []
   (is
    (do (test-class-with-hierarchy)
-       (o/subclass? "a" "c")))
+       (o/subclass? to "a" "c")))
   (is
    (not
     (do (test-class-with-hierarchy)
-        (o/subclass? "c" "e")))))
+        (o/subclass? to "c" "e")))))
 
 
 (deftest disjointclasses []
