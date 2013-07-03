@@ -100,11 +100,11 @@ converting it from a string or IRI if necessary."
 ;; the ensure-class/property things can be extended to for an IRI to check if
 ;; it is already in the signature of any known ontology
 
-(defn datatypeproperty-explicit
+(defontfn datatypeproperty-explicit
   "Define a new datatype property with an explicit map"
-  [property map]
+  [o property map]
   (let [o (or (first (get map :ontology))
-                            (get-current-ontology))
+              o)
         dataproperty (ensure-data-property o property)]
     (.addAxiom owl-ontology-manager
                o
@@ -128,11 +128,11 @@ converting it from a string or IRI if necessary."
 
     dataproperty))
 
-(defn datatypeproperty
+(defontfn datatypeproperty
   "Define a new datatype property"
-  [name & frames]
+  [o name & frames]
   (datatypeproperty-explicit
-   name
+   o name
    (util/check-keys
     (merge-with concat
                 (util/hashify

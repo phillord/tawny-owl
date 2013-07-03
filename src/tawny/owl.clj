@@ -846,13 +846,13 @@ a superproperty."
 (declare add-a-simple-annotation)
 
 ;; object properties
-(defn objectproperty-explicit
+(defontfn objectproperty-explicit
   "Returns an objectproperty. This requires an hash with a list
 value for each frame."
-  [name {:keys [domain range inverse subproperty
+  [o name {:keys [domain range inverse subproperty
                 characteristic subpropertychain ontology]}]
   (let [o (or (first ontology)
-              (get-current-ontology))
+              o)
         property (ensure-object-property o name)
         axioms
         (concat
@@ -877,11 +877,11 @@ value for each frame."
     property))
 
 
-(defn objectproperty
+(defontfn objectproperty
   "Returns a new object property in the current ontology."
-  [name & frames]
+  [o name & frames]
   (objectproperty-explicit
-   name
+   o name
    (util/check-keys
     (merge-with concat
                 (util/hashify frames)
@@ -1216,13 +1216,12 @@ converting it from a string or IRI if necessary."
          deprecatedproperty
          args))
 
-(defn annotation-property-explicit
+(defontfn annotation-property-explicit
   "Add this annotation property to the ontology"
-  [property
+  [o property
    {:keys [comment label supers annotation ontology]}]
   (let [o
-        (or (first ontology)
-            (get-current-ontology))
+        (or (first ontology) o)
         property-object
         (ensure-annotation-property o property)
         ]
@@ -1282,17 +1281,18 @@ See 'defclass' for more details on the syntax."
                    {:owl true})
        property#)))
 
-(defn owlclass-explicit
+(defontfn owlclass-explicit
   "Creates a class in the current ontology.
 Frames is a map, keyed on the frame name, value a list of items (of other
 lists) containing classes. This function has a rigid syntax, and the more
 flexible 'owlclass' is normally prefered. However, this function should be
 slightly faster.
 "
-  [name {:keys [subclass equivalent disjoint annotation haskey
+  [o
+   name {:keys [subclass equivalent disjoint annotation haskey
                 comment label ontology]}]
   (let [o (or (first ontology)
-                     (get-current-ontology))
+              o)
         class (ensure-class o name)]
     ;; store classes if we are in a disjoint binding
     (when (seq? recent-axiom-list)
@@ -1308,11 +1308,11 @@ slightly faster.
       (add-disjoint o class disjoint)
       (add-annotation o class annotation)
       (when haskey
-        (add-haskey class haskey))
+        (add-haskey o class haskey))
 
       ;; change these to add to the annotation frame instead perhaps?
       (when comment
-        (add-annotation class
+        (add-annotation o class
                         (list (owlcomment
                                (first comment)))))
       (when (instance? String name)
@@ -1327,20 +1327,20 @@ slightly faster.
       class)))
 
 
-(defn owlclass
+(defontfn owlclass
   "Creates a new class in the current ontology. See 'defclass' for
 full details."
-  ([name & frames]
-     (owlclass-explicit
-      name
-      (util/check-keys
-       (merge-with
-               concat
-               (util/hashify frames)
-               *default-frames*)
-       [:subclass :equivalent :annotation
-        :name :comment :label :disjoint
-        :haskey :ontology]))))
+  [ontology name & frames]
+  (owlclass-explicit
+   ontology name
+   (util/check-keys
+    (merge-with
+     concat
+     (util/hashify frames)
+     *default-frames*)
+    [:subclass :equivalent :annotation
+     :name :comment :label :disjoint
+     :haskey :ontology])))
 
 (defmacro defclass
   "Define a new class. Accepts a set number of frames, each marked
@@ -1475,15 +1475,15 @@ or to ONTOLOGY if present."
 
 ;; need to support all the different frames here...
 ;; need to use hashify
-(defn individual
+(defontfn individual
   "Returns a new individual."
-  [name & frames]
+  [o name & frames]
   (let [hframes
         (util/check-keys
          (util/hashify frames)
          [:type :fact :same :different :ontology])
         o (or (first (:ontology hframes))
-                     (get-current-ontology))
+              o)
         individual (ensure-individual o name)]
     (add-axiom o
      (.getOWLDeclarationAxiom ontology-data-factory individual))
