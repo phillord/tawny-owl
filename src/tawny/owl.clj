@@ -1499,6 +1499,10 @@ or to ONTOLOGY if present."
     (when (:different hframes)
       (add-different o individual
                      (:different hframes)))
+    (when (instance? String name)
+      (add-a-simple-annotation
+       o individual (tawny-name name)))
+
     individual))
 
 
