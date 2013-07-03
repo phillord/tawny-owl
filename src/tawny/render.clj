@@ -364,13 +364,15 @@ A set means recursively render the object unless it is the set."}
         (form (.getFiller s))))
 
 (defmethod form OWLObjectUnionOf [u]
-  `(owlor ~@(form (.getOperands u))))
+  (list*
+   'owlor (form (.getOperands u))))
 
 (defmethod form OWLObjectIntersectionOf [c]
-  `(owland ~@(form (.getOperands c))))
+  (list*
+   'owland (form (.getOperands c))))
 
 (defmethod form OWLObjectAllValuesFrom [a]
-  (list 'owlall
+  (list 'owlonly
         (form (.getProperty a))
         (form (.getFiller a))))
 
@@ -482,29 +484,3 @@ A set means recursively render the object unless it is the set."}
     (println "Unknown form" (class e))
     (. Thread dumpStack)
     `(unknown form)))
-
-
-
-
-
-
-
-;; OWLDataAllValuesFrom
-;; OWLDataExactCardinality
-;; OWLDataHasValue
-;; OWLDataMaxCardinality
-;; OWLDataMinCardinality
-;; OWLDataSomeValuesFrom
-;; OWLObjectAllValuesFrom
-;; OWLObjectComplementOf
-;; OWLObjectExactCardinality
-;; OWLObjectHasSelf
-;; OWLObjectHasValue
-;; OWLObjectIntersectionOf
-;; OWLObjectMaxCardinality
-;; OWLObjectMinCardinality
-;; OWLObjectOneOf
-;; OWLObjectUnionOf
-
-
-
