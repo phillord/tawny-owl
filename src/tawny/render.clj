@@ -321,24 +321,21 @@ A set means recursively render the object unless it is the set."}
   ;; this big time.
   (tawny.util/domap form s))
 
+(defmethod form java.util.Map [m]
+  (tawny.util/dofor
+   [[k v] m]
+   `(~(form k) ~(form v))))
+
 (defn- entity-or-iri [c]
-  (cond
-   (= :resolve terminal-strategy)
-   (let [res (tawny.lookup/resolve-entity c)]
-     (if res
-       (symbol
-        (tawny.lookup/resolve-entity c))
-       `(~'iri ~(tawny.lookup/named-entity-as-string c))))
-   (= :object terminal-strategy)
-   c
-   (instance? clojure.lang.Atom terminal-strategy)
-   (do
-     (if-not (contains? @terminal-strategy c)
-       (do
-         (as-form c)
-         (swap! terminal-strategy conj c))
-       c))
-   :default (throw (IllegalArgumentException. "Unknown strategy"))))
+  (case terminal-strategy
+    :resolve
+    (let [res (tawny.lookup/resolve-entity c)]
+      (if res
+        (symbol
+         (tawny.lookup/resolve-entity c))
+        `(~'iri ~(tawny.lookup/named-entity-as-string c))))
+    :object
+    c))
 
 (defmethod form OWLClass [c]
   (entity-or-iri c))
