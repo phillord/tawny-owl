@@ -1348,11 +1348,11 @@ All arguments must of an instance of OWLClassExpression"
       (into-array OWLClassExpression
                   classlist)))))
 
-(defn disjointclasses
+(defontfn disjointclasses
   "Makes all the arguments disjoint.
 All arguments must be an instance of OWLClassExpression."
-  [& list]
-  (disjointclasseslist list))
+  [o & list]
+  (disjointclasseslist o list))
 
 (defn- get-create-individual
   "Returns an individual for the given name."
@@ -1542,7 +1542,9 @@ The first item may be an ontology, followed by options.
                     var-get-maybe
                     (drop-while keyword? rest))]
     ;; first we deal with subclasses
-    (add-subclass o superclass subclasses)
+    (util/domap
+     #(add-subclass o % superclass)
+     subclasses)
     (when
         (:disjoint options))
       (disjointclasseslist o subclasses)
@@ -1554,7 +1556,7 @@ The first item may be an ontology, followed by options.
   as-disjoint-subclasses
   {:doc "Declare all subclasses as disjoint"}
   [o superclass & subclasses]
-  (as-subclasses o superclass :disjoint subclasses))
+  (apply as-subclasses (list* o superclass :disjoint subclasses)))
 
 ;; hmmm, now how do we do the ontology thing here?
 (defmacro declare-classes

@@ -614,23 +614,25 @@ Assumes that fixture has been run
 
 (deftest as-disjoint-subclasses
   (is
-   (let [x (o/owlclass "x")]
-     (o/as-disjoint-subclasses
+   (let [x (o/owlclass to "x")]
+     (o/as-disjoint-subclasses to
       x
       (o/owlclass "y")
       (o/owlclass "z"))
 
-     (and
-      (o/disjoint?
-       (o/owlclass "y")
-       (o/owlclass "z"))
+     (o/save-ontology to "to.omn" :omn)
 
-      (o/superclass?
-       (o/owlclass "y")
+     (and
+      (o/disjoint? to
+       (o/owlclass to "y")
+       (o/owlclass to "z"))
+      
+      (o/superclass? to
+       (o/owlclass to "y")
        x)
 
-      (o/superclass?
-       (o/owlclass "z")
+      (o/superclass? to
+       (o/owlclass to "z")
        x)))))
 
 (deftest prefix-suffix-symbol
