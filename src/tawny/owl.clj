@@ -831,18 +831,6 @@ a superproperty."
              ((get charfuncs characteristic)
               ontology-data-factory (ensure-object-property o property))))
 
-(def
-  ^{:doc "Frames to add to all new classes."
-    :dynamic true
-    :private true}
-  *default-frames* nil)
-
-(def
-  ^{:doc "Axioms we have added recently"
-    :dynamic true}
-  recent-axiom-list
-  nil)
-
 (declare add-a-simple-annotation)
 
 ;; object properties
@@ -870,10 +858,6 @@ value for each frame."
       (add-a-simple-annotation
        o property
        (tawny-name name)))
-    ;; store classes if we are in an inverse binding
-    (when (seq? recent-axiom-list)
-      (set! recent-axiom-list
-            (concat (list property) recent-axiom-list)))
     property))
 
 
@@ -883,9 +867,7 @@ value for each frame."
   (objectproperty-explicit
    o name
    (util/check-keys
-    (merge-with concat
-                (util/hashify frames)
-                *default-frames*)
+    (util/hashify frames)
     [:domain :range :inverse :subproperty :characteristic
      :ontology])))
 
@@ -1294,11 +1276,6 @@ slightly faster.
   (let [o (or (first ontology)
               o)
         class (ensure-class o name)]
-    ;; store classes if we are in a disjoint binding
-    (when (seq? recent-axiom-list)
-      (set! recent-axiom-list
-            (concat (list class)
-                    recent-axiom-list)))
     ;; create the class
     (do
       ;; add-class returns a single axiom -- concat balks at this
@@ -1334,10 +1311,7 @@ full details."
   (owlclass-explicit
    ontology name
    (util/check-keys
-    (merge-with
-     concat
-     (util/hashify frames)
-     *default-frames*)
+    (util/hashify frames)
     [:subclass :equivalent :annotation
      :name :comment :label :disjoint
      :haskey :ontology])))
@@ -1530,90 +1504,57 @@ or to ONTOLOGY if present."
                                (.getOWLImportsDeclaration
                                 ontology-data-factory
                                 (get-iri o))))))
-;; convienience macros
-;; is this necessary? is as-disjoint-subclasses not enough?
-(defmacro as-disjoint [& body]
-  "All entities declared in scope are declared as disjoint.
+
+(defn- var-get-maybe [var-maybe]
+  (if (var? var-maybe)
+    (var-get var-maybe)
+    var-maybe))
+
+(defontfn as-disjoint
+  {:doc "All entities declared in scope are declared as disjoint.
 See also 'as-subclasses'."
-  `(do ;; delete all recent classes
-     (binding [tawny.owl/recent-axiom-list '()]
-       ;; do the body
-       ~@body
-       ;; set them disjoint if there is more than one. if there is only one
-       ;; then it would be illegal OWL2. this macro then just shields the body
-       ;; from any other as-disjoint statements.
-       (when (< 1 (count tawny.owl/recent-axiom-list))
-         (tawny.owl/disjointclasseslist
-          tawny.owl/recent-axiom-list)))))
+   :arglists '([ontology & classes] [& classes])}
+  [o classes]
+  (disjointclasseslist
+   o (map var-get-maybe classes)))
 
-(defmacro as-inverse [& body]
-  "The two properties declared in the dynamic scope of this macro
-are declared as inverses."
-  `(do
-     (binding [tawny.owl/recent-axiom-list '()]
-       ~@body
-       (when-not (= (count tawny.owl/recent-axiom-list) 2)
-         (throw
-          (IllegalArgumentException.
-           "Can only have two properties in as-inverse")))
-       (tawny.owl/add-inverse
-        (first tawny.owl/recent-axiom-list)
-        (rest tawny.owl/recent-axiom-list))
-       )))
+(defontfn as-inverse
+  {:doc "Declare the two properties as inverse"
+   :arglist '([ontology prop1 prop2] [prop1 prop2])}
+  [o p1 p2]
+  (add-inverse o
+   (var-get-maybe p1)
+   (var-get-maybe p2)))
 
-
-;; specify default frames which should be merged with additional frames passed
-;; in. place into a dynamic variable and then use (merge-with concat) to do
-;; the business
-(defmacro with-default-frames [frames & body]
-  "Adds a standard frame to all entities declared within its scope.
-This macro is lexically scoped."
-  `(binding [tawny.owl/*default-frames*
-             (tawny.util/hashify ~frames)]
-     ~@body))
-
-
-(defmacro as-disjoint-subclasses
-  "All declared subclasses in body. Convienience
-macro over 'as-subclasses'"
-  [superclass & body]
-  `(as-subclasses ~superclass :disjoint ~@body))
-
-(defmacro as-subclasses [superclass & body]
-  "All classes defined within body are given a superclass.
-The first items in body can also be options.
+(defontfn
+  as-subclasses
+  {:doc "All classes are given the superclass.
+The first item may be an ontology, followed by options.
 
 :disjoint also sets the class disjoint.
-:cover also makes the subclasses cover the superclass.
+:cover also makes the subclasses cover the superclass."
+   :arglists '([ontology superclass options & classes]
+                 [superclass options & classes]
+                   [superclass & classes])}
+  [o superclass & rest]
+  (let [options (into #{} (take-while keyword? rest))
+        subclasses (map
+                    var-get-maybe
+                    (drop-while keyword? rest))]
+    ;; first we deal with subclasses
+    (add-subclass o superclass subclasses)
+    (when
+        (:disjoint options))
+      (disjointclasseslist o subclasses)
+    (when (:cover options)
+      (add-equivalent o superclass
+                      (owlor subclasses)))))
 
-This macro is dynamically scoped."
-  (let [options# (vec (take-while keyword? body))
-        rest# (drop-while keyword? body)]
-    `(binding [tawny.owl/recent-axiom-list '()]
-       (with-default-frames [:subclass ~superclass]
-        ~@rest#)
-       (#'tawny.owl/subclass-options
-        ~options#
-        ~superclass
-        tawny.owl/recent-axiom-list))))
-
-(defn- subclass-options
-  "Handles disjoint and covering axioms on subclasses."
-  [options superclass subclasses]
-  (let [optset (into #{} options)]
-    (when (and
-           (contains? optset :disjoint)
-           ;; set them disjoint if there is more than one. if there is only one
-           ;; then it would be illegal OWL2. this macro then just shields the body
-           ;; from any other as-disjoint statements.
-           (< 1 (count tawny.owl/recent-axiom-list)))
-      (disjointclasseslist
-       recent-axiom-list))
-    (when (and
-           (contains? optset :cover))
-      (add-equivalent
-       superclass
-       (list (owlor recent-axiom-list))))))
+(defontfn
+  as-disjoint-subclasses
+  {:doc "Declare all subclasses as disjoint"}
+  [o superclass & subclasses]
+  (as-subclasses o superclass :disjoint subclasses))
 
 ;; hmmm, now how do we do the ontology thing here?
 (defmacro declare-classes
@@ -1626,9 +1567,10 @@ have any default frames or disjoints if `as-disjoints' or
 See `defclassn' to define many classes with frames.
 "
   [& names]
-  `(do ~@(map
-          (fn [x#]
-            `(defclass ~x#))
+  `(list
+    ~@(map
+       (fn [x#]
+         `(defclass ~x#))
           names)))
 
 (defmacro defclassn
@@ -1639,7 +1581,7 @@ Each class and associated frames should be supplied as a vector.
 See `declare-classes' where frames (or just default frames) are not needed.
 "
   [& classes]
-  `(do ~@(map
+  `(list ~@(map
           (fn [x#]
             `(defclass ~@x#)) classes)))
 
@@ -1722,15 +1664,17 @@ expressions."
    (.getDisjointClasses a o)
    b))
 
-
 (defontfn equivalent?
   "Returns t iff classes are asserted to be equivalent."
   [o a b]
   (contains?
-   (.getEquivalentClasses a o)
-   b))
+   (.getEquivalentClasses a o) b))
 
-
+(defontfn inverse?
+  "Returns t iff properties are asserted to be inverse"
+  [o p1 p2]
+  (contains?
+   (.getInverses p1 o) p2))
 ;; some test useful macros
 
 ;; currently doesn't support an ontology argument

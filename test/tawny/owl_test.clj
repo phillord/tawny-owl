@@ -552,6 +552,8 @@ Assumes that fixture has been run
      (#'o/disjointclasses a b)
      (o/disjoint? a b))))
 
+
+
 ;; TODO lots of macros are in serious need of a test
 
 (deftest as-subclasses

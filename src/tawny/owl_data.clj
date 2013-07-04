@@ -134,10 +134,8 @@ converting it from a string or IRI if necessary."
   (datatypeproperty-explicit
    o name
    (util/check-keys
-    (merge-with concat
-                (util/hashify
-                 frames)
-                *default-frames*)
+    (util/hashify
+     frames)
     [:domain :range :annotation :characteristic
      :subproperty :equivalent :disjoint :ontology
      :label :comment])))
@@ -201,10 +199,7 @@ which is an OWLDatatype object.
   (datatype-explicit
    name
    (util/check-keys
-    (merge-with
-     concat
-     (util/hashify frames)
-     *default-frames*)
+    (util/hashify frames)
     [:equivalent :annotation :label :comment])))
 
 
