@@ -152,7 +152,7 @@ converting it from a string or IRI if necessary."
        datatype#)))
 
 
-(defn literal
+(defontfn literal
   "Returns a OWL2 literal.
 
 `literal' is the value of the literal and must be a string or a number. Anything
@@ -160,7 +160,7 @@ else must by coerced into a string manually. Options can also be specified,
 with :lang definining the language where `literal' is a string, and :type
 which is an OWLDatatype object.
 "
-  [literal & {:keys [lang type]}]
+  [_ literal & {:keys [lang type]}]
   (cond
    lang
    (.getOWLLiteral ontology-data-factory literal lang)
@@ -170,10 +170,10 @@ which is an OWLDatatype object.
    (.getOWLLiteral ontology-data-factory literal)))
 
 
-(defn datatype-explicit [name frame]
+(defontfn datatype-explicit [o name frame]
   (let [o
         (or (first (get frame :ontology))
-            (get-current-ontology))
+            o)
         datatype
         (.getOWLDatatype
          ontology-data-factory
@@ -195,9 +195,9 @@ which is an OWLDatatype object.
         ontology-data-factory datatype n)))
     datatype))
 
-(defn datatype [name & frames]
+(defontfn datatype [o name & frames]
   (datatype-explicit
-   name
+   o name
    (util/check-keys
     (util/hashify frames)
     [:equivalent :annotation :label :comment])))

@@ -274,13 +274,18 @@ The following keys must be supplied.
 
 (declare get-current-ontology)
 (defn default-ontology [f & args]
-  (if (instance?
-       org.semanticweb.owlapi.model.OWLOntology (first args))
-    (apply f args)
-    (do
-      ;; a call back so we can block this if we choose
-      (util/run-hook default-ontology-hook)
-      (apply f (get-current-ontology) args))))
+  (let [pre-ontology
+        (drop-while #(not (= :ontology %)) args)
+        ontology (second pre-ontology)]
+    (if (instance?
+         org.semanticweb.owlapi.model.OWLOntology (first args))
+      (apply f args)
+      (if ontology
+        (apply f ontology args)
+        (do
+          ;; a call back so we can block this if we choose
+          (util/run-hook default-ontology-hook)
+          (apply f (get-current-ontology) args))))))
 
 (defmacro defontfn
   "Like defn, but automatically adds the current-ontology to the args
@@ -1234,10 +1239,11 @@ converting it from a string or IRI if necessary."
     (add-annotation o property-object annotation)
     property-object))
 
-(defn annotation-property
-  "Creates a new annotation property."
-  [name & frames]
-  (annotation-property-explicit
+(defontfn annotation-property
+  {:doc "Creates a new annotation property."
+   :arglists '([ontology name & frames] [name & frames])}
+  [o name & frames]
+  (annotation-property-explicit o
    name
    (util/check-keys
     (util/hashify frames)
@@ -1550,7 +1556,7 @@ The first item may be an ontology, followed by options.
       (disjointclasseslist o subclasses)
     (when (:cover options)
       (add-equivalent o superclass
-                      (owlor subclasses)))))
+                      (owlor o subclasses)))))
 
 (defontfn
   as-disjoint-subclasses
@@ -1597,11 +1603,10 @@ See `declare-classes' where frames (or just default frames) are not needed.
 Name can be either a class or a string name. Returns a list of class
 expressions."
   [o name]
-  (let [clz (ensure-class name)]
+  (let [clz (ensure-class o name)]
     ;; general Class expressions return empty
     (if (instance? OWLClass clz)
-      (.getSuperClasses clz
-                        o)
+      (.getSuperClasses clz o)
       ())))
 
 ;; does the OWL API really not do this for me?
@@ -1686,29 +1691,46 @@ expressions."
 ;; currently doesn't support an ontology argument
 ;; modified from with-open
 (defmacro with-probe-entities
-  "Evaluate the body with a number of entities defined. Then
-delete these entities from the ontology"
-  [bindings & body]
-  (when-not (vector? bindings)
-    (IllegalArgumentException. "with-probe-entities requires a vector"))
-  (when-not (even? (count bindings))
-    (IllegalArgumentException.
-     "with-probe-entities requires an even number of forms in binding vector"))
-  (cond
-   (= (count bindings) 0)
-   `(do ~@body)
-   (symbol? (bindings 0))
-   `(let ~(subvec bindings 0 2)
-      (with-probe-entities
-        ~(subvec bindings 2)
-        ;; try block just so we can use finally
-        (try
-          ~@body
-          (finally
-            (tawny.owl/remove-entity ~(bindings 0))))))
-   :else
-   (throw (IllegalArgumentException.
-           "with-probe-entities only allows Symbols in bindings"))))
+{:doc
+ "Evaluate BODY with a number of entities defined. Then delete these entities
+  from the ontology. BINDINGS are a vector with similar to let. The first
+  argument should evaluate to the ontology, or the current ontology will be
+  used. Statements inside bindings are evaluated with the current-ontology set
+  to ONTOLOGY. Entities added to ONTOLOGY are removed from ONTOLOGY; so if
+  they are added to a different ontology explicitly, they will remain there
+  after the completion of this form."
+ :arglists '([bindings & body] [ontology bindings & body])
+ }
+
+  [& args]
+  (let [o (take-while #(not (vector? %)) args)
+        o (or (first o) `(get-current-ontology))
+        rst (drop-while #(not (vector? %)) args)
+        bindings (first rst)
+        body (rest rst)
+        ]
+    (when-not (vector? bindings)
+      (IllegalArgumentException. "with-probe-entities requires a vector"))
+    (when-not (even? (count bindings))
+      (IllegalArgumentException.
+       "with-probe-entities requires an even number of forms in binding vector"))
+    (cond
+     (= (count bindings) 0)
+     `(do
+        ~@body)
+     (symbol? (bindings 0))
+     `(with-ontology ~o
+        (let ~(subvec bindings 0 2)
+          (with-probe-entities ~o
+            ~(subvec bindings 2)
+            ;; try block just so we can use finally
+            (try
+              ~@body
+              (finally
+                (tawny.owl/remove-entity ~o ~(bindings 0)))))))
+     :else
+     (throw (IllegalArgumentException.
+             "with-probe-entities only allows Symbols in bindings")))))
 
 
 (defmacro with-probe-axioms
@@ -1718,27 +1740,35 @@ delete these axioms from the ontology.
 This is mostly useful for test cases. Axioms can be added, consistency
 or inconsistency can be checked then removed, leaving the ontology
 effectively unchanged."
-  [bindings & body]
-  (when-not (vector? bindings)
-    (IllegalArgumentException. "with-probe-axioms requires a vector"))
-  (when-not (even? (count bindings))
-    (IllegalArgumentException.
-     "with-probe-axioms requires an even number of forms in binding vector"))
-  (cond
-   (= (count bindings) 0)
-   `(do ~@body)
-   (symbol? (bindings 0))
-   `(let ~(subvec bindings 0 2)
-      (with-probe-axioms
-        ~(subvec bindings 2)
-        ;; try block just so we can use finally
-        (try
-          ~@body
-          (finally
-            (tawny.owl/remove-axiom ~(bindings 0))))))
-   :else
-   (throw (IllegalArgumentException.
-           "with-probe-axioms only allows Symbols in bindings"))))
+  [& args]
+  (let [o (take-while #(not (vector? %)) args)
+        o (or (first o) `(get-current-ontology))
+        rst (drop-while #(not (vector? %)) args)
+        bindings (first rst)
+        body (rest rst)
+        ]
+    (when-not (vector? bindings)
+      (IllegalArgumentException. "with-probe-axioms requires a vector"))
+    (when-not (even? (count bindings))
+      (IllegalArgumentException.
+       "with-probe-axioms requires an even number of forms in binding vector"))
+    (cond
+     (= (count bindings) 0)
+     `(do ~@body)
+     (symbol? (bindings 0))
+     `(with-ontology ~o
+       (let ~(subvec bindings 0 2)
+         (with-probe-axioms ~o
+           ~(subvec bindings 2)
+           ;; try block just so we can use finally
+           (try
+             ~@body
+             (finally
+               (tawny.owl/remove-axiom ~o ~(bindings 0)))))))
+     :else
+     (throw (IllegalArgumentException.
+             "with-probe-axioms only allows Symbols in bindings")))))
+
 
 (defn owlthing
   "Object representing OWL thing."
