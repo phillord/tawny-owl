@@ -1560,20 +1560,24 @@ The first item may be an ontology, followed by options.
 
 ;; hmmm, now how do we do the ontology thing here?
 (defmacro declare-classes
-  "Declares all the classes given in names.
+  "Declares all the classes given in args. Any args including and following
+the first keyword will be interpreted as frames for all the classes. Frame
+args will be evaluated multiple times so should be side-effect free.
 
-This is mostly useful for forward declarations, but the classes declared will
-have any default frames or disjoints if `as-disjoints' or
-`with-default-frames' or equivalent macros are in use.
+This is mostly useful for forward declarations.
 
-See `defclassn' to define many classes with frames.
+See `defclassn' to define many classes with different frames.
 "
-  [& names]
-  `(list
-    ~@(map
-       (fn [x#]
-         `(defclass ~x#))
-          names)))
+  [& args]
+  (let [nk (comp not keyword?)
+        names (take-while nk args)
+        frames (drop-while nk args)
+        ]
+    `(list
+      ~@(map
+         (fn [x#]
+           `(defclass ~x# ~@frames))
+         names))))
 
 (defmacro defclassn
   "Defines many classes at once.
