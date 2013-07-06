@@ -165,7 +165,7 @@
       (let [reas
             (.createNonBufferingReasoner
              (reasoner-factory)
-             (owl/get-current-ontology)
+             ontology
              (SimpleConfiguration.
               ((deref *reasoner-progress-monitor*))))]
         (dosync
@@ -186,7 +186,6 @@
   ;; add in do, so that we can't do one without the other
   (util/add-hook owl/remove-ontology-hook
                  discard-reasoner))
-
 
 (defontfn consistent?
   "Returns true if the ontology is consistent.
@@ -239,7 +238,7 @@ ontology is inconsistent"
   (no-top-bottom
    (entities
     (.getSuperClasses (reasoner ontology)
-                      (owl/ensure-class name)
+                      (owl/ensure-class ontology name)
                       false))))
 
 ;; move this to using isuperclasses
@@ -250,11 +249,11 @@ ontology is inconsistent"
         (isuperclasses ontology name)]
     (some #{superclass} superclasses)))
 
-(defontfn isubclasses [ontology name]
+(defontfn isubclasses [o name]
   (no-top-bottom
    (entities
-    (.getSubClasses (reasoner ontology)
-                    (owl/ensure-class name)
+    (.getSubClasses (reasoner o)
+                    (owl/ensure-class o name)
                     false))))
 
 (defontfn isubclass?
@@ -268,7 +267,7 @@ ontology is inconsistent"
   (no-top-bottom
    (entities
     (.getEquivalentClasses (reasoner ontology)
-                           (owl/ensure-class name)))))
+                           (owl/ensure-class ontology name)))))
 
 (defontfn iequivalent-class? [ontology name equiv]
   (let [equivs

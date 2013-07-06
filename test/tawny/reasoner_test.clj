@@ -22,20 +22,23 @@
             [tawny.reasoner :as r])
   [:use clojure.test])
 
-
+(def to nil)
 (defn createtestontology[]
-  (o/ontology 
-   :iri "http://iri/"
-   :prefix "iri:"))
+  (alter-var-root
+   #'to
+   (fn [x]
+     (o/ontology
+      :iri "http://iri/"
+      :prefix "iri:"))))
 
 (defn createandsavefixture[test]
   (binding
       [r/*reasoner-progress-monitor*
        (atom r/reasoner-progress-monitor-silent)]
-    (o/with-ontology
-      (createtestontology)
-      (test)
-      (o/save-ontology "test-reasoner.omn"))))
+    (createtestontology)
+    (test)
+    ;;(o/save-ontology to "test-reasoner.omn")
+    ))
 
 
 
@@ -59,27 +62,27 @@
 (defn with-ontology []
   (is
    (not
-    (nil? (o/get-current-ontology)))))
+    (nil? to))))
 
 (defn ontology-abc []
-  (o/owlclass "a")
-  (o/owlclass "b")
-  (o/owlclass "c" :subclass "a" "b"))
+  (o/owlclass to "a")
+  (o/owlclass to "b")
+  (o/owlclass to "c" :subclass "a" "b"))
 
 (defn ontology-abc-indc []
   (ontology-abc)
-  (o/individual "indC" :type "c"))
+  (o/individual to "indC" :type "c"))
 
 
 (defn ontology-abc-reasoning []
   ;; simple ontology -- c should be reasoned to be a subclass of a.
-  (o/owlclass "a"
+  (o/owlclass to "a"
               :equivalent 
-              (o/object-some "p" "b"))
-  (o/owlclass "b")
-  (o/owlclass "c"
+              (o/object-some to "p" "b"))
+  (o/owlclass to "b")
+  (o/owlclass to "c"
               :subclass 
-              (o/object-some "p" "b")))
+              (o/object-some to "p" "b")))
 
 
 (defn far-reasoner [func reasonerlist]
@@ -113,14 +116,14 @@
     IllegalStateException
     (dosync 
      (ref-set r/vreasoner-factory nil)
-     (r/reasoner)))))
+     (r/reasoner to)))))
 
 (deftest empty-consistent? 
   ;; empty only is consistent
   (is
    (every?
     identity
-    (far #(r/consistent?)))))
+    (far #(r/consistent? to)))))
 
 
 (deftest ind-consistent? 
@@ -130,7 +133,7 @@
     identity
     (do
       (ontology-abc-indc)
-      (far #(r/consistent?))))))
+      (far #(r/consistent? to))))))
 
 
 (deftest simple-consistent []
@@ -140,7 +143,7 @@
     identity
     (do
       (ontology-abc)
-      (far #(r/consistent?))))))
+      (far #(r/consistent? to))))))
 
 (deftest disjoint-consistent []
   ;; without ind -- should be incoherent
@@ -149,8 +152,8 @@
     complement
     (do
       (ontology-abc)
-      (#'o/disjointclasses "a" "b")
-      (far #(r/consistent?))))))
+      (o/disjointclasses to "a" "b")
+      (far #(r/consistent? to))))))
 
   
 (deftest disjoint-and-individual []
@@ -160,8 +163,8 @@
     complement
     (do
       (ontology-abc-indc)
-      (#'o/disjointclasses "a" "b")
-      (far #(r/consistent?))))))
+      (o/disjointclasses to "a" "b")
+      (far #(r/consistent? to))))))
 
 (deftest unsatisfiable []
 
@@ -169,15 +172,15 @@
    (every?
     #(= 0 (count %))
     (do (ontology-abc)
-        (far #(r/unsatisfiable)))))
+        (far #(r/unsatisfiable to)))))
 
   (is
    (every?
     #(= 1 (count %))
     (do
       (ontology-abc)
-      (#'o/disjointclasses "a" "b")
-      (far #(r/unsatisfiable))))))
+      (o/disjointclasses to "a" "b")
+      (far #(r/unsatisfiable to))))))
 
 ;; had lots of problems getting this working so lets try with a single reasoner
 (deftest single-coherent
@@ -185,7 +188,7 @@
    (do 
      (r/reasoner-factory :hermit)
      (ontology-abc)
-     (r/coherent?))))
+     (r/coherent? to))))
 
 
 (deftest coherent 
@@ -195,7 +198,7 @@
     (do
       (ontology-abc)
       (far #(do 
-              (r/coherent?)))))))
+              (r/coherent? to)))))))
 
 
 (deftest incoherent
@@ -204,8 +207,8 @@
     not
     (do
       (ontology-abc)
-      (#'o/disjointclasses "a" "b")
-      (far #(r/coherent?))))))
+      (o/disjointclasses to "a" "b")
+      (far #(r/coherent? to))))))
 
 
 (deftest isuperclass?
@@ -214,9 +217,9 @@
     identity
     (do 
       (ontology-abc-reasoning)
-      (far #(r/isuperclass?
-             (o/owlclass "c") 
-             (o/owlclass "a")))))))
+      (far #(r/isuperclass? to
+             (o/owlclass to "c") 
+             (o/owlclass to "a")))))))
 
 (deftest isubclass?
   (is
@@ -224,9 +227,9 @@
     identity
     (do
       (ontology-abc-reasoning)
-      (far #(r/isubclass?
-             (o/owlclass "a")
-             (o/owlclass "c"))))
+      (far #(r/isubclass? to
+             (o/owlclass to "a")
+             (o/owlclass to "c"))))
     )))
 
 
@@ -239,10 +242,9 @@
     not
     (do
       (ontology-abc)
-      (o/with-probe-axioms
-        [a (#'o/disjointclasses "a" "b")]
-        (o/save-ontology "test-probe.omn" :omn)
-        (doall (far #(r/coherent?)))))))
+      (o/with-probe-axioms to
+        [a (o/disjointclasses to "a" "b")]
+        (doall (far #(r/coherent? to)))))))
 
   ;; add a disjoint test whether it breaks after
   (is 
@@ -250,13 +252,14 @@
     identity
     (do 
       (ontology-abc)
-      (o/with-probe-axioms
-        [a (#'o/disjointclasses "a" "b")])
-      (o/save-ontology "test-probe-after.omn" :omn)
-      (doall (far #(r/coherent?)))))))
+      (o/with-probe-axioms to
+        [a (o/disjointclasses to "a" "b")])
+      (doall (far #(r/coherent? to)))))))
 
 
-(deftest reasoner-gui-maybe
-  (is
-   (instance? org.semanticweb.owlapi.reasoner.ReasonerProgressMonitor
-              (r/reasoner-progress-monitor-gui-maybe)) ()))
+;; Nice idea for a test, but in a non-headless environment, it starts
+;; a GUI thread, and then nothing exists.
+;; (deftest reasoner-gui-maybe
+;;   (is
+;;    (instance? org.semanticweb.owlapi.reasoner.ReasonerProgressMonitor
+;;               (r/reasoner-progress-monitor-gui-maybe)) ()))
