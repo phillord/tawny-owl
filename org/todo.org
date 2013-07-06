@@ -8,6 +8,18 @@
   :severity_ALL: mild medium high critical
   :END:
 
+
+** Should be able to pass multiple comments or labels
+
+      (when comment
+        (add-annotation o class
+                        (list (owlcomment
+                               (first comment)))))
+
+    doesn't make sense.
+
+
+
 ** Move the reasoner code into ontology options
    
    :PROPERTIES:
