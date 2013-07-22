@@ -41,6 +41,5 @@
   (tawny-annotation-property
    (iri (str tawny-base-url "name"))))
 
-
 (defn- tawny-name [literal]
   (tawny-annotation tawny-name-property literal))

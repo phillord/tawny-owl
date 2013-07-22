@@ -38,19 +38,15 @@
               (name superclass#)))]
 
     ;; need to think what to do about the doc string. 
-    `(do 
+    `(do
        ;; need a forward declaration
        (o/defclass ~superclass#)
        ;; haven't added documentation to defoproperty yet
        (o/defoproperty ~propertyname#
          :characteristic o/functional
          )
-       (o/with-default-frames
-         [:subclass ~superclass#
-          ~@documentation#
-          ]
-        
-         (o/declare-classes ~@values#))
+       (o/declare-classes
+        ~@values# :subclass ~superclass#)
 
        ;; put in covering axiom once we worked out how to do this. 
        (o/defclass ~superclass#

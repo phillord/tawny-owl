@@ -84,8 +84,6 @@
          (line "Comments:")
          (doseq [c comment]
            (line "\t" (.getValue c)))
-         
-         
          (line "Full Definition:")
          (o/with-ontology ontology
            (clojure.pprint/pprint
