@@ -1855,6 +1855,9 @@ for example, building two interlocking ontologies with different OWL profiles.
 (defmethod refine OWLObjectProperty [& args]
   (apply objectproperty args))
 
+(defmethod refine OWLAnnotationProperty [& args]
+  (apply annotation-property args))
+
 (defmacro defrefineto
   "Takes an existing definition, add more frames.
 The first argument should be a symbol that will hold the
