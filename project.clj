@@ -36,7 +36,7 @@
                  [robert/hooke "1.3.0"]
 
                  ;; reasoners
-                 [org.semanticweb.elk/elk-owlapi "0.3.2"]
+                 [org.semanticweb.elk/elk-owlapi "0.4.0"]
                  [org.semanticweb.hermit/HermiT "1.3.7.3"]
 
                  ;; need to access log4j to control elk.
