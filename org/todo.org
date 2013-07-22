@@ -8,6 +8,30 @@
   :severity_ALL: mild medium high critical
   :END:
 
+** Default ontology must be set for seealso 
+
+As a much wider problem, we sometimes require the default ontology to be set
+when it is not used. Generally, this comes about because we have functions
+which can take OWL API objects (in which case we don't need the ontology),
+but can also take strings (in which case we need to know how to transform to
+objects, which uses the ontology object). 
+
+The current crash comes because defontfn calls default-ontology, which in
+turn calls "get-current-ontology" which crashes if there isn't one. 
+
+Solution 
+
+get-current-ontology-or-nil
+
+which returns nil when there is no currentonlogy -- rewrite
+get-current-ontology to use. 
+
+write new macro 
+
+defmontfn (maybe ontology), which calls get-current-ontology or nil.
+
+Move most functions to this. The ensure-class functions will still crash when
+necessary. But seealso functions will work because they use OWL API object.
 
 ** Should be able to pass multiple comments or labels
 
