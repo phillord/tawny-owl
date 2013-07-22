@@ -1520,7 +1520,7 @@ or to ONTOLOGY if present."
   {:doc "All entities declared in scope are declared as disjoint.
 See also 'as-subclasses'."
    :arglists '([ontology & classes] [& classes])}
-  [o classes]
+  [o & classes]
   (disjointclasseslist
    o (map var-get-maybe classes)))
 
@@ -1544,9 +1544,10 @@ The first item may be an ontology, followed by options.
                    [superclass & classes])}
   [o superclass & rest]
   (let [options (into #{} (take-while keyword? rest))
-        subclasses (map
-                    var-get-maybe
-                    (drop-while keyword? rest))]
+        subclasses
+        (map
+         var-get-maybe
+         (flatten (drop-while keyword? rest)))]
     ;; first we deal with subclasses
     (util/domap
      #(add-subclass o % superclass)
