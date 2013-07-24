@@ -6,9 +6,34 @@
   :status_ALL: open closed assigned inprogress
   :type_ALL: bug feature performance refactor
   :severity_ALL: mild medium high critical
+  :scheduled_release_ALL: 0.12 1.0 1.1
   :END:
 
+** Clojure IDs as annotation
+
+   :PROPERTIES:
+   :type:     feature
+   :severity: medium
+   :scheduled_release: 0.12
+   :status:   closed
+   :END:
+
+The identifiers used within clojure should be placed onto the ontology as
+annotations. The idea here is that someone using clojure-owl to generate an
+OWL file, should be able to read this OWL file in and recreate what they
+started with (at least in terms of ids and so on). 
+
+
+
+
 ** Should be able to pass multiple comments or labels
+   :PROPERTIES:
+   :type:     bug
+   :status:   open
+   :severity: mild
+   :scheduled_release: 1.0
+   :END:
+   
 
       (when comment
         (add-annotation o class
@@ -16,7 +41,6 @@
                                (first comment)))))
 
     doesn't make sense.
-
 
 
 ** Move the reasoner code into ontology options
@@ -33,6 +57,8 @@
    :PROPERTIES:
    :type:     feature
    :severity: medium
+   :status:   open
+   :scheduled_release:  1.1
    :END:
 
 Would like to be able to interpolate comments and labels. Currently, we
@@ -51,18 +77,6 @@ go through a map stage (guess it's an array map).
 Could hook into the owlclass-explicit function and add stuff at the end. 
 
 
-** Clojure IDs as annotation
-   :PROPERTIES:
-   :type:     feature
-   :severity: medium
-   :END:
-
-The identifiers used within clojure should be placed onto the ontology as
-annotations. The idea here is that someone using clojure-owl to generate an
-OWL file, should be able to read this OWL file in and recreate what they
-started with (at least in terms of ids and so on). 
-
-
 ** Version ID
    :PROPERTIES:
    :type:     feature
@@ -71,43 +85,6 @@ started with (at least in terms of ids and so on).
 
 Support Version ID for everything.
 
-
-
-** tawny.lookup optimisation
-   :PROPERTIES:
-   :type:     performance
-   :status:   closed
-   :END:
-
-*** Issue
-
-This is potentially very slow. Add a cache to hold the map. 
-Put hooks into tawny.old macros for "new var creation". When this 
-pings, just kill the cache and start again. 
-
-Also, kill on ontology kill I think. 
-
-
-*** Solution
-
-Providing a generic cache is more of a pain than it appears, as it requires
-hooks in everywhere, which potentially get called often. tawny.render was the
-biggest sufferer from this, where I have fixed it by dynamically binding a
-cache. 
-
-
-** add :ontology frame to all things
-   :PROPERTIES:
-   :type:     feature
-   :severity: mild
-   :END:
-
-We should be able to specify the ontology as a parameter, to 
-all things that add to an ontology -- with-ontology is a bit unwieldy. 
-Although we might want to use with-ontology to implement this, or I will have
-to pass it around a lot. 
-
-A new frame would be one option. Or the first parameter would be another. 
 
 
 ** Autoname
@@ -121,30 +98,6 @@ name. Especially good for probe classes. Easiest way is to just implement a
 new owlclass function. 
 
 
-
-
-** reasoner monitor
-   :PROPERTIES:
-   :type:     bug
-   :status:   closed
-   :END:
-
-*** Issue
-Something isn't working and the progress monitor isn't always getting set. 
-
-             (SimpleConfiguration.
-              (*reasoner-progress-monitor*)))]
-
-This *should* work. Using dynamic binding? Some laziness disaster? 
-
-Think I should extent reasoner to take this explicitly. It balks tests
-completely. 
-
-*** Closed
-
-The original issue was wrong, and this dynamic binding is working.
-
-
 ** Ontology reload
    :PROPERTIES:
    :type:     feature
@@ -153,22 +106,6 @@ The original issue was wrong, and this dynamic binding is working.
 Now we have tawny.lookup, it *should* be possible to unmap all vars in a
 namespace when an ontology is re-evaled. Just do "tawny.lookup", then ns-umap
 the entire lot. 
-
-
-** tawny doc
-   :PROPERTIES:
-   :type:     bug
-   :END:
-
-Doesn't cope well when the class isn't known as a var. Should fall back to 
-http:// with special case for owl:thing. 
-
-
-
-** multiple arity version of defontfn
-
-The defontfn can currently only cope with single artiy functions. 
-It should be able to cope with more. 
 
 
 * Documentation 

@@ -122,9 +122,12 @@ converting it from a string or IRI if necessary."
                       (list (owlcomment (first comment)))))
 
     (when-let [labl (:label map)]
-      (println labl)
       (add-annotation o dataproperty
                       (list (label (first labl)))))
+
+    (when (instance? String property)
+      (add-a-simple-annotation
+       o dataproperty (tawny-name property)))
 
     dataproperty))
 
@@ -187,6 +190,10 @@ which is an OWLDatatype object.
       (:annotation frame)
       (map label (:label frame))
       (map owlcomment (:comment frame))))
+    
+    (when (instance? String name)
+      (add-a-simple-annotation
+       o datatype (tawny-name name)))
 
     (doseq
         [n (:equivalent frame)]
