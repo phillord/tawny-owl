@@ -380,3 +380,25 @@ biggest sufferer from this, where I have fixed it by dynamically binding a
 cache. 
 
 
+
+* Clojure IDs as annotation
+
+   :PROPERTIES:
+   :type:     feature
+   :severity: medium
+   :scheduled_release: 0.12
+   :status:   closed
+   :ARCHIVE_TIME: 2013-07-24 Wed 13:47
+   :ARCHIVE_FILE: ~/src/knowledge/tawny-owl/org/todo.org
+   :ARCHIVE_OLPATH: Issues
+   :ARCHIVE_CATEGORY: todo
+   :END:
+
+The identifiers used within clojure should be placed onto the ontology as
+annotations. The idea here is that someone using clojure-owl to generate an
+OWL file, should be able to read this OWL file in and recreate what they
+started with (at least in terms of ids and so on). 
+
+
+
+

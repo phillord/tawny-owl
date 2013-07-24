@@ -9,23 +9,6 @@
   :scheduled_release_ALL: 0.12 1.0 1.1
   :END:
 
-** Clojure IDs as annotation
-
-   :PROPERTIES:
-   :type:     feature
-   :severity: medium
-   :scheduled_release: 0.12
-   :status:   closed
-   :END:
-
-The identifiers used within clojure should be placed onto the ontology as
-annotations. The idea here is that someone using clojure-owl to generate an
-OWL file, should be able to read this OWL file in and recreate what they
-started with (at least in terms of ids and so on). 
-
-
-
-
 ** Should be able to pass multiple comments or labels
    :PROPERTIES:
    :type:     bug
