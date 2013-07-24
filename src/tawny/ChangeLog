@@ -1,3 +1,16 @@
+2013-07-24  Phillip Lord  <phillip.lord@newcastle.ac.uk>
+
+	* owl_data.clj: Completion of OWL, with support for datatypes.
+
+	* repl.clj: Rewrite of the documentation function to no longer use hooks.
+
+	* fixture.clj: Some standard fixtures added, useful for ontology testing.
+
+	* query.clj: New namespace -- turns a rendered OWLObject into a
+	map, for querying.
+
+	* owl.clj: Complete update of functions to regularize their interface.
+
 2013-05-20  Phillip Lord  <phillip.lord@newcastle.ac.uk>
 
 	* reasoner.clj: Changed *reasoner-progress-monitor* to use an
