@@ -22,7 +22,7 @@ more tutorial information, please see http://ontogenesis.knowledgeblog.org.
 
 The core library, `owl.clj` provides an API which looks similar to Manchester
 OWL syntax, but is nonetheless fully programmatically extensible; all
-namespaces are [described](docs/namespaces.md) elsewhere. 
+namespaces are [described](docs/namespaces.md) elsewhere.
 
 ## Motivation
 
