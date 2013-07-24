@@ -15,7 +15,7 @@
 
 
 (ns tawny.reasoner
-  (:use [tawny.owl :only [defontfn]])
+  (:use [tawny.owl :only [defdontfn]])
   (:require [tawny.owl :as owl]
             [tawny.util :as util])
   (:import
@@ -158,7 +158,7 @@
 ;; we need to cache these 'cause reasoners listen to changes could just use
 ;; memoized function taking jontology as param Probably need to write a new
 ;; ProgressMonitor to communicate with emacs.
-(defontfn reasoner [ontology]
+(defdontfn reasoner [ontology]
   (let [reas (reasoner-for-ontology ontology)]
     (if reas
       reas
@@ -187,7 +187,7 @@
   (util/add-hook owl/remove-ontology-hook
                  discard-reasoner))
 
-(defontfn consistent?
+(defdontfn consistent?
   "Returns true if the ontology is consistent.
 
 This method can throw an InconsistentOntologyException
@@ -201,7 +201,7 @@ This method can throw an InconsistentOntologyException
   (do
     (.isConsistent (reasoner ontology))))
 
-(defontfn unsatisfiable
+(defdontfn unsatisfiable
   "Returns all unsatisfiable classes from the current ontology
 
 Throws an org.semanticweb.owlapi.reasoner.InconsistentOntologyException if the
@@ -212,7 +212,7 @@ ontology is inconsistent"
    (.getUnsatisfiableClasses
     (reasoner ontology))))
 
-(defontfn coherent?
+(defdontfn coherent?
   "Returns true if the ontology is coherent"
   [ontology]
   ;; actually implement this -- satisfiable > 0
@@ -234,7 +234,7 @@ ontology is inconsistent"
 
 
 ;; returns an immutable set of Nodes (including NodeSet's I think).
-(defontfn isuperclasses [ontology name]
+(defdontfn isuperclasses [ontology name]
   (no-top-bottom
    (entities
     (.getSuperClasses (reasoner ontology)
@@ -242,39 +242,39 @@ ontology is inconsistent"
                       false))))
 
 ;; move this to using isuperclasses
-(defontfn isuperclass?
+(defdontfn isuperclass?
   "Returns true if name has superclass as a strict superclass"
   [ontology name superclass]
   (let [superclasses
         (isuperclasses ontology name)]
     (some #{superclass} superclasses)))
 
-(defontfn isubclasses [o name]
+(defdontfn isubclasses [o name]
   (no-top-bottom
    (entities
     (.getSubClasses (reasoner o)
                     (owl/ensure-class o name)
                     false))))
 
-(defontfn isubclass?
+(defdontfn isubclass?
   "Returns true if name has subclass as a strict subclass"
   [ontology name subclass]
   (let [subclasses
         (isubclasses ontology name)]
     (some #{subclass} subclasses)))
 
-(defontfn iequivalent-classes [ontology name]
+(defdontfn iequivalent-classes [ontology name]
   (no-top-bottom
    (entities
     (.getEquivalentClasses (reasoner ontology)
                            (owl/ensure-class ontology name)))))
 
-(defontfn iequivalent-class? [ontology name equiv]
+(defdontfn iequivalent-class? [ontology name equiv]
   (let [equivs
         (iequivalent-classes ontology name)]
    (some #{equiv} equivs)))
 
-(defontfn instances [ontology class]
+(defdontfn instances [ontology class]
   (entities
    (.getInstances (reasoner ontology)
                   class false)))

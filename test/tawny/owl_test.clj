@@ -67,7 +67,6 @@
   (is (= "http://iri/"
          (.toString (o/get-iri to)))))
 
-
 (deftest declare-classes
   (is
    (-> (o/declare-classes a :ontology to)
@@ -137,6 +136,11 @@
    (var?
     (o/defoproperty a :ontology to))))
 
+
+(deftest oproperty
+  (is
+   (instance? org.semanticweb.owlapi.model.OWLObjectProperty
+              (o/objectproperty to "r"))))
 
 (deftest get-create-class []
   (is (instance? org.semanticweb.owlapi.model.OWLClass
