@@ -24,7 +24,9 @@ Manchester syntax, underneath there is a full programming language. It is
 possible to extend and build on the core library in arbitrary ways. Many
 classes can be created according to a pattern in a single statement; it is
 possible to add specialised support for your given domain, provide new syntax
-for your purposes.
+for your purposes. It is also possible to use Tawny as an
+[API](tawny-as-an-api.md) to maninpulate existing OWL, although it was not
+designed for this purpose and has some limitations.
 
 In this document, we will explore the basic usage of the library, using
 examples from the tawny-pizza -- the traditional
