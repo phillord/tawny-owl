@@ -217,3 +217,64 @@ annotation.
 
 
 
+
+* Default ontology must be set for seealso
+
+   :PROPERTIES:
+   :status:   closed
+   :ARCHIVE_TIME: 2013-07-24 Wed 12:22
+   :ARCHIVE_FILE: ~/src/knowledge/tawny-owl/org/todo.org
+   :ARCHIVE_OLPATH: Issues
+   :ARCHIVE_CATEGORY: todo
+   :END: 
+
+
+As a much wider problem, we sometimes require the default ontology to be set
+when it is not used. Generally, this comes about because we have functions
+which can take OWL API objects (in which case we don't need the ontology),
+but can also take strings (in which case we need to know how to transform to
+objects, which uses the ontology object). 
+
+The current crash comes because defontfn calls default-ontology, which in
+turn calls "get-current-ontology" which crashes if there isn't one. 
+
+Solution 
+
+get-current-ontology-or-nil
+
+which returns nil when there is no currentonlogy -- rewrite
+get-current-ontology to use. 
+
+write new macro 
+
+defmontfn (maybe ontology), which calls get-current-ontology or nil.
+
+Move most functions to this. The ensure-class functions will still crash when
+necessary. But seealso functions will work because they use OWL API object.
+
+
+
+* IRI creation needs to be generalised.
+   :PROPERTIES:
+   :type:     feature
+   :status:   closed
+   :severity: medium
+   :ARCHIVE_TIME: 2013-07-24 Wed 12:24
+   :ARCHIVE_FILE: ~/src/knowledge/tawny-owl/org/todo.org
+   :ARCHIVE_OLPATH: Issues
+   :ARCHIVE_CATEGORY: todo
+   :END: 
+   
+Have a OBO style generator. 
+
+Initially, generate an UUID style identifer for new terms. Can use memorise to
+save and to store these in a file. Add a URI gen client which will search for
+these, and replace them with newly minted URIs. Have to add a purl creation
+client also, which will update all purls and make sure that they point to the
+correct place. 
+
+First thing to do is to have a memorise in reverse thing which puts the IRIs
+into another file.
+
+
+
