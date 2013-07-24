@@ -881,7 +881,8 @@ a superproperty."
   "Returns an objectproperty. This requires an hash with a list
 value for each frame."
   [o name {:keys [domain range inverse subproperty
-                characteristic subpropertychain ontology]}]
+                  characteristic subpropertychain ontology
+                  annotation label comment]}]
   (let [o (or (first ontology)
               o)
         property (ensure-object-property o name)
@@ -896,7 +897,15 @@ value for each frame."
          (add-superproperty o property subproperty)
          (add-characteristics o property characteristic)
          (add-subpropertychain o property subpropertychain)
-        )]
+
+         (when annotation
+           (add-annotation o property annotation))
+         (when comment
+           (add-annotation o property
+                           (owlcomment (first comment))))
+         (when label
+           (add-annotation o property
+                           (label (first label)))))]
     (when (instance? String name)
       (add-a-simple-annotation
        o property
@@ -912,7 +921,7 @@ value for each frame."
    (util/check-keys
     (util/hashify frames)
     [:domain :range :inverse :subproperty :characteristic
-     :ontology])))
+     :ontology :annotation :label :comment])))
 
 (defmacro defoproperty
   "Defines a new object property in the current ontology."
