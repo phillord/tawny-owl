@@ -3,9 +3,24 @@ Release Notes
 
 # 0.12
 
+This release is intended to be feature complete. New features will not be
+added for 1.0, although accidentally missing functionality may be added.
+
 ## New Features
 
-- Updated to Hermit 1.3.7.3
+- Complete support for OWL 2, include data types
+- OWL documentation can be queries as normal clojure metadata
+- New namespaces, query and fixture
+- Completion of rendering functionality
+- Regularisation of interfaces: where relevant
+- Updated to Hermit 1.3.7.3, OWL API 3.4.5
+
+## Breaking Changes
+
+This version introduces a few breaking changes.
+
+- The `as-subclasses` and `as-disjoint` macros are now functions, making them
+  lexically scoped.
 
 # 0.11
 
