@@ -32,9 +32,6 @@
                  ;; clojure
                  [org.clojure/clojure "1.5.1"]
 
-                 ;; hook functions
-                 [robert/hooke "1.3.0"]
-
                  ;; reasoners
                  [org.semanticweb.elk/elk-owlapi "0.4.0"]
                  [org.semanticweb.hermit/HermiT "1.3.7.3"]
