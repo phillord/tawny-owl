@@ -17,10 +17,10 @@
 
 (ns tawny.english
   (:require [tawny.owl])
-  (:refer-clojure :exclude [and or not some]))
+  (:refer-clojure :exclude [and or not some class]))
 
 (def and tawny.owl/owland)
-(def or tawny.owl.owlor)
+(def or tawny.owl/owlor)
 (def not tawny.owl/owlnot)
 (def some tawny.owl/owlsome)
 (def class tawny.owl/owlclass)

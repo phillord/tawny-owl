@@ -103,16 +103,18 @@
 
 
 ;; unlazy map function
-(defn domap [& body]
+(defn domap
   "Unlazy map function, for when the map function has side effects.
 
 Typing (doall (map)) all the time is hard work!"
+  [& body]
   (doall (apply map body)))
 
 
-(defmacro dofor [& body]
+(defmacro dofor
   "Unlazy dofor, for when the side effects are necessary.
 Unlike doseq this holds onto the head."
+  [& body]
   `(doall
     (for ~@body)))
 

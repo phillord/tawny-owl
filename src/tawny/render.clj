@@ -295,16 +295,16 @@ A set means recursively render the object unless it is the set."}
              (cons :subproperty
                    (form super)))
          ~@(when (< 0 (count ann))
-             (cons :annotations
+             (cons :annotation
                    (form ann)))))))
 
-(defmethod as-form org.semanticweb.owlapi.model.OWLDatatype [d]
+(defmethod as-form org.semanticweb.owlapi.model.OWLDatatype [_]
   ;; I think we can safely ignore this here -- if it declared, then it should
   ;; be used elsewhere also. I think. Regardless, there is no read syntax in
   ;; tawny at the moment.
   )
 
-(defmethod as-form :default [p]
+(defmethod as-form :default [_]
   (println "Unknown element in signature")
   (. Thread dumpStack)
   '(unknown as-form))

@@ -1,6 +1,6 @@
 (ns tawny.debug)
 
-(defn tracing-println [& args]
+(defn tracing-println [& _]
   (let [e (Exception.)
         st (.getStackTrace e)
         ]

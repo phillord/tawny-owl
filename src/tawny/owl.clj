@@ -495,9 +495,10 @@ ontology"
   (.getOntologyIRI
    (.getOntologyID o)))
 
-(defn get-current-iri[]
+(defn get-current-iri
   "DEPRECATED: Use 'get-iri' instead. "
   {:deprecated "0.8"}
+  []
   (get-iri))
 
 (defdontfn get-prefix
@@ -512,9 +513,10 @@ is given."
      (.getOntologyFormat owl-ontology-manager
                          o)))))
 
-(defn get-current-prefix []
+(defn get-current-prefix
   "Gets the current prefix"
   {:deprecated "0.8"}
+  []
   (get-prefix))
 
 (defdontfn save-ontology
@@ -653,9 +655,10 @@ or throw an exception if it cannot be converted."
   (.getOWLClass ontology-data-factory
                 (iriforname o name)))
 
-(defmontfn ensure-class [o clz]
+(defmontfn ensure-class
   "If clz is a String return a class of with that name,
 else if clz is a OWLClassExpression add that."
+  [o clz]
   (cond
    (fn? clz)
    (ensure-class o (clz))
@@ -1145,9 +1148,10 @@ all values from restrictions."
       (for [n annotation-list]
         (add-an-ontology-annotation o n)))))
 
-(defn- ensure-annotation-property [o property]
+(defn- ensure-annotation-property
   "Ensures that 'property' is an annotation property,
 converting it from a string or IRI if necessary."
+  [o property]
   (cond
    (instance? OWLAnnotationProperty property)
    property
@@ -1413,10 +1417,11 @@ All arguments must be an instance of OWLClassExpression."
   (.getOWLNamedIndividual ontology-data-factory
                           (iriforname o individual)))
 
-(defn- ensure-individual [o individual]
+(defn- ensure-individual
   "Returns an INDIVIDUAL.
 If INDIVIDUAL is an OWLIndividual return individual, else
 interpret this as a string and create a new OWLIndividual."
+  [o individual]
   (cond (instance? org.semanticweb.owlapi.model.OWLIndividual individual)
         individual
         (instance? IRI individual)
@@ -1466,14 +1471,14 @@ toward an individual TO."
     (getfactnot o property from to)))
 
 
-(defmontfn object-getfact [o property from to]
+(defmontfn object-getfact [_ property from to]
   (.getOWLObjectPropertyAssertionAxiom
    ontology-data-factory
    property from to))
 
 (.addMethod getfact :object object-getfact)
 
-(defmontfn object-getfactnot [o property from to]
+(defmontfn object-getfactnot [_ property from to]
   (.getOWLNegativeObjectPropertyAssertionAxiom
    ontology-data-factory
    property from to))
@@ -1671,8 +1676,9 @@ expressions."
             (superclasses-1 o
                           (direct-superclasses o (first classlist))))))
 
-(defdontfn superclasses [o class]
+(defdontfn superclasses
   "Return all subclasses of class"
+  [o class]
   (superclasses-1 o (direct-superclasses o class)))
 
 (defdontfn superclass?
@@ -1712,8 +1718,9 @@ expressions."
             (subclasses-1 o
                           (direct-subclasses o (first classlist))))))
 
-(defdontfn subclasses [o class]
+(defdontfn subclasses
   "Return all subclasses of class"
+  [o class]
   (subclasses-1 o (direct-subclasses o class)))
 
 (defdontfn disjoint?
@@ -1840,8 +1847,9 @@ effectively unchanged."
    :default
    x))
 
-(defn- prefix-symbol [prefix sym]
+(defn- prefix-symbol
   "Add a prefix to a symbol and return a new symbol."
+  [prefix sym]
   (symbol
    (str prefix (name sym))))
 
@@ -1894,7 +1902,7 @@ places and add frames in both of these places. For simple forward declaration
 appear in two ontologies, but with more axioms in the second. This can enable,
 for example, building two interlocking ontologies with different OWL profiles.
 "
-  (fn [owlentity & frames] (class owlentity)))
+  (fn [owlentity & _] (class owlentity)))
 
 (defmethod refine OWLClass [& args]
   (apply owlclass args))

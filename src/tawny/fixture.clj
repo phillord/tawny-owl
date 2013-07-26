@@ -24,7 +24,7 @@
 and defines the reasoner factory to use."
   [o reasoner]
   (fn [tests]
-    (r/reasoner-factory :hermit)
+    (r/reasoner-factory reasoner)
     (ontology-to-namespace o)
     (binding [r/*reasoner-progress-monitor*
               (atom r/reasoner-progress-monitor-silent)]
@@ -37,7 +37,7 @@ the reasoner factory to use. ns should be a symbol"
   [ns reasoner]
   (let [o (get @ontology-for-namespace (find-ns ns))]
     (fn [tests]
-      (r/reasoner-factory :hermit)
+      (r/reasoner-factory reasoner)
       (ontology-to-namespace o)
       (binding [r/*reasoner-progress-monitor*
                 (atom r/reasoner-progress-monitor-silent)]

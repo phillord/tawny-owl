@@ -11,7 +11,7 @@
 
 (defn- default-filter [e]
   (and (instance? OWLNamedObject e)
-       (= (tawny.owl/get-current-iri)
+       (= (tawny.owl/get-iri)
           (.getStart (.getIRI e)))))
 
 

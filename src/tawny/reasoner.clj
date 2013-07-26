@@ -68,12 +68,6 @@
                 )))))
 
 
-(def
-  ^{:private true
-    :dynamic true}
-  *reasoner-start-time*
-  )
-
 (defn reasoner-progress-monitor-gui []
   (let [progressbar (JProgressBar.)
         frame (JFrame. "Reasoner Progress")
@@ -125,9 +119,9 @@
   (proxy [org.semanticweb.owlapi.reasoner.ReasonerProgressMonitor] []
     (reasonerTaskBusy[]
       )
-    (reasonerTaskProgressChanged [val max]
+    (reasonerTaskProgressChanged [_ _]
       )
-    (reasonerTaskStarted [name]
+    (reasonerTaskStarted [_]
       )
     (reasonerTaskStopped []
       )))
@@ -218,10 +212,6 @@ ontology is inconsistent"
   ;; actually implement this -- satisfiable > 0
   (zero? (count (unsatisfiable ontology))))
 
-(defn- class-in-node-set? [nodeset class]
-  (util/in?
-   (.getFlattened nodeset) class))
-
 (defn entities [nodeset]
   (into #{} (.getFlattened nodeset)))
 
@@ -249,7 +239,9 @@ ontology is inconsistent"
         (isuperclasses ontology name)]
     (some #{superclass} superclasses)))
 
-(defdontfn isubclasses [o name]
+(defdontfn isubclasses
+  "Returns all infered subclasses of name in ontology o."
+  [o name]
   (no-top-bottom
    (entities
     (.getSubClasses (reasoner o)

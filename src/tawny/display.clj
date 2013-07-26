@@ -19,7 +19,7 @@
 (ns tawny.display
   (:require [tawny.owl :as o]))
 
-(defn pp-entity [entity]
+(defn pp-entity [class]
   (str class "\n"))
 
 (defn pp-class [class]
@@ -31,9 +31,9 @@
     (str prepend (first classlist) "\n"
          ;; can't use recur, not in tail position
          (pp-subclasses-1 (rest classlist) prepend)
-         (pp-subclasses-1 (o/isubclasses (first classlist))
+         (pp-subclasses-1 (o/subclasses (first classlist))
                           (str "  " prepend)))))
 
 (defn pp-subclasses [class]
   (str (pp-class class)
-       (pp-subclasses-1 (o/isubclasses class) "  ")))
+       (pp-subclasses-1 (o/subclasses class) "  ")))
