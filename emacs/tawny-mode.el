@@ -201,7 +201,7 @@
       (when 
           (re-search-forward
            (regexp-opt 
-            '("defontology" "defoproperty" "defannotationproperty") 'symbols)
+            '("defontology" "defoproperty" "defannotationproperty" "tawny.owl") 'symbols)
            (point-max) t)
         (tawny-mode 1)))))
 
