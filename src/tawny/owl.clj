@@ -251,11 +251,13 @@ The following keys must be supplied.
 
 (defn ontology-to-namespace
   "Sets the current ontology as defined by `defontology'"
-  [o]
-  (dosync (ref-set
-           ontology-for-namespace
-           (merge @ontology-for-namespace
-                  {*ns* o}))))
+  ([o]
+     (ontology-to-namespace *ns* o))
+  ([ns o]
+     (dosync (ref-set
+              ontology-for-namespace
+              (merge @ontology-for-namespace
+                     {ns o})))))
 
 
 ;; ontology options -- additional knowledge that I want to attach to each
