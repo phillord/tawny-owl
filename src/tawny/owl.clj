@@ -126,7 +126,11 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
   [& args]
   (let [options (apply hash-map args)
         iri (IRI/create (get options :iri
-                             (.toString (java.util.UUID/randomUUID))))]
+                             (str
+                              (.toString (java.util.UUID/randomUUID))
+                              (if-let [name
+                                       (get options :name)]
+                                (str "#" name)))))]
     (remove-ontology-maybe
      (OWLOntologyID. iri))
 
