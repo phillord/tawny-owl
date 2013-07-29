@@ -19,26 +19,27 @@
   (:use [tawny.owl])
   (:require [tawny.reasoner :as r]))
 
+(defn reasoner [reasoner]
+  (fn [tests]
+    (r/reasoner-factory reasoner)
+    (binding [r/*reasoner-progress-monitor*
+              (atom r/reasoner-progress-monitor-silent)]
+      (tests))))
+
 (defn ontology-and-reasoner
   "Returns a fixture which sets o as the current ontology
 and defines the reasoner factory to use."
   [o reasoner]
   (fn [tests]
-    (r/reasoner-factory reasoner)
-    (ontology-to-namespace o)
-    (binding [r/*reasoner-progress-monitor*
-              (atom r/reasoner-progress-monitor-silent)]
-      (tests))))
+    (with-ontology
+      o
+      ((tawny.fixture/reasoner reasoner) tests))))
 
 
 (defn namespace-and-reasoner
   "Returns a fixture which sets the ontology from the namespace ns and defines
 the reasoner factory to use. ns should be a symbol"
-  [ns reasoner]
-  (let [o (get @ontology-for-namespace (find-ns ns))]
-    (fn [tests]
-      (r/reasoner-factory reasoner)
-      (ontology-to-namespace o)
-      (binding [r/*reasoner-progress-monitor*
-                (atom r/reasoner-progress-monitor-silent)]
-        (tests)))))
+  ([ns reasoner]
+     (fn [tests]
+       (let [o (get @ontology-for-namespace (find-ns ns))]
+         ((ontology-and-reasoner o reasoner) tests)))))
