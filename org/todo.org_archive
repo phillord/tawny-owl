@@ -402,3 +402,16 @@ started with (at least in terms of ids and so on).
 
 
 
+
+* r/isuperclass? returns class
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2013-07-29 Mon 15:32
+  :ARCHIVE_FILE: ~/src/knowledge/tawny-owl/org/todo.org
+  :ARCHIVE_OLPATH: Issues
+  :ARCHIVE_CATEGORY: todo
+  :END:
+
+Technically this is correct, but we might have expected true or false.
+Probably nil is not ideal either.
+
+

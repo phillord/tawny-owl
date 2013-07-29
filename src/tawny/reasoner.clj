@@ -237,7 +237,8 @@ ontology is inconsistent"
   [ontology name superclass]
   (let [superclasses
         (isuperclasses ontology name)]
-    (some #{superclass} superclasses)))
+    (if (some #{superclass} superclasses)
+      true false)))
 
 (defdontfn isubclasses
   "Returns all infered subclasses of name in ontology o."
@@ -253,7 +254,8 @@ ontology is inconsistent"
   [ontology name subclass]
   (let [subclasses
         (isubclasses ontology name)]
-    (some #{subclass} subclasses)))
+    (if (some #{subclass} subclasses)
+      true false)))
 
 (defdontfn iequivalent-classes [ontology name]
   (no-top-bottom
@@ -264,7 +266,8 @@ ontology is inconsistent"
 (defdontfn iequivalent-class? [ontology name equiv]
   (let [equivs
         (iequivalent-classes ontology name)]
-   (some #{equiv} equivs)))
+    (if (some #{equiv} equivs)
+      true false)))
 
 (defdontfn instances [ontology class]
   (entities
