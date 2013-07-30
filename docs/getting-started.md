@@ -7,6 +7,8 @@ Getting Started
 This is an introduction to the Tawny-OWL library. It assumes that you have a
 working Clojure environment; if not please see a
 [getting started with clojure](getting-started-with-clojure.md) documentation.
+It also assumes that you have a knowledge of OWL and ontologies in general; if
+not please see the description of [what OWL is](what-is-owl.md).
 
 Tawny-OWL is a library which supports the production of ontologies using the
 [Ontology Web Language](http://www.w3.org/TR/owl2-overview/). It is designed
