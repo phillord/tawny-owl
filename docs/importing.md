@@ -132,33 +132,11 @@ journal; the code here is somewhat updated due to changes in tawny.
       :viri "http://purl.obolibrary.org/obo/obi/2012-07-01/obi.owl"
       ;; but OBO ontologies are wierd, so pass in a filter function
       :filter
-      (fn [e]
-        (and (instance? OWLNamedObject e)
-             (.startsWith
-              (.toString (.getIRI e))
-              "http://purl.obolibrary.org/obo/OBI"
-              ))
-        )
+      (clojure.core/partial tawny.read/iri-starts-with-filter "http://purl.obolibrary.org/obo/OBI")
       :transform
-      ;; fix the space problem
-      (fn [e]
-        (clojure.string/replace
-         ;; with luck these will always be literals, so we can do this
-         ;; although not true in general
-         (.getLiteral
-          ;; get the value of the annotation
-          (.getValue
-           (first
-            ;; filter for annotations which are labels
-            ;; is lazy, so doesn't eval all
-            (filter
-             #(.isLabel (.getProperty %))
-             ;; get the annotations
-             (.getAnnotations e
-                              (tawny.owl/get-current-ontology))))))
-         #"[ /]" "_"
-         ))
-      )
+      (clojure.core/comp tawny.read/stop-characters-transform
+                         tawny.read/exception-nil-label-transform))
+
 
 This is a fairly complex example, but it can be broken into pieces. The first
 part of the form looks very similar to a `defontology` function call. The only
@@ -189,37 +167,21 @@ apply a custom filter. This is applied to every entity, so here we check that
 it starts with an OBI ID:
 
       :filter
-      (fn [e]
-        (and (instance? OWLNamedObject e)
-             (.startsWith
-              (.toString (.getIRI e))
-              "http://purl.obolibrary.org/obo/OBI"
-              ))
-        )
+      (clojure.core/partial tawny.read/iri-starts-with-filter "http://purl.obolibrary.org/obo/OBI")
+
+`tawny.read` provides a number of filters such as `iri-starts-with-filter` but
+you can use any function you wish.
 
 Finally, we need to address a problem: OBI IRIs are numeric, and unreadable.
 So, instead we need to apply a transform to produce a usuable string. In this
-case, we take the label and remove any spaces.
+case, we take the label and remove any stop characters. To do this, we compose
+two functions from `tawny.read`. In this case, `exception-nil-label-transform`
+will throw an exception if it is unable to generate a non-nil name.
 
       :transform
-      ;; fix the space problem
-      (fn [e]
-        (clojure.string/replace
-         ;; with luck these will always be literals, so we can do this
-         ;; although not true in general
-         (.getLiteral
-          ;; get the value of the annotation
-          (.getValue
-           (first
-            ;; filter for annotations which are labels
-            ;; is lazy, so doesn't eval all
-            (filter
-             #(.isLabel (.getProperty %))
-             ;; get the annotations
-             (.getAnnotations e
-                              (tawny.owl/get-current-ontology))))))
-         #"[ /]" "_"
-         )
+      (clojure.core/comp tawny.read/stop-characters-transform
+                     tawny.read/exception-nil-label-transform)
+
 
 
 Finally, we need to remember the names that are used and how they map to IRIs
