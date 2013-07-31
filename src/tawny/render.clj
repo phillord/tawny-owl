@@ -358,6 +358,10 @@ A set means recursively render the object unless it is the set."}
 (defmethod form OWLIndividual [i]
   (entity-or-iri i))
 
+(defmethod form OWLObjectOneOf [o]
+  (list* 'oneof
+        (form (.getIndividuals o))))
+
 (defmethod form OWLObjectSomeValuesFrom [s]
   (list 'owlsome
         (form (.getProperty s))
@@ -432,8 +436,31 @@ A set means recursively render the object unless it is the set."}
 
 (defmethod form OWLDataSomeValuesFrom [d]
   `(~'owlsome ~(form (.getProperty d))
-            ~(form (.getFiller d))))
+              ~(form (.getFiller d))))
 
+(defmethod form org.semanticweb.owlapi.model.OWLDataAllValuesFrom [a]
+  (list 'owlonly
+        (form (.getProperty a))
+        (form (.getFiller a))))
+
+(defmethod form org.semanticweb.owlapi.model.OWLDataComplementOf [c]
+  (list 'owlnot
+        (form (.getOperand c))))
+
+(defmethod form org.semanticweb.owlapi.model.OWLDataExactCardinality [c]
+  (list 'exactly (.getCardinality c)
+        (form (.getProperty c))
+        (form (.getFiller c))))
+
+(defmethod form org.semanticweb.owlapi.model.OWLDataMaxCardinality [c]
+  (list 'atmost (.getCardinality c)
+        (form (.getProperty c))
+        (form (.getFiller c))))
+
+(defmethod form org.semanticweb.owlapi.model.OWLDataMinCardinality [c]
+  (list 'atleast (.getCardinality c)
+        (form (.getProperty c))
+        (form (.getFiller c))))
 
 (defmethod form org.semanticweb.owlapi.model.OWLDatatypeRestriction [d]
   (for [fr (.getFacetRestrictions d)]
@@ -467,10 +494,12 @@ A set means recursively render the object unless it is the set."}
        d))
 
 
-(defmethod form org.semanticweb.owlapi.model.OWLDataHasValue [p]
+(defmethod form org.semanticweb.owlapi.model.OWLHasValueRestriction [p]
   (list 'hasvalue
         (form (.getProperty p))
         (form (.getValue p))))
+
+
 
 ;; OWLObjectHasSelf
 ;; OWLObjectHasValue
