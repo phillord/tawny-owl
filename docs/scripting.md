@@ -112,7 +112,7 @@ code; after evaluating `x` at the REPL, it all works.
     ;; #<OWLOntologyImpl  [Axioms: 3 Logical Axioms: 0]>
 
 The practical upshot of all this is, while `doseq` has a slightly more complex
-syntax than `map`, it's better of to use this. If you use `map` or any of
+syntax than `map`, it's better to use this. If you use `map` or any of
 Clojure's lazy constructs, you need to use `doall` regularly.
 
 ## Extending
@@ -196,3 +196,54 @@ In this case, this saves quite a considerable amount of typing, and also
 reducing the risk of incidentally errors, as well as leaving a clearer and
 declarative statement of the intention for the use of the `NamedPizza`
 concept.
+
+## Incrementally Defining Entities
+
+It is possible to build entities up incrementally; this is often very useful
+where forward references are needed. Consider this somewhat elided example
+from the `tawny.pizza`
+
+    (defclass Pizza)
+    (defoproperty hasTopping
+      :domain Pizza)
+    (defoproperty hasBase
+      :domain Pizza)
+    (owlclass Pizza
+              :subclass
+              (owlsome hasTopping PizzaTopping)
+              (owlsome hasBase PizzaBase))
+
+In this case, we define the `Pizza` class and place the OWLObject into the
+`Pizza` var. We use this value to define two properties `hasTopping` and
+`hasBase`. Then we extend the definition of `Pizza` to use these two
+references; in this case, we use `owlclass` rather than `defclass` as we have
+already created a class in the `Pizza` var; in practice, we could also use
+`defclass`, which would redefine the var. Either should operate in the same
+way.
+
+
+## Refining
+
+Tawny also provides a `refine` function which can be used to update an owl
+object regardless of its type. This can be useful, for example, for adding
+annotation. Consider this example from the `pizzaontology`.
+
+    (doseq
+        [e (.getSignature pizzaontology)
+         :while
+         (and (named-object? e)
+              (.startsWith
+               (.toString (.getIRI e))
+               "http://www.ncl.ac.uk/pizza"))]
+      (try
+        (println "refining:" e)
+        (refine e :annotation (annotation creator "Phillip Lord"))
+        (catch Exception exp
+          (printf "Problem with entity: %s :%s\n" e exp)
+          )))
+
+The first half just filter the relevant entities from the ontology, while the
+`refine` form adds an annotation; without `refine`, a type check would be
+necessary and the relevant function called.
+
+

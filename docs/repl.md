@@ -154,17 +154,16 @@ that are [read](importing.md#reading) from an OWL file.
 
 ## Native Clojure documentation
 
-Once `tawny.repl` has been `require`d it will hook into the native Clojure
-documentation facilities; the practical upshot of this, is that the normal
-Clojure documentation lookup should display the tawny documentation without
-interfering with the documentation for normal clojure functions.
+Tawny can place documentation in the same place as Clojure normally places it;
+this means that documentation lookup will probably work as with normal
+functions.
 
-This can happen automatically, by placing this form in your `project.clj` file
-if you are using leiningen. Assuming your IDE uses lein to start the REPL
-tawnyified documentation lookup should now happen automatically.
+Unfortunately, this is not totally straight-forward; the documentation lookup
+system of Clojure makes the assumption that Vars are immutable; unfortunately
+with tawny, the vars point to mutable Java objects. The documentation may
+change as the ontology is built.
 
-    :repl-options {
-                   ;; This expression will run when first opening a REPL, in the
-                   ;; namespace from :init-ns or :main if specified
-                   :init (require 'tawny.repl)
-                   }
+It is possible to update the documentation on the Clojure var to represent the
+current state of the ontology using `(tawny.repl/update-doc MyClass)`, or
+alternatively, to update all the Var in a ns using `(tawny.repl/update-ns-doc
+*ns*)` or `(tawny.repl/update-ns-doc (find-ns 'my-namespace))`.

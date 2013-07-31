@@ -12,7 +12,8 @@ added for 1.0, although accidentally missing functionality may be added.
 - OWL documentation can be queries as normal clojure metadata
 - New namespaces, query and fixture
 - Completion of rendering functionality
-- Regularisation of interfaces: where relevant
+- Regularisation of interfaces: where relevant functions now take an ontology
+  as  the first argument.
 - Updated to Hermit 1.3.7.3, OWL API 3.4.5
 
 ## Breaking Changes
