@@ -500,10 +500,11 @@ A set means recursively render the object unless it is the set."}
         (form (.getValue p))))
 
 
+(defmethod form org.semanticweb.owlapi.model.OWLObjectHasSelf [s]
+  (list 'hasself (form (.getProperty s))))
 
 ;; OWLObjectHasSelf
-;; OWLObjectHasValue
-;; OWLObjectOneOf
+
 
 (defmethod form String [e]
   e)
