@@ -73,7 +73,13 @@ starts-with. Use this partially applied with a filter for 'read'."
   "Takes a string and treats characters not legal in a
 Clojure symbol. Use this composed with a entity transform function"
   [s]
-  (clojure.string/replace s #"[ /]" "_"))
+  (let [r (clojure.string/replace s #"[() /]" "_")
+        f (first r)]
+    (str
+     (if (or (Character/isLetter f)
+             (= \_ f))
+       "" "_")
+     r)))
 
 (defn intern-entity
   ([e]

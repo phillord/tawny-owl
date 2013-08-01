@@ -132,3 +132,12 @@
               (IRI/create (clojure.java.io/resource "go-snippet.owl"))
               :iri "http://purl.obolibrary.org/obo/go.owl"
               :prefix "go:")))
+
+
+(deftest stop-characters-transform
+  (is (= "bob" (r/stop-characters-transform "bob")))
+  (is (= "bob_" (r/stop-characters-transform "bob(")))
+  (is (= "bob_bob" (r/stop-characters-transform "bob bob")))
+  (is (= "_9bob" (r/stop-characters-transform "9bob")))
+  (is (= "_9_bob" (r/stop-characters-transform "9 bob")))
+  (is (= "_9_bob" (r/stop-characters-transform " 9 bob"))))
