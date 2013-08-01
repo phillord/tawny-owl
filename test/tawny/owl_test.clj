@@ -705,3 +705,8 @@ Assumes that fixture has been run
              (o/add-data-superproperty
               to
               dp sdp)))))
+
+(deftest hasself
+  (is 
+   (instance? org.semanticweb.owlapi.model.OWLObjectHasSelf
+              (o/hasself (o/objectproperty "r")))))

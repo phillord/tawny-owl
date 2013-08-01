@@ -1124,7 +1124,7 @@ all values from restrictions."
 
 
 (defmontfn hasself [o property]
-  (.getOWLObjectHasSelf
+  (.getOWLObjectHasSelf ontology-data-factory
    (ensure-object-property o property)))
 
 
