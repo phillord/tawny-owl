@@ -162,7 +162,7 @@ A set means recursively render the object unless it is the set."}
                     'functional)
                    (and
                     (.isInverseFunctional p ont)
-                    'inversefunctionl)
+                    'inversefunctional)
                    (and
                     (.isSymmetric p ont)
                     'symmetric)
@@ -190,10 +190,10 @@ A set means recursively render the object unless it is the set."}
              (cons :range
                    (form range)))
          ~@(when (< 0 (count inverseof))
-             (cons :inverseof
+             (cons :inverse
                    (form inverseof)))
          ~@(when (< 0 (count characteristic))
-             (cons :characteristics
+             (cons :characteristic
                    characteristic))))))
 
 (defmethod as-form OWLIndividual [p]
@@ -288,7 +288,7 @@ A set means recursively render the object unless it is the set."}
           prop (form p)]
       `(
         ~(if (symbol? prop)
-           'defaproperty
+           'defannotationproperty
            'annotation-property)
          ~(form p)
          ~@(when (< 0 (count super))
