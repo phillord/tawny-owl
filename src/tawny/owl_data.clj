@@ -335,7 +335,7 @@ which is an OWLDatatype object.
    `(apply owlmin '~args)
    (= comparitor '><)
    `(apply minmax '~args)
-   (= comparitor '=<)
+   (= comparitor '<=)
    `(apply maxinc '~args)
    (= comparitor '>=)
    `(apply mininc '~args)
