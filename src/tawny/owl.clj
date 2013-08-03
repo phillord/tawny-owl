@@ -29,8 +29,7 @@
                                  OWLNamedObject OWLOntologyID
                                  OWLAnnotationProperty OWLObjectProperty
                                  OWLDataProperty OWLDataRange
-                                 OWLDataPropertyExpression OWLLiteral
-                                 )
+                                 OWLDataPropertyExpression OWLLiteral)
    (org.semanticweb.owlapi.apibinding OWLManager)
    (org.coode.owlapi.manchesterowlsyntax ManchesterOWLSyntaxOntologyFormat)
    (org.semanticweb.owlapi.io StreamDocumentTarget OWLXMLOntologyFormat
@@ -41,9 +40,6 @@
    (java.util Collections)
    (org.semanticweb.owlapi.model AddAxiom RemoveAxiom AddImport
                                  AddOntologyAnnotation)))
-
-
-
 
 
 ;; The next three forms all contain values that percolate across all the
