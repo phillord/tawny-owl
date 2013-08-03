@@ -16,7 +16,9 @@
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
 
 
-(ns tawny.repl
+(ns ^{:author "Phillip Lord"
+      :doc "Repl and documentation functions for OWL objects"}
+    tawny.repl
   (:require [tawny.owl :as o]
             [tawny.lookup]
             [tawny.render]
@@ -25,6 +27,9 @@
   (:import [java.io StringWriter PrintWriter]))
 
 (defn fetch-doc
+  "Given an owlobject and potentially ontology, return documentation.
+The documentation is generated over the live object (owlobjects are mutable).
+It includes all labels, comments and a rendered version of the owlobject."
   ([owlobject]
      (fetch-doc owlobject (o/get-current-ontology)))
   ([owlobject ontology]
@@ -83,13 +88,16 @@
          (.toString writer)))))
 
 (defn print-doc
+  "Print the documentation for the owlobject. See fetch-doc for more on how
+this documentation is generated."
   ([owlobject]
      (println (fetch-doc owlobject)))
-
   ([owlobject ontology]
      (println (fetch-doc owlobject ontology))))
 
 (defn print-ns-doc
+  "Print the documentation for all owlobjects stored in vars within a given
+namespace."
   ([]
      (print-ns-doc *ns*))
   ([ns]
@@ -102,7 +110,10 @@
 
 
 (defn update-var-doc
-  "Updates the documentation on a var containing a OWLObject"
+  "Updates the documentation on a var containing a OWLObject. This updates the
+documentation based on the state of the OWLObject at the current time. See
+also update-ns-doc which is more efficient for updating multiple vars at
+once."
   [var]
   (alter-meta!
    var
@@ -113,10 +124,12 @@
    var))
 
 (defmacro update-doc
+  "Updates the documentation on a symbol containing an OWLObject."
   [name]
   `(update-var-doc (var ~name)))
 
 (defn update-ns-doc
+  "Updates the documentation for all vars in a namespace."
   ([]
      (update-ns-doc *ns*))
   ([ns]
