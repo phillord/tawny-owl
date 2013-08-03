@@ -22,19 +22,9 @@
             [tawny.render]
             [clojure.pprint]
             )
-  (:import [java.io StringWriter PrintWriter])
-  )
+  (:import [java.io StringWriter PrintWriter]))
 
-;; do a documentation formatter first
-;; want to have two entry points -- "update all documentation" which does 
-;; everything in a namespace. And everything for a single symbol, which 
-;; I can hook into the macros. 
-
-;; this does the job of adding metadata to an existing symbol. 
-;; (intern *ns* (vary-meta 'test-without-doc assoc :doc "Now we have documentation"))
-
-
-(defn fetch-doc 
+(defn fetch-doc
   ([owlobject]
      (fetch-doc owlobject (o/get-current-ontology)))
   ([owlobject ontology]
@@ -42,7 +32,7 @@
                 (tawny.lookup/all-iri-to-var)]
        (let [annotation (.getAnnotations owlobject ontology)
              label
-             (filter 
+             (filter
               #(-> %
                    (.getProperty)
                    (.isLabel))
@@ -54,21 +44,21 @@
                    (.getProperty)
                    (.isComment))
               annotation)
-             
+
              iri (-> owlobject
                      (.getIRI)
                      (.toURI)
                      (.toString))
-             
+
              writer (StringWriter.)
              pwriter (PrintWriter. writer)
              line (fn [& args]
-                    (.println pwriter 
+                    (.println pwriter
                               (str (apply str args))))]
 
          (line "")
 
-         (line 
+         (line
 
           (.toString (.getEntityType owlobject))
           ": "
