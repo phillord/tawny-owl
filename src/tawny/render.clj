@@ -326,6 +326,8 @@ A set means recursively render the object unless it is the set."}
                [k x])))]
       `(~f ~(form ope) ~(form ind)))))
 
+(defmethod form clojure.lang.ISeq [s]
+  (map form s))
 
 (defmethod form Set [s]
   ;; no lazy -- we are going to render the entire form anyway, and we are
@@ -433,10 +435,11 @@ A set means recursively render the object unless it is the set."}
    :default
    (list (.getLiteral l))))
 
-
 (defmethod form OWLDataSomeValuesFrom [d]
-  `(~'owlsome ~(form (.getProperty d))
-              ~(form (.getFiller d))))
+  (list*
+   'owlsome
+   (form (.getProperty d))
+   (form (.getFiller d))))
 
 (defmethod form org.semanticweb.owlapi.model.OWLDataAllValuesFrom [a]
   (list 'owlonly
@@ -463,12 +466,13 @@ A set means recursively render the object unless it is the set."}
         (form (.getFiller c))))
 
 (defmethod form org.semanticweb.owlapi.model.OWLDatatypeRestriction [d]
-  (for [fr (.getFacetRestrictions d)]
-    `(~'span ~@(form fr))))
+  (doall
+   (for [fr (.getFacetRestrictions d)]
+     `(~'span ~@(form fr)))))
 
 
 (defmethod form OWLFacetRestriction [d]
-  `(~(form (.getFacet d)) ~(form (.getFacetValue d))))
+  (list* (form (.getFacet d)) (form (.getFacetValue d))))
 
 
 (defmethod form OWLFacet [d]
