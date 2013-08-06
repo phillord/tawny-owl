@@ -716,6 +716,38 @@ Assumes that fixture has been run
               dp sdp)))))
 
 (deftest hasself
-  (is 
+  (is
    (instance? org.semanticweb.owlapi.model.OWLObjectHasSelf
-              (o/hasself (o/objectproperty "r")))))
+              (o/hasself to (o/objectproperty to "r")))))
+
+(deftest owlmin
+  (is
+   (instance? org.semanticweb.owlapi.model.OWLDatatypeRestriction
+              (o/owlmin 10))))
+
+(deftest owlmax
+  (is
+   (instance? org.semanticweb.owlapi.model.OWLDatatypeRestriction
+              (o/owlmax 10))))
+
+(deftest minmax
+  (is
+   (instance? org.semanticweb.owlapi.model.OWLDatatypeRestriction
+              (o/minmax 10 10))))
+
+(deftest mininc
+  (is
+   (instance? org.semanticweb.owlapi.model.OWLDatatypeRestriction
+              (o/mininc 10))))
+
+(deftest maxinc
+  (is
+   (instance? org.semanticweb.owlapi.model.OWLDatatypeRestriction
+              (o/maxinc 10))))
+
+(deftest minmaxinc
+  (is
+   (instance? org.semanticweb.owlapi.model.OWLDatatypeRestriction
+              (o/minmaxinc 10 20))))
+
+ 
