@@ -92,6 +92,11 @@ converting it from a string or IRI if necessary."
 (def rdf:plainliteral
   (.getRDFPlainLiteral ontology-data-factory))
 
+(def owl2datatypes
+  (into {}
+        (for [k (org.semanticweb.owlapi.vocab.OWL2Datatype/values)]
+          [(keyword (.name k)) k])))
+
 ;; TODO
 ;; need to create accessor methods for all the data ranges. Sadly, also need
 ;; to think what to do about or and and, which they also support. In the ideal
@@ -170,7 +175,11 @@ which is an OWLDatatype object.
    lang
    (.getOWLLiteral ontology-data-factory literal lang)
    type
-   (.getOWLLiteral ontology-data-factory literal type)
+   (.getOWLLiteral ontology-data-factory
+                   literal
+                   (if (instance? OWLDatatype type)
+                     type
+                     (get owl2datatypes type)))
    :default
    (.getOWLLiteral ontology-data-factory literal)))
 
@@ -300,7 +309,6 @@ which is an OWLDatatype object.
    (ensure-data-property o property)))
 
 (.addMethod atleast :data data-atleast)
-
 
 (defn owlmin [from]
   (.getOWLDatatypeMinExclusiveRestriction
