@@ -40,15 +40,24 @@
      (o/ontology :iri "http://iri/" :prefix "iri"))))
 
 (defn createandsavefixture[test]
-  (when false
-    (tawny.util/add-hook
-     o/default-ontology-hook
-     #(tawny.debug/tracing-println "default ontology used")))
-  (createtestontology)
-  (test))
+  (let [exp
+        #(throw (Exception. "default ontology used"))
+        trace
+        #(tawny.debug/tracing-println "default ontology used")
+        ]
+    (when true
+      (tawny.util/add-hook
+       o/default-ontology-hook exp
+       ))
+    (when false
+      (tawny.util/add-hook
+       o/default-ontology-hook trace))
+    (createtestontology)
+    (test)
+    (tawny.util/remove-hook o/default-ontology-hook exp)
+    (tawny.util/remove-hook o/default-ontology-hook trace)))
 
 (use-fixtures :each createandsavefixture)
-
 
 (deftest ontology
   (is true)
@@ -185,9 +194,9 @@
    (not (nil?
          (do
            (o/with-probe-entities
-             [p (o/objectproperty "p")
-              c (o/owlclass "c")]
-             (o/add-haskey c (list p))))))))
+             [p (o/objectproperty to "p")
+              c (o/owlclass to "c")]
+             (o/add-haskey to c (list p))))))))
 
 (deftest add-subpropertychain
   (is
@@ -650,7 +659,7 @@ Assumes that fixture has been run
 
   (is (= :object
          (o/guess-type to
-          (list (o/owlclass "d") "e" "f"))))
+          (list (o/owlclass to "d") "e" "f"))))
 
   (is (= :object
          (o/guess-type to
@@ -674,7 +683,7 @@ Assumes that fixture has been run
     org.semanticweb.owlapi.model.OWLObjectOneOf
     (o/oneof to (o/individual to "a"))))
 
-  (is 
+  (is
    (instance?
     org.semanticweb.owlapi.model.OWLDataOneOf
     (o/oneof to (o/literal to "hello")))))
