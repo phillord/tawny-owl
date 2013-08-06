@@ -15,7 +15,10 @@
 ;; You should have received a copy of the GNU Lesser General Public License
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
 
-(ns tawny.lookup
+(ns
+    ^{:doc "Facilities to find the var of an OWL object."
+      :author "Phillip Lord"}
+    tawny.lookup
   (:require [tawny.owl]))
 
 (defn- iri-for-var
@@ -23,10 +26,12 @@
 or nil otherwise."
   [var]
   (if (tawny.owl/named-object? (var-get var))
-    (.toString (.toURI (.getIRI (tawny.owl/as-named-object (var-get var)))))
+    (.toString (.getIRI (tawny.owl/as-named-object (var-get var))))
     nil))
 
-(defn- vars-in-namespace [namespace]
+(defn- vars-in-namespace
+  "Return all the vars in the given namespace."
+  [namespace]
   (vals (ns-publics namespace)))
 
 (defn iri-to-var
@@ -57,22 +62,26 @@ including the name space."
        (var-str var)))
 
 (defn var-maybe-qualified-str
-  "Given a var, return a string representation of its name
-including the name space."
+  "Given a var, return a string representation of its name including the name
+space, if it the var is not in the current namespace."
   [var]
   (let [ns (:ns (meta var))]
     (if (= ns *ns*)
       (var-str var)
       (var-qualified-str var))))
 
-(defn named-entity-as-string [entity]
+(defn named-entity-as-string
+  "Given an OWLNamedObject, return the IRI."
+  [entity]
   (-> entity
       (.getIRI)
-      (.toURI)
       (.toString)))
 
 (declare all-iri-to-var)
 (defn resolve-entity
+  "Given an OWLObject return a string representation of the var holding that
+object. The string will be qualified if the var is not in the current
+namespace."
   ([entity]
      (resolve-entity entity (all-iri-to-var)))
   ([entity iri-to-var]
@@ -82,7 +91,10 @@ including the name space."
           nil
           (var-maybe-qualified-str var)))))
 
-(defn name-to-var [& namespaces]
+(defn name-to-var
+  "Returns a map of IRI for OWLObjects to the vars which
+hold them for the given namespaces."
+  [& namespaces]
   (into {}
         (for [[k v] (apply iri-to-var namespaces)]
           [(var-str v) v])))
@@ -106,7 +118,8 @@ for the duration of the form."}
 
 
 (defn all-iri-to-var
-  "Returns a map keyed on IRI to var"
+  "Returns a map keyed on the IRI of an OWLObject to var that holds that
+OWLObject for all namespaces in which tawny has created an ontology."
   []
   (or all-iri-to-var-cache
       (do
