@@ -19,6 +19,19 @@
   [:require [clojure.test :refer :all] [tawny.util :as u]])
 
 
+(deftest groupify-at
+  (is
+   (empty? (u/groupify-at [:a :b :c] [])))
+  (is
+   (= (u/groupify-at [:a :b :c] [:a 1])
+      [:a [1]]))
+  (is
+   (thrown? IllegalArgumentException
+            (u/groupify-at [:a :b :c] '(:a :b))))
+  (is
+   (= (u/groupify-at [:a :c] '(:a :b :c 1 2))
+      [:a [:b] :c [1 2]])))
+
 (deftest groupify
   (is
    (empty? (u/groupify '())))
