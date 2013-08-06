@@ -329,7 +329,7 @@ The 'm' stands for maybe."
 (defn broadcast-ontology-maybe
   [f & args]
   (apply default-ontology-maybe
-    (fn [o & narg]
+    (fn broadcast-ontology-maybe [o & narg]
       (doall
        (map (partial f o (first narg))
             (filter identity
@@ -606,16 +606,16 @@ an IRI with no transformation. nil is returned when the result is not clear.
   [o entity]
   (cond
    (coll? entity)
-   (some guess-individual-literal entity)
+   (some (partial guess-individual-literal o) entity)
    (instance? OWLIndividual entity)
    :individual
    (instance? OWLLiteral entity)
    :literal
    (instance? IRI entity)
-   (guess-individual-literal
+   (guess-individual-literal o
     (entity-for-iri o entity))
    (string? entity)
-   (guess-individual-literal
+   (guess-individual-literal o
     (entity-for-string o entity))
    :default
    (throw (IllegalArgumentException.
