@@ -156,25 +156,25 @@ A set means recursively render the object unless it is the set."}
                   (list
                    (and
                     (.isTransitive p ont)
-                    'transitive)
+                    :transitive)
                    (and
                     (.isFunctional p ont)
-                    'functional)
+                    :functional)
                    (and
                     (.isInverseFunctional p ont)
-                    'inversefunctional)
+                    :inversefunctional)
                    (and
                     (.isSymmetric p ont)
-                    'symmetric)
+                    :symmetric)
                    (and
                     (.isAsymmetric p ont)
-                    'asymmetric)
+                    :asymmetric)
                    (and
                     (.isIrreflexive p ont)
-                    'irreflexive)
+                    :irreflexive)
                    (and
                     (.isReflexive p ont)
-                    'reflexive)
+                    :reflexive)
                    ))
           prop (form p)]
 
@@ -258,7 +258,7 @@ A set means recursively render the object unless it is the set."}
                   (list
                    (and
                     (.isFunctional p ont)
-                    'functional)
+                    :functional)
                    ))
           prop (form p)]
 

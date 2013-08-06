@@ -134,14 +134,16 @@ converting it from a string or IRI if necessary."
 (defdontfn datatypeproperty
   "Define a new datatype property"
   [o name & frames]
-  (datatypeproperty-explicit
-   o name
-   (util/check-keys
-    (util/hashify
-     frames)
-    [:domain :range :annotation :characteristic
-     :subproperty :equivalent :disjoint :ontology
-     :label :comment])))
+  (let [keys
+        [:domain :range :annotation :characteristic
+         :subproperty :equivalent :disjoint :ontology
+         :label :comment]]
+    (datatypeproperty-explicit
+     o name
+     (util/check-keys
+      (util/hashify-at
+       keys frames)
+      keys))))
 
 (defmacro defdproperty
   [dataname & frames]

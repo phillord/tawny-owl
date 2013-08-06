@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+# 1.0
+
+## Breaking Changes
+
+ - characteristics on properties now use keywords (:functional instead of functional).
+
 # 0.12
 
 This release is intended to be feature complete. New features will not be

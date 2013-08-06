@@ -22,20 +22,40 @@
 ;;
 ;; Utillity functions for improving syntax
 ;;
+(defn groupify-by
+  "Takes a list by and turns adjacent values for which pred returns false into
+a single list, while leaving values for which pred returns true untouched.
+Values for which pred returns true must be separated by at least other value."
+[pred list]
+  (doall
+   (map
+    (fn [x]
+      (if (-> x (first) (pred))
+        (if (> (count x) 1)
+          (throw (IllegalArgumentException.
+                  (str "Sequence not legal in this context:" x)))
+          (first x))
+        x))
+    (partition-by pred list))))
+
+
+(defn groupify-at
+  "Takes a list and returns all adjacent values which are not in keys into a
+single list. Keys must be separated by at least one value."
+  [keys list]
+  (groupify-by (fn [x] (some #(= x %) keys)) list))
+
+(defn hashify-at
+  "Takes a list with alternating keyword values and returns a hash"
+  [keys list]
+  (apply
+   hash-map (groupify-at keys list)))
+
 (defn groupify
   "Takes a list with keywords and values and turns all adjacent values into a
   single list"
   [list]
-  (doall
-   (map
-    (fn [x]
-      (if (-> x (first) (keyword?))
-        (if (> (count x) 1)
-          (throw (IllegalArgumentException.
-                  "Cannot have two keywords next to each other"))
-          (first x))
-        x))
-    (partition-by keyword? list))))
+  (groupify-by keyword? list))
 
 (defn hashify
   "Takes a list with alternating keyword values and returns a hash"

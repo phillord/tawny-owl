@@ -843,30 +843,16 @@ a superproperty."
             lists)))))
 
 
-;; Really it would make more sense to use keywords, but this breaks the
-;; groupify function which expects alternative keyword value args. The
-;; approach of using strings and symbol names here is scary -- if someone does
-;; (defclass transitive) for example, it's all going to break. I don't think
-;; that the const does what it might
-(def ^:const transitive "transitive")
-(def ^:const functional "functional")
-(def ^:const inversefunctional "inversefunctional")
-(def ^:const symmetric "symmetric")
-(def ^:const asymmetric "asymmetric")
-(def ^:const reflexive "reflexive")
-(def ^:const irreflexive "irreflexive")
-
-
 (def
   ^{:private true}
   charfuncs
-  {transitive #(.getOWLTransitiveObjectPropertyAxiom %1 %2)
-   functional #(.getOWLFunctionalObjectPropertyAxiom %1 %2)
-   inversefunctional #(.getOWLInverseFunctionalObjectPropertyAxiom %1 %2)
-   symmetric #(.getOWLSymmetricObjectPropertyAxiom %1 %2)
-   asymmetric #(.getOWLAsymmetricObjectPropertyAxiom %1 %2)
-   irreflexive #(.getOWLIrreflexiveObjectPropertyAxiom %1 %2)
-   reflexive #(.getOWLReflexiveObjectPropertyAxiom %1 %2)
+  {:transitive #(.getOWLTransitiveObjectPropertyAxiom %1 %2)
+   :functional #(.getOWLFunctionalObjectPropertyAxiom %1 %2)
+   :inversefunctional #(.getOWLInverseFunctionalObjectPropertyAxiom %1 %2)
+   :symmetric #(.getOWLSymmetricObjectPropertyAxiom %1 %2)
+   :asymmetric #(.getOWLAsymmetricObjectPropertyAxiom %1 %2)
+   :irreflexive #(.getOWLIrreflexiveObjectPropertyAxiom %1 %2)
+   :reflexive #(.getOWLReflexiveObjectPropertyAxiom %1 %2)
    })
 
 (defbdontfn add-characteristics
@@ -921,12 +907,12 @@ value for each frame."
 (defdontfn objectproperty
   "Returns a new object property in the current ontology."
   [o name & frames]
-  (objectproperty-explicit
-   o name
-   (util/check-keys
-    (util/hashify frames)
-    [:domain :range :inverse :subproperty :characteristic
-     :ontology :annotation :label :comment])))
+  (let [keys [:domain :range :inverse :subproperty :characteristic
+              :ontology :annotation :label :comment]]
+    (objectproperty-explicit
+     o name
+     (util/check-keys
+      (util/hashify-at keys frames) keys))))
 
 (defmacro defoproperty
   "Defines a new object property in the current ontology."
