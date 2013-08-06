@@ -65,7 +65,7 @@ converting it from a string or IRI if necessary."
   ^{:private true}
   datacharfuncs
   {
-   functional #(.getOWLFunctionalDataPropertyAxiom %1 %2)
+   :functional #(.getOWLFunctionalDataPropertyAxiom %1 %2)
    })
 
 (defbdontfn add-data-characteristics
