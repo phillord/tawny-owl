@@ -312,7 +312,7 @@ which is an OWLDatatype object.
 
 (defn minmax
   [from to]
-  (.getOWLDatatypeMinMaxInclusiveRestriction
+  (.getOWLDatatypeMinMaxExclusiveRestriction
    ontology-data-factory from to))
 
 (defn mininc [from]
@@ -325,7 +325,7 @@ which is an OWLDatatype object.
 
 (defn minmaxinc
   [from to]
-  (.getOWLDatatypeMinMaxExclusiveRestriction
+  (.getOWLDatatypeMinMaxInclusiveRestriction
    ontology-data-factory from to))
 
 (defmacro span
