@@ -63,7 +63,7 @@
   ^{
     :dynamic true
     :doc "Strategy for determining action on reaching a terminal.
-:resolve means translate into the clojure symbol.
+:resolve means translate into the clojure symbol.2
 :object means leave as a Java object
 A set means recursively render the object unless it is the set."}
   terminal-strategy
@@ -227,6 +227,7 @@ A set means recursively render the object unless it is the set."}
          ~@(when (< 0 (count types))
              (cons :type
                    (form types)))
+         "here is a s tring"
          ~@(when (< 0 (count same))
              (cons :same
                    (form same)))
@@ -370,7 +371,7 @@ A set means recursively render the object unless it is the set."}
         (form (.getFiller s))))
 
 (defmethod form OWLObjectUnionOf [u]
-  (list*
+   (list*
    'owlor (form (.getOperands u))))
 
 (defmethod form OWLObjectIntersectionOf [c]
@@ -425,18 +426,26 @@ A set means recursively render the object unless it is the set."}
   (list
    (.toString v)))
 
+
+(def
+  ^{:private true}
+  owldatatypes-inverted
+  (into {}
+        (for [[k v] owl/owl2datatypes]
+          [(.getDatatype v owl/ontology-data-factory) k])))
+
 (defmethod form OWLLiteral [l]
-  (cond
-   (.isInteger l)
-   (.parseInteger l)
-   (.hasLang l)
-   (list (.getLiteral l)
-         (.getLang l))
-   :default
-   (list (.getLiteral l))))
+  (list*
+   'literal
+   (.getLiteral l)
+   (if (.hasLang l)
+     [:lang (.getLang l)]
+     [:type
+      (form (.getDatatype l))])))
 
 (defmethod form OWLDataSomeValuesFrom [d]
-  (list*
+  (println (.getFiller d))
+  (list
    'owlsome
    (form (.getProperty d))
    (form (.getFiller d))))
@@ -465,17 +474,19 @@ A set means recursively render the object unless it is the set."}
         (form (.getProperty c))
         (form (.getFiller c))))
 
-(defmethod form org.semanticweb.owlapi.model.OWLDatatypeRestriction [d]
-  (doall
-   (for [fr (.getFacetRestrictions d)]
-     `(~'span ~@(form fr)))))
 
+(defn- numeric-literal [l]
+  (cond
+   (.isInteger l)
+   (.parseInteger l)
+   (.isFloat l)
+   (.parseFloat l)
+   (.isDouble l)
+   (.parseDouble l)
+   :default
+   (throw (IllegalArgumentException. "Non numeric literal passed to numeric-literal"))))
 
-(defmethod form OWLFacetRestriction [d]
-  (list* (form (.getFacet d)) (form (.getFacetValue d))))
-
-
-(defmethod form OWLFacet [d]
+(defn- numeric-facet [d]
   (get
        {OWLFacet/MAX_EXCLUSIVE '<
         OWLFacet/MAX_INCLUSIVE '<=
@@ -484,18 +495,28 @@ A set means recursively render the object unless it is the set."}
         }
        d))
 
-(defmethod form org.semanticweb.owlapi.model.OWLDatatype [d]
-  (form (.getBuiltInDatatype d)))
+(defmethod form org.semanticweb.owlapi.model.OWLDatatypeRestriction [d]
+  (let [dt (.getDatatype d)]
+    (cond
+     (or
+      (.isDouble dt)
+      (.isFloat dt)
+      (.isInteger dt))
+     (for [fr (.getFacetRestrictions d)]
+       (list 'span
+             (numeric-facet (.getFacet fr))
+             (numeric-literal (.getFacetValue fr))))
+     :default
+     (throw (Exception. "Can't render non-numeric datatype")))))
 
-(defmethod form OWL2Datatype [d]
-  (get
-       {
-        OWL2Datatype/RDF_PLAIN_LITERAL 'rdf:plainliteral
-        OWL2Datatype/XSD_FLOAT 'xsd:float
-        OWL2Datatype/XSD_DOUBLE 'xsd:double
-        OWL2Datatype/XSD_INTEGER 'xsd:integer
-        }
-       d))
+(defmethod form OWLFacetRestriction [d]
+  (list (form (.getFacet d)) (form (.getFacetValue d))))
+
+(defmethod form org.semanticweb.owlapi.model.OWLDatatype [d]
+  (if-let [x (get owldatatypes-inverted d)]
+    ;; it's a builtin, so reverse lookup keyword
+    x
+    (entity-or-iri d)))
 
 
 (defmethod form org.semanticweb.owlapi.model.OWLHasValueRestriction [p]

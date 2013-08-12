@@ -262,7 +262,7 @@
                (o/owland to)))
   (is (instance?
        org.semanticweb.owlapi.model.OWLDataIntersectionOf
-       (o/owland to o/xsd:integer o/xsd:float))))
+       (o/owland to :XSD_INTEGER :XSD_FLOAT))))
 
 (deftest owlor
   (is (not (nil? (o/object-or to "a" "b"))))
@@ -273,10 +273,10 @@
                (o/owlor to)))
   (is (instance?
        org.semanticweb.owlapi.model.OWLDataUnionOf
-       (o/data-or to o/xsd:integer o/xsd:float)))
+       (o/data-or to :XSD_INTEGER :XSD_FLOAT)))
   (is (instance?
        org.semanticweb.owlapi.model.OWLDataUnionOf
-       (o/owlor to o/xsd:integer o/xsd:float))))
+       (o/owlor to :XSD_INTEGER :XSD_FLOAT))))
 
 (deftest owlnot
   (is (instance?
@@ -291,10 +291,10 @@
                (o/owlnot to)))
   (is (instance?
        org.semanticweb.owlapi.model.OWLDataComplementOf
-       (o/data-not to o/xsd:integer)))
+       (o/data-not to :XSD_INTEGER)))
   (is (instance?
        org.semanticweb.owlapi.model.OWLDataComplementOf
-       (o/owlnot to o/xsd:integer)))
+       (o/owlnot to :XSD_FLOAT)))
 )
 
 (deftest someonly []
@@ -304,13 +304,20 @@
      (o/someonly to
       (o/objectproperty "p" :ontology to) "a"))))
 
-
   (is
    (not
     (nil?
      (o/someonly to
                  (o/objectproperty "p" :ontology to) "a" "b")))))
 
+
+(deftest data-some
+  (is
+   (instance? org.semanticweb.owlapi.model.OWLDataSomeValuesFrom
+              (first
+               (o/owlsome to
+                          (o/datatypeproperty "p" :ontology to)
+                          :XSD_INTEGER)))))
 
 (deftest disjointclasses []
   (is

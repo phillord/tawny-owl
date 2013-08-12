@@ -415,3 +415,19 @@ Technically this is correct, but we might have expected true or false.
 Probably nil is not ideal either.
 
 
+
+* data-some not rendering proper
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2013-08-12 Mon 14:39
+  :ARCHIVE_FILE: ~/src/knowledge/tawny-owl/org/todo.org
+  :ARCHIVE_OLPATH: Issues
+  :ARCHIVE_CATEGORY: todo
+  :END:
+
+(data-some sio.sio/has_value :XSD_DATE_TIME)
+
+renders as ...
+(owlsome sio.sio/has_value nil)
+
+Obviously the nil is wrong
+

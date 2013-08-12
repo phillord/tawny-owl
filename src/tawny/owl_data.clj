@@ -78,24 +78,28 @@ converting it from a string or IRI if necessary."
              ((get datacharfuncs characteristic)
               ontology-data-factory (ensure-data-property o property))))
 
-
-
-(def xsd:float
-  (.getFloatOWLDatatype ontology-data-factory))
-
-(def xsd:double
-  (.getDoubleOWLDatatype ontology-data-factory))
-
-(def xsd:integer
-  (.getIntegerOWLDatatype ontology-data-factory))
-
-(def rdf:plainliteral
-  (.getRDFPlainLiteral ontology-data-factory))
-
 (def owl2datatypes
   (into {}
         (for [k (org.semanticweb.owlapi.vocab.OWL2Datatype/values)]
           [(keyword (.name k)) k])))
+
+
+(defn- ensure-datatype [o datatype]
+  (cond
+   (instance? OWLDatatype datatype)
+   datatype
+   (instance? org.semanticweb.owlapi.vocab.OWL2Datatype datatype)
+   (.getDatatype datatype ontology-data-factory)
+   (keyword? datatype)
+   (if-let [d (get owl2datatypes datatype)]
+     (ensure-datatype o d)
+     (throw (IllegalArgumentException.
+             (str "Was expecting a datatype. Got " datatype "."))))
+   (instance? IRI datatype)
+   (.getOWLDatatype datatype ontology-data-factory)
+   :default
+   (throw (IllegalArgumentException.
+           (str "Was expecting a datatype. Got " datatype ".")))))
 
 ;; TODO
 ;; need to create accessor methods for all the data ranges. Sadly, also need
@@ -177,9 +181,7 @@ which is an OWLDatatype object.
    type
    (.getOWLLiteral ontology-data-factory
                    literal
-                   (if (instance? OWLDatatype type)
-                     type
-                     (get owl2datatypes type)))
+                   (ensure-datatype type))
    :default
    (.getOWLLiteral ontology-data-factory literal)))
 
@@ -201,7 +203,6 @@ which is an OWLDatatype object.
       (:annotation frame)
       (map label (:label frame))
       (map owlcomment (:comment frame))))
-    
     (when (instance? String name)
       (add-a-simple-annotation
        o datatype (tawny-name name)))
@@ -241,17 +242,18 @@ which is an OWLDatatype object.
 (.addMethod owland :data data-and)
 
 (defmontfn data-or
-  [_ & types]
+  [o & types]
   (.getOWLDataUnionOf
    ontology-data-factory
-   (into #{} types)))
+   (into #{} (map (partial ensure-datatype o) types))))
 
 (.addMethod owlor :data data-or)
 
 (defmontfn data-not
-  [_ type]
+  [o type]
   (.getOWLDataComplementOf
-   ontology-data-factory type))
+   ontology-data-factory
+   (ensure-datatype o type)))
 
 (.addMethod owlnot :data data-not)
 
@@ -259,7 +261,8 @@ which is an OWLDatatype object.
   [o property datatype]
   (.getOWLDataSomeValuesFrom
    ontology-data-factory
-   (ensure-data-property o property) datatype))
+   (ensure-data-property o property)
+   (ensure-datatype o datatype)))
 
 (.addMethod owlsome :data data-some)
 
@@ -267,7 +270,8 @@ which is an OWLDatatype object.
   [o property datatype]
   (.getOWLDataAllValuesFrom
    ontology-data-factory
-   (ensure-data-property o property) datatype))
+   (ensure-data-property o property)
+   datatype))
 
 
 (.addMethod only :data data-only)

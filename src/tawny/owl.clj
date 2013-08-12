@@ -554,6 +554,7 @@ If no ontology is given, use the current-ontology"
        (.saveOntology owl-ontology-manager o
                       this-format output-stream))))
 
+(declare owl2datatypes)
 (defmontfn guess-type
   "Guesses the type of the entity. Returns :object, :data or :annotation or
 nil where the type cannot be guessed. IllegalArgumentException is thrown for
@@ -588,6 +589,10 @@ an IRI with no transformation. nil is returned when the result is not clear.
      ;; if an IRI, see if it is the current ontology
      (instance? IRI entity)
      (guess-type o (entity-for-iri o entity))
+     ;; keyword -- these are builtin OWL2Datatypes
+     (and (keyword? entity)
+          (get owl2datatypes entity))
+     :data
      ;; string name in current ontology?
      (string? entity)
      (guess-type o (entity-for-string o entity))
