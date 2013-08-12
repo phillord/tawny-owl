@@ -9,6 +9,15 @@
   :scheduled_release_ALL: 0.12 1.0 1.1
   :END:
 
+** data-some not rendering proper
+
+(data-some sio.sio/has_value :XSD_DATE_TIME)
+
+renders as ...
+(owlsome sio.sio/has_value nil)
+
+Obviously the nil is wrong
+
 ** Should be able to pass multiple comments or labels
    :PROPERTIES:
    :type:     bug
