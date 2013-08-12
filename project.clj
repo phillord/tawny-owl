@@ -25,9 +25,9 @@
 
   :dependencies [
                  ;; owl API
-                 [net.sourceforge.owlapi/owlapi-api "3.4.5"]
-                 [net.sourceforge.owlapi/owlapi-apibinding "3.4.5"]
-                 [net.sourceforge.owlapi/owlapi-distribution "3.4.5"]
+                 [net.sourceforge.owlapi/owlapi-api "3.4.6-SNAPSHOT"]
+                 [net.sourceforge.owlapi/owlapi-apibinding "3.4.6-SNAPSHOT"]
+                 [net.sourceforge.owlapi/owlapi-distribution "3.4.6-SNAPSHOT"]
 
                  ;; clojure
                  [org.clojure/clojure "1.5.1"]
