@@ -757,4 +757,25 @@ Assumes that fixture has been run
    (instance? org.semanticweb.owlapi.model.OWLDatatypeRestriction
               (o/minmaxinc 10 20))))
 
- 
+(deftest literal
+  (is
+   (instance?
+    org.semanticweb.owlapi.model.OWLLiteral
+    (o/literal to "bob" :lang "en")))
+  (is
+   (instance?
+    org.semanticweb.owlapi.model.OWLLiteral
+    (o/literal to "bob")))
+  (is
+   (instance?
+    org.semanticweb.owlapi.model.OWLLiteral
+    (o/literal to "bob" :type :RDF_PLAIN_LITERAL))))
+
+
+(deftest owlcomment
+  (is
+   (instance?
+    OWLAnnotation
+    (o/owlcomment to
+     (o/literal to "comment"
+                 :type :RDF_PLAIN_LITERAL)))))

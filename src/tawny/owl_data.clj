@@ -174,14 +174,14 @@ else must by coerced into a string manually. Options can also be specified,
 with :lang definining the language where `literal' is a string, and :type
 which is an OWLDatatype object.
 "
-  [_ literal & {:keys [lang type]}]
+  [o literal & {:keys [lang type]}]
   (cond
    lang
    (.getOWLLiteral ontology-data-factory literal lang)
    type
    (.getOWLLiteral ontology-data-factory
                    literal
-                   (ensure-datatype type))
+                   (ensure-datatype o type))
    :default
    (.getOWLLiteral ontology-data-factory literal)))
 
