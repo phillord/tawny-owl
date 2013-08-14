@@ -406,13 +406,13 @@ A set means recursively render the object unless it is the set."}
   (let [v (.getValue a)]
     (cond
      (.isLabel a)
-     (list* 'label
+     (list 'label
            (form v))
      (.isComment a)
-     (list* 'owlcomment
+     (list 'owlcomment
            (form v))
      :default
-     (list*
+     (list
       'annotation
       (form (.getProperty a))
       (form v)))))
@@ -443,8 +443,7 @@ A set means recursively render the object unless it is the set."}
      [:type
       (form (.getDatatype l))])))
 
-(defmethod form OWLDataSomeValuesFrom [d]
-  (println (.getFiller d))
+(defmethod form OWLDataSomeValuesFrom[d]
   (list
    'owlsome
    (form (.getProperty d))
@@ -513,6 +512,7 @@ A set means recursively render the object unless it is the set."}
   (list (form (.getFacet d)) (form (.getFacetValue d))))
 
 (defmethod form org.semanticweb.owlapi.model.OWLDatatype [d]
+  (println "datatype" d)
   (if-let [x (get owldatatypes-inverted d)]
     ;; it's a builtin, so reverse lookup keyword
     x

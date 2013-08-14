@@ -1160,14 +1160,24 @@ converting it from a string or IRI if necessary."
            (format "Expecting an OWL annotation property: %s" property)))))
 
 (defmontfn annotation
-  "Creates a new annotation property."
+  "Creates a new annotation property. If literal is a string it is
+interpreted as a String in English. Alternatively, a literal created
+with the literal function."
   ([o annotation-property literal]
-     (annotation o annotation-property literal "en"))
+     (cond
+      (instance? String literal)
+      (annotation o annotation-property literal "en")
+      (instance? OWLLiteral literal)
+      (.getOWLAnnotation
+       ontology-data-factory
+       (ensure-annotation-property o annotation-property)
+       literal)
+      :default
+      (throw (IllegalArgumentException.
+              "annotation takes a String or OWLLiteral"))))
   ([o annotation-property literal language]
-     (.getOWLAnnotation
-      ontology-data-factory
-      (ensure-annotation-property o annotation-property)
-      (.getOWLLiteral ontology-data-factory literal language))))
+     (annotation o annotation-property
+                 (.getOWLLiteral ontology-data-factory literal language))))
 
 (defbdontfn add-super-annotation
   "Adds a set of superproperties to the given subproperty."
