@@ -601,8 +601,11 @@ an IRI with no transformation. nil is returned when the result is not clear.
      nil
      (number? entity)
      nil
+     ;; if we get nil, carry on, because we may be able to determine the type
+     ;; from a later argument.
      (nil? entity)
      nil
+     ;; probably it's something crazy here.
      :default
      (throw (IllegalArgumentException.
              (str "Cannot guess this type:" entity))))))
@@ -955,6 +958,21 @@ value for each frame."
 (defmulti atleast #'guess-type-args)
 (defmulti atmost #'guess-type-args)
 (defmulti hasvalue #'guess-type-args)
+
+(defn guess-type-error [& args]
+  (throw (IllegalArgumentException.
+          (str "Unable to determine the type of: " args))))
+
+(.addMethod owlsome nil guess-type-error)
+(.addMethod only nil guess-type-error)
+(.addMethod someonly nil guess-type-error)
+(.addMethod owland nil guess-type-error)
+(.addMethod owlor nil guess-type-error)
+(.addMethod owlnot nil guess-type-error)
+(.addMethod exactly nil guess-type-error)
+(.addMethod atleast nil guess-type-error)
+(.addMethod atmost nil guess-type-error)
+(.addMethod hasvalue nil guess-type-error)
 
 ;; short cuts for the terminally lazy. Still prefix!
 (def && owland)
