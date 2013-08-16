@@ -319,6 +319,14 @@
                           (o/datatypeproperty "p" :ontology to)
                           :XSD_INTEGER)))))
 
+(deftest data-some-datarange
+  (is
+   (instance? org.semanticweb.owlapi.model.OWLDataSomeValuesFrom
+              (first
+               (o/data-some to
+                            (o/datatypeproperty "p" :ontology to)
+                            (o/span < 1))))))
+
 (deftest disjointclasses []
   (is
    (do (#'o/disjointclasses to "a" "b" "c")))

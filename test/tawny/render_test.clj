@@ -21,17 +21,18 @@
 
 (def to nil)
 
-(defn createtestontology[]
+(defn createtestontology[test]
   (alter-var-root
    #'to
    (fn [x]
-     (o/ontology :iri "http://iri/" :prefix "iri"))))
+     (o/ontology :iri "http://iri/" :prefix "iri")))
+  (test))
 
+(use-fixtures :each createtestontology)
 
 (deftest datatype
   (is (= :XSD_INTEGER
          (r/form (#'o/ensure-datatype to :XSD_INTEGER)))))
-
 
 (defn lit-f
   ([val]
@@ -56,5 +57,27 @@
 ;;    (= ["bob" "en"]
 ;;       (lit-f "bob" "en"))))
 
+(defn data-ontology []
+  (o/datatypeproperty to "rD"))
+
+(deftest datasome-datatype
+  (is
+   (=
+    '(owlsome (iri "http://iri/#rD") :XSD_INTEGER)
+
+    (do (data-ontology)
+        (r/form
+         (first (o/owlsome to "rD" :XSD_INTEGER)))))))
+
+(deftest datasome-range
+  (is
+   (= '(owlsome (iri "http://iri/#rD") (span < 1))
+                (first
+                 (r/form
+                  (o/owlsome to "rD" (o/span < 1)))))))
+
+
+
+;;(eval (tawny.render/as-form (first (.getSignature (read-sio)))))
 
 
