@@ -66,9 +66,23 @@
 :resolve means translate into the clojure symbol.2
 :object means leave as a Java object
 A set means recursively render the object unless it is the set."}
-  terminal-strategy
+  *terminal-strategy*
   :resolve
   )
+
+(def
+  ^{
+    :dynamic true
+    :doc "Use object/data explicit forms of functions, rather than trying to
+infer. For example, use data-some or object-some, rather than owlsome." }
+  *explicit*
+  false)
+
+
+(defmacro
+  ^{:private true} exp
+  [a b]
+  `(if *explicit* '~b '~a))
 
 (defn named-entity-as-string [entity]
   (-> entity
@@ -181,7 +195,7 @@ A set means recursively render the object unless it is the set."}
       `(
         ~(if (symbol? prop)
            'defoproperty
-           'object-property)
+           'objectproperty)
         ~prop
          ~@(when (< 0 (count domain))
              (cons :domain
@@ -266,7 +280,7 @@ A set means recursively render the object unless it is the set."}
       `(
         ~(if (symbol? prop)
            'defdproperty
-           'data-property)
+           'datatypeproperty)
         ~prop
          ~@(when (< 0 (count domain))
              (cons :domain
@@ -275,7 +289,7 @@ A set means recursively render the object unless it is the set."}
              (cons :range
                    (form range)))
          ~@(when (< 0 (count characteristic))
-             (cons :characteristics
+             (cons :characteristic
                    characteristic))))))
 
 (defmethod as-form OWLAnnotationProperty [p]
@@ -342,7 +356,7 @@ A set means recursively render the object unless it is the set."}
    `(~(form k) ~(form v))))
 
 (defn- entity-or-iri [c]
-  (case terminal-strategy
+  (case *terminal-strategy*
     :resolve
     (let [res (tawny.lookup/resolve-entity c)]
       (if res
@@ -362,43 +376,55 @@ A set means recursively render the object unless it is the set."}
   (entity-or-iri i))
 
 (defmethod form OWLObjectOneOf [o]
-  (list* 'oneof
+  (list*
+   (exp oneof object-oneof)
         (form (.getIndividuals o))))
 
 (defmethod form OWLObjectSomeValuesFrom [s]
-  (list 'owlsome
+  (list
+   (exp owlsome object-some)
         (form (.getProperty s))
         (form (.getFiller s))))
 
 (defmethod form OWLObjectUnionOf [u]
    (list*
-   'owlor (form (.getOperands u))))
+    (exp owlor object-or)
+    (form (.getOperands u))))
 
 (defmethod form OWLObjectIntersectionOf [c]
   (list*
-   'owland (form (.getOperands c))))
+   (exp owland object-or) (form (.getOperands c))))
 
 (defmethod form OWLObjectAllValuesFrom [a]
-  (list 'owlonly
+  (list
+   (exp
+    owlonly
+    object-only)
         (form (.getProperty a))
         (form (.getFiller a))))
 
 (defmethod form OWLObjectComplementOf [c]
-  (list 'owlnot
+  (list
+   (exp owlnot
+        object-not)
         (form (.getOperand c))))
 
 (defmethod form OWLObjectExactCardinality [c]
-  (list 'exactly (.getCardinality c)
+  (list
+   (exp exactly object-exactly)
+   (.getCardinality c)
         (form (.getProperty c))
         (form (.getFiller c))))
 
 (defmethod form OWLObjectMaxCardinality [c]
-  (list 'atmost (.getCardinality c)
+  (list
+   (exp atmost object-atmost) (.getCardinality c)
         (form (.getProperty c))
         (form (.getFiller c))))
 
 (defmethod form OWLObjectMinCardinality [c]
-  (list 'atleast (.getCardinality c)
+  (list (exp atleast object-atleast)
+        (.getCardinality c)
         (form (.getProperty c))
         (form (.getFiller c))))
 
@@ -443,33 +469,50 @@ A set means recursively render the object unless it is the set."}
      [:type
       (form (.getDatatype l))])))
 
+;; so, in many cases, fillers can be an Datatype, which is probably going
+;; to render as a keyword. Alternatively, it might be a DataRange which is
+;; going to render as one or more span elements. The former needs to be
+;; include directly, the latter needs not
+(defn- list** [& args]
+  (if (seq? (last args))
+    (apply list* args)
+    (apply list args)))
+
 (defmethod form OWLDataSomeValuesFrom[d]
-  (list
-   'owlsome
+  (list**
+   (exp owlsome data-some)
    (form (.getProperty d))
    (form (.getFiller d))))
 
 (defmethod form org.semanticweb.owlapi.model.OWLDataAllValuesFrom [a]
-  (list 'owlonly
+  (list
+   (exp owlonly data-only)
         (form (.getProperty a))
         (form (.getFiller a))))
 
 (defmethod form org.semanticweb.owlapi.model.OWLDataComplementOf [c]
-  (list 'owlnot
+  (list
+   (exp owlnot data-not)
         (form (.getOperand c))))
 
 (defmethod form org.semanticweb.owlapi.model.OWLDataExactCardinality [c]
-  (list 'exactly (.getCardinality c)
+  (list
+   (exp exactly data-exactly)
+   (.getCardinality c)
         (form (.getProperty c))
         (form (.getFiller c))))
 
 (defmethod form org.semanticweb.owlapi.model.OWLDataMaxCardinality [c]
-  (list 'atmost (.getCardinality c)
+  (list
+   (exp atmost data-atmost)
+   (.getCardinality c)
         (form (.getProperty c))
         (form (.getFiller c))))
 
 (defmethod form org.semanticweb.owlapi.model.OWLDataMinCardinality [c]
-  (list 'atleast (.getCardinality c)
+  (list
+   (exp atleast data-atleast)
+   (.getCardinality c)
         (form (.getProperty c))
         (form (.getFiller c))))
 
@@ -512,15 +555,14 @@ A set means recursively render the object unless it is the set."}
   (list (form (.getFacet d)) (form (.getFacetValue d))))
 
 (defmethod form org.semanticweb.owlapi.model.OWLDatatype [d]
-  (println "datatype" d)
   (if-let [x (get owldatatypes-inverted d)]
     ;; it's a builtin, so reverse lookup keyword
     x
     (entity-or-iri d)))
 
 
-(defmethod form org.semanticweb.owlapi.model.OWLHasValueRestriction [p]
-  (list 'hasvalue
+(defmethod form org.semanticweb.owlapi.model.OWLObjectHasValue [p]
+  (list (exp hasvalue object-hasvalue)
         (form (.getProperty p))
         (form (.getValue p))))
 
@@ -528,7 +570,11 @@ A set means recursively render the object unless it is the set."}
 (defmethod form org.semanticweb.owlapi.model.OWLObjectHasSelf [s]
   (list 'hasself (form (.getProperty s))))
 
-;; OWLObjectHasSelf
+
+(defmethod form org.semanticweb.owlapi.model.OWLDataHasValue [p]
+  (list (exp hasvalue data-hasvalue)
+        (form (.getProperty p))
+        (form (.getValue p))))
 
 
 (defmethod form String [e]
