@@ -53,7 +53,7 @@ In addition a :type key is added which describes the type of the object.
   [owlobject]
   (let [render
         (binding
-            [terminal-strategy :object
+            [*terminal-strategy* :object
              tawny.lookup/all-iri-to-var-cache
              (tawny.lookup/all-iri-to-var)]
           (as-form owlobject))]
