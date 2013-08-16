@@ -83,7 +83,6 @@ converting it from a string or IRI if necessary."
         (for [k (org.semanticweb.owlapi.vocab.OWL2Datatype/values)]
           [(keyword (.name k)) k])))
 
-
 (defn- ensure-datatype [o datatype]
   (cond
    (instance? OWLDatatype datatype)
@@ -100,6 +99,13 @@ converting it from a string or IRI if necessary."
    :default
    (throw (IllegalArgumentException.
            (str "Was expecting a datatype. Got " datatype ".")))))
+
+(defn- ensure-datarange [o datarange]
+  (cond
+   (instance? org.semanticweb.owlapi.model.OWLDataRange datarange)
+   datarange
+   :default
+   (ensure-datatype o datarange)))
 
 ;; TODO
 ;; need to create accessor methods for all the data ranges. Sadly, also need
@@ -245,7 +251,7 @@ which is an OWLDatatype object.
   [o & types]
   (.getOWLDataUnionOf
    ontology-data-factory
-   (into #{} (map (partial ensure-datatype o) types))))
+   (into #{} (map (partial ensure-datarange o) types))))
 
 (.addMethod owlor :data data-or)
 
@@ -253,16 +259,16 @@ which is an OWLDatatype object.
   [o type]
   (.getOWLDataComplementOf
    ontology-data-factory
-   (ensure-datatype o type)))
+   (ensure-datarange o type)))
 
 (.addMethod owlnot :data data-not)
 
 (defbmontfn data-some
-  [o property datatype]
+  [o property datarange]
   (.getOWLDataSomeValuesFrom
    ontology-data-factory
    (ensure-data-property o property)
-   (ensure-datatype o datatype)))
+   (ensure-datarange o datarange)))
 
 (.addMethod owlsome :data data-some)
 
@@ -271,15 +277,16 @@ which is an OWLDatatype object.
   (.getOWLDataAllValuesFrom
    ontology-data-factory
    (ensure-data-property o property)
-   datatype))
+   (ensure-datarange o datatype)))
 
 
 (.addMethod only :data data-only)
 
-(defmontfn data-oneof [_ & data]
+(defmontfn data-oneof [o & literal]
   (.getOWLDataOneOf
    ontology-data-factory
-   (into #{} data)))
+   (into #{}
+         literal)))
 
 (.addMethod oneof :literal data-oneof)
 
