@@ -139,3 +139,42 @@ once."
                (vals
                 (tawny.lookup/iri-to-var ns))]
          (update-var-doc v)))))
+
+
+(defn println-load-listener
+  "Returns a OWLOntologyLoaderListener that logs to println."
+  []
+  (proxy [org.semanticweb.owlapi.model.OWLOntologyLoaderListener] []
+    (finishedLoadingOntology[event]
+      (println "Finished Loading:"
+               (-> event
+                   (.getOntologyID)
+                   (.getOntologyIRI))
+               (if (.isSuccessful event)
+                 "...succeeded"))
+      (if-not (.isSuccessful event)
+        (println "Exception" (.printStackTrace (.getException event)))))
+    (startedLoadingOntology [event]
+      (println "Started Loading:"
+               (-> event
+                   (.getOntologyID)
+                   (.getOntologyIRI))
+               " from:"
+               (-> event
+                   (.getDocumentIRI))))))
+
+(defn load-ontology
+  "Loads and returns an ontology directly through the OWL API.
+This is a useful test function; see 'tawny.read' for more integrated
+  solution."
+  [document-iri]
+  (let [listener
+        (println-load-listener)]
+    (.addOntologyLoaderListener tawny.owl/owl-ontology-manager listener)
+    (try
+      (.loadOntologyFromOntologyDocument
+       tawny.owl/owl-ontology-manager
+       (tawny.owl/iri document-iri))
+      (finally
+        (.removeOntologyLoaderListener
+         tawny.owl/owl-ontology-manager listener)))))
