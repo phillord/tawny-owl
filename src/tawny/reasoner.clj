@@ -222,13 +222,12 @@ ontology is inconsistent"
                       (= (owl/owlnothing) %1)))
                 coll)))
 
-
 ;; returns an immutable set of Nodes (including NodeSet's I think).
 (defdontfn isuperclasses [ontology name]
   (no-top-bottom
    (entities
     (.getSuperClasses (reasoner ontology)
-                      (owl/ensure-class ontology name)
+                      (#'tawny.owl/ensure-class ontology name)
                       false))))
 
 ;; move this to using isuperclasses
@@ -246,7 +245,7 @@ ontology is inconsistent"
   (no-top-bottom
    (entities
     (.getSubClasses (reasoner o)
-                    (owl/ensure-class o name)
+                    (#'tawny.owl/ensure-class o name)
                     false))))
 
 (defdontfn isubclass?
@@ -261,7 +260,7 @@ ontology is inconsistent"
   (no-top-bottom
    (entities
     (.getEquivalentClasses (reasoner ontology)
-                           (owl/ensure-class ontology name)))))
+                           (#'tawny.owl/ensure-class ontology name)))))
 
 (defdontfn iequivalent-class? [ontology name equiv]
   (let [equivs

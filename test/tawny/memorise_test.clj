@@ -24,12 +24,12 @@
 (deftest bind-and-unbind
   (is 
    (= 0 (count 
-         (do (o/test-ontology)
+         (do (o/ontology)
              (test-memorise-map)))))
   
   (is 
    (= 3 
-      (do (o/test-ontology)
+      (do (o/ontology)
           (bind-some-vars)
           (let [x
                 (count
@@ -39,26 +39,26 @@
 
   (is 
    (= 0 (count 
-         (do (o/test-ontology)
+         (do (o/ontology)
              (bind-some-vars)
              (unbind-some-vars)
              (test-memorise-map)))))
 
   (is
    (= 0
-      (do 
-        (o/test-ontology)
+      (do
+        (o/ontology)
         (count (test-memorise-map))))))
 
 
 
 (deftest memory-merge []
-  (is 
+  (is
    (= {:a #{:b} :c #{:d} :e #{:f}}
       (#'m/memory-merge '(:a :b :c :d :e :f))
       ))
 
-  (is 
+  (is
    (= {:a #{:e :b}, :c #{:f :d} :g #{:h}}
       (#'m/memory-merge '(:a :b, :c :d, :a :e, :c :f, :g :h))
       )))
@@ -71,30 +71,30 @@
        {"iri1" #{"symbol1"}}
        {"iri1" #{"symbol1"}})))
 
-  (is 
+  (is
    (= {}
       (#'m/find-missing-mappings
        {"iri1" #{"symbol1" "symbol2"}}
        {"iri1" #{"symbol1"}})))
-  
+
   (is
-   (= {"iri1" #{"symbol2"}} 
+   (= {"iri1" #{"symbol2"}}
       (#'m/find-missing-mappings
        {"iri1" #{"symbol1"}}
        {"iri1" #{"symbol1" "symbol2"}})))
-  
+
   )
 
 
 (def var-str-test 1)
 (deftest var-str
-  (is 
+  (is
    (= "var-str-test"
       (#'m/var-str (var var-str-test)))))
 
 
 (deftest memory
-  (is 
+  (is
    (= {"a" #{"1"}}
       (m/memory "a" "1")
       ))
@@ -118,32 +118,31 @@
           (unbind-some-vars)
           retn))))
 
-  (is 
+  (is
    (= {}
       (#'m/change-values-to-string-set (m/memorise-map *ns*)))))
 
 
 
 (deftest merge-with-distinct
-  (is 
+  (is
    (= {"a" #{"1"}}
-      (m/merge-with-distinct 
+      (m/merge-with-distinct
         {} {"a" #{"1"}})))
-  
-  (is 
+
+  (is
    (= {"a" #{"1"}}
-      (m/merge-with-distinct 
+      (m/merge-with-distinct
         {"a" #{"1"}} {})))
 
 
-  (is 
+  (is
    (= {"a" #{"1"}}
       (m/merge-with-distinct
         {"a" #{"1"}} {"a" #{"1"}})))
 
 
-(is 
+(is
    (= {"a" #{"1" "2"}}
       (m/merge-with-distinct
         {"a" #{"1"}} {"a" #{"1" "2"}}))))
-

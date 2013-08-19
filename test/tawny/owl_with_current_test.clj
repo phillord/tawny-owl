@@ -44,8 +44,3 @@
 (deftest get-current-ontology
   (is (not (nil? (o/get-current-ontology)))))
 
-(deftest get-current-iri
-  (is (= "http://iri/" (.toString (o/get-current-iri)))))
-
-(deftest get-current-prefix
-  (is (= "iri:" (o/get-current-prefix))))

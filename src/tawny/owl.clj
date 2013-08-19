@@ -42,6 +42,8 @@
                                  AddOntologyAnnotation)))
 
 
+;;; Begin resource section
+
 ;; The next three forms all contain values that percolate across all the
 ;; namespaces that contain ontologies. Resetting all of these when owl.clj is
 ;; eval'd is a pain, hence they are all defonce.
@@ -68,18 +70,6 @@ string; use 'iriforname' to perform ontology specific expansion"
 
 (load "owl_self")
 
-
-;; not sure this is necessary now as (almost) all functions now take an
-;; ontology parameter, which is generally going to be the nicer way to achieve
-;; things.
-(def
-  ^{:dynamic true
-    :doc "The currently bound ontology. If this is not set, then the current
-ontology is expected to be bound to the current namespace with 'defontology'
-or similar macros. Normally, when set, this is set with the 'with-ontology'
-macro." }
-  *current-bound-ontology* nil)
-
 (defn named-object?
   "Returns true iff entity is an OWLNamedObject."
   [entity]
@@ -94,172 +84,51 @@ an exception."
         entity)
    (throw (IllegalArgumentException. "Expecting a named entity"))))
 
+;;; Begin current ontology support
+
+;; not sure this is necessary now as (almost) all functions now take an
+;; ontology parameter, which is generally going to be the nicer way to achieve
+;; things.
 (def
-  ^{:doc "Hook called immediately after an ontology is removed from the
-owl-ontology-manager."}
-  remove-ontology-hook (util/make-hook))
+  ^{:dynamic true
+    :doc "The currently bound ontology. If this is not set, then the current
+ontology is expected to be bound to the current namespace with 'defontology'
+or similar macros. Normally, when set, this is set with the 'with-ontology'
+macro." }
+  *current-bound-ontology* nil)
 
-(defn remove-ontology-maybe
-  "Removes the ontology with the given ID from the manager.
-This calls the relevant hooks, so is better than direct use of the OWL API. "
-  [ontologyid]
-  (when (.contains owl-ontology-manager ontologyid)
-    (let [o (.getOntology owl-ontology-manager ontologyid)]
-      (.removeOntology
-       owl-ontology-manager o)
-      (util/run-hook remove-ontology-hook o))))
+(defmacro with-ontology
+  "Sets the default ontology for all operations inside its dynamic scope.
 
-
-(declare add-annotation)
-(declare owlcomment)
-(declare versioninfo)
-(declare ontology-options)
-(declare seealso)
-(declare add-an-ontology-annotation)
-
-(defn ontology
-  "Returns a new ontology. See 'defontology' for full description."
-  [& args]
-  (let [options (apply hash-map args)
-        iri (IRI/create (get options :iri
-                             (str
-                              (.toString (java.util.UUID/randomUUID))
-                              (if-let [name
-                                       (get options :name)]
-                                (str "#" name)))))]
-    (remove-ontology-maybe
-     (OWLOntologyID. iri))
-
-    (let [jontology
-          (.createOntology owl-ontology-manager iri)
-
-          ontology-format
-          (.getOntologyFormat
-           owl-ontology-manager jontology)]
-
-      ;; iri gen options needs to be remembered
-      (when-let [iri-gen (:iri-gen options)]
-        (dosync
-         (alter (ontology-options jontology)
-                merge {:iri-gen iri-gen})))
-
-      ;; put prefix into the prefix manager
-      ;; this isn't a given -- the prefix manager being returned by default
-      ;; returns true for isPrefixOWLOntologyFormat, so we can do this, but
-      ;; strictly we are depending on the underlying types.
-      (when-let [prefix
-                 (or (:prefix options)
-                     (:name options))]
-        (.setPrefix ontology-format
-                    prefix
-                    (.toString iri)))
-
-      (when-let [name (:name options)]
-        (add-an-ontology-annotation
-         jontology
-         (tawny-name name)))
-
-      ;; add annotations to the ontology
-      (add-annotation
-       jontology
-       (filter (comp not nil?)
-               (flatten
-                (list
-                 (:annotation options)
-                 (when-let [s (:seealso options)]
-                   (seealso jontology s))
-                 (when-let [c (:comment options)]
-                   (owlcomment jontology c))
-                 (when-let [v (:versioninfo options)]
-                   (versioninfo jontology v))))))
-      jontology)))
-
-;;
-;; we use intern-owl here because we need to attach the ontology to the
-;; metadata for the symbol. With def this isn't possible because we need
-;; to generate the symbol at compile time, when we don't have the
-;; ontology yet. &form is an implicit variable for macro's, and carries
-;; the line and column metadata which otherwise we loose. This is a
-;; compiler detail, but there is no other way, as far as I can tell.
-;;
-;; However, we still need to declare at this point, or we get into
-;; trouble in macros such as "as-disjoint" which check symbols at compile
-;; time, and cannot determine that the symbol will exist at run time,
-;; once the intern has run.
-;;
-;; This all seems horribly messy, and I am not sure that it is all true;
-;; after all I can do this?
-;; (let [n (tawny.owl/owlclass "y")]
-;;                 (def ^{:tmp n} g n))
-;;
-;; However, an attempt to try this using this sort of thing fails: the
-;; metadata disappears away, I think because the reader is doing something
-;; special with it. Regardless it does not appear in the expansion.
-;;
-;; (def ^{:owl true
-;;        :doc
-;;        (tawny.util.CallbackString.
-;;         (partial tawny.repl/fetch-doc ontology#))}
-;;   ~ontname ontology#)
-;;
-;; Also have tried calling the "ontology" function at compile time, and then
-;; generating the appropriate form.
-;;
-;; This sounds reasonable, but doesn't work either, because valn# is the FORM
-;; and not the evaluation of it.
-;;
-;; (defmacro defthing
-;;   [name val]
-;;   (let [valn# (identity val)]
-;;     `(def
-;;        ~(vary-meta
-;;          name
-;;          merge
-;;          {:owl true
-;;           :val valn#})
-;;        ~valn#)
-;;      ))
-;;
-;; So, I think that this is about the best I can do. The ultimate solution has
-;; to be changes to the way the doc lookup works. Putting an entity into it's
-;; own metadata makes no sense. It would be much cleaner if the doc function
-;; checked the *value* of a var, to see if it implements a documentation
-;; protocol, and if not uses the :doc metadata.
-(defmacro defontology
-  "Define a new ontology with `name'.
-
-The following keys must be supplied.
-:iri -- the IRI for the new ontology
-:prefix -- the prefix used in the serialised version of the ontology
-"
-  [name & body]
-  `(do
-     (let [ontology# (ontology :name ~(clojure.core/name name) ~@body)
-           var#
-           (def
-             ~(with-meta name
-                (assoc (meta name)
-                  :owl true))
-             ontology#)]
-       (tawny.owl/ontology-to-namespace ontology#)
-       var#
-       )))
-
-(defn ontology-to-namespace
-  "Sets the current ontology as defined by `defontology'"
-  ([o]
-     (ontology-to-namespace *ns* o))
-  ([ns o]
-     (dosync (ref-set
-              ontology-for-namespace
-              (merge @ontology-for-namespace
-                     {ns o})))))
+This may be deprecated in future. Where relevant, functions now accept an
+ontology as a first argument."
+ [o & body]
+  `(binding [tawny.owl/*current-bound-ontology* ~o]
+     ~@body))
 
 
-;; ontology options -- additional knowledge that I want to attach to each
-;; ontology,  but which gets junked when the ontology does.
-(def ^{:doc "Ontology options. A map on a ref for each ontology"}
-  ontology-options-atom (atom {}))
+(defn get-current-ontology-maybe
+  "Gets the current ontology, or nil if there is not one."
+  ([]
+     (get-current-ontology-maybe *ns*))
+  ([ns]
+     ;; if current ontology is inside a binding
+     (or *current-bound-ontology*
+         ;; so use the namespace bound one
+         (get @ontology-for-namespace ns))))
+
+(defn get-current-ontology
+  "Gets the current ontology. Throws an exception if there is not current
+ontology"
+  ([]
+     (get-current-ontology *ns*))
+  ([ns]
+     (or (get-current-ontology-maybe ns)
+         ;; so break
+         (throw (IllegalStateException. "Current ontology has not been set")))))
+
+
+
 
 (defmacro defnwithfn [name function & body]
   `(let [vr# (defn ~name ~@body)]
@@ -274,7 +143,7 @@ The following keys must be supplied.
   ^{:doc "Hook called when the default ontology is used"}
   default-ontology-hook (util/make-hook))
 
-(declare get-current-ontology-maybe)
+
 (defn default-ontology-maybe [f & args]
   (let [pre-ontology
         (drop-while #(not (= :ontology %)) args)
@@ -291,7 +160,6 @@ The following keys must be supplied.
           (util/run-hook default-ontology-hook)
           (apply f (get-current-ontology-maybe) args))))))
 
-(declare get-current-ontology)
 (defn default-ontology [f & args]
   (let [pre-ontology
         (drop-while #(not (= :ontology %)) args)
@@ -366,14 +234,49 @@ Uses the default ontology if not supplied and throws an IllegalStateException
   `(defnwithfn ~name #'broadcast-ontology-maybe
      ~@body))
 
-(defmacro with-ontology
-  "Sets the default ontology for all operations inside its dynamic scope.
 
-This may be deprecated in future. Where relevant, functions now accept an
-ontology as a first argument."
- [o & body]
-  `(binding [tawny.owl/*current-bound-ontology* ~o]
-     ~@body))
+;;; Axiom mainpulation
+(defdontfn add-axiom
+  "Adds an axiom from the given ontology, or the current one."
+  [o axiom]
+  (.applyChange owl-ontology-manager
+                (AddAxiom. o axiom))
+  axiom)
+
+(defdontfn remove-axiom
+  "Removes an axiom from the given ontology, or the current one."
+  [o axiom]
+  (.applyChange owl-ontology-manager
+                (RemoveAxiom. o axiom))
+  axiom)
+
+(defdontfn remove-entity
+  "Remove from the ontology an entity created and added by
+owlclass, defclass, objectproperty or defoproperty. Entity is the value
+returned by these functions.
+
+This removes all the axioms that were added. So, for example, a form such as
+
+   (defclass a
+      :subclass b
+      :equivalent c)
+
+adds three axioms -- it declares a, makes it a subclass of b, and equivalent
+of c."
+  [o entity]
+  (let [remover
+        (OWLEntityRemover. owl-ontology-manager
+                           (hash-set o))]
+    (.accept entity remover)
+    (.applyChanges owl-ontology-manager
+                   (.getChanges remover))))
+
+;;; Begin Ontology options
+
+;; ontology options -- additional knowledge that I want to attach to each
+;; ontology,  but which gets junked when the ontology does.
+(def ^{:doc "Ontology options. A map on a ref for each ontology"}
+  ontology-options-atom (atom {}))
 
 ;; return options for ontology -- lazy (defn get-ontology-options [ontology])
 (defdontfn ontology-options
@@ -388,13 +291,13 @@ or the current-ontology"
       ontology-options-atom assoc o (ref {}))
      o)))
 
-(util/add-hook remove-ontology-hook
-               (fn [o]
-                 (dosync
-                  (swap! ontology-options-atom
-                         dissoc o))))
+;;; Begin iri support
+(defdontfn get-iri
+  "Gets the IRI for the given ontology, or the current ontology if none is given"
+  [o]
+  (.getOntologyIRI
+   (.getOntologyID o)))
 
-(declare get-iri)
 (defdontfn iriforname
   "Returns an IRI object for the given name.
 
@@ -405,7 +308,354 @@ the moment it is very simple."
     (iri-gen name)
     (iri (str (get-iri o) "#" name))))
 
-(defn check-entity-set
+;;; Begin OWL2 datatypes
+(def owl2datatypes
+  (into {}
+        (for [k (org.semanticweb.owlapi.vocab.OWL2Datatype/values)]
+          [(keyword (.name k)) k])))
+
+;;; Begin Annotation Support
+
+;; annotations
+(defn- add-a-simple-annotation
+  [o named-entity annotation]
+  (let [axiom
+        (.getOWLAnnotationAssertionAxiom
+         ontology-data-factory
+         (.getIRI named-entity) annotation)]
+    (add-axiom o axiom)))
+
+(defn- add-an-ontology-annotation
+  [o annotation]
+  (.applyChange
+   owl-ontology-manager
+   (AddOntologyAnnotation. o annotation)))
+
+
+(defmontfn add-annotation
+  ([o named-entity annotation-list]
+     (doall
+      (for [n annotation-list]
+        (add-a-simple-annotation o named-entity n))))
+  ([o annotation-list]
+     (doall
+      (for [n annotation-list]
+        (add-an-ontology-annotation o n)))))
+
+(defn- ensure-annotation-property
+  "Ensures that 'property' is an annotation property,
+converting it from a string or IRI if necessary."
+  [o property]
+  (cond
+   (instance? OWLAnnotationProperty property)
+   property
+   (instance? IRI property)
+   (.getOWLAnnotationProperty
+    ontology-data-factory property)
+   (instance? String property)
+   (ensure-annotation-property
+    o
+    (iriforname o property))
+   :default
+  (throw (IllegalArgumentException.
+          (format "Expecting an OWL annotation property: %s" property)))))
+
+(defmontfn annotation
+  "Creates a new annotation property. If literal is a string it is
+interpreted as a String in English. Alternatively, a literal created
+with the literal function."
+  ([o annotation-property literal]
+     (cond
+      (instance? String literal)
+      (annotation o annotation-property literal "en")
+      (instance? OWLLiteral literal)
+      (.getOWLAnnotation
+       ontology-data-factory
+       (ensure-annotation-property o annotation-property)
+       literal)
+      :default
+      (throw (IllegalArgumentException.
+              "annotation takes a String or OWLLiteral"))))
+  ([o annotation-property literal language]
+     (annotation o annotation-property
+                 (.getOWLLiteral ontology-data-factory literal language))))
+
+(defbdontfn add-super-annotation
+  "Adds a set of superproperties to the given subproperty."
+  [o subproperty superproperty]
+  (.applyChange owl-ontology-manager
+                (AddAxiom.
+                 o
+                 (.getOWLSubAnnotationPropertyOfAxiom
+                  ontology-data-factory
+                  subproperty
+                  (ensure-annotation-property o superproperty)))))
+
+
+;; various annotation types
+(def labelproperty
+  (.getRDFSLabel ontology-data-factory))
+
+(defmontfn label
+  [o & args]
+  (apply annotation o labelproperty args))
+
+(def owlcommentproperty
+  (.getRDFSComment ontology-data-factory))
+
+(defmontfn owlcomment
+  [o & args]
+  (apply annotation o owlcommentproperty args))
+
+(def isdefinedbyproperty
+  (.getRDFSIsDefinedBy ontology-data-factory))
+
+(defmontfn isdefinedby
+  [o & args]
+  (apply annotation o isdefinedbyproperty args))
+
+(def seealsoproperty
+  (.getRDFSSeeAlso ontology-data-factory))
+
+(defmontfn seealso
+  [o & args]
+  (apply annotation o
+         seealsoproperty args))
+
+(def backwardcompatiblewithproperty
+  (.getOWLBackwardCompatibleWith ontology-data-factory))
+
+(defmontfn backwardcompatiblewith
+  [o & args]
+  (apply annotation o
+              backwardcompatiblewithproperty
+              args))
+
+(def incompatiblewithproperty
+  (.getOWLIncompatibleWith ontology-data-factory))
+
+(defmontfn incompatiblewith
+  [o & args]
+  (apply annotation o
+         incompatiblewithproperty
+         args))
+
+(def versioninfoproperty
+  (.getOWLVersionInfo ontology-data-factory))
+
+(defmontfn versioninfo
+  [o & args]
+  (apply annotation o
+              versioninfoproperty
+              args))
+
+(def deprecatedproperty
+  (.getOWLDeprecated ontology-data-factory))
+
+(defmontfn deprecated
+  [o & args]
+  (apply annotation o
+         deprecatedproperty
+         args))
+
+(defdontfn annotation-property-explicit
+  "Add this annotation property to the ontology"
+  [o property
+   {:keys [comment label supers annotation ontology]}]
+  (let [o
+        (or (first ontology) o)
+        property-object
+        (ensure-annotation-property o property)
+        ]
+    ;; add the property
+    (.addAxiom owl-ontology-manager
+               o
+               (.getOWLDeclarationAxiom
+                ontology-data-factory
+                property-object))
+
+    (when comment
+      (add-annotation o
+                      property-object
+                      (list (owlcomment
+                             (first comment)))))
+
+    (when label
+      (add-annotation o
+                      property-object
+                      (list (tawny.owl/label
+                             (first
+                              label)))))
+
+    (when supers
+      (add-super-annotation o
+                            property-object supers))
+
+    (add-annotation o property-object annotation)
+    property-object))
+
+(defdontfn annotation-property
+  {:doc "Creates a new annotation property."
+   :arglists '([ontology name & frames] [name & frames])}
+  [o name & frames]
+  (annotation-property-explicit o
+   name
+   (util/check-keys
+    (util/hashify frames)
+    [:ontology :annotation :label :comment :subproperty])))
+
+(defn- get-annotation-property
+  "Gets an annotation property with the given name."
+  [o property]
+  (.getOWLAnnotationProperty
+   ontology-data-factory
+   (iriforname o property)))
+
+(defmacro defannotationproperty
+  "Defines a new annotation property in the current ontology.
+See 'defclass' for more details on the syntax."
+  [property & frames]
+  `(let [property-name# (name '~property)
+         property#
+         (tawny.owl/annotation-property property-name# ~@frames)]
+     (def
+       ~(vary-meta property
+                   merge
+                   {:owl true})
+       property#)))
+
+
+
+
+
+
+;;; Ontology manipulation
+(def
+  ^{:doc "Hook called immediately after an ontology is removed from the
+owl-ontology-manager."}
+  remove-ontology-hook (util/make-hook))
+
+(util/add-hook remove-ontology-hook
+               (fn [o]
+                 (dosync
+                  (swap! ontology-options-atom
+                         dissoc o))))
+
+(defn remove-ontology-maybe
+  "Removes the ontology with the given ID from the manager.
+This calls the relevant hooks, so is better than direct use of the OWL API. "
+  [ontologyid]
+  (when (.contains owl-ontology-manager ontologyid)
+    (let [o (.getOntology owl-ontology-manager ontologyid)]
+      (.removeOntology
+       owl-ontology-manager o)
+      (util/run-hook remove-ontology-hook o))))
+
+(defn ontology
+  "Returns a new ontology. See 'defontology' for full description."
+  [& args]
+  (let [options (apply hash-map args)
+        iri (IRI/create (get options :iri
+                             (str
+                              (.toString (java.util.UUID/randomUUID))
+                              (if-let [name
+                                       (get options :name)]
+                                (str "#" name)))))]
+    (remove-ontology-maybe
+     (OWLOntologyID. iri))
+
+    (let [jontology
+          (.createOntology owl-ontology-manager iri)
+
+          ontology-format
+          (.getOntologyFormat
+           owl-ontology-manager jontology)]
+
+      ;; iri gen options needs to be remembered
+      (when-let [iri-gen (:iri-gen options)]
+        (dosync
+         (alter (ontology-options jontology)
+                merge {:iri-gen iri-gen})))
+
+      ;; put prefix into the prefix manager
+      ;; this isn't a given -- the prefix manager being returned by default
+      ;; returns true for isPrefixOWLOntologyFormat, so we can do this, but
+      ;; strictly we are depending on the underlying types.
+      (when-let [prefix
+                 (or (:prefix options)
+                     (:name options))]
+        (.setPrefix ontology-format
+                    prefix
+                    (.toString iri)))
+
+      (when-let [name (:name options)]
+        (add-an-ontology-annotation
+         jontology
+         (tawny-name name)))
+
+      ;; add annotations to the ontology
+      (add-annotation
+       jontology
+       (filter (comp not nil?)
+               (flatten
+                (list
+                 (:annotation options)
+                 (when-let [s (:seealso options)]
+                   (seealso jontology s))
+                 (when-let [c (:comment options)]
+                   (owlcomment jontology c))
+                 (when-let [v (:versioninfo options)]
+                   (versioninfo jontology v))))))
+      jontology)))
+
+(defmacro defontology
+  "Define a new ontology with `name'.
+
+The following keys must be supplied.
+:iri -- the IRI for the new ontology
+:prefix -- the prefix used in the serialised version of the ontology
+"
+  [name & body]
+  `(do
+     (let [ontology# (ontology :name ~(clojure.core/name name) ~@body)
+           var#
+           (def
+             ~(with-meta name
+                (assoc (meta name)
+                  :owl true))
+             ontology#)]
+       (tawny.owl/ontology-to-namespace ontology#)
+       var#
+       )))
+
+(defn ontology-to-namespace
+  "Sets the current ontology as defined by `defontology'"
+  ([o]
+     (ontology-to-namespace *ns* o))
+  ([ns o]
+     (dosync (ref-set
+              ontology-for-namespace
+              (merge @ontology-for-namespace
+                     {ns o})))))
+(defn test-ontology
+  "Define a test ontology.
+
+This function probably shouldn't be here, but one of the consequences of
+making the ontology implicit in all my functions is that playing on the repl
+is a pain, as the test ontology has to be defined first.
+
+This defines a minimal test ontology.
+
+"
+  ([]
+     (test-ontology *ns*))
+  ([ns]
+     (let [o (ontology :iri "http://iri/" :prefix "test:")]
+       (ontology-to-namespace o)
+       (intern ns 'a-test-ontology o))))
+
+;;; Begin ontology look up functions
+(defn- check-entity-set
   [entity-set iri]
   ;; ontology could be in full, or could be punning. Either way we are
   ;; stuffed.
@@ -453,56 +703,6 @@ See 'entity-for-iri' for more details."
       ;; string name somewhere?
       (entity-for-iri o (iri string))))
 
-(defn test-ontology
-  "Define a test ontology.
-
-This function probably shouldn't be here, but one of the consequences of
-making the ontology implicit in all my functions is that playing on the repl
-is a pain, as the test ontology has to be defined first.
-
-This defines a minimal test ontology.
-
-"
-  ([]
-     (test-ontology *ns*))
-  ([ns]
-     (let [o (ontology :iri "http://iri/" :prefix "test:")]
-       (ontology-to-namespace o)
-       (intern ns 'a-test-ontology o))))
-
-(defn get-current-ontology-maybe
-  "Gets the current ontology, or nil if there is not one."
-  ([]
-     (get-current-ontology-maybe *ns*))
-  ([ns]
-     ;; if current ontology is inside a binding
-     (or *current-bound-ontology*
-         ;; so use the namespace bound one
-         (get @ontology-for-namespace ns))))
-
-(defn get-current-ontology
-  "Gets the current ontology. Throws an exception if there is not current
-ontology"
-  ([]
-     (get-current-ontology *ns*))
-  ([ns]
-     (or (get-current-ontology-maybe ns)
-         ;; so break
-         (throw (IllegalStateException. "Current ontology has not been set")))))
-
-
-(defdontfn get-iri
-  "Gets the IRI for the given ontology, or the current ontology if none is given"
-  [o]
-  (.getOntologyIRI
-   (.getOntologyID o)))
-
-(defn get-current-iri
-  "DEPRECATED: Use 'get-iri' instead. "
-  {:deprecated "0.8"}
-  []
-  (get-iri))
-
 (defdontfn get-prefix
   "Returns the prefix for the given ontology, or the current ontology if none
 is given."
@@ -514,12 +714,6 @@ is given."
     (.getPrefixName2PrefixMap
      (.getOntologyFormat owl-ontology-manager
                          o)))))
-
-(defn get-current-prefix
-  "Gets the current prefix"
-  {:deprecated "0.8"}
-  []
-  (get-prefix))
 
 (defdontfn save-ontology
   "Save the current 'ontology' in the file or `filename' if given.
@@ -554,7 +748,7 @@ If no ontology is given, use the current-ontology"
        (.saveOntology owl-ontology-manager o
                       this-format output-stream))))
 
-(declare owl2datatypes)
+;;; Begin OWL entity guess/ensure
 (defmontfn guess-type
   "Guesses the type of the entity. Returns :object, :data or :annotation or
 nil where the type cannot be guessed. IllegalArgumentException is thrown for
@@ -629,16 +823,7 @@ an IRI with no transformation. nil is returned when the result is not clear.
    (throw (IllegalArgumentException.
            (str "Cannot tell if this is individual or literal:" entity)))))
 
-
-(defdontfn
-  ^{:private true}
-  get-create-object-property
-  "Creates an OWLObjectProperty for the given name."
-  [o name]
-  (.getOWLObjectProperty ontology-data-factory
-                         (iriforname o name)))
-
-(defmontfn
+(defn-
   ^{:private true}
   ensure-object-property
   "Ensures that the entity in question is an OWLObjectProperty
@@ -652,20 +837,12 @@ or throw an exception if it cannot be converted."
    (instance? IRI prop)
    (.getOWLObjectProperty ontology-data-factory prop)
    (string? prop)
-   (get-create-object-property o prop)
+   (ensure-object-property o (iriforname o prop))
    :default
    (throw (IllegalArgumentException.
            (str "Expecting an object property. Got: " prop)))))
 
-(defdontfn
-  ^{:private true}
-  get-create-class
-  "Returns an OWL class."
-  [o name]
-  (.getOWLClass ontology-data-factory
-                (iriforname o name)))
-
-(defmontfn ensure-class
+(defn- ensure-class
   "If clz is a String return a class of with that name,
 else if clz is a OWLClassExpression add that."
   [o clz]
@@ -677,46 +854,69 @@ else if clz is a OWLClassExpression add that."
    (instance? IRI clz)
    (.getOWLClass ontology-data-factory clz)
    (string? clz)
-   (get-create-class o clz)
+   (ensure-class o (iriforname o clz))
    true
    (throw (IllegalArgumentException.
            (str "Expecting a class. Got: " clz)))))
 
-(defdontfn add-axiom
-  "Adds an axiom from the given ontology, or the current one."
-  [o axiom]
-  (.applyChange owl-ontology-manager
-                (AddAxiom. o axiom))
-  axiom)
+(defn- ensure-data-property [o property]
+  "Ensures that 'property' is an data property,
+converting it from a string or IRI if necessary."
+  (cond
+   (instance? OWLDataProperty property)
+   property
+   (instance? IRI property)
+   (.getOWLDataProperty
+    ontology-data-factory property)
+   (instance? String property)
+   (ensure-data-property o
+    (iriforname o property))
+   :default
+   (throw (IllegalArgumentException.
+           (format "Expecting an OWL data property: %s" property)))))
 
-(defdontfn remove-axiom
-  "Removes an axiom from the given ontology, or the current one."
-  [o axiom]
-  (.applyChange owl-ontology-manager
-                (RemoveAxiom. o axiom))
-  axiom)
+(defn- ensure-datatype [o datatype]
+  (cond
+   (instance? OWLDatatype datatype)
+   datatype
+   (instance? org.semanticweb.owlapi.vocab.OWL2Datatype datatype)
+   (.getDatatype datatype ontology-data-factory)
+   (keyword? datatype)
+   (if-let [d (get owl2datatypes datatype)]
+     (ensure-datatype o d)
+     (throw (IllegalArgumentException.
+             (str "Was expecting a datatype. Got " datatype "."))))
+   (instance? IRI datatype)
+   (.getOWLDatatype datatype ontology-data-factory)
+   :default
+   (throw (IllegalArgumentException.
+           (str "Was expecting a datatype. Got " datatype ".")))))
 
-(defdontfn remove-entity
-  "Remove from the ontology an entity created and added by
-owlclass, defclass, objectproperty or defoproperty. Entity is the value
-returned by these functions.
+(defn- ensure-datarange [o datarange]
+  (cond
+   (instance? org.semanticweb.owlapi.model.OWLDataRange datarange)
+   datarange
+   :default
+   (ensure-datatype o datarange)))
 
-This removes all the axioms that were added. So, for example, a form such as
+(defn- ensure-individual
+  "Returns an INDIVIDUAL.
+If INDIVIDUAL is an OWLIndividual return individual, else
+interpret this as a string and create a new OWLIndividual."
+  [o individual]
+  (cond (instance? org.semanticweb.owlapi.model.OWLIndividual individual)
+        individual
+        (instance? IRI individual)
+        (.getOWLNamedIndividual ontology-data-factory
+                                individual)
+        (string? individual)
+        (ensure-individual o (iriforname o individual))
+        :default
+        (throw (IllegalArgumentException.
+                (str "Expecting an Individual. Got: " individual)))))
 
-   (defclass a
-      :subclass b
-      :equivalent c)
 
-adds three axioms -- it declares a, makes it a subclass of b, and equivalent
-of c."
-  [o entity]
-  (let [remover
-        (OWLEntityRemover. owl-ontology-manager
-                           (hash-set o))]
-    (.accept entity remover)
-    (.applyChanges owl-ontology-manager
-                   (.getChanges remover))))
-
+;; Begin add-owl objects
 (defbdontfn
   add-subclass
   {:doc "Adds one or more subclass to name in ontology."
@@ -772,7 +972,6 @@ of c."
               ontology-data-factory
               (ensure-class o name))))
 
-(declare ensure-data-property)
 ;; a class can have only a single haskey, so ain't no point broadcasting this.
 (defdontfn add-haskey
   [o class propertylist]
@@ -872,8 +1071,6 @@ a superproperty."
   (add-axiom o
              ((get charfuncs characteristic)
               ontology-data-factory (ensure-object-property o property))))
-
-(declare add-a-simple-annotation)
 
 ;; object properties
 (defdontfn objectproperty-explicit
@@ -1107,7 +1304,6 @@ all values from restrictions."
 
 (.addMethod exactly :object object-exactly)
 
-(declare ensure-individual)
 (defmontfn object-oneof
   "Returns an OWL one of property restriction."
   [o & individuals]
@@ -1132,214 +1328,6 @@ all values from restrictions."
   (.getOWLObjectHasSelf ontology-data-factory
    (ensure-object-property o property)))
 
-
-;; annotations
-(defn- add-a-simple-annotation
-  [o named-entity annotation]
-  (let [axiom
-        (.getOWLAnnotationAssertionAxiom
-         ontology-data-factory
-         (.getIRI named-entity) annotation)]
-    (add-axiom o axiom)))
-
-(defn- add-an-ontology-annotation
-  [o annotation]
-  (.applyChange
-   owl-ontology-manager
-   (AddOntologyAnnotation. o annotation)))
-
-
-(defmontfn add-annotation
-  ([o named-entity annotation-list]
-     (doall
-      (for [n annotation-list]
-        (add-a-simple-annotation o named-entity n))))
-  ([o annotation-list]
-     (doall
-      (for [n annotation-list]
-        (add-an-ontology-annotation o n)))))
-
-(defn- ensure-annotation-property
-  "Ensures that 'property' is an annotation property,
-converting it from a string or IRI if necessary."
-  [o property]
-  (cond
-   (instance? OWLAnnotationProperty property)
-   property
-   (instance? IRI property)
-   (.getOWLAnnotationProperty
-    ontology-data-factory property)
-   (instance? String property)
-   (ensure-annotation-property
-    o
-    (iriforname o property))
-   :default
-  (throw (IllegalArgumentException.
-           (format "Expecting an OWL annotation property: %s" property)))))
-
-(defmontfn annotation
-  "Creates a new annotation property. If literal is a string it is
-interpreted as a String in English. Alternatively, a literal created
-with the literal function."
-  ([o annotation-property literal]
-     (cond
-      (instance? String literal)
-      (annotation o annotation-property literal "en")
-      (instance? OWLLiteral literal)
-      (.getOWLAnnotation
-       ontology-data-factory
-       (ensure-annotation-property o annotation-property)
-       literal)
-      :default
-      (throw (IllegalArgumentException.
-              "annotation takes a String or OWLLiteral"))))
-  ([o annotation-property literal language]
-     (annotation o annotation-property
-                 (.getOWLLiteral ontology-data-factory literal language))))
-
-(defbdontfn add-super-annotation
-  "Adds a set of superproperties to the given subproperty."
-  [o subproperty superproperty]
-  (.applyChange owl-ontology-manager
-                (AddAxiom.
-                 o
-                 (.getOWLSubAnnotationPropertyOfAxiom
-                  ontology-data-factory
-                  subproperty
-                  (ensure-annotation-property o superproperty)))))
-
-
-;; various annotation types
-(def labelproperty
-  (.getRDFSLabel ontology-data-factory))
-
-(defmontfn label
-  [o & args]
-  (apply annotation o labelproperty args))
-
-(def owlcommentproperty
-  (.getRDFSComment ontology-data-factory))
-
-(defmontfn owlcomment
-  [o & args]
-  (apply annotation o owlcommentproperty args))
-
-(def isdefinedbyproperty
-  (.getRDFSIsDefinedBy ontology-data-factory))
-
-(defmontfn isdefinedby
-  [o & args]
-  (apply annotation o isdefinedbyproperty args))
-
-(def seealsoproperty
-  (.getRDFSSeeAlso ontology-data-factory))
-
-(defmontfn seealso
-  [o & args]
-  (apply annotation o
-         seealsoproperty args))
-
-(def backwardcompatiblewithproperty
-  (.getOWLBackwardCompatibleWith ontology-data-factory))
-
-(defmontfn backwardcompatiblewith
-  [o & args]
-  (apply annotation o
-              backwardcompatiblewithproperty
-              args))
-
-(def incompatiblewithproperty
-  (.getOWLIncompatibleWith ontology-data-factory))
-
-(defmontfn incompatiblewith
-  [o & args]
-  (apply annotation o
-         incompatiblewithproperty
-         args))
-
-(def versioninfoproperty
-  (.getOWLVersionInfo ontology-data-factory))
-
-(defmontfn versioninfo
-  [o & args]
-  (apply annotation o
-              versioninfoproperty
-              args))
-
-(def deprecatedproperty
-  (.getOWLDeprecated ontology-data-factory))
-
-(defmontfn deprecated
-  [o & args]
-  (apply annotation o
-         deprecatedproperty
-         args))
-
-(defdontfn annotation-property-explicit
-  "Add this annotation property to the ontology"
-  [o property
-   {:keys [comment label supers annotation ontology]}]
-  (let [o
-        (or (first ontology) o)
-        property-object
-        (ensure-annotation-property o property)
-        ]
-    ;; add the property
-    (.addAxiom owl-ontology-manager
-               o
-               (.getOWLDeclarationAxiom
-                ontology-data-factory
-                property-object))
-
-    (when comment
-      (add-annotation o
-                      property-object
-                      (list (owlcomment
-                             (first comment)))))
-
-    (when label
-      (add-annotation o
-                      property-object
-                      (list (tawny.owl/label
-                             (first
-                              label)))))
-
-    (when supers
-      (add-super-annotation o
-                            property-object supers))
-
-    (add-annotation o property-object annotation)
-    property-object))
-
-(defdontfn annotation-property
-  {:doc "Creates a new annotation property."
-   :arglists '([ontology name & frames] [name & frames])}
-  [o name & frames]
-  (annotation-property-explicit o
-   name
-   (util/check-keys
-    (util/hashify frames)
-    [:ontology :annotation :label :comment :subproperty])))
-
-(defn- get-annotation-property
-  "Gets an annotation property with the given name."
-  [o property]
-  (.getOWLAnnotationProperty
-   ontology-data-factory
-   (iriforname o property)))
-
-(defmacro defannotationproperty
-  "Defines a new annotation property in the current ontology.
-See 'defclass' for more details on the syntax."
-  [property & frames]
-  `(let [property-name# (name '~property)
-         property#
-         (tawny.owl/annotation-property property-name# ~@frames)]
-     (def
-       ~(vary-meta property
-                   merge
-                   {:owl true})
-       property#)))
 
 (defdontfn owlclass-explicit
   "Creates a class in the current ontology.
@@ -1432,27 +1420,6 @@ All arguments must be an instance of OWLClassExpression."
   [o & list]
   (disjointclasseslist o list))
 
-(defn- get-create-individual
-  "Returns an individual for the given name."
-  [o individual]
-  (.getOWLNamedIndividual ontology-data-factory
-                          (iriforname o individual)))
-
-(defn- ensure-individual
-  "Returns an INDIVIDUAL.
-If INDIVIDUAL is an OWLIndividual return individual, else
-interpret this as a string and create a new OWLIndividual."
-  [o individual]
-  (cond (instance? org.semanticweb.owlapi.model.OWLIndividual individual)
-        individual
-        (instance? IRI individual)
-        (.getOWLNamedIndividual ontology-data-factory
-                                individual)
-        (string? individual)
-        (get-create-individual o individual)
-        true
-        (throw (IllegalArgumentException.
-                (str "Expecting an Individual. Got: " individual)))))
 
 (defbdontfn add-type
   {:doc "Adds CLAZZES as a type to individual to current ontology
@@ -1718,14 +1685,6 @@ expressions."
                       o)
       ())))
 
-(declare subclasses)
-(defdontfn subclass?
-  "Returns true if name has subclass as a subclass"
-  [o name subclass]
-  (let [namecls (ensure-class o name)
-        subclasscls (ensure-class o subclass)]
-    (some #(.equals subclasscls %) (subclasses o name))))
-
 (defn- subclasses-1
   "Returns all subclasses of all classes in classlist."
   [o classlist]
@@ -1743,6 +1702,13 @@ expressions."
   "Return all subclasses of class"
   [o class]
   (subclasses-1 o (direct-subclasses o class)))
+
+(defdontfn subclass?
+  "Returns true if name has subclass as a subclass"
+  [o name subclass]
+  (let [namecls (ensure-class o name)
+        subclasscls (ensure-class o subclass)]
+    (some #(.equals subclasscls %) (subclasses o name))))
 
 (defdontfn disjoint?
   "Returns t iff classes are asserted to be disjoint."

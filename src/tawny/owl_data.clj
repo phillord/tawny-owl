@@ -17,22 +17,7 @@
 (in-ns 'tawny.owl)
 
 
-;; data type properties
-(defn- ensure-data-property [o property]
-  "Ensures that 'property' is an data property,
-converting it from a string or IRI if necessary."
-  (cond
-   (instance? OWLDataProperty property)
-   property
-   (instance? IRI property)
-   (.getOWLDataProperty
-    ontology-data-factory property)
-   (instance? String property)
-   (ensure-data-property o
-    (iriforname o property))
-   :default
-   (throw (IllegalArgumentException.
-           (format "Expecting an OWL data property: %s" property)))))
+
 
 (defbdontfn add-data-domain
   {:doc "Adds a domain to a data property."
@@ -78,34 +63,7 @@ converting it from a string or IRI if necessary."
              ((get datacharfuncs characteristic)
               ontology-data-factory (ensure-data-property o property))))
 
-(def owl2datatypes
-  (into {}
-        (for [k (org.semanticweb.owlapi.vocab.OWL2Datatype/values)]
-          [(keyword (.name k)) k])))
 
-(defn- ensure-datatype [o datatype]
-  (cond
-   (instance? OWLDatatype datatype)
-   datatype
-   (instance? org.semanticweb.owlapi.vocab.OWL2Datatype datatype)
-   (.getDatatype datatype ontology-data-factory)
-   (keyword? datatype)
-   (if-let [d (get owl2datatypes datatype)]
-     (ensure-datatype o d)
-     (throw (IllegalArgumentException.
-             (str "Was expecting a datatype. Got " datatype "."))))
-   (instance? IRI datatype)
-   (.getOWLDatatype datatype ontology-data-factory)
-   :default
-   (throw (IllegalArgumentException.
-           (str "Was expecting a datatype. Got " datatype ".")))))
-
-(defn- ensure-datarange [o datarange]
-  (cond
-   (instance? org.semanticweb.owlapi.model.OWLDataRange datarange)
-   datarange
-   :default
-   (ensure-datatype o datarange)))
 
 ;; TODO
 ;; need to create accessor methods for all the data ranges. Sadly, also need

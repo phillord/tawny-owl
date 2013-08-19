@@ -121,24 +121,11 @@
   (is (= (.toString (#'o/iriforname to "test"))
          "http://iri/#test")))
 
-(deftest get-create-object-property []
-  (is (instance? org.semanticweb.owlapi.model.OWLObjectProperty
-                 (#'o/get-create-object-property to "hello")))
-  (is (instance? org.semanticweb.owlapi.model.OWLObjectProperty
-                 (#'o/get-create-object-property
-                  to "hello"))))
-
-
 (deftest ensure-object-property []
   (is
    ;; check whether it makes an object out of a string
    (instance? org.semanticweb.owlapi.model.OWLObjectProperty
-              (#'o/ensure-object-property to "hello")))
-  (is
-   ;; check whether it makes keeps an object as an object
-   (instance? org.semanticweb.owlapi.model.OWLObjectProperty
-              (#'o/ensure-object-property to
-               (#'o/get-create-object-property to "hello")))))
+              (#'o/ensure-object-property to "hello"))))
 
 (deftest defoproperty
   (is
@@ -151,18 +138,9 @@
    (instance? org.semanticweb.owlapi.model.OWLObjectProperty
               (o/objectproperty to "r"))))
 
-(deftest get-create-class []
-  (is (instance? org.semanticweb.owlapi.model.OWLClass
-                 (#'o/get-create-class to "hello")))
-  (is  (=  (.hashCode (#'o/get-create-class to "hello"))
-           (.hashCode (#'o/get-create-class to "hello")))))
-
-
 (deftest ensure-class []
   (is (instance? org.semanticweb.owlapi.model.OWLClassExpression
-                 (#'o/ensure-class to "hello")))
-  (is (instance? org.semanticweb.owlapi.model.OWLClassExpression
-                 (#'o/ensure-class to (#'o/get-create-class to "hello")))))
+                 (#'o/ensure-class to "hello"))))
 
 
 (deftest add-subclass
