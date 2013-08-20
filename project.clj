@@ -2,9 +2,7 @@
   :description "tawny-owl enables building OWL ontologies in a programmatic environment."
   :url "http://www.russet.org.uk/blog/tawny-owl"
   :repositories [["maven" "http://repo1.maven.org/maven2"]
-                 ;; for when the OWL API is pre-release.
-                 ;;["snapshot" "https://oss.sonatype.org/content/repositories/snapshots"]
-                 ;; hermit comes from here
+                 ;; for when I am pre-release
                  ["phillord" "http://homepages.cs.ncl.ac.uk/phillip.lord/maven"]
                  ]
 
@@ -34,7 +32,7 @@
 
                  ;; reasoners
                  [org.semanticweb.elk/elk-owlapi "0.4.0"]
-                 [org.semanticweb.hermit/HermiT "1.3.7.3"]
+                 [com.hermit-reasoner/org.semanticweb.hermit "1.3.8.1"]
 
                  ;; need to access log4j to control elk.
                  [log4j/log4j "1.2.17"]])
