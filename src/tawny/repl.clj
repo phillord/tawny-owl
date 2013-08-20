@@ -156,25 +156,63 @@ once."
         (println "Exception" (.printStackTrace (.getException event)))))
     (startedLoadingOntology [event]
       (println "Started Loading:"
-               (-> event
-                   (.getOntologyID)
-                   (.getOntologyIRI))
+               (or (-> event
+                       (.getOntologyID)
+                       (.getOntologyIRI))
+                   "unknown")
                " from:"
                (-> event
                    (.getDocumentIRI))))))
 
+
+(defn- new-manager []
+  (org.semanticweb.owlapi.apibinding.OWLManager/createOWLOntologyManager
+   tawny.owl/ontology-data-factory))
+
 (defn load-ontology
   "Loads and returns an ontology directly through the OWL API.
-This is a useful test function; see 'tawny.read' for more integrated
-  solution."
-  [document-iri]
-  (let [listener
-        (println-load-listener)]
-    (.addOntologyLoaderListener tawny.owl/owl-ontology-manager listener)
-    (try
-      (.loadOntologyFromOntologyDocument
-       tawny.owl/owl-ontology-manager
-       (tawny.owl/iri document-iri))
-      (finally
-        (.removeOntologyLoaderListener
-         tawny.owl/owl-ontology-manager listener)))))
+This is function is meant for usage at the REPL; see 'tawny.read' for more
+integrated solution. If an manager is passed in, it should not already have
+loaded an ontology with the same name."
+  ([iri manager]
+     (let [listener
+           (println-load-listener)]
+       (.addOntologyLoaderListener
+        manager listener)
+       (.loadOntologyFromOntologyDocument
+        manager
+        (tawny.owl/iri iri))))
+  ([iri]
+     (load-ontology iri (new-manager))))
+
+
+(defn materialize-ontology
+  "Loads an ontology, attempts to resolve all of its imports, then
+saves the import clojure to the resources directory. Returns a map of IRI
+to file names. Save ontologies in 'root' or the resources directory."
+  ([iri]
+     (materialize-ontology iri "resources/"))
+  ([iri root]
+      (let [manager (new-manager)
+            ontology (load-ontology iri manager)]
+        (into {}
+              (for [k (.getOntologies manager)]
+                [(-> k
+                     (.getOntologyID)
+                     (.getOntologyIRI)
+                     (.toString))
+                 (let
+                     [file-maybe
+                      (-> k
+                          (.getOntologyID)
+                          (.getOntologyIRI)
+                          (.getFragment))
+                      file
+                      (str root
+                           (if file-maybe
+                             file-maybe
+                             (.toString (java.util.UUID/randomUUID))))]
+                   (.saveOntology manager k
+                                  (java.io.FileOutputStream.
+                                   (java.io.File. file)))
+                   file)])))))
