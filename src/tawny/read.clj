@@ -136,7 +136,7 @@ OWLOntologyIRIMapper instance."
            tawny.owl/owl-ontology-manager
            location)
           (finally
-            (.removeIRIMapper mapper)))]
+            (when mapper (.removeIRIMapper mapper))))]
 
     (when prefix
       (let [format (.getOntologyFormat tawny.owl/owl-ontology-manager owlontology)]
