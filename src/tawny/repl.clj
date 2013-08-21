@@ -165,7 +165,7 @@ once."
                    (.getDocumentIRI))))))
 
 
-(defn- new-manager []
+(defn new-manager []
   (org.semanticweb.owlapi.apibinding.OWLManager/createOWLOntologyManager
    tawny.owl/ontology-data-factory))
 
@@ -191,7 +191,7 @@ loaded an ontology with the same name."
 saves the import clojure to the resources directory. Returns a map of IRI
 to file names. Save ontologies in 'root' or the resources directory."
   ([iri]
-     (materialize-ontology iri "resources/"))
+     (materialize-ontology iri "dev-resources/"))
   ([iri root]
       (let [manager (new-manager)
             ontology (load-ontology iri manager)]
@@ -207,12 +207,12 @@ to file names. Save ontologies in 'root' or the resources directory."
                           (.getOntologyID)
                           (.getOntologyIRI)
                           (.getFragment))
-                      file
-                      (str root
-                           (if file-maybe
-                             file-maybe
-                             (.toString (java.util.UUID/randomUUID))))]
+                      stem
+                      (if file-maybe
+                        file-maybe
+                        (.toString (java.util.UUID/randomUUID)))
+                      file (str root stem)]
                    (.saveOntology manager k
                                   (java.io.FileOutputStream.
                                    (java.io.File. file)))
-                   file)])))))
+                   stem)])))))

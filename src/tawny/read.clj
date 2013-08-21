@@ -97,9 +97,28 @@ Clojure symbol. Use this composed with a entity transform function"
          (print "Broken Intern on:" e)
          (throw i)))))
 
+(defn iri-mapper
+  [iri-map]
+  "Given a map of Ontology IRI strings to document IRI strings, return an
+OWLOntologyIRIMapper instance."
+  (proxy [org.semanticweb.owlapi.model.OWLOntologyIRIMapper] []
+    (getDocumentIRI [o-iri]
+      (if-let [retn (get iri-map (.toString o-iri))]
+        (tawny.owl/iri retn)
+        nil))))
+
+(defn resource-iri-mapper
+  [iri-map]
+  "Given a map of Ontology IRI strings to resource strings, return an
+  OWLOntologyIRIMapper instance."
+  (iri-mapper
+   (into {}
+         (for [[k v] iri-map]
+           [k (clojure.java.io/resource v)]))))
 
 (defn read [& rest]
-  (let [{:keys [location iri file prefix filter transform version-iri]} rest
+  (let [{:keys [location iri file prefix filter transform version-iri
+                mapper]} rest
 
         jiri (IRI/create iri)
         viri (if version-iri
@@ -109,12 +128,15 @@ Clojure symbol. Use this composed with a entity transform function"
         (OWLOntologyID. jiri viri)
 
         owlontology
-        (do
+        (try
           (tawny.owl/remove-ontology-maybe ontologyid)
+          (when mapper
+            (.addIRIMapper mapper))
           (.loadOntologyFromOntologyDocument
            tawny.owl/owl-ontology-manager
-           location))
-        ]
+           location)
+          (finally
+            (.removeIRIMapper mapper)))]
 
     (when prefix
       (let [format (.getOntologyFormat tawny.owl/owl-ontology-manager owlontology)]

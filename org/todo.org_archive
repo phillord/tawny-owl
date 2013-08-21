@@ -431,3 +431,13 @@ renders as ...
 
 Obviously the nil is wrong
 
+
+* Added SimpleMapper support to tawny.read
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2013-08-21 Wed 10:29
+  :ARCHIVE_FILE: ~/src/knowledge/tawny-owl/org/todo.org
+  :ARCHIVE_OLPATH: Issues
+  :ARCHIVE_CATEGORY: todo
+  :END:
+
+
