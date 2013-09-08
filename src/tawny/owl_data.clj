@@ -63,54 +63,45 @@
              ((get datacharfuncs characteristic)
               ontology-data-factory (ensure-data-property o property))))
 
+(defbdontfn add-data-equivalent
+  [o property equivalent]
+  (add-axiom
+   o (.getOWLEquivalentDataPropertiesAxiom
+      ontology-data-factory
+      (ensure-data-property o property)
+      (ensure-data-property o equivalent))))
 
-
-;; TODO
-;; need to create accessor methods for all the data ranges. Sadly, also need
-;; to think what to do about or and and, which they also support. In the ideal
-;; world I don't want to introduce new functions, although I have already had
-;; to with add-data-range and so on. What a pain in the ass!
-;; the ensure-class/property things can be extended to for an IRI to check if
-;; it is already in the signature of any known ontology
+(def ^{:private true}
+  datatypeproperty-handlers
+  {:annotation add-annotation,
+   :domain add-data-domain,
+   :range add-data-range,
+   :subproperty add-data-superproperty
+   :characteristic add-data-characteristics
+   :equivalent add-data-equivalent
+   :comment add-comment
+   :label add-label})
 
 (defdontfn datatypeproperty-explicit
   "Define a new datatype property with an explicit map"
-  [o property map]
-  (let [o (or (first (get map :ontology))
-              o)
-        dataproperty (ensure-data-property o property)]
+  [o name frames]
+  (let [o (or (first (get frames :ontology)) o)
+        property (ensure-data-property o name)]
     (.addAxiom owl-ontology-manager
                o
                (.getOWLDeclarationAxiom
                 ontology-data-factory
-                dataproperty))
-    (add-annotation o dataproperty (:annotation map))
-    (add-data-domain o dataproperty (:domain map))
-    (add-data-range o dataproperty (:range map))
-    (add-data-superproperty o dataproperty (:subproperty map))
-    (add-data-characteristics o dataproperty (:characteristic map))
-    (when-let [comment (:comment map)]
-      (add-annotation o
-                      dataproperty
-                      (list (owlcomment (first comment)))))
-
-    (when-let [labl (:label map)]
-      (add-annotation o dataproperty
-                      (list (label (first labl)))))
-
-    (when (instance? String property)
-      (add-a-simple-annotation
-       o dataproperty (tawny-name property)))
-
-    dataproperty))
+                property))
+    (add-a-name-annotation o property name)
+    (doseq [[k f] datatypeproperty-handlers]
+      (f o property (get frames k)))
+    property))
 
 (defdontfn datatypeproperty
   "Define a new datatype property"
   [o name & frames]
   (let [keys
-        [:domain :range :annotation :characteristic
-         :subproperty :equivalent :disjoint :ontology
-         :label :comment]]
+        (list* :ontology (keys datatypeproperty-handlers))]
     (datatypeproperty-explicit
      o name
      (util/check-keys
@@ -150,9 +141,23 @@ which is an OWLDatatype object.
    (.getOWLLiteral ontology-data-factory literal)))
 
 
-(defdontfn datatype-explicit [o name frame]
+(defbdontfn add-datatype-equivalent
+  [o datatype equivalent]
+  (add-axiom
+   o (.getOWLDatatypeDefinitionAxiom
+      ontology-data-factory datatype
+      (ensure-datatype o equivalent))))
+
+(def ^{:private true}
+  datatype-handlers
+  {:annotation add-annotation
+   :comment add-comment
+   :label add-label
+   :equivalent add-datatype-equivalent})
+
+(defdontfn datatype-explicit [o name frames]
   (let [o
-        (or (first (get frame :ontology))
+        (or (first (get frames :ontology))
             o)
         datatype
         (.getOWLDatatype
@@ -160,31 +165,20 @@ which is an OWLDatatype object.
          (iriforname name))]
     (add-axiom o
      (.getOWLDeclarationAxiom ontology-data-factory datatype))
-
-    (add-annotation
-     o datatype
-     (concat
-      (:annotation frame)
-      (map label (:label frame))
-      (map owlcomment (:comment frame))))
-    (when (instance? String name)
-      (add-a-simple-annotation
-       o datatype (tawny-name name)))
-
-    (doseq
-        [n (:equivalent frame)]
-      (add-axiom o
-       (.getOWLDatatypeDefinitionAxiom
-        ontology-data-factory datatype n)))
+    (add-a-name-annotation o datatype name)
+    (doseq [[k f] datatype-handlers]
+      (f o datatype (get frames k)))
     datatype))
 
 (defdontfn datatype [o name & frames]
-  (datatype-explicit
-   o name
-   (util/check-keys
-    (util/hashify frames)
-    [:equivalent :annotation :label :comment])))
-
+  (let [keys
+        (list* :ontology
+               (keys datatype-handlers))]
+    (datatype-explicit
+     o name
+     (util/check-keys
+      (util/hashify-at keys frames)
+      keys))))
 
 (defmacro defdatatype
   [dataname & frames]

@@ -325,12 +325,16 @@ the moment it is very simple."
          (.getIRI named-entity) annotation)]
     (add-axiom o axiom)))
 
+(defn- add-a-name-annotation
+  [o named-entity name]
+  (when (instance? String name)
+    (add-a-simple-annotation o named-entity (tawny-name name))))
+
 (defn- add-an-ontology-annotation
   [o annotation]
   (.applyChange
    owl-ontology-manager
    (AddOntologyAnnotation. o annotation)))
-
 
 (defmontfn add-annotation
   ([o named-entity annotation-list]
@@ -458,41 +462,48 @@ with the literal function."
          deprecatedproperty
          args))
 
+(defbmontfn add-label
+  [o named-entity label]
+  (add-annotation
+   o
+   named-entity
+   [(tawny.owl/label label)]))
+
+(defbmontfn add-comment
+  [o named-entity comment]
+  (add-annotation o named-entity
+                  [(owlcomment comment)]))
+
+
+(def ^{:private true} annotation-property-handlers
+  {
+   :subproperty add-super-annotation
+   :annotation add-annotation
+   :comment add-comment
+   :label add-label
+   })
+
 (defdontfn annotation-property-explicit
   "Add this annotation property to the ontology"
-  [o property
-   {:keys [comment label supers annotation ontology]}]
+  [o name frames]
   (let [o
-        (or (first ontology) o)
-        property-object
-        (ensure-annotation-property o property)
+        (or (first (get frames :ontology)) o)
+        property
+        (ensure-annotation-property o name)
         ]
     ;; add the property
     (.addAxiom owl-ontology-manager
                o
                (.getOWLDeclarationAxiom
                 ontology-data-factory
-                property-object))
-
-    (when comment
-      (add-annotation o
-                      property-object
-                      (list (owlcomment
-                             (first comment)))))
-
-    (when label
-      (add-annotation o
-                      property-object
-                      (list (tawny.owl/label
-                             (first
-                              label)))))
-
-    (when supers
-      (add-super-annotation o
-                            property-object supers))
-
-    (add-annotation o property-object annotation)
-    property-object))
+                property))
+    ;; add a name annotation
+    (add-a-name-annotation o property name)
+    ;; apply the handlers
+    (doseq [[k f] annotation-property-handlers]
+      (f o property (get frames k)))
+    ;; return the property
+    property))
 
 (defdontfn annotation-property
   {:doc "Creates a new annotation property."
@@ -502,7 +513,8 @@ with the literal function."
    name
    (util/check-keys
     (util/hashify frames)
-    [:ontology :annotation :label :comment :subproperty])))
+    (list* :ontology
+           (keys annotation-property-handlers)))))
 
 (defn- get-annotation-property
   "Gets an annotation property with the given name."
@@ -975,21 +987,23 @@ interpret this as a string and create a new OWLIndividual."
 ;; a class can have only a single haskey, so ain't no point broadcasting this.
 (defdontfn add-haskey
   [o class propertylist]
-  (let [type (guess-type o propertylist)
-        propertylist
-        (cond
-         (= :object type)
-         (map (partial ensure-object-property o) propertylist)
-         (= :data type)
-         (map (partial ensure-data-property o) propertylist)
-         :default
-         (throw
-          (IllegalArgumentException.
-           "Unable to determine type of property")))]
-    (add-axiom o
-     (.getOWLHasKeyAxiom ontology-data-factory
-                         (ensure-class o class)
-                         (into #{} propertylist)))))
+  ;; nil or empty list safe
+  (if (seq propertylist)
+    (let [type (guess-type o propertylist)
+          propertylist
+          (cond
+           (= :object type)
+           (map (partial ensure-object-property o) propertylist)
+           (= :data type)
+           (map (partial ensure-data-property o) propertylist)
+           :default
+           (throw
+            (IllegalArgumentException.
+             "Unable to determine type of property")))]
+      (add-axiom o
+                 (.getOWLHasKeyAxiom ontology-data-factory
+                                     (ensure-class o class)
+                                     (into #{} propertylist))))))
 
 (defbdontfn add-domain
   "Adds all the entities in domainlist as domains to a property."
@@ -1072,52 +1086,48 @@ a superproperty."
              ((get charfuncs characteristic)
               ontology-data-factory (ensure-object-property o property))))
 
+(def ^{:private true} objectproperty-handlers
+  {
+   :domain add-domain
+   :range add-range
+   :inverse add-inverse
+   :subproperty add-superproperty
+   :characteristic add-characteristics
+   :subpropertychain add-subpropertychain
+   :annotation add-annotation
+   :label add-label
+   :comment add-comment})
+
 ;; object properties
 (defdontfn objectproperty-explicit
   "Returns an objectproperty. This requires an hash with a list
 value for each frame."
-  [o name {:keys [domain range inverse subproperty
-                  characteristic subpropertychain ontology
-                  annotation label comment]}]
-  (let [o (or (first ontology)
+  [o name frames]
+  (let [o (or (first (get frames :ontology))
               o)
-        property (ensure-object-property o name)
-        axioms
-        (concat
-         (list (add-axiom o
-                (.getOWLDeclarationAxiom
-                 ontology-data-factory property)))
-         (add-domain o property domain)
-         (add-range o property range)
-         (add-inverse o property inverse)
-         (add-superproperty o property subproperty)
-         (add-characteristics o property characteristic)
-         (add-subpropertychain o property subpropertychain)
-
-         (when annotation
-           (add-annotation o property annotation))
-         (when comment
-           (add-annotation o property
-                           (owlcomment (first comment))))
-         (when label
-           (add-annotation o property
-                           (label (first label)))))]
-    (when (instance? String name)
-      (add-a-simple-annotation
-       o property
-       (tawny-name name)))
+        property (ensure-object-property o name)]
+    (do
+      ;; add the property
+      (add-axiom o
+                 (.getOWLDeclarationAxiom
+                  ontology-data-factory property))
+      ;; add a name annotation
+      (add-a-name-annotation o property name)
+      ;; apply the handlers
+      (doseq [[k f] objectproperty-handlers]
+        (f o property (get frames k))))
     property))
 
 
 (defdontfn objectproperty
   "Returns a new object property in the current ontology."
   [o name & frames]
-  (let [keys [:domain :range :inverse :subproperty :characteristic
-              :ontology :annotation :label :comment]]
+  (let [keys (list* :ontology (keys objectproperty-handlers))]
     (objectproperty-explicit
      o name
      (util/check-keys
-      (util/hashify-at keys frames) keys))))
+      (util/hashify-at keys frames)
+      keys))))
 
 (defmacro defoproperty
   "Defines a new object property in the current ontology."
@@ -1323,11 +1333,19 @@ all values from restrictions."
 
 (.addMethod hasvalue :object object-hasvalue)
 
-
 (defmontfn hasself [o property]
   (.getOWLObjectHasSelf ontology-data-factory
    (ensure-object-property o property)))
 
+(def
+  ^{:private true} owlclass-handlers
+  {:subclass add-subclass
+   :equivalent add-equivalent
+   :disjoint add-disjoint
+   :annotation add-annotation
+   :haskey add-haskey
+   :comment add-comment
+   :label add-label})
 
 (defdontfn owlclass-explicit
   "Creates a class in the current ontology.
@@ -1336,39 +1354,20 @@ lists) containing classes. This function has a rigid syntax, and the more
 flexible 'owlclass' is normally prefered. However, this function should be
 slightly faster.
 "
-  [o
-   name {:keys [subclass equivalent disjoint annotation haskey
-                comment label ontology]}]
-  (let [o (or (first ontology)
+  [o name frames]
+  (let [o (or (first (get frames :ontology))
               o)
         class (ensure-class o name)]
-    ;; create the class
     (do
-      ;; add-class returns a single axiom -- concat balks at this
+      ;; add the class
       (add-class o class)
-      (add-subclass o class subclass)
-      (add-equivalent o class equivalent)
-      (add-disjoint o class disjoint)
-      (add-annotation o class annotation)
-      (when haskey
-        (add-haskey o class haskey))
-
-      ;; change these to add to the annotation frame instead perhaps?
-      (when comment
-        (add-annotation o class
-                        (list (owlcomment
-                               (first comment)))))
-      (when (instance? String name)
-        (add-a-simple-annotation
-         o class (tawny-name name)))
-
-      (when label
-          (add-annotation class
-                        (list (tawny.owl/label
-                               (first label)))))
+      ;; add an name annotation
+      (add-a-name-annotation o class name)
+      ;; apply the handlers to the frames
+      (doseq [[k f] owlclass-handlers]
+        (f o class (get frames k)))
       ;; return the class object
       class)))
-
 
 (defdontfn owlclass
   "Creates a new class in the current ontology. See 'defclass' for
@@ -1378,9 +1377,9 @@ full details."
    ontology name
    (util/check-keys
     (util/hashify frames)
-    [:subclass :equivalent :annotation
-     :name :comment :label :disjoint
-     :haskey :ontology])))
+    (list*
+     :ontology :name
+     (keys owlclass-handlers)))))
 
 (defmacro defclass
   "Define a new class. Accepts a set number of frames, each marked

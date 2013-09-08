@@ -441,3 +441,26 @@ Obviously the nil is wrong
   :END:
 
 
+
+* consisten function impl
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2013-09-08 Sun 21:13
+  :ARCHIVE_FILE: ~/src/knowledge/tawny-owl/org/todo.org
+  :ARCHIVE_OLPATH: Issues
+  :ARCHIVE_CATEGORY: todo
+  :END:
+
+owlclass-explicit and others should all use the same form, with destructuring
+and the like. 
+
+This little function would be a good thing to do...
+(defn fapply [f x]
+  (into {}
+        (for [[k v] x]
+          [k ((get f k) v)])))
+
+
+Takes a map of key->function and key->data, and applies the former to the
+latter. This should make things nice a declarative. 
+
+
