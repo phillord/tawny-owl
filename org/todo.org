@@ -9,6 +9,56 @@
   :scheduled_release_ALL: 0.12 1.0 1.1
   :END:
 
+** name corrections
+
+Consistent use of "-"
+Including for "owl" prefix
+
+iriforname
+
+labelproperty
+owlcommentproperty
+owlsomment
+etc...
+
+add-haskey
+add-superproperty
+objectproperty
+
+asmost/atleast
+disjointclasseslist
+disjointclasses
+
+getfact/getfactnot
+owlimport
+
+owlthing/nothing
+
+** Privacy
+
+consider "add" methods 
+
+
+** Consistent macro
+
+defannotationproperty
+
+** consisten function impl
+
+owlclass-explicit and others should all use the same form, with destructuring
+and the like. 
+
+This little function would be a good thing to do...
+(defn fapply [f x]
+  (into {}
+        (for [[k v] x]
+          [k ((get f k) v)])))
+
+
+Takes a map of key->function and key->data, and applies the former to the
+latter. This should make things nice a declarative. 
+
+
 ** Should be able to pass multiple comments or labels
    :PROPERTIES:
    :type:     bug
