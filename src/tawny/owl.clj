@@ -749,7 +749,7 @@ is given."
 If no ontology is given, use the current-ontology"
   ([o filename]
      (save-ontology o filename (ManchesterOWLSyntaxOntologyFormat.)
-                    (str "## This file was created by Clojure-OWL\n"
+                    (str "## This file was created by Tawny-OWL\n"
                          "## It should not be edited by hand\n" )))
   ([o filename format]
      (save-ontology o filename format ""))
