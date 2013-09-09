@@ -8,12 +8,10 @@
    (org.semanticweb.owlapi.apibinding OWLManager)
    (org.semanticweb.owlapi.model IRI OWLNamedObject OWLOntologyID)))
 
-
-(defn- default-filter [e]
+(tawny.owl/defmontfn default-filter [o e]
   (and (instance? OWLNamedObject e)
-       (= (tawny.owl/get-iri)
+       (= (tawny.owl/get-iri o)
           (.getStart (.getIRI e)))))
-
 
 (defn- default-transform [e]
   (.. e (getIRI) (getFragment)))
@@ -27,36 +25,36 @@ starts-with. Use this partially applied with a filter for 'read'."
         (.toString (.getIRI e))
         starts-with)))
 
-(defn filter-for-labels
+(tawny.owl/defmontfn filter-for-labels
   "Filter annotations on an entity for labels"
-  [e]
+  [o e]
   (filter
    #(some-> %
         (.getProperty)
         (.isLabel))
-   (.getAnnotations e (tawny.owl/get-current-ontology))))
+   (.getAnnotations e o)))
 
-(defn label-transform
+(tawny.owl/defmontfn label-transform
   "Get text from label annotation"
-  [e]
-  (some-> (filter-for-labels e)
+  [o e]
+  (some-> (filter-for-labels o e)
       (first)
       (.getValue)
       (.getLiteral)))
 
-(defn noisy-nil-label-transform
+(tawny.owl/defmontfn noisy-nil-label-transform
  "Check for empty labels noisily"
- [e]
- (let [trans (label-transform e)]
+ [o e]
+ (let [trans (label-transform o e)]
     (when (nil? trans)
       (println "Unable to generate transform for:" e))
     trans
     ))
 
-(defn exception-nil-label-transform
+(tawny.owl/defmontfn exception-nil-label-transform
  "Check for empty labels noisily"
- [e]
-  (let [trans (label-transform e)]
+ [o e]
+  (let [trans (label-transform o e)]
     (when (nil? trans)
       (throw (IllegalArgumentException. (str "Unable to generate transform for:" e))))
     trans
@@ -128,25 +126,31 @@ OWLOntologyIRIMapper instance."
         (OWLOntologyID. jiri viri)
 
         owlontology
-        (try
+        (do
           (tawny.owl/remove-ontology-maybe ontologyid)
           (when mapper
-            (.addIRIMapper mapper))
-          (.loadOntologyFromOntologyDocument
-           tawny.owl/owl-ontology-manager
-           location)
-          (finally
-            (when mapper (.removeIRIMapper mapper))))]
-
+            (.addIRIMapper
+             tawny.owl/owl-ontology-manager
+             mapper))
+          (try
+            (.loadOntologyFromOntologyDocument
+             tawny.owl/owl-ontology-manager
+             location)
+            (finally
+              (when mapper
+                (.removeIRIMapper
+                 tawny.owl/owl-ontology-manager
+                 mapper)))))]
     (when prefix
-      (let [format (.getOntologyFormat tawny.owl/owl-ontology-manager owlontology)]
+      (let [format (.getOntologyFormat tawny.owl/owl-ontology-manager
+                                       owlontology)]
         (if (.isPrefixOWLOntologyFormat format)
           (.setPrefix format prefix (.toString iri))
-          (throw (IllegalArgumentException. "Attempt to provide a prefix to an ontology that is not using a prefix format")))))
+          (throw (IllegalArgumentException.
+                  "Attempt to provide a prefix to an ontology that is not using a prefix format")))))
 
     ;; this is the ontology for the namespace so stuff it place
     (tawny.owl/ontology-to-namespace owlontology)
-
     ;;
     (doall
      (map

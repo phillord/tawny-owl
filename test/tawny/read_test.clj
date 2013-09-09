@@ -51,8 +51,29 @@
                )
        ;; we shouldn't be using this again, but clean up anyway.
        (finally
+         (doseq
+             [o
+              (.getOntologies tawny.owl/owl-ontology-manager)]
+           (tawny.owl/remove-ontology-maybe (.getOntologyID o)))
          (.clearIRIMappers tawny.owl/owl-ontology-manager))))))
 
+
+(deftest read-with-mapper
+  (is
+   (try
+     (r/read :location
+             (IRI/create (clojure.java.io/resource "wine.rdf"))
+             :iri "http://www.w3.org/TR/2003/CR-owl-guide-20030818/wine"
+             :prefix "wine:"
+             :mapper
+             (r/resource-iri-mapper
+              {"http://www.w3.org/TR/2003/PR-owl-guide-20031209/food",
+               "food.rdf"}))
+     (finally
+         (doseq
+             [o
+              (.getOntologies tawny.owl/owl-ontology-manager)]
+           (tawny.owl/remove-ontology-maybe (.getOntologyID o)))))))
 
 (deftest go-snippet-as-resource
   (is (clojure.java.io/resource "go-snippet.owl")))
@@ -61,7 +82,7 @@
   (is
    (every?
     (comp not nil?)
-    (filter #'r/default-filter
+    (filter (partial #'r/default-filter (get-go-ontology))
             (.getSignature (get-go-ontology)))))
 
   (is
@@ -96,7 +117,7 @@
    (do
      (let [fil
            (doall
-            (map r/label-transform
+            (map (partial r/label-transform (get-go-ontology))
                  ;; the label transform should work on "GO" terms should return
                  ;; one annotation and one nil which it is superclass. We have
                  ;; chopped the annotation out of the snippet.
@@ -113,7 +134,7 @@
     IllegalArgumentException
     (let [fil
           (doall
-           (map r/exception-nil-label-transform
+           (map (partial r/exception-nil-label-transform (get-go-ontology))
                       ;; this should throw an exception because we have one class without
                       ;; annotation
                       (filter (partial r/iri-starts-with-filter

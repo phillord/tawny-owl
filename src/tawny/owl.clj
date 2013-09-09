@@ -541,17 +541,37 @@ See 'defclass' for more details on the syntax."
 
 
 
+
 ;;; Ontology manipulation
+
+(defn ontology-to-namespace
+  "Sets the current ontology as defined by `defontology'"
+  ([o]
+     (ontology-to-namespace *ns* o))
+  ([ns o]
+     (dosync
+      (alter
+       ontology-for-namespace
+       assoc ns o))))
+
+(defn- remove-ontology-from-namespace-map
+  [o]
+  (dosync
+   (doseq
+       [ns
+        ;; select namespaces with given ontology
+        (for [[k v] @ontology-for-namespace
+              :when (= v o)]
+          k)]
+     (alter ontology-for-namespace
+            dissoc ns))))
+
 (def
   ^{:doc "Hook called immediately after an ontology is removed from the
 owl-ontology-manager."}
   remove-ontology-hook (util/make-hook))
 
-(util/add-hook remove-ontology-hook
-               (fn [o]
-                 (dosync
-                  (swap! ontology-options-atom
-                         dissoc o))))
+
 
 (defn remove-ontology-maybe
   "Removes the ontology with the given ID from the manager.
@@ -561,6 +581,12 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
     (let [o (.getOntology owl-ontology-manager ontologyid)]
       (.removeOntology
        owl-ontology-manager o)
+      ;; remove the ontology options
+      (dosync
+       (swap! ontology-options-atom
+              dissoc o))
+      ;; remove the ontology from the namespace map
+      (remove-ontology-from-namespace-map o)
       (util/run-hook remove-ontology-hook o))))
 
 (defn ontology
@@ -640,15 +666,6 @@ The following keys must be supplied.
        var#
        )))
 
-(defn ontology-to-namespace
-  "Sets the current ontology as defined by `defontology'"
-  ([o]
-     (ontology-to-namespace *ns* o))
-  ([ns o]
-     (dosync (ref-set
-              ontology-for-namespace
-              (merge @ontology-for-namespace
-                     {ns o})))))
 (defn test-ontology
   "Define a test ontology.
 
@@ -1732,8 +1749,8 @@ expressions."
 ;; currently doesn't support an ontology argument
 ;; modified from with-open
 (defmacro with-probe-entities
-{:doc
- "Evaluate BODY with a number of entities defined. Then delete these entities
+  {:doc
+   "Evaluate BODY with a number of entities defined. Then delete these entities
   from the ontology. BINDINGS are a vector with similar to let. The first
   argument should evaluate to the ontology, or the current ontology will be
   used. Statements inside bindings are evaluated with the current-ontology set

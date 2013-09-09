@@ -171,7 +171,7 @@
   (is
    (not (nil?
          (do
-           (o/with-probe-entities
+           (o/with-probe-entities to
              [p (o/objectproperty to "p")
               c (o/owlclass to "c")]
              (o/add-haskey to c (list p))))))))
@@ -437,7 +437,7 @@ Assumes that fixture has been run
    (= 1
       (do
         (ontology-c-with-two-parents)
-        (o/with-probe-axioms
+        (o/with-probe-axioms to
           [a (#'o/disjointclasses to "a" "b")]
           (-> to
               (.getDisjointClassesAxioms
@@ -663,7 +663,7 @@ Assumes that fixture has been run
   (is (= :object
          (do
            (o/guess-type to
-            (o/with-probe-entities
+            (o/with-probe-entities to
               [r (o/objectproperty to "hasTopping")
                c (o/owlclass to "MeatTopping")]
               (o/owlnot to
@@ -694,14 +694,15 @@ Assumes that fixture has been run
 
 (deftest add-data-super
   (is
-   (o/with-probe-entities
-     [dp (o/datatypeproperty to "a")
-      sdp (o/datatypeproperty to "b" :subproperty dp)]
-     true))
+   (do
+     (o/with-probe-entities to
+       [dp (o/datatypeproperty to "a")
+        sdp (o/datatypeproperty to "b" :subproperty dp)]
+       true)))
   (is
    (every? #(instance?
              org.semanticweb.owlapi.model.OWLSubDataPropertyOfAxiom %1)
-           (o/with-probe-entities
+           (o/with-probe-entities to
              [dp (o/datatypeproperty to "a")
               sdp (o/datatypeproperty to "b")]
              (o/add-data-superproperty
