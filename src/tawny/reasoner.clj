@@ -218,8 +218,8 @@ ontology is inconsistent"
 (defn no-top-bottom [coll]
   (into #{}
         (filter #(not
-                  (or (= (owl/owlthing) %1)
-                      (= (owl/owlnothing) %1)))
+                  (or (= (owl/owl-thing) %1)
+                      (= (owl/owl-nothing) %1)))
                 coll)))
 
 ;; returns an immutable set of Nodes (including NodeSet's I think).

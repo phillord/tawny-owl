@@ -74,7 +74,7 @@ A set means recursively render the object unless it is the set."}
   ^{
     :dynamic true
     :doc "Use object/data explicit forms of functions, rather than trying to
-infer. For example, use data-some or object-some, rather than owlsome." }
+infer. For example, use data-some or object-some, rather than owl-some." }
   *explicit*
   false)
 
@@ -118,7 +118,7 @@ infer. For example, use data-some or object-some, rather than owlsome." }
         ;; we don't know what kind -- a var string or an IRI?
         ~(if (symbol? cls)
            'defclass
-           'owlclass)
+           'owl-class)
 
 
          ~(form c)
@@ -195,7 +195,7 @@ infer. For example, use data-some or object-some, rather than owlsome." }
       `(
         ~(if (symbol? prop)
            'defoproperty
-           'objectproperty)
+           'object-property)
         ~prop
          ~@(when (< 0 (count domain))
              (cons :domain
@@ -280,7 +280,7 @@ infer. For example, use data-some or object-some, rather than owlsome." }
       `(
         ~(if (symbol? prop)
            'defdproperty
-           'datatypeproperty)
+           'datatype-property)
         ~prop
          ~@(when (< 0 (count domain))
              (cons :domain
@@ -382,18 +382,18 @@ infer. For example, use data-some or object-some, rather than owlsome." }
 
 (defmethod form OWLObjectSomeValuesFrom [s]
   (list
-   (exp owlsome object-some)
+   (exp owl-some object-some)
         (form (.getProperty s))
         (form (.getFiller s))))
 
 (defmethod form OWLObjectUnionOf [u]
    (list*
-    (exp owlor object-or)
+    (exp owl-or object-or)
     (form (.getOperands u))))
 
 (defmethod form OWLObjectIntersectionOf [c]
   (list*
-   (exp owland object-or) (form (.getOperands c))))
+   (exp owl-and object-or) (form (.getOperands c))))
 
 (defmethod form OWLObjectAllValuesFrom [a]
   (list
@@ -405,7 +405,7 @@ infer. For example, use data-some or object-some, rather than owlsome." }
 
 (defmethod form OWLObjectComplementOf [c]
   (list
-   (exp owlnot
+   (exp owl-not
         object-not)
         (form (.getOperand c))))
 
@@ -418,12 +418,12 @@ infer. For example, use data-some or object-some, rather than owlsome." }
 
 (defmethod form OWLObjectMaxCardinality [c]
   (list
-   (exp atmost object-atmost) (.getCardinality c)
+   (exp at-most object-at-most) (.getCardinality c)
         (form (.getProperty c))
         (form (.getFiller c))))
 
 (defmethod form OWLObjectMinCardinality [c]
-  (list (exp atleast object-atleast)
+  (list (exp at-least object-at-least)
         (.getCardinality c)
         (form (.getProperty c))
         (form (.getFiller c))))
@@ -435,7 +435,7 @@ infer. For example, use data-some or object-some, rather than owlsome." }
      (list 'label
            (form v))
      (.isComment a)
-     (list 'owlcomment
+     (list 'owl-comment
            (form v))
      :default
      (list
@@ -480,7 +480,7 @@ infer. For example, use data-some or object-some, rather than owlsome." }
 
 (defmethod form OWLDataSomeValuesFrom[d]
   (list**
-   (exp owlsome data-some)
+   (exp owl-some data-some)
    (form (.getProperty d))
    (form (.getFiller d))))
 
@@ -492,7 +492,7 @@ infer. For example, use data-some or object-some, rather than owlsome." }
 
 (defmethod form org.semanticweb.owlapi.model.OWLDataComplementOf [c]
   (list
-   (exp owlnot data-not)
+   (exp owl-not data-not)
         (form (.getOperand c))))
 
 (defmethod form org.semanticweb.owlapi.model.OWLDataExactCardinality [c]
@@ -504,14 +504,14 @@ infer. For example, use data-some or object-some, rather than owlsome." }
 
 (defmethod form org.semanticweb.owlapi.model.OWLDataMaxCardinality [c]
   (list
-   (exp atmost data-atmost)
+   (exp at-most data-at-most)
    (.getCardinality c)
         (form (.getProperty c))
         (form (.getFiller c))))
 
 (defmethod form org.semanticweb.owlapi.model.OWLDataMinCardinality [c]
   (list
-   (exp atleast data-atleast)
+   (exp at-least data-at-least)
    (.getCardinality c)
         (form (.getProperty c))
         (form (.getFiller c))))
@@ -562,7 +562,7 @@ infer. For example, use data-some or object-some, rather than owlsome." }
 
 
 (defmethod form org.semanticweb.owlapi.model.OWLObjectHasValue [p]
-  (list (exp hasvalue object-hasvalue)
+  (list (exp has-value object-has-value)
         (form (.getProperty p))
         (form (.getValue p))))
 
@@ -572,7 +572,7 @@ infer. For example, use data-some or object-some, rather than owlsome." }
 
 
 (defmethod form org.semanticweb.owlapi.model.OWLDataHasValue [p]
-  (list (exp hasvalue data-hasvalue)
+  (list (exp has-value data-has-value)
         (form (.getProperty p))
         (form (.getValue p))))
 

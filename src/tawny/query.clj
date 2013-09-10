@@ -24,7 +24,7 @@
     :private true}
   typemap
   {'defclass :class
-   'owlclass :class
+   'owl-class :class
    'defoproperty :oproperty
    'object-property :oproperty
    'defindividual :individual

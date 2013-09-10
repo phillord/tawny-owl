@@ -58,23 +58,23 @@
 ;;       (lit-f "bob" "en"))))
 
 (defn data-ontology []
-  (o/datatypeproperty to "rD"))
+  (o/datatype-property to "rD"))
 
 (deftest datasome-datatype
   (is
    (=
-    '(owlsome (iri "http://iri/#rD") :XSD_INTEGER)
+    '(owl-some (iri "http://iri/#rD") :XSD_INTEGER)
 
     (do (data-ontology)
         (r/form
-         (first (o/owlsome to "rD" :XSD_INTEGER)))))))
+         (first (o/owl-some to "rD" :XSD_INTEGER)))))))
 
 (deftest datasome-range
   (is
-   (= '(owlsome (iri "http://iri/#rD") (span < 1))
+   (= '(owl-some (iri "http://iri/#rD") (span < 1))
                 (first
                  (r/form
-                  (o/owlsome to "rD" (o/span < 1)))))))
+                  (o/owl-some to "rD" (o/span < 1)))))))
 
 
 

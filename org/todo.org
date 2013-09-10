@@ -9,39 +9,15 @@
   :scheduled_release_ALL: 0.12 1.0 1.1
   :END:
 
-** name corrections
-
-Consistent use of "-"
-Including for "owl" prefix
-
-iriforname
-
-labelproperty
-owlcommentproperty
-owlsomment
-etc...
-
-add-haskey
-add-superproperty
-objectproperty
-
-asmost/atleast
-disjointclasseslist
-disjointclasses
-
-getfact/getfactnot
-owlimport
-
-owlthing/nothing
-
 ** Privacy
 
 consider "add" methods 
 
 
-** Consistent macro
 
-defannotationproperty
+** Ontology 
+
+This function should also use extensible handlers.
 
 ** Should be able to pass multiple comments or labels
    :PROPERTIES:

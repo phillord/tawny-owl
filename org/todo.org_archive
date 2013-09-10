@@ -464,3 +464,50 @@ Takes a map of key->function and key->data, and applies the former to the
 latter. This should make things nice a declarative. 
 
 
+
+* name corrections [13/13]
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2013-09-10 Tue 08:34
+  :ARCHIVE_FILE: ~/src/knowledge/tawny-owl/org/todo.org
+  :ARCHIVE_OLPATH: Issues
+  :ARCHIVE_CATEGORY: todo
+  :END:
+
+Consistent use of "-"
+Including for "owl" prefix
+
+ - [X] iriforname
+ - [X] labelproperty
+ - [X] owlcommentproperty
+ - [X] owlcomment
+etc...
+
+ - [X] add-haskey
+ - [X] add-superproperty
+ - [X] objectproperty
+
+ - [X] atmost/atleast
+ - [X] disjointclasseslist
+ - [X] disjointclasses
+
+ - [X] getfact/getfactnot
+ - [X] owlimport
+
+ - [X] owlthing/nothing
+
+
+* Macro naming
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2013-09-10 Tue 08:34
+  :ARCHIVE_FILE: ~/src/knowledge/tawny-owl/org/todo.org
+  :ARCHIVE_OLPATH: Issues
+  :ARCHIVE_CATEGORY: todo
+  :END:
+
+defannotationproperty
+defoproperty
+defdproperty
+defclass
+defdatatype
+
+

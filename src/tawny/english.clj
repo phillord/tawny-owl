@@ -19,8 +19,8 @@
   (:require [tawny.owl])
   (:refer-clojure :exclude [and or not some class]))
 
-(def and tawny.owl/owland)
-(def or tawny.owl/owlor)
-(def not tawny.owl/owlnot)
-(def some tawny.owl/owlsome)
-(def class tawny.owl/owlclass)
+(def and tawny.owl/owl-and)
+(def or tawny.owl/owl-or)
+(def not tawny.owl/owl-not)
+(def some tawny.owl/owl-some)
+(def class tawny.owl/owl-class)

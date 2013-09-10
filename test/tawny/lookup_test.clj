@@ -46,8 +46,8 @@
    (= "tawny.lookup-test/hello"
       (try
         (o/test-ontology)
-        (def hello (o/owlclass "test"))
-        (l/resolve-entity (o/owlclass "test")
+        (def hello (o/owl-class "test"))
+        (l/resolve-entity (o/owl-class "test")
                         (l/iri-to-var lookup-test-namespace))
         (finally
           (ns-unmap lookup-test-namespace 'hello))))))

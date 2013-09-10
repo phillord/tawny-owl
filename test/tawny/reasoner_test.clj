@@ -65,9 +65,9 @@
     (nil? to))))
 
 (defn ontology-abc []
-  (o/owlclass to "a")
-  (o/owlclass to "b")
-  (o/owlclass to "c" :subclass "a" "b"))
+  (o/owl-class to "a")
+  (o/owl-class to "b")
+  (o/owl-class to "c" :subclass "a" "b"))
 
 (defn ontology-abc-indc []
   (ontology-abc)
@@ -76,11 +76,11 @@
 
 (defn ontology-abc-reasoning []
   ;; simple ontology -- c should be reasoned to be a subclass of a.
-  (o/owlclass to "a"
+  (o/owl-class to "a"
               :equivalent 
               (o/object-some to "p" "b"))
-  (o/owlclass to "b")
-  (o/owlclass to "c"
+  (o/owl-class to "b")
+  (o/owl-class to "c"
               :subclass 
               (o/object-some to "p" "b")))
 
@@ -152,7 +152,7 @@
     complement
     (do
       (ontology-abc)
-      (o/disjointclasses to "a" "b")
+      (o/disjoint-classes to "a" "b")
       (far #(r/consistent? to))))))
 
   
@@ -163,7 +163,7 @@
     complement
     (do
       (ontology-abc-indc)
-      (o/disjointclasses to "a" "b")
+      (o/disjoint-classes to "a" "b")
       (far #(r/consistent? to))))))
 
 (deftest unsatisfiable []
@@ -179,7 +179,7 @@
     #(= 1 (count %))
     (do
       (ontology-abc)
-      (o/disjointclasses to "a" "b")
+      (o/disjoint-classes to "a" "b")
       (far #(r/unsatisfiable to))))))
 
 ;; had lots of problems getting this working so lets try with a single reasoner
@@ -207,7 +207,7 @@
     not
     (do
       (ontology-abc)
-      (o/disjointclasses to "a" "b")
+      (o/disjoint-classes to "a" "b")
       (far #(r/coherent? to))))))
 
 
@@ -218,8 +218,8 @@
     (do 
       (ontology-abc-reasoning)
       (far #(r/isuperclass? to
-             (o/owlclass to "c") 
-             (o/owlclass to "a")))))))
+             (o/owl-class to "c") 
+             (o/owl-class to "a")))))))
 
 (deftest isubclass?
   (is
@@ -228,8 +228,8 @@
     (do
       (ontology-abc-reasoning)
       (far #(r/isubclass? to
-             (o/owlclass to "a")
-             (o/owlclass to "c"))))
+             (o/owl-class to "a")
+             (o/owl-class to "c"))))
     )))
 
 
@@ -243,7 +243,7 @@
     (do
       (ontology-abc)
       (o/with-probe-axioms to
-        [a (o/disjointclasses to "a" "b")]
+        [a (o/disjoint-classes to "a" "b")]
         (doall (far #(r/coherent? to)))))))
 
   ;; add a disjoint test whether it breaks after
@@ -253,7 +253,7 @@
     (do 
       (ontology-abc)
       (o/with-probe-axioms to
-        [a (o/disjointclasses to "a" "b")])
+        [a (o/disjoint-classes to "a" "b")])
       (doall (far #(r/coherent? to)))))))
 
 
