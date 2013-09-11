@@ -1420,7 +1420,8 @@ combination of the two. The class object is stored in a var called classname."
   "Makes all elements in list disjoint.
 All arguments must of an instance of OWLClassExpression"
   [o list]
-  {:pre (seq? list)}
+  {:pre [(seq? list)
+         (> (count list) 1)]}
   (let [classlist
         (doall
          (map
