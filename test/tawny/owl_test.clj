@@ -275,17 +275,17 @@
        (o/owl-not to :XSD_FLOAT)))
 )
 
-(deftest someonly []
+(deftest some-only []
   (is
    (not
     (nil?
-     (o/someonly to
+     (o/some-only to
       (o/object-property "p" :ontology to) "a"))))
 
   (is
    (not
     (nil?
-     (o/someonly to
+     (o/some-only to
                  (o/object-property "p" :ontology to) "a" "b")))))
 
 
@@ -297,7 +297,7 @@
                           (o/datatype-property "p" :ontology to)
                           :XSD_INTEGER)))))
 
-(deftest data-some-datarange
+(deftest data-some-data-range
   (is
    (instance? org.semanticweb.owlapi.model.OWLDataSomeValuesFrom
               (first

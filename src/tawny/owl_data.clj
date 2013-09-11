@@ -37,7 +37,7 @@
    (.getOWLDataPropertyRangeAxiom
     ontology-data-factory
     (ensure-data-property o property)
-    range)))
+    (ensure-data-range o range))))
 
 (defbdontfn add-data-superproperty
   [o property super]
@@ -203,7 +203,7 @@ which is an OWLDatatype object.
   [o & types]
   (.getOWLDataUnionOf
    ontology-data-factory
-   (into #{} (map (partial ensure-datarange o) types))))
+   (into #{} (map (partial ensure-data-range o) types))))
 
 (.addMethod owl-or :data data-or)
 
@@ -211,16 +211,16 @@ which is an OWLDatatype object.
   [o type]
   (.getOWLDataComplementOf
    ontology-data-factory
-   (ensure-datarange o type)))
+   (ensure-data-range o type)))
 
 (.addMethod owl-not :data data-not)
 
 (defbmontfn data-some
-  [o property datarange]
+  [o property data-range]
   (.getOWLDataSomeValuesFrom
    ontology-data-factory
    (ensure-data-property o property)
-   (ensure-datarange o datarange)))
+   (ensure-data-range o data-range)))
 
 (.addMethod owl-some :data data-some)
 
@@ -229,7 +229,7 @@ which is an OWLDatatype object.
   (.getOWLDataAllValuesFrom
    ontology-data-factory
    (ensure-data-property o property)
-   (ensure-datarange o datatype)))
+   (ensure-data-range o datatype)))
 
 
 (.addMethod only :data data-only)

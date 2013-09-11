@@ -924,12 +924,12 @@ converting it from a string or IRI if necessary."
    (throw (IllegalArgumentException.
            (str "Was expecting a datatype. Got " datatype ".")))))
 
-(defn- ensure-datarange [o datarange]
+(defn- ensure-data-range [o data-range]
   (cond
-   (instance? org.semanticweb.owlapi.model.OWLDataRange datarange)
-   datarange
+   (instance? org.semanticweb.owlapi.model.OWLDataRange data-range)
+   data-range
    :default
-   (ensure-datatype o datarange)))
+   (ensure-datatype o data-range)))
 
 (defn- ensure-individual
   "Returns an INDIVIDUAL.
@@ -987,7 +987,7 @@ interpret this as a string and create a new OWLIndividual."
   "Adds a disjoint union axiom to all subclasses."
   [o clazz subclasses]
   (let [ensured-subclasses
-        (util/domap #(ensure-class %) subclasses)
+        (util/domap #(ensure-class o %) subclasses)
         ]
     (list
      (add-axiom o
@@ -1176,7 +1176,7 @@ value for each frame."
 ;; better.
 (defmulti owl-some #'guess-type-args)
 (defmulti only #'guess-type-args)
-(defmulti someonly #'guess-type-args)
+(defmulti some-only #'guess-type-args)
 (defmulti owl-and #'guess-type-args)
 (defmulti owl-or #'guess-type-args)
 (defmulti owl-not #'guess-type-args)
@@ -1192,7 +1192,7 @@ value for each frame."
 
 (.addMethod owl-some nil guess-type-error)
 (.addMethod only nil guess-type-error)
-(.addMethod someonly nil guess-type-error)
+(.addMethod some-only nil guess-type-error)
 (.addMethod owl-and nil guess-type-error)
 (.addMethod owl-or nil guess-type-error)
 (.addMethod owl-not nil guess-type-error)
@@ -1282,7 +1282,7 @@ value for each frame."
 
 (.addMethod owl-not :object object-not)
 
-(defmontfn object-someonly
+(defmontfn object-some-only
   "Returns an restriction combines the OWL some values from and
 all values from restrictions."
   [o property & classes]
@@ -1294,7 +1294,7 @@ all values from restrictions."
    (object-only o property
          (apply object-or o classes))))
 
-(.addMethod someonly :object object-someonly)
+(.addMethod some-only :object object-some-only)
 
 ;; cardinality
 (defmontfn object-at-least
