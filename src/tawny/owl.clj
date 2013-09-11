@@ -1612,8 +1612,8 @@ The first item may be an ontology, followed by options.
      #(add-subclass o % superclass)
      subclasses)
     (when
-        (:disjoint options))
-      (disjoint-classes-list o subclasses)
+        (:disjoint options)
+      (disjoint-classes-list o subclasses))
     (when (:cover options)
       (add-equivalent o superclass
                       (owl-or o subclasses)))))
