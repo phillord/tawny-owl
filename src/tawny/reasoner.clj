@@ -258,7 +258,7 @@ ontology is inconsistent"
 
 (defdontfn iequivalent-classes [ontology name]
   (no-top-bottom
-   (entities
+   (.getEntities
     (.getEquivalentClasses (reasoner ontology)
                            (#'tawny.owl/ensure-class ontology name)))))
 
