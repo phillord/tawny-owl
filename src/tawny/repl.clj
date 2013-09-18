@@ -33,59 +33,58 @@ It includes all labels, comments and a rendered version of the owlobject."
   ([owlobject]
      (fetch-doc owlobject (o/get-current-ontology)))
   ([owlobject ontology]
-     (binding [tawny.lookup/all-iri-to-var-cache
-                (tawny.lookup/all-iri-to-var)]
-       (let [annotation (.getAnnotations owlobject ontology)
-             label
-             (filter
-              #(-> %
-                   (.getProperty)
-                   (.isLabel))
-              annotation)
+     (let [annotation (.getAnnotations owlobject ontology)
+           label
+           (filter
+            #(-> %
+                 (.getProperty)
+                 (.isLabel))
+            annotation)
 
-             comment
-             (filter
-              #(-> %
-                   (.getProperty)
-                   (.isComment))
-              annotation)
+           comment
+           (filter
+            #(-> %
+                 (.getProperty)
+                 (.isComment))
+            annotation)
 
-             iri (-> owlobject
-                     (.getIRI)
-                     (.toURI)
-                     (.toString))
+           iri (-> owlobject
+                   (.getIRI)
+                   (.toURI)
+                   (.toString))
 
-             writer (StringWriter.)
-             pwriter (PrintWriter. writer)
-             line (fn [& args]
-                    (.println pwriter
-                              (str (apply str args))))]
+           writer (StringWriter.)
+           pwriter (PrintWriter. writer)
+           line (fn [& args]
+                  (.println pwriter
+                            (str (apply str args))))]
+       (line "")
+       (line
+        (.toString (.getEntityType owlobject))
+        ": "
+        (tawny.lookup/var-maybe-qualified-str
+         (get
+          (tawny.lookup/all-iri-to-var) iri)))
 
-         (line "")
+       (line "IRI: " iri)
+       (line "Labels:")
+       (doseq [l label]
+         (line "\t" (.getValue l)))
 
-         (line
+       (line "Comments:")
 
-          (.toString (.getEntityType owlobject))
-          ": "
-          (tawny.lookup/var-maybe-qualified-str
-           (get
-            (tawny.lookup/all-iri-to-var) iri)))
-
-         (line "IRI: " iri)
-         (line "Labels:")
-         (doseq [l label]
-           (line "\t" (.getValue l)))
-
-         (line "Comments:")
-         (doseq [c comment]
-           (line "\t" (.getValue c)))
-         (line "Full Definition:")
-         (o/with-ontology ontology
-           (clojure.pprint/pprint
-            (tawny.render/as-form owlobject)
-            writer))
-
-         (.toString writer)))))
+       (doseq [c comment]
+         (line "\t" (.getValue c)))
+       (line "Full Definition:")
+       (line
+        (o/with-ontology ontology
+          ;; hmm pprint here takes 95% of the time. Problematic
+          ;; str is much much quicker, but produces a rubbishy output!
+          (clojure.pprint/pprint
+           (tawny.render/as-form owlobject)
+           writer)))
+       (.close writer)
+       (.toString writer))))
 
 (defn print-doc
   "Print the documentation for the owlobject. See fetch-doc for more on how
@@ -101,12 +100,10 @@ namespace."
   ([]
      (print-ns-doc *ns*))
   ([ns]
-     (binding [tawny.lookup/all-iri-to-var-cache
-                (tawny.lookup/all-iri-to-var)]
-       (doseq [v
-               (vals
-                (tawny.lookup/iri-to-var ns))]
-         (println (fetch-doc (var-get v)))))))
+     (doseq [v
+             (vals
+              (tawny.lookup/iri-to-var ns))]
+       (println (fetch-doc (var-get v))))))
 
 
 (defn update-var-doc
@@ -133,12 +130,10 @@ once."
   ([]
      (update-ns-doc *ns*))
   ([ns]
-     (binding [tawny.lookup/all-iri-to-var-cache
-                (tawny.lookup/all-iri-to-var)]
-       (doseq [v
-               (vals
-                (tawny.lookup/iri-to-var ns))]
-         (update-var-doc v)))))
+     (doseq [v
+             (vals
+              (tawny.lookup/iri-to-var ns))]
+       (update-var-doc v))))
 
 
 (defn println-load-listener

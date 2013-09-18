@@ -101,43 +101,41 @@ infer. For example, use data-some or object-some, rather than owl-some." }
 (defmulti as-form class)
 
 (defmethod as-form OWLClass [c]
-  (binding [tawny.lookup/all-iri-to-var-cache
-            (tawny.lookup/all-iri-to-var)]
-    (let [ont (ontologies)
-          super (.getSuperClasses c ont)
-          equiv (.getEquivalentClasses c ont)
-          disjoint (.getDisjointClasses c ont)
-          annotation
-          (setmap
-           #(.getAnnotations c %) ont)
-          cls (form c)
-          ]
-     `(
-        ;; seems like a nice idea, but cls is always a symbol because form
-        ;; OWLClass makes it so. Resolve-entity always returns a string, but
-        ;; we don't know what kind -- a var string or an IRI?
-        ~(if (symbol? cls)
-           'defclass
-           'owl-class)
+  (let [ont (ontologies)
+        super (.getSuperClasses c ont)
+        equiv (.getEquivalentClasses c ont)
+        disjoint (.getDisjointClasses c ont)
+        annotation
+        (setmap
+         #(.getAnnotations c %) ont)
+        cls (form c)
+        ]
+    `(
+      ;; seems like a nice idea, but cls is always a symbol because form
+      ;; OWLClass makes it so. Resolve-entity always returns a string, but
+      ;; we don't know what kind -- a var string or an IRI?
+      ~(if (symbol? cls)
+         'defclass
+         'owl-class)
 
 
-         ~(form c)
-         ~@(when (< 0 (count super))
-             (cons
-              :subclass
-              (form super)))
-         ~@(when (< 0 (count equiv))
-             (cons
-              :equivalent
-              (form equiv)))
-         ~@(when (< 0 (count disjoint))
-             (cons
-              :disjoint
-              (form disjoint)))
-         ~@(when (< 0 (count annotation))
-             (cons :annotation
-                   (form annotation)))
-         ))))
+      ~(form c)
+      ~@(when (< 0 (count super))
+          (cons
+           :subclass
+           (form super)))
+      ~@(when (< 0 (count equiv))
+          (cons
+           :equivalent
+           (form equiv)))
+      ~@(when (< 0 (count disjoint))
+          (cons
+           :disjoint
+           (form disjoint)))
+      ~@(when (< 0 (count annotation))
+          (cons :annotation
+                (form annotation)))
+      )))
 
 
 ;; subproperty chain from Ontology it would appear!
@@ -158,160 +156,152 @@ infer. For example, use data-some or object-some, rather than owl-some." }
 
 
 (defmethod as-form OWLObjectProperty [p]
-  (binding [tawny.lookup/all-iri-to-var-cache
-            (tawny.lookup/all-iri-to-var)]
-    (let [ont (ontologies)
-          domain (.getDomains p ont)
-          range (.getRanges p ont)
-          inverseof (.getInverses p ont)
-          subpropertyof (.getSuperProperties p ont)
-          characteristic
-          (filter identity
-                  (list
-                   (and
-                    (.isTransitive p ont)
-                    :transitive)
-                   (and
-                    (.isFunctional p ont)
-                    :functional)
-                   (and
-                    (.isInverseFunctional p ont)
-                    :inversefunctional)
-                   (and
-                    (.isSymmetric p ont)
-                    :symmetric)
-                   (and
-                    (.isAsymmetric p ont)
-                    :asymmetric)
-                   (and
-                    (.isIrreflexive p ont)
-                    :irreflexive)
-                   (and
-                    (.isReflexive p ont)
-                    :reflexive)
-                   ))
-          prop (form p)]
+  (let [ont (ontologies)
+        domain (.getDomains p ont)
+        range (.getRanges p ont)
+        inverseof (.getInverses p ont)
+        subpropertyof (.getSuperProperties p ont)
+        characteristic
+        (filter identity
+                (list
+                 (and
+                  (.isTransitive p ont)
+                  :transitive)
+                 (and
+                  (.isFunctional p ont)
+                  :functional)
+                 (and
+                  (.isInverseFunctional p ont)
+                  :inversefunctional)
+                 (and
+                  (.isSymmetric p ont)
+                  :symmetric)
+                 (and
+                  (.isAsymmetric p ont)
+                  :asymmetric)
+                 (and
+                  (.isIrreflexive p ont)
+                  :irreflexive)
+                 (and
+                  (.isReflexive p ont)
+                  :reflexive)
+                 ))
+        prop (form p)]
 
-      `(
-        ~(if (symbol? prop)
-           'defoproperty
-           'object-property)
-        ~prop
-         ~@(when (< 0 (count domain))
-             (cons :domain
-                   (form domain)))
-         ~@(when (< 0 (count range))
-             (cons :range
-                   (form range)))
-         ~@(when (< 0 (count inverseof))
-             (cons :inverse
-                   (form inverseof)))
-         ~@(when (< 0 (count characteristic))
-             (cons :characteristic
-                   characteristic))))))
+    `(
+      ~(if (symbol? prop)
+         'defoproperty
+         'object-property)
+      ~prop
+      ~@(when (< 0 (count domain))
+          (cons :domain
+                (form domain)))
+      ~@(when (< 0 (count range))
+          (cons :range
+                (form range)))
+      ~@(when (< 0 (count inverseof))
+          (cons :inverse
+                (form inverseof)))
+      ~@(when (< 0 (count characteristic))
+          (cons :characteristic
+                characteristic)))))
 
 (defmethod as-form OWLIndividual [p]
-  (binding [tawny.lookup/all-iri-to-var-cache
-            (tawny.lookup/all-iri-to-var)]
-    (let [ont (ontologies)
-          types (.getTypes p ont)
-          same (setmap #(.getSameIndividuals p %) ont)
-          diff (setmap #(.getDifferentIndividuals p %) ont)
-          annotation
-          (setmap
-           #(.getAnnotations p %) ont)
-          fact
-          (clojure.set/union
-           (apply clojure.set/union
-                  (map #(.getDataPropertyValues p %) ont))
-           (apply clojure.set/union
-                  (map #(.getObjectPropertyValues p %) ont)))
-         factnot
-          (clojure.set/union
-           (apply clojure.set/union
-                  (map #(.getNegativeDataPropertyValues p %) ont))
-           (apply clojure.set/union
-                  (map #(.getNegativeObjectPropertyValues p %) ont)))
-          ind (form p)
-          ]
-      `(~(if (symbol? ind)
-           'defindividual
-           'individual)
-         ~(form p)
-         ~@(when (< 0 (count types))
-             (cons :type
-                   (form types)))
-         "here is a s tring"
-         ~@(when (< 0 (count same))
-             (cons :same
-                   (form same)))
-         ~@(when (< 0 (count diff))
-             (cons :different
-                   (form diff)))
-         ~@(when (< 0 (count annotation))
-             (cons :annotation
-                   (form annotation)))
-         ~@(when (some
-                  #(< 0 (count %))
-                  [fact factnot])
-             (doall (concat
-                     [:fact]
-                     (form [:fact fact])
-                     (form [:factnot factnot]))))))))
+  (let [ont (ontologies)
+        types (.getTypes p ont)
+        same (setmap #(.getSameIndividuals p %) ont)
+        diff (setmap #(.getDifferentIndividuals p %) ont)
+        annotation
+        (setmap
+         #(.getAnnotations p %) ont)
+        fact
+        (clojure.set/union
+         (apply clojure.set/union
+                (map #(.getDataPropertyValues p %) ont))
+         (apply clojure.set/union
+                (map #(.getObjectPropertyValues p %) ont)))
+        factnot
+        (clojure.set/union
+         (apply clojure.set/union
+                (map #(.getNegativeDataPropertyValues p %) ont))
+         (apply clojure.set/union
+                (map #(.getNegativeObjectPropertyValues p %) ont)))
+        ind (form p)
+        ]
+    `(~(if (symbol? ind)
+         'defindividual
+         'individual)
+      ~(form p)
+      ~@(when (< 0 (count types))
+          (cons :type
+                (form types)))
+      "here is a s tring"
+      ~@(when (< 0 (count same))
+          (cons :same
+                (form same)))
+      ~@(when (< 0 (count diff))
+          (cons :different
+                (form diff)))
+      ~@(when (< 0 (count annotation))
+          (cons :annotation
+                (form annotation)))
+      ~@(when (some
+               #(< 0 (count %))
+               [fact factnot])
+          (doall (concat
+                  [:fact]
+                  (form [:fact fact])
+                  (form [:factnot factnot])))))))
 
 
 
 (defmethod as-form OWLDataProperty [p]
-  (binding [tawny.lookup/all-iri-to-var-cache
-            (tawny.lookup/all-iri-to-var)]
-    (let [ont (ontologies)
-          domain (.getDomains p ont)
-          range (.getRanges p ont)
-          subpropertyof (.getSuperProperties p ont)
-          characteristic
-          (filter identity
-                  (list
-                   (and
-                    (.isFunctional p ont)
-                    :functional)
-                   ))
-          prop (form p)]
+  (let [ont (ontologies)
+        domain (.getDomains p ont)
+        range (.getRanges p ont)
+        subpropertyof (.getSuperProperties p ont)
+        characteristic
+        (filter identity
+                (list
+                 (and
+                  (.isFunctional p ont)
+                  :functional)
+                 ))
+        prop (form p)]
 
-      `(
-        ~(if (symbol? prop)
-           'defdproperty
-           'datatype-property)
-        ~prop
-         ~@(when (< 0 (count domain))
-             (cons :domain
-                   (form domain)))
-         ~@(when (< 0 (count range))
-             (cons :range
-                   (form range)))
-         ~@(when (< 0 (count characteristic))
-             (cons :characteristic
-                   characteristic))))))
+    `(
+      ~(if (symbol? prop)
+         'defdproperty
+         'datatype-property)
+      ~prop
+      ~@(when (< 0 (count domain))
+          (cons :domain
+                (form domain)))
+      ~@(when (< 0 (count range))
+          (cons :range
+                (form range)))
+      ~@(when (< 0 (count characteristic))
+          (cons :characteristic
+                characteristic)))))
 
 (defmethod as-form OWLAnnotationProperty [p]
-    (binding [tawny.lookup/all-iri-to-var-cache
-            (tawny.lookup/all-iri-to-var)]
-    (let [ont (ontologies)
-          super
-          (setmap #(.getSuperProperties p %) ont)
-          ann
-          (setmap #(.getAnnotations p %) ont)
-          prop (form p)]
-      `(
-        ~(if (symbol? prop)
-           'defannotationproperty
-           'annotation-property)
-         ~(form p)
-         ~@(when (< 0 (count super))
-             (cons :subproperty
-                   (form super)))
-         ~@(when (< 0 (count ann))
-             (cons :annotation
-                   (form ann)))))))
+  (let [ont (ontologies)
+        super
+        (setmap #(.getSuperProperties p %) ont)
+        ann
+        (setmap #(.getAnnotations p %) ont)
+        prop (form p)]
+    `(
+      ~(if (symbol? prop)
+         'defannotationproperty
+         'annotation-property)
+      ~(form p)
+      ~@(when (< 0 (count super))
+          (cons :subproperty
+                (form super)))
+      ~@(when (< 0 (count ann))
+          (cons :annotation
+                (form ann))))))
 
 (defmethod as-form org.semanticweb.owlapi.model.OWLDatatype [_]
   ;; I think we can safely ignore this here -- if it declared, then it should

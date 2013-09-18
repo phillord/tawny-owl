@@ -19,7 +19,7 @@
     ^{:doc "Facilities to find the var of an OWL object."
       :author "Phillip Lord"}
     tawny.lookup
-  (:require [tawny.owl]))
+  (:require [tawny owl util]))
 
 (defn- iri-for-var
   "Return the IRI for var if it is a named object
@@ -105,23 +105,33 @@ hold them for the given namespaces."
   (keys @tawny.owl/ontology-for-namespace))
 
 
-;; This is an expensive operation, so we might want to cache it. However, we
-;; cannot do this sensibly, because we don't have hooks for when new vars are
-;; being created. So, instead, put all-iri-to-var-cache in a binding form for
-;; the duration of the time that you wish the cache to last. Inside that
-;; binding form, all-iri-to-var will just return the cache
+;; This is an expensive operation, so we cache it!
 (def
   ^{:dynamic true
+    :private true
     :doc "Holds a copy of the iri-to-var map
 for the duration of the form."}
-  all-iri-to-var-cache nil)
-
+  all-iri-to-var-cache (atom nil))
 
 (defn all-iri-to-var
   "Returns a map keyed on the IRI of an OWLObject to var that holds that
 OWLObject for all namespaces in which tawny has created an ontology."
   []
-  (or all-iri-to-var-cache
-      (do
-        ;;#spy/d ^{:fs 10 :nses #"tawny"} ["calc"]
-        (apply iri-to-var (namespace-with-ontology)))))
+  (if @all-iri-to-var-cache
+    @all-iri-to-var-cache
+    (do
+      (println "filling iri cache")
+      (reset! all-iri-to-var-cache
+              (apply iri-to-var (namespace-with-ontology))))))
+
+;; this actually gives us the var -- we could build things up as we go?
+;; although this means we also have to cope with uninterns and the like as
+;; they come. ultimately we are duplicating elsewhere?
+(defn- kill-iri-cache [var]
+  ;;  (println "blitzing iri-cache")
+  (reset! all-iri-to-var-cache nil))
+
+(println "Adding intern hook")
+(tawny.util/add-hook
+ tawny.owl/intern-owl-entity-hook
+ #'kill-iri-cache)
