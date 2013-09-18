@@ -36,7 +36,7 @@ underlying programming language.
 
 Probably the most heavy use of ontologies has been in biomedicine, where very
 large ontologies have been used to annotate
-[data](http://ontogenesis.knowledgeblog.org/50) data.
+[data](http://ontogenesis.knowledgeblog.org/50).
 
 ## What is OWL?
 
