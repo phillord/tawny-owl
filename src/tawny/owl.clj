@@ -311,6 +311,33 @@ the moment it is very simple."
     (iri-gen name)
     (iri (str (get-iri o) "#" name))))
 
+;;; Begin interned-entity-support
+(defonce
+  ^{:doc "Hook called when an new var is created with an OWLObject, with the var"}
+  intern-owl-entity-hook
+  (util/make-hook))
+
+(defn
+  run-intern-hook
+  "Run intern-owl-entity hooks and return first argument."
+  [var]
+  (util/run-hook intern-owl-entity-hook var)
+  var)
+
+
+(defn intern-owl
+  "Intern an OWL Entity. Compared to the clojure.core/intern function
+this signals a hook, and adds :owl true to the metadata."
+  ([name entity]
+     (intern-owl *ns* name entity))
+  ([namespace name entity]
+     (tawny.owl/run-intern-hook
+      (intern namespace
+              (vary-meta name
+                         merge
+                         {:owl true})
+              entity))))
+
 ;;; Begin OWL2 datatypes
 (def owl2datatypes
   (into {}
@@ -533,17 +560,7 @@ See 'defclass' for more details on the syntax."
   `(let [property-name# (name '~property)
          property#
          (tawny.owl/annotation-property property-name# ~@frames)]
-     (def
-       ~(vary-meta property
-                   merge
-                   {:owl true})
-       property#)))
-
-
-
-
-
-
+     (intern-owl (quote ~property) property#)))
 
 ;;; Ontology manipulation
 
@@ -1154,10 +1171,7 @@ value for each frame."
   [property & frames]
   `(let [property-name# (name '~property)
          property# (tawny.owl/object-property property-name# ~@frames)]
-     (def ~(with-meta property
-             (assoc (meta name)
-               :owl true))
-       property#)))
+     (intern-owl (quote ~property) property#)))
 
 (defmontfn
   guess-type-args
@@ -1409,12 +1423,7 @@ combination of the two. The class object is stored in a var called classname."
   [classname & frames]
   `(let [string-name# (name '~classname)
          class# (tawny.owl/owl-class string-name# ~@frames)]
-     (def
-       ~(vary-meta classname
-                   merge
-                   {:owl true})
-       class#)))
-
+     (intern-owl (quote ~classname) class#)))
 
 (defdontfn disjoint-classes-list
   "Makes all elements in list disjoint.
@@ -1551,11 +1560,7 @@ or to ONTOLOGY if present."
   [individualname & frames]
   `(let [string-name# (name '~individualname)
          individual# (tawny.owl/individual string-name# ~@frames)]
-     (def
-       ~(vary-meta individualname
-                  merge
-                  {:owl true})
-       individual#)))
+     (intern-owl (quote ~individualname) individual#)))
 
 (load "owl_data")
 

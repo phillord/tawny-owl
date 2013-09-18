@@ -113,12 +113,8 @@
   [dataname & frames]
   `(let [namestring# (name '~dataname)
          datatype# (tawny.owl/datatype-property namestring#
-                                               ~@frames)]
-     (def
-       ~(vary-meta dataname
-                   merge
-                   {:owl true})
-       datatype#)))
+                                                ~@frames)]
+     (intern-owl (quote ~dataname) datatype#)))
 
 
 (defmontfn literal
@@ -185,11 +181,7 @@ which is an OWLDatatype object.
   `(let [namestring# (name '~dataname)
          datatype# (tawny.owl/datatype namestring#
                                        ~@frames)]
-     (def
-       ~(vary-meta dataname
-                   merge
-                   {:owl true})
-       datatype#)))
+     (intern-owl (quote ~dataname) datatype#)))
 
 (defmontfn data-and
   [_ & types]
