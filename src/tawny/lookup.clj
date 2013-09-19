@@ -130,7 +130,6 @@ OWLObject for all namespaces in which tawny has created an ontology."
   ;;  (println "blitzing iri-cache")
   (reset! all-iri-to-var-cache nil))
 
-(println "Adding intern hook")
 (tawny.util/add-hook
  tawny.owl/intern-owl-entity-hook
  #'kill-iri-cache)
