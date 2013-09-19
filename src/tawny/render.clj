@@ -388,7 +388,7 @@ infer. For example, use data-some or object-some, rather than owl-some." }
 (defmethod form OWLObjectAllValuesFrom [a]
   (list
    (exp
-    owlonly
+    only
     object-only)
         (form (.getProperty a))
         (form (.getFiller a))))
@@ -476,7 +476,7 @@ infer. For example, use data-some or object-some, rather than owl-some." }
 
 (defmethod form org.semanticweb.owlapi.model.OWLDataAllValuesFrom [a]
   (list
-   (exp owlonly data-only)
+   (exp only data-only)
         (form (.getProperty a))
         (form (.getFiller a))))
 

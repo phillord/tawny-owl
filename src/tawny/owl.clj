@@ -1221,7 +1221,7 @@ value for each frame."
 (def ! owl-not)
 
 ;; "long cuts" for consistency with some
-(def owlonly only)
+(def owl-only only)
 
 
 ;; restrictions! name clash -- we can do nothing about this, so accept the
