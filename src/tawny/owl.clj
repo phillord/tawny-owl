@@ -324,19 +324,30 @@ the moment it is very simple."
   (util/run-hook intern-owl-entity-hook var)
   var)
 
-
-(defn intern-owl
-  "Intern an OWL Entity. Compared to the clojure.core/intern function
-this signals a hook, and adds :owl true to the metadata."
+;; I am convinced that there is way to define the next two functions in terms
+;; of each other. Just don't know what it is.
+(defn intern-owl-string
+  "Interns an OWL Entity. Compared to the clojure.core/intern function this
+signals a hook, and adds :owl true to the metadata. NAME must be a strings"
   ([name entity]
-     (intern-owl *ns* name entity))
-  ([namespace name entity]
      (tawny.owl/run-intern-hook
-      (intern namespace
-              (vary-meta name
-                         merge
-                         {:owl true})
-              entity))))
+      (intern *ns*
+              (with-meta
+                (symbol name)
+                {:owl true})
+               entity))))
+
+(defmacro intern-owl
+  "Intern an OWL Entity. Compared to the clojure.core/intern function this
+signals a hook, and adds :owl true to the metadata. NAME must be a symbol"
+  ([name entity]
+     ;; we use def semantics here, rather than intern-owl-string, because
+     ;; intern is not picked up by the compiler as defining a symbol
+     `(tawny.owl/run-intern-hook
+       (def ~(vary-meta name
+                        merge
+                        {:owl true})
+              ~entity))))
 
 ;;; Begin OWL2 datatypes
 (def owl2datatypes
@@ -560,7 +571,7 @@ See 'defclass' for more details on the syntax."
   `(let [property-name# (name '~property)
          property#
          (tawny.owl/annotation-property property-name# ~@frames)]
-     (intern-owl (quote ~property) property#)))
+     (intern-owl ~property property#)))
 
 ;;; Ontology manipulation
 
@@ -1171,7 +1182,7 @@ value for each frame."
   [property & frames]
   `(let [property-name# (name '~property)
          property# (tawny.owl/object-property property-name# ~@frames)]
-     (intern-owl (quote ~property) property#)))
+     (intern-owl ~property property#)))
 
 (defmontfn
   guess-type-args
@@ -1423,7 +1434,7 @@ combination of the two. The class object is stored in a var called classname."
   [classname & frames]
   `(let [string-name# (name '~classname)
          class# (tawny.owl/owl-class string-name# ~@frames)]
-     (intern-owl (quote ~classname) class#)))
+     (intern-owl ~classname class#)))
 
 (defdontfn disjoint-classes-list
   "Makes all elements in list disjoint.
@@ -1554,13 +1565,12 @@ or to ONTOLOGY if present."
 
     individual))
 
-
 (defmacro defindividual
   "Declare a new individual."
   [individualname & frames]
   `(let [string-name# (name '~individualname)
          individual# (tawny.owl/individual string-name# ~@frames)]
-     (intern-owl (quote ~individualname) individual#)))
+     (intern-owl ~individualname individual#)))
 
 (load "owl_data")
 
