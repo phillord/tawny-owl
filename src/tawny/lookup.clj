@@ -120,7 +120,6 @@ OWLObject for all namespaces in which tawny has created an ontology."
   (if @all-iri-to-var-cache
     @all-iri-to-var-cache
     (do
-      (println "filling iri cache")
       (reset! all-iri-to-var-cache
               (apply iri-to-var (namespace-with-ontology))))))
 
