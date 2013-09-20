@@ -15,10 +15,6 @@ consider "add" methods
 
 
 
-** Ontology 
-
-This function should also use extensible handlers.
-
 ** Should be able to pass multiple comments or labels
    :PROPERTIES:
    :type:     bug

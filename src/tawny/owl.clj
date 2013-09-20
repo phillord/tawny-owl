@@ -620,6 +620,42 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
       (remove-ontology-from-namespace-map o)
       (util/run-hook remove-ontology-hook o))))
 
+(defn- add-an-ontology-name [o n]
+  (if n
+    (add-an-ontology-annotation
+     o (tawny-name n))))
+
+(defn- set-iri-gen [o f]
+  (if f
+    (dosync
+     (alter (ontology-options o)
+            merge {:iri-gen f}))))
+
+(defn- set-prefix [o p]
+  (if p
+    (.setPrefix
+     (.getOntologyFormat
+      owl-ontology-manager o)
+     p (.toString (get-iri o)))))
+
+
+(defn- add-see-also [o s]
+  (if s
+    (add-annotation o (seealso o s))))
+
+(defn- add-versioninfo [o v]
+  (if v
+    (add-versioninfo o v)))
+
+(def ^{:private true} ontology-handlers
+  {:iri-gen set-iri-gen,
+   :prefix set-prefix,
+   :name add-an-ontology-name
+   :seealso add-see-also
+   :comment add-comment
+   :versioninfo add-versioninfo
+   })
+
 (defn ontology
   "Returns a new ontology. See 'defontology' for full description."
   [& args]
@@ -632,50 +668,11 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
                                 (str "#" name)))))]
     (remove-ontology-maybe
      (OWLOntologyID. iri))
-
-    (let [jontology
-          (.createOntology owl-ontology-manager iri)
-
-          ontology-format
-          (.getOntologyFormat
-           owl-ontology-manager jontology)]
-
-      ;; iri gen options needs to be remembered
-      (when-let [iri-gen (:iri-gen options)]
-        (dosync
-         (alter (ontology-options jontology)
-                merge {:iri-gen iri-gen})))
-
-      ;; put prefix into the prefix manager
-      ;; this isn't a given -- the prefix manager being returned by default
-      ;; returns true for isPrefixOWLOntologyFormat, so we can do this, but
-      ;; strictly we are depending on the underlying types.
-      (when-let [prefix
-                 (or (:prefix options)
-                     (:name options))]
-        (.setPrefix ontology-format
-                    prefix
-                    (.toString iri)))
-
-      (when-let [name (:name options)]
-        (add-an-ontology-annotation
-         jontology
-         (tawny-name name)))
-
-      ;; add annotations to the ontology
-      (add-annotation
-       jontology
-       (filter (comp not nil?)
-               (flatten
-                (list
-                 (:annotation options)
-                 (when-let [s (:seealso options)]
-                   (seealso jontology s))
-                 (when-let [c (:comment options)]
-                   (owl-comment jontology c))
-                 (when-let [v (:versioninfo options)]
-                   (versioninfo jontology v))))))
-      jontology)))
+    (let [ontology
+          (.createOntology owl-ontology-manager iri)]
+      (doseq [[k f] ontology-handlers]
+        (f ontology (get options k)))
+      ontology)))
 
 (defmacro defontology
   "Define a new ontology with `name'.

@@ -511,3 +511,15 @@ defclass
 defdatatype
 
 
+
+* Ontology
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2013-09-20 Fri 11:42
+  :ARCHIVE_FILE: ~/src/knowledge/tawny-owl/org/todo.org
+  :ARCHIVE_OLPATH: Issues
+  :ARCHIVE_CATEGORY: todo
+  :END: 
+
+This function should also use extensible handlers.
+
+
