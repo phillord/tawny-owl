@@ -45,11 +45,19 @@ single list. Keys must be separated by at least one value."
   [keys list]
   (groupify-by (fn [x] (some #(= x %) keys)) list))
 
+(defn- merge-hash-map [& list]
+  (reduce
+   (partial merge-with concat)
+   (map
+    (fn [n]
+      (apply hash-map n))
+    (partition 2 list))))
+
 (defn hashify-at
   "Takes a list with alternating keyword values and returns a hash"
   [keys list]
   (apply
-   hash-map (groupify-at keys list)))
+   merge-hash-map (groupify-at keys list)))
 
 (defn groupify
   "Takes a list with keywords and values and turns all adjacent values into a
@@ -61,7 +69,7 @@ single list. Keys must be separated by at least one value."
   "Takes a list with alternating keyword values and returns a hash"
   [list]
   (apply
-   hash-map (groupify list)))
+   merge-hash-map (groupify list)))
 
 ;; contains really doesn't do what you expect
 (defn in?
