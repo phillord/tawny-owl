@@ -115,6 +115,9 @@
 
 (deftest save-ontology []
   (is (do (o/save-ontology to "test.omn")
+          true))
+  (is (do (o/save-ontology
+           (o/ontology :name "bob") "test2.omn")
           true)))
 
 (deftest iri-for-name []

@@ -660,6 +660,11 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
   "Returns a new ontology. See 'defontology' for full description."
   [& args]
   (let [options (apply hash-map args)
+        ;; the prefix is specified by the prefix or the name.
+        ;; this allows me to do "(defontology tmp)"
+        options (merge options
+                       {:prefix (or (:prefix options)
+                                    (:name options))})
         iri (IRI/create (get options :iri
                              (str
                               (.toString (java.util.UUID/randomUUID))
