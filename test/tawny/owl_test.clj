@@ -478,18 +478,18 @@ Assumes that fixture has been run
 
   (is
    (instance? org.semanticweb.owlapi.model.OWLAnnotation
-              (o/isdefinedby to "hello")))
+              (o/is-defined-by to "hello")))
 
   (is
    (instance? org.semanticweb.owlapi.model.OWLAnnotation
-              (o/seealso to "hello")))
+              (o/see-also to "hello")))
   (is
    (instance? org.semanticweb.owlapi.model.OWLAnnotation
-              (o/backwardcompatiblewith to "hello")))
+              (o/backward-compatible-with to "hello")))
 
   (is
    (instance? org.semanticweb.owlapi.model.OWLAnnotation
-              (o/incompatiblewith to "hello")))
+              (o/incompatible-with to "hello")))
 
   (is
    (instance? org.semanticweb.owlapi.model.OWLAnnotationProperty

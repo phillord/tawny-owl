@@ -452,55 +452,55 @@ with the literal function."
   [o & args]
   (apply annotation o owl-comment-property args))
 
-(def isdefinedbyproperty
+(def is-defined-by-property
   (.getRDFSIsDefinedBy ontology-data-factory))
 
-(defmontfn isdefinedby
+(defmontfn is-defined-by
   [o & args]
-  (apply annotation o isdefinedbyproperty args))
+  (apply annotation o is-defined-by-property args))
 
-(def seealsoproperty
+(def see-also-property
   (.getRDFSSeeAlso ontology-data-factory))
 
-(defmontfn seealso
+(defmontfn see-also
   [o & args]
   (apply annotation o
-         seealsoproperty args))
+         see-also-property args))
 
-(def backwardcompatiblewithproperty
+(def backward-compatible-with-property
   (.getOWLBackwardCompatibleWith ontology-data-factory))
 
-(defmontfn backwardcompatiblewith
+(defmontfn backward-compatible-with
   [o & args]
   (apply annotation o
-              backwardcompatiblewithproperty
+              backward-compatible-with-property
               args))
 
-(def incompatiblewithproperty
+(def incompatible-with-property
   (.getOWLIncompatibleWith ontology-data-factory))
 
-(defmontfn incompatiblewith
+(defmontfn incompatible-with
   [o & args]
   (apply annotation o
-         incompatiblewithproperty
+         incompatible-with-property
          args))
 
-(def versioninfoproperty
+(def version-info-property
   (.getOWLVersionInfo ontology-data-factory))
 
-(defmontfn versioninfo
+(defmontfn version-info
   [o & args]
   (apply annotation o
-              versioninfoproperty
+              version-info-property
               args))
 
-(def deprecatedproperty
+(def deprecated-property
   (.getOWLDeprecated ontology-data-factory))
 
 (defmontfn deprecated
   [o & args]
   (apply annotation o
-         deprecatedproperty
+         deprecated-property
          args))
 
 (defbmontfn add-label
@@ -641,11 +641,11 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
 
 (defn- add-see-also [o s]
   (if s
-    (add-annotation o (seealso o s))))
+    (add-annotation o (see-also o s))))
 
-(defn- add-versioninfo [o v]
+(defn- add-version-info [o v]
   (if v
-    (add-versioninfo o v)))
+    (add-version-info o v)))
 
 (def ^{:private true} ontology-handlers
   {:iri-gen set-iri-gen,
@@ -653,7 +653,7 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
    :name add-an-ontology-name
    :seealso add-see-also
    :comment add-comment
-   :versioninfo add-versioninfo
+   :versioninfo add-version-info
    })
 
 (defn ontology
