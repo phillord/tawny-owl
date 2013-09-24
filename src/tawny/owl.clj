@@ -790,8 +790,6 @@ If no ontology is given, use the current-ontology"
      (let [file (new File filename)
            output-stream (new FileOutputStream file)
            file-writer (new PrintWriter output-stream)
-           existingformat (.getOntologyFormat owl-ontology-manager
-                                              o)
            this-format
            (cond
             (= format :rdf) (RDFXMLOntologyFormat.)
