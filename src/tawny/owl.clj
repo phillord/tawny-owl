@@ -358,7 +358,8 @@ signals a hook, and adds :owl true to the metadata. NAME must be a symbol"
 ;;; Begin Annotation Support
 
 ;; annotations
-(defn- add-a-simple-annotation
+(defbdontfn add-a-simple-annotation
+  "Adds an annotation to a named object."
   [o named-entity annotation]
   (let [axiom
         (.getOWLAnnotationAssertionAxiom
@@ -371,21 +372,27 @@ signals a hook, and adds :owl true to the metadata. NAME must be a symbol"
   (when (instance? String name)
     (add-a-simple-annotation o named-entity (tawny-name name))))
 
-(defn- add-an-ontology-annotation
-  [o annotation]
+(defbdontfn add-an-ontology-annotation
+  "Adds an annotation to an ontology."
+  [o o annotation]
   (.applyChange
    owl-ontology-manager
    (AddOntologyAnnotation. o annotation)))
 
-(defmontfn add-annotation
-  ([o named-entity annotation-list]
-     (doall
-      (for [n annotation-list]
-        (add-a-simple-annotation o named-entity n))))
-  ([o annotation-list]
-     (doall
-      (for [n annotation-list]
-        (add-an-ontology-annotation o n)))))
+(defdontfn add-annotation
+  {:doc "Add an annotation in the ontology to either the named-entity
+or the ontology. Broadcasts over annotations."
+   :arglists '([ontology named-entity & annotations]
+                 [named-entity & annotations]
+                 [ontology & annotations][annotations])}
+  [o & args]
+  (if (named-object? (first args))
+    (add-a-simple-annotation
+     o (first args) (rest args))
+    (add-an-ontology-annotation
+     ;; okay, so this is wierd, but broadcasting requires a three arg
+     ;; function, first being an ontology.
+     o o args)))
 
 (defn- ensure-annotation-property
   "Ensures that 'property' is an annotation property,
