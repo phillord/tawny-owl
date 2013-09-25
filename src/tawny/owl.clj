@@ -630,7 +630,7 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
 (defn- add-an-ontology-name [o n]
   (if n
     (add-an-ontology-annotation
-     o (tawny-name n))))
+     o o (tawny-name n))))
 
 (defn- set-iri-gen [o f]
   (if f
