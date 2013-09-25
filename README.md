@@ -1,6 +1,8 @@
 Tawny-OWL
 ===========
 
+[![Build Status](https://travis-ci.org/phillord/tawny-owl.png?branch=master)](https://travis-ci.org/phillord/tawny-owl)
+
 ## Introduction
 
 This package allows users to construct OWL ontologies in a fully programmatic
