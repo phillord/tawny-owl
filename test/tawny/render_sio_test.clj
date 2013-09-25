@@ -41,8 +41,7 @@
 (deftest signature
   (is
    (= (count (.getSignature sio))
-      ;; tawny adds an annotation property
-      (- (count (.getSignature sio-rendered)) 1))))
+      (count (.getSignature sio-rendered)))))
 
 
 (deftest classes
