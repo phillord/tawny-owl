@@ -247,13 +247,13 @@ Uses the default ontology if not supplied and throws an IllegalStateException
 
 (defdontfn remove-axiom
   "Removes a list of axioms from the given ontology, or the current one."
-  [o axiom-list]
+  [o & axiom-list]
   (doall
    (map (fn [axiom]
           (do
             (.applyChange owl-ontology-manager
                           (RemoveAxiom. o axiom))))
-        axiom-list)))
+        (flatten axiom-list))))
 
 (defdontfn remove-entity
   "Remove from the ontology an entity created and added by
