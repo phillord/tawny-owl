@@ -6,12 +6,14 @@ Release Notes
 ## Code Changes
  - Lookup implementation has been enhanced for performance. This also affects
    repl and render namespaces.
+ - All relevant functions should broadcast now.
 
 ## Bug Fixes
  - Support for datatypes was broken in a few areas.
 
 ## Breaking Changes
 
+ - `remove-axiom` now takes a list, which most of the `add-*` functions returns
  - characteristics on properties now use keywords (:functional instead of functional).
  - function names have been regularised (see
    [documentation](nameconventions.md)) resulting in many name changes.
