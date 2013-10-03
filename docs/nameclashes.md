@@ -3,7 +3,7 @@ Nameclashes
 
 One of the idiosyncrasies of Tawny-OWL is that several user facing functions
 have multiple names, and that these are somewhat inconsistent: compare, for
-instance, `owlsome` and `only`.
+instance, `owl-some` and `only`.
 
 This document explain the design rationale behind this.
 
@@ -79,8 +79,8 @@ confusion.
 Tawny-OWL takes the approach of not using namespaces to differentiate, but
 using a prefix where necessary, and providing the option of using it always.
 So, for instance, there is a core function called `some`, hence the Tawny
-function is `owlsome`. There is not core function called `only`, hence Tawny
-provides two names (to the same function), `owlonly` and `only`. The logical
+function is `owl-some`. There is not core function called `only`, hence Tawny
+provides two names (to the same function), `owl-only` and `only`. The logical
 constructors all provide their C style equivalent: `owland` and `&&`.
 
 We are still not entirely convinced that this is the correct approach; a

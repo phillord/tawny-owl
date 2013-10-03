@@ -115,7 +115,7 @@ to the last few examples.
 
     (owl-class clazz :label "label1" "label2" "label3" "label4")
     ;; or
-    (owl-class "label1" ["label2" ["label3" ["label4"]]])
+    (owl-class clazz :label "label1" ["label2" ["label3" ["label4"]]])
 
 This provides considerable flexibility to the library. For example, this has
 been used with the `some-only` function to enable
@@ -139,17 +139,22 @@ simply as:
 
 In addition to this flexibility, the frame based functions uses specialised
 support for keyword arguments rather than Clojure destructuring, which means
-the same keyword can be supplied multiple times. This makes it easy to write
-specialised extensions of these functions. Consider this silly example:
+the same keyword can be supplied multiple times. So, equivalent to the
+examples given earlier, four labels could also be given like this:
 
+    (owl-class clazz :label "label1" :label "label2"
+                     :label "label3" :label "label4")
+
+This makes it easy to write specialised extensions of these functions.
+Consider this silly example:
 
     (defn silly-class [& args]
             (apply owl-class (concat args [:comment "This class is silly"])))
     (silly-class "c" :comment "Although it's not my fault")
 
 The `silly-class` function will handle frames exactly the same as `owl-class`,
-rather than following a "last keyword wins" semantics, which will remove any
-comments.
+rather than following a "last keyword wins" semantics, which would remove any
+comments provided to the `silly-class` call.
 
 The `add-*` functions
 ---------------------

@@ -37,33 +37,33 @@ which is equivalent to a `Pizza` which `hasTopping` of `CheeseTopping`.
     (defclass CheesyPizza
         :equivalent
         Pizza
-        (owlsome hasTopping CheeseTopping)))
+        (owl-some hasTopping CheeseTopping)))
 
-In this case, an existential restriction is created using the `owlsome`
+In this case, an existential restriction is created using the `owl-some`
 function. This is semantically equivalent to this form:
 
     (defclass CheesyPizza
         :equivalent
-        (owland Pizza
-            (owlsome hasTopping CheeseTopping)))
+        (owl-and Pizza
+            (owl-some hasTopping CheeseTopping)))
 
-which also makes use of an explicit `owland`. All of the class constructors in
+which also makes use of an explicit `owl-and`. All of the class constructors in
 OWL are supported, in many cases with a [variety](nameclashes.md) of names.
 These are:
 
-- `owlsome`
-- `only`,`owlonly`
-- `owlnot`, `!`
-- `owlor`, `||`
-- `owland`, `&&`
-- `atleast`
-- `atmost`,
+- `owl-some`
+- `only`,`owl-only`
+- `owl-not`, `!`
+- `owl-or`, `||`
+- `owl-and`, `&&`
+- `at-least`
+- `at-most`
 - `exactly`
+- `has-value`
+- `has-self`
 
-*Note* `hasValue` and `hasSelf` haven't been written yet.
-
-There is also a single convienience constructor: `someonly` which combines
-both `some` and `only` property restricutions in a single step.
+There is also a single convienience constructor: `some-only` which combines
+both `some` and `only` property restrictions in a single step.
 
 ## Forward Declarartions
 
@@ -72,7 +72,7 @@ have been created before they are used. A more naturalistic interpretation of
 OWL would allow statements like so:
 
     (defclass A
-        :subclass (owlsome hasPart B))
+        :subclass (owl-some hasPart B))
     (defclass B)
     (defoproperty hasPart)
 
@@ -87,7 +87,7 @@ your statements, which would work well in this case.
 
     (defclass B)
     (defclass A
-        :subclass (owlsome hasPart B))
+        :subclass (owl-some hasPart B))
 
 In many cases where classes need to refer to each other this is often not
 possible. For instance:
@@ -102,23 +102,37 @@ The most common of these cases (disjoints as shown) can be avoided with the
         (defclass A)
         (defclass B))
 
-However, when all else fails, Tawny-OWL provides a function for
-"forward-declaration".
+When all else fails, the problem can be over come by using some combination of
+the `def-*` macros and their equivalent functions (described in more detail
+in the next section).
 
     (defoproperty hasPart)
-    (declare-classes B)
-    (defclass A
-        :subclass (owlsome hasPart B))
     (defclass B)
+    (defclass A
+        :subclass (owl-some hasPart B))
+    (owl-class B :subclass
+        (owl-some isPartOf A))
 
-This has exactly the same semantics as previously.
+In this case, we define `B` with no frames, and then refine it later, adding
+more frames to the same entity. Tawny-OWL also provides a convienience
+`declare-classes` macro which allows the defintiion of multiple classes at
+once.
+
+    (declare-classes B C)
+    (defclass A
+        :subclass (owl-some hasPart B C))
+    ;; more definitions of B and C
+    (owl-class B :subclass
+        (owl-some isPartOf A))
+    (owl-class C :subclass
+        (owl-some isPartOf A))
 
 ## Tawny without variables
 
 So far the documentation has described the use of Tawny-OWL as a DSL. For each
 new class or property, a new Clojure variable is created also. This works well
 for ontology development, but it not so useful for use of Tawny-OWL as an API.
-This is most useful for a highly programmatic use of Tawny-OWL, so this
+By definition this is a programmatic use of Tawny-OWL, so this
 section assumes a reasonable understanding of Clojure and its related
 terminology.
 
@@ -127,7 +141,7 @@ simply return the OWL API objects created -- the macros forms such as `defclass`
 return the Clojure [Var](http://clojure.org/vars) object for consistency with
 the rest of Clojure. For example:
 
-    (owlclass "A" :subclass "B" "C")
+    (owl-class "A" :subclass "B" "C")
 
 will return a class with name "A", a subclass of "B" and "C". If "B" and "C"
 do not exist, then these will also be created. These functions are not pure,
@@ -137,7 +151,7 @@ however so multiple calls will return the same class. It is possible to mix
 this form of call freely with the `defclass` forms:
 
     (defclass A)
-    (owlclass "B" :subclass A)
+    (owl-class "B" :subclass A)
     (defclass C :subclass "B")
 
 This is not a particularly good idea from an engineering point of view. It is
@@ -154,14 +168,20 @@ this.
 
 The equivalent string based system does not:
 
-    tawny.owl> (objectproperty "B")
+    tawny.owl> (object-property "B")
     #<OWLObjectPropertyImpl <http://iri/#B>>
-    tawny.owl> (owlclass "A" :subclass "B")
+    tawny.owl> (owl-class "A" :subclass "B")
     #<OWLClassImpl <http://iri/#A>>
 
-The main advantage of this approach, though is that it's easier to code again.
-The macro forms require symbols as their first parameter, which requires the
-use of macros and back-tick unquoting to use.
+Any attempt to reason over an ontology with these statements is likely to
+complain, though, that B is both a class and a property. The first advantage of
+this approach, though is that it's easier to code again. The macro forms
+require symbols as their first parameter, which requires the use of macros and
+back-tick unquoting to use programmatically. The second advantage is that the
+macros require forward declaration which means building an ontology needs to
+be done incrementally. One piece of the Tawny-OWL test code reads an OWL file,
+renders it into Clojure, then reads it back again; it does this using the
+function form to avoid the forward declaration problem.
 
 Performance wise, both are about the same.
 

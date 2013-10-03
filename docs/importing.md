@@ -77,7 +77,7 @@ must both `require` or `use` these classes, and `owlimport` them. For example:
 
     (defclass ImpossiblePizza
       :subclass p/VegetarianPizza
-      (owlsome p/hasTopping p/HamTopping))
+      (owl-some p/hasTopping p/HamTopping))
 
 
     (tawny.reasoner/reasoner-factory :hermit)
@@ -106,7 +106,7 @@ we could do the following:
 
     (defclass A
         :subclass
-            (owlclass ""
+            (owl-class ""
                 :name "http://purl.obolibrary.org/obo/GO_0000002"))
 
 This would create a new class called "A" which is a subclass of `mitochondrial
@@ -186,8 +186,8 @@ will throw an exception if it is unable to generate a non-nil name.
 
 Finally, we need to remember the names that are used and how they map to IRIs
 in case the names change. For this, we use the `remember` function. For full
-details of why this is necessary, please read my earlier
-[article](http://www.russet.org.uk/blog/2316).
+details of why this is necessary, please see documentation on
+[memorise](memorise).
 
     (tawny.memorise/remember "./src/tawny/obi/obi_memorise.clj")
 
@@ -196,3 +196,4 @@ ontology loaded in this way is saved using `tawny.owl/save-ontology` all
 axioms will be saved, not just those filtered out.
 
 ## Next
+

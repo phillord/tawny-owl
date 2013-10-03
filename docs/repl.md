@@ -58,17 +58,17 @@ described here. To see the `OWLObject` created, type the variable name again.
 
 Use of the functional forms will return this value directly.
 
-    (owlclass "A")
+    (owl-class "A")
     ;; #<OWLClassImpl <http://iri/#A>>
 
 Because of the behaviour of the OWL API, calling this function twice will
 result in an equivalent object.
 
-    (= A (owlclass "A"))
+    (= A (owl-class "A"))
     ;; true
-    (= (owlclass "A") (owlclass "A"))
+    (= (owl-class "A") (owl-class "A"))
     ;; true
-    (= (owlclass "A") (owlclass "B"))
+    (= (owl-class "A") (owl-class "B"))
     ;; false
 
 These functions do have the side effect of adding entities to the ontology.
@@ -78,7 +78,7 @@ So, for example, after typing the forms above, we find:
     ;; #<OWLOntologyImpl Ontology(OntologyID(OntologyIRI(<http://iri/>)))
     ;; [Axioms: 2 Logical Axioms: 0]>
 
-the current ontology has 2 axioms in total -- we have created (owlclass "B").
+the current ontology has 2 axioms in total -- we have created `(owl-class "B")`.
 If we wish to remove the entity again, we can do so. Note that this does not
 delete the class or remove it from the namespace, just from the ontology.
 

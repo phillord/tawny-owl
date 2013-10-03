@@ -33,14 +33,14 @@ which is both a `Pizza` and have a `CheeseTopping` will be considered to be a
 
     (defclass CheesyPizza
       :equivalent
-      (owland Pizza
-               (owlsome hasTopping CheeseTopping)))
+      (owl-and Pizza
+               (owl-some hasTopping CheeseTopping)))
 
 We can also introduce non-sensical classes which cannot make sense under any
 circumstances. Here we introduce the simplest example:
 
     (defclass A
-        :subclass B (owlnot B))
+        :subclass B (owl-not B))
 
 This class never has any classes.
 
@@ -113,7 +113,7 @@ reasoner. For instance:
 
     (defclass MargheritaPizza
         :subclass Pizza
-            (someonly hasTopping MozzarellaTopping TomatoTopping))
+            (some-only hasTopping MozzarellaTopping TomatoTopping))
 
 
 will be infered to be a subclass of `CheesyPizza` because it has a
