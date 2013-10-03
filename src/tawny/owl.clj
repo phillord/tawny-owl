@@ -129,7 +129,6 @@ ontology"
 
 
 
-
 (defmacro defnwithfn
   "Define a new var like defn, but compose FUNCTION with BODY before
 rather than just using BODY directly."
@@ -247,11 +246,14 @@ Uses the default ontology if not supplied and throws an IllegalStateException
   axiom)
 
 (defdontfn remove-axiom
-  "Removes an axiom from the given ontology, or the current one."
-  [o axiom]
-  (.applyChange owl-ontology-manager
-                (RemoveAxiom. o axiom))
-  axiom)
+  "Removes a list of axioms from the given ontology, or the current one."
+  [o axiom-list]
+  (doall
+   (map (fn [axiom]
+          (do
+            (.applyChange owl-ontology-manager
+                          (RemoveAxiom. o axiom))))
+        axiom-list)))
 
 (defdontfn remove-entity
   "Remove from the ontology an entity created and added by
