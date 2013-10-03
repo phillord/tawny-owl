@@ -265,28 +265,28 @@ which is an OWLDatatype object.
 
 (.addMethod at-least :data data-at-least)
 
-(defn owlmin [from]
+(defn owl-min [from]
   (.getOWLDatatypeMinExclusiveRestriction
    ontology-data-factory from))
 
-(defn owlmax [to]
+(defn owl-max [to]
   (.getOWLDatatypeMaxExclusiveRestriction
    ontology-data-factory to))
 
-(defn minmax
+(defn min-max
   [from to]
   (.getOWLDatatypeMinMaxExclusiveRestriction
    ontology-data-factory from to))
 
-(defn mininc [from]
+(defn min-inc [from]
   (.getOWLDatatypeMinInclusiveRestriction
    ontology-data-factory from))
 
-(defn maxinc [to]
+(defn max-inc [to]
   (.getOWLDatatypeMaxInclusiveRestriction
    ontology-data-factory to))
 
-(defn minmaxinc
+(defn min-max-inc
   [from to]
   (.getOWLDatatypeMinMaxInclusiveRestriction
    ontology-data-factory from to))
@@ -295,17 +295,17 @@ which is an OWLDatatype object.
   [comparitor & args]
   (cond
    (= comparitor '<)
-   `(apply owlmax '~args)
+   `(apply owl-max '~args)
    (= comparitor '>)
-   `(apply owlmin '~args)
+   `(apply owl-min '~args)
    (= comparitor '><)
-   `(apply minmax '~args)
+   `(apply min-max '~args)
    (= comparitor '<=)
-   `(apply maxinc '~args)
+   `(apply max-inc '~args)
    (= comparitor '>=)
-   `(apply mininc '~args)
+   `(apply min-inc '~args)
    (= comparitor '>=<)
-   `(apply minmaxinc '~args)
+   `(apply min-max-inc '~args)
    :default
    (throw (IllegalArgumentException. (str "Unknown comparitor" comparitor)))))
 

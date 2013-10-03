@@ -1385,7 +1385,7 @@ all values from restrictions."
 
 (.addMethod has-value :object object-has-value)
 
-(defmontfn hasself [o property]
+(defmontfn has-self [o property]
   (.getOWLObjectHasSelf ontology-data-factory
    (ensure-object-property o property)))
 

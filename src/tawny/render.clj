@@ -558,7 +558,7 @@ infer. For example, use data-some or object-some, rather than owl-some." }
 
 
 (defmethod form org.semanticweb.owlapi.model.OWLObjectHasSelf [s]
-  (list 'hasself (form (.getProperty s))))
+  (list 'has-self (form (.getProperty s))))
 
 
 (defmethod form org.semanticweb.owlapi.model.OWLDataHasValue [p]
