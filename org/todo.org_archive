@@ -523,3 +523,70 @@ defdatatype
 This function should also use extensible handlers.
 
 
+
+* Should be able to pass multiple comments or labels
+  :PROPERTIES:
+  :type:     bug
+  :status:   open
+  :severity: mild
+  :scheduled_release: 1.0
+  :ARCHIVE_TIME: 2013-10-03 Thu 08:03
+  :ARCHIVE_FILE: ~/src/knowledge/tawny-owl/org/todo.org
+  :ARCHIVE_OLPATH: Issues
+  :ARCHIVE_CATEGORY: todo
+  :END:
+  
+
+     (when comment
+       (add-annotation o class
+                       (list (owlcomment
+                              (first comment)))))
+
+   doesn't make sense.
+
+
+
+* Autoname
+   :PROPERTIES:
+   :type:     feature
+   :severity: mild
+   :ARCHIVE_TIME: 2013-10-03 Thu 08:03
+   :ARCHIVE_FILE: ~/src/knowledge/tawny-owl/org/todo.org
+   :ARCHIVE_OLPATH: Issues
+   :ARCHIVE_CATEGORY: todo
+   :END:
+
+An autoname facility might be nice for where I can't be assed to specify a
+name. Especially good for probe classes. Easiest way is to just implement a
+new owlclass function. 
+
+
+
+* add-annotation
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2013-10-03 Thu 08:03
+  :ARCHIVE_FILE: ~/src/knowledge/tawny-owl/org/todo.org
+  :ARCHIVE_OLPATH: Issues
+  :ARCHIVE_CATEGORY: todo
+  :END:
+
+Doesn't broadcast, and probably should!
+
+
+
+* Move the reasoner code into ontology options
+   
+   :PROPERTIES:
+   :status:   open
+   :severity: mild
+   :type:     performance
+   :ARCHIVE_TIME: 2013-10-03 Thu 08:07
+   :ARCHIVE_FILE: ~/src/knowledge/tawny-owl/org/todo.org
+   :ARCHIVE_OLPATH: Issues
+   :ARCHIVE_CATEGORY: todo
+   :END:
+
+This is actually a bit of a pain, because I have to blitz all the reasoners
+when changing factory. So, it's probably not worth doing.   
+
+   

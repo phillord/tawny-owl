@@ -9,9 +9,36 @@
   :scheduled_release_ALL: 0.12 1.0 1.1
   :END:
 
-** add-annotation
+** name annotation
 
-Doesn't broadcast, and probably should!
+Forces everything into OWL full. This is clearly not ideal.
+
+Possiblilites? Auto import?
+(def
+  owl-self-ont
+  (.loadOntologyFromOntologyDocument 
+  owl-ontology-manager
+  (iri (clojure.java.io/resource "tawny.owl"))))
+
+(owl-import owl-self-ont) 
+
+when creating a new ontology fixes the problem. Can't create this ontology in
+tawny because of a disaster bootstrap problem.
+
+In protege, this will force loading everytime.
+
+We need an ability to switch this off. Add an ontology option maybe?
+
+
+** Ontology options
+
+This exposes too much implementation detail, I think. Should probably use a
+atom rather than a ref (since changes are never synchronised with anything
+else). 
+
+** Memorise, obo
+
+Move to defontfn footing, and add some documentation!
 
 ** Privacy
 
@@ -19,33 +46,6 @@ consider "add" methods
 
 
 
-** Should be able to pass multiple comments or labels
-   :PROPERTIES:
-   :type:     bug
-   :status:   open
-   :severity: mild
-   :scheduled_release: 1.0
-   :END:
-   
-
-      (when comment
-        (add-annotation o class
-                        (list (owlcomment
-                               (first comment)))))
-
-    doesn't make sense.
-
-
-** Move the reasoner code into ontology options
-   
-   :PROPERTIES:
-   :status:   open
-   :severity: mild
-   :type:     performance
-   :END:
-   
-
-   
 ** Interpolation for comments
    :PROPERTIES:
    :type:     feature
@@ -78,17 +78,6 @@ Could hook into the owlclass-explicit function and add stuff at the end.
 
 Support Version ID for everything.
 
-
-
-** Autoname
-   :PROPERTIES:
-   :type:     feature
-   :severity: mild
-   :END:
-
-An autoname facility might be nice for where I can't be assed to specify a
-name. Especially good for probe classes. Easiest way is to just implement a
-new owlclass function. 
 
 
 ** Ontology reload
@@ -152,6 +141,7 @@ the entire lot.
 
 ** Tawny Repl [1/1]
  - [X] Documentation lookup
+ - [ ] Why documentation lookup is slow
 
 ** Scripting with Tawny [1/1]
  - [X] Added NamedPizza's
@@ -164,6 +154,12 @@ the entire lot.
  - [ ] How memorise helps to solve this problem
  - [ ] How to save a memorisation state
  - [ ] How to load one again.
+
+** Render [/]
+ - [ ] What render is for
+ - [ ] How render is not necessary for reading
+ - [ ] How render is used for documentation
+ - [ ] And testing
 
 ** Testing [6/6]
  - [X] What is unit testing, how does it look in Clojure
