@@ -6,8 +6,6 @@
                  ["phillord" "http://homepages.cs.ncl.ac.uk/phillip.lord/maven"]
                  ]
 
-  :resource-paths ["src/resources"]
-
   :scm {:url "https://github.com/phillord/tawny-owl.git"
         :name "git"}
 
