@@ -98,16 +98,15 @@
      (= @(o/ontology-options to)
             options)))
 
+  ;; create the same ontology several times, and check that ontology-options
+  ;; is not growing
   (is
    (do
      ;; need a clean slate to start with!
      (reset! o/ontology-options-atom {})
-     (o/ontology :iri "http://iri" :prefix "dfda:")
-     (o/ontology-options to)
-     (o/ontology :iri "http://iri" :prefix "dfda:")
-     (o/ontology-options to)
-     (o/ontology :iri "http://iri" :prefix "dfda:")
-     (o/ontology-options to)
+     (o/ontology :iri "http://iri/some-more" :prefix "dfda:" :noname true)
+     (o/ontology :iri "http://iri/some-more" :prefix "dfda:" :noname true)
+     (o/ontology :iri "http://iri/some-more" :prefix "dfda:" :noname true)
      (= 1
           (count @o/ontology-options-atom)))))
 

@@ -145,7 +145,6 @@ rather than just using BODY directly."
   ^{:doc "Hook called when the default ontology is used"}
   default-ontology-hook (util/make-hook))
 
-
 (defn default-ontology-maybe [f & args]
   (let [pre-ontology
         (drop-while #(not (= :ontology %)) args)
@@ -371,7 +370,11 @@ signals a hook, and adds :owl true to the metadata. NAME must be a symbol"
 
 (defn- add-a-name-annotation
   [o named-entity name]
-  (when (instance? String name)
+  (when
+      (and
+       (not (get @(ontology-options o)
+                 :noname false))
+       (instance? String name))
     (add-a-simple-annotation o named-entity (tawny-name name))))
 
 (defbdontfn add-an-ontology-annotation
@@ -630,7 +633,11 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
       (util/run-hook remove-ontology-hook o))))
 
 (defn- add-an-ontology-name [o n]
-  (if n
+  (when
+      (and
+       (not (get @(ontology-options o)
+                 :noname false))
+       n)
     (add-an-ontology-annotation
      o o (tawny-name n))))
 
@@ -656,6 +663,22 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
   (if v
     (add-version-info o v)))
 
+;; owl imports
+(defn owl-import
+  "Adds a new import to the current ontology. o may be an
+ontology or an IRI"
+  ([o]
+     (owl-import (get-current-ontology) o))
+  ([ontology-into o]
+     (let [iri (if (instance? OWLOntology o) 
+                 (get-iri o)
+                 o)]
+       (.applyChange owl-ontology-manager
+                     (AddImport. ontology-into
+                                 (.getOWLImportsDeclaration
+                                  ontology-data-factory
+                                  iri))))))
+;; ontology
 (def ^{:private true} ontology-handlers
   {:iri-gen set-iri-gen,
    :prefix set-prefix,
@@ -679,11 +702,19 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
                               (.toString (java.util.UUID/randomUUID))
                               (if-let [name
                                        (get options :name)]
-                                (str "#" name)))))]
+                                (str "#" name)))))
+        noname (get options :noname false)
+        ]
     (remove-ontology-maybe
      (OWLOntologyID. iri))
     (let [ontology
           (.createOntology owl-ontology-manager iri)]
+      (if noname
+        (dosync
+         (alter
+          (tawny.owl/ontology-options ontology)
+          merge {:noname true}))
+        (owl-import ontology tawny-iri))
       (doseq [[k f] ontology-handlers]
         (f ontology (get options k)))
       ontology)))
@@ -1582,18 +1613,6 @@ or to ONTOLOGY if present."
      (intern-owl ~individualname individual#)))
 
 (load "owl_data")
-
-;; owl imports
-(defn owl-import
-  "Adds a new import to the current ontology."
-  ([o]
-     (owl-import (get-current-ontology) o))
-  ([ontology-into o]
-     (.applyChange owl-ontology-manager
-                   (AddImport. ontology-into
-                               (.getOWLImportsDeclaration
-                                ontology-data-factory
-                                (get-iri o))))))
 
 (defn- var-get-maybe [var-maybe]
   (if (var? var-maybe)

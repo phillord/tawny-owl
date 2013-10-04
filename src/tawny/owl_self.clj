@@ -32,14 +32,17 @@
   [iri]
   (.getOWLAnnotationProperty ontology-data-factory iri))
 
-(def tawny-base-url
-  "http://www.purl.org/ontolink/tawny/")
+(def ^{:private true} tawny-base-url
+  "http://www.purl.org/ontolink/tawny")
+
+(def ^{:private true} tawny-iri
+  (iri tawny-base-url))
 
 (def
   ^{:private true}
   tawny-name-property
   (tawny-annotation-property
-   (iri (str tawny-base-url "name"))))
+   (iri (str tawny-base-url "#name"))))
 
 (defn- tawny-name [literal]
   (tawny-annotation tawny-name-property literal))
