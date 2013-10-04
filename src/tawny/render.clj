@@ -293,7 +293,7 @@ infer. For example, use data-some or object-some, rather than owl-some." }
         prop (form p)]
     `(
       ~(if (symbol? prop)
-         'defannotationproperty
+         'defaproperty
          'annotation-property)
       ~(form p)
       ~@(when (< 0 (count super))
