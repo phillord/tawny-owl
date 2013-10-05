@@ -86,13 +86,6 @@
   )
 
 
-(def var-str-test 1)
-(deftest var-str
-  (is
-   (= "var-str-test"
-      (#'m/var-str (var var-str-test)))))
-
-
 (deftest memory
   (is
    (= {"a" #{"1"}}

@@ -19,21 +19,13 @@
 (ns tawny.polyglot
   (:require [tawny.lookup] [tawny.owl]))
 
-
-;; oh dear, lifted from memorise -- move to lookup I think
-(defn- var-str 
-  "Given a var, return a string representation of its name"
-  [var]
-  (str (:name (meta var))))
-
-
 ;; function to create empty properties file
 (defn polyglot-create-resource [filename] 
   (with-open [w (clojure.java.io/writer filename)]
     (doseq [name 
             (into (sorted-set)
                   (for [[k v] (tawny.lookup/iri-to-var *ns*)]
-                    (var-str v)))]
+                    (tawny.lookup/var-str v)))]
       (.write w (format "%s=\n" name)))))
 
 ;; main entry function to gather add labels to all classes, given a language,

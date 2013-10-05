@@ -21,26 +21,20 @@
             [clojure.set]))
 
 
-(defn- var-str 
-  "Given a var, return a string representation of its name"
-  [var]
-  (str (:name (meta var))))
-
-
 (defn- change-values-to-string-set [map]
   (into {}
         (for [[k v] map]
-          [k #{(var-str v)}])))
+          [k #{(tawny.lookup/var-str v)}])))
 
 
-(defn- find-missing-mappings 
+(defn- find-missing-mappings
   "Find mappings in old that are not present in current.
 
 Both current and old are maps of IRI to set of string names"
   [current old]
   (into {}
         (filter (comp not empty? second)
-                (merge-with 
+                (merge-with
                  clojure.set/difference old current))))
 
 (defn merge-with-distinct [x y]
