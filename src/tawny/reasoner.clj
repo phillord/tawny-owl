@@ -12,9 +12,10 @@
 
 ;; You should have received a copy of the GNU Lesser General Public License
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
-
-
-(ns tawny.reasoner
+(ns
+    ^{:doc "Interaction with external reasoners"
+      :author "Phillip Lord"}
+  tawny.reasoner
   (:use [tawny.owl :only [defdontfn]])
   (:require [tawny.owl :as owl]
             [tawny.util :as util])
@@ -30,19 +31,31 @@
       WindowConstants)
     (java.awt GraphicsEnvironment)
     (org.semanticweb.elk.owlapi ElkReasonerFactory)
-    (org.apache.log4j 
+    (org.apache.log4j
      Level
      Logger)
     (org.semanticweb.owlapi.reasoner SimpleConfiguration)
     (org.semanticweb.HermiT Reasoner)))
 
-(def vreasoner-factory
+;; defonce semantics because a new reasoner factory should cause us
+;; to drop all existing reasoners.
+(defonce
+  ^{:doc "The current reasoner factory."
+    :private true}
+  vreasoner-factory
   (ref nil))
 
-(def reasoner-list
+;; defonce semantics because reasoners do not necessarily clear up nicely
+;; even after GC.
+(defonce
+  ^{:doc "A list of the reasoners currently in use"
+    :private true}
+  reasoner-list
   (ref ()))
 
 (defn reasoner-factory
+  "Return or set the reasoner factory. The reasoner must be either
+:hermit or :elk."
   ([]
      (when (nil? @vreasoner-factory)
        (throw (IllegalStateException. "No reasoner has been chosen")))
@@ -57,7 +70,7 @@
       ;; create a new reasoner
       (ref-set vreasoner-factory
                (reasoner
-                {:elk 
+                {:elk
                  (do
                    ;; ELK is noisy, so shut it up
                    (-> (Logger/getLogger "org.semanticweb.elk")
@@ -68,7 +81,9 @@
                 )))))
 
 
-(defn reasoner-progress-monitor-gui []
+(defn reasoner-progress-monitor-gui
+  "Return a new graphical progress monitor."
+  []
   (let [progressbar (JProgressBar.)
         frame (JFrame. "Reasoner Progress")
         content (JPanel.)
@@ -77,7 +92,6 @@
     (doto frame
       (.setDefaultCloseOperation WindowConstants/HIDE_ON_CLOSE)
       (.add content))
-
     (doto content
       (.setLayout (BoxLayout. content BoxLayout/Y_AXIS))
       (.add progressbar)
@@ -101,7 +115,9 @@
         (.setVisible frame false)))))
 
 
-(defn reasoner-progress-monitor-text []
+(defn reasoner-progress-monitor-text
+  "Return a new text based progress monitor."
+  []
   (proxy [org.semanticweb.owlapi.reasoner.ReasonerProgressMonitor] []
     (reasonerTaskBusy[]
       (println "Reasoner task busy");; stuff
@@ -115,7 +131,9 @@
       (println "reasoner task stopped"))))
 
 
-(defn reasoner-progress-monitor-silent[]
+(defn reasoner-progress-monitor-silent
+  "Returns a new progress monitor which is silent."
+  []
   (proxy [org.semanticweb.owlapi.reasoner.ReasonerProgressMonitor] []
     (reasonerTaskBusy[]
       )
@@ -126,21 +144,29 @@
     (reasonerTaskStopped []
       )))
 
-(defn reasoner-progress-monitor-gui-maybe []
+(defn reasoner-progress-monitor-gui-maybe
+  "Return a gui monitor unless we are headless."
+  []
   (if (GraphicsEnvironment/isHeadless)
     (reasoner-progress-monitor-text)
     (reasoner-progress-monitor-gui)))
 
 ;; set up the default!
 (def
-  ^{:dynamic true}
+  ^{:dynamic true
+    :doc "The current progress monitor to use."}
   *reasoner-progress-monitor*
   (atom reasoner-progress-monitor-gui-maybe))
 
-(defn reasoner-silent []
+(defn reasoner-silent
+  "Shut the reasoner up"
+  []
   (reset! *reasoner-progress-monitor* reasoner-progress-monitor-silent))
 
-(defn reasoner-for-ontology [ontology]
+(defn reasoner-for-ontology
+  "Return an reasoner for the given ontology if it exists. Normally
+the reasoner function is better to use."
+  [ontology]
   (first
    (filter
     #(= (System/identityHashCode
@@ -152,7 +178,10 @@
 ;; we need to cache these 'cause reasoners listen to changes could just use
 ;; memoized function taking jontology as param Probably need to write a new
 ;; ProgressMonitor to communicate with emacs.
-(defdontfn reasoner [ontology]
+(defdontfn reasoner
+  "Returns a reasoner for the given ontology, creating a new one if necessary
+from the current reasoner-factory."
+  [ontology]
   (let [reas (reasoner-for-ontology ontology)]
     (if reas
       reas
@@ -169,14 +198,17 @@
 
 (do
   ;; define the hook function
-  (defn discard-reasoner [ontology]
+  (defn discard-reasoner
+    "Explicitly discard the reasoner for a given ontology. This should
+happen automatically."
+    [ontology]
     (dosync
      (let [reasoner (reasoner-for-ontology ontology)]
        (when-not (nil? reasoner)
          (ref-set reasoner-list
                   (remove #{reasoner} @reasoner-list))
          (.dispose reasoner)))))
-  
+
   ;; add in do, so that we can't do one without the other
   (util/add-hook owl/remove-ontology-hook
                  discard-reasoner))
@@ -212,18 +244,24 @@ ontology is inconsistent"
   ;; actually implement this -- satisfiable > 0
   (zero? (count (unsatisfiable ontology))))
 
-(defn entities [nodeset]
+(defn entities
+  "Return all entities for a nodeset."
+  [nodeset]
   (into #{} (.getFlattened nodeset)))
 
-(defn no-top-bottom [coll]
+(defn no-top-bottom
+  "Delete top and bottom from a collection."
+ [coll]
   (into #{}
         (filter #(not
                   (or (= (owl/owl-thing) %1)
                       (= (owl/owl-nothing) %1)))
                 coll)))
 
-;; returns an immutable set of Nodes (including NodeSet's I think).
-(defdontfn isuperclasses [ontology name]
+(defdontfn isuperclasses
+  "Return all superclasses in ontology for name. Returns a (clojure)
+set and does not return top or bottom."
+  [ontology name]
   (no-top-bottom
    (entities
     (.getSuperClasses (reasoner ontology)
@@ -232,7 +270,7 @@ ontology is inconsistent"
 
 ;; move this to using isuperclasses
 (defdontfn isuperclass?
-  "Returns true if name has superclass as a strict superclass"
+  "Returns true if name has superclass as a strict superclass."
   [ontology name superclass]
   (let [superclasses
         (isuperclasses ontology name)]
@@ -240,7 +278,8 @@ ontology is inconsistent"
       true false)))
 
 (defdontfn isubclasses
-  "Returns all infered subclasses of name in ontology o."
+  "Returns all infered subclasses of name in ontology o.
+Returns a clojure set, and does not return top or bottom."
   [o name]
   (no-top-bottom
    (entities
@@ -256,19 +295,26 @@ ontology is inconsistent"
     (if (some #{subclass} subclasses)
       true false)))
 
-(defdontfn iequivalent-classes [ontology name]
+(defdontfn iequivalent-classes
+  "Returns equivalent classes to name in ontology. Returns a set
+and does not return top or bottom."
+  [ontology name]
   (no-top-bottom
    (.getEntities
     (.getEquivalentClasses (reasoner ontology)
                            (#'tawny.owl/ensure-class ontology name)))))
 
-(defdontfn iequivalent-class? [ontology name equiv]
+(defdontfn iequivalent-class?
+  "Returns true if name and equiv are equivalent in ontology."
+  [ontology name equiv]
   (let [equivs
         (iequivalent-classes ontology name)]
     (if (some #{equiv} equivs)
       true false)))
 
-(defdontfn instances [ontology class]
+(defdontfn instances
+  "Returns all instances of class in ontology."
+  [ontology class]
   (entities
    (.getInstances (reasoner ontology)
                   class false)))

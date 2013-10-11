@@ -19,7 +19,10 @@
   (:use [tawny.owl])
   (:require [tawny.reasoner :as r]))
 
-(defn reasoner [reasoner]
+(defn reasoner
+  "Fixture which sets up the reasoner factor to be used, and makes
+turns the progress monitor off."
+  [reasoner]
   (fn [tests]
     (r/reasoner-factory reasoner)
     (binding [r/*reasoner-progress-monitor*

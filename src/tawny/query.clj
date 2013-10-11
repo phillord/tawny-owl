@@ -14,7 +14,10 @@
 ;;
 ;; You should have received a copy of the GNU Lesser General Public License
 ;; along with this program. If not, see http://www.gnu.org/licenses/.
-(ns tawny.query
+(ns
+    ^{:doc "Enable querying over ontologies."
+      :author "Phillip Lord"}
+    tawny.query
   (:use [tawny.owl])
   (:use [tawny.render])
   (:require [tawny.util]))
@@ -48,8 +51,7 @@ The map is similar to the form used to define an entity. Keys are the keywords
 used by tawny.owl (:subclass, :domain, etc). Value are sets. Each element of
 the set is either an OWL object, or, if it is a restriction, similar to that
 used to define a restriction but with OWLObjects instead of clojure symbols.
-In addition a :type key is added which describes the type of the object.
-"
+In addition a :type key is added which describes the type of the object."
   [owlobject]
   (let [render
         (binding

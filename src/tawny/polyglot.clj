@@ -16,13 +16,18 @@
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
 
 
-(ns tawny.polyglot
+(ns
+    ^{:doc "Support for multi-lingual ontologies"
+      :author "Phillip Lord"}
+    tawny.polyglot
   (:require [tawny.lookup] [tawny.owl]))
 
 ;; function to create empty properties file
-(defn polyglot-create-resource [filename] 
+(defn polyglot-create-resource
+  "Create a blank resources file with no var names but no translations."
+  [filename]
   (with-open [w (clojure.java.io/writer filename)]
-    (doseq [name 
+    (doseq [name
             (into (sorted-set)
                   (for [[k v] (tawny.lookup/iri-to-var *ns*)]
                     (tawny.lookup/var-str v)))]
@@ -31,12 +36,14 @@
 ;; main entry function to gather add labels to all classes, given a language,
 ;; warning of missing translations.
 
-(defn polyglot-load-label [filename locale]
+(defn polyglot-load-label
+  "Load the properties file with translations for the given locale."
+  [filename locale]
   (if-let [resource
            (clojure.java.io/resource filename)]
-    (let [props 
-          (with-open 
-              [r (clojure.java.io/reader 
+    (let [props
+          (with-open
+              [r (clojure.java.io/reader
                   resource)]
             (let [props (java.util.Properties.)]
               (.load props r)
@@ -53,7 +60,5 @@
             (println
              (format "Missing Label (%s:%s)"
                      k locale))))))
-    (throw (IllegalStateException. 
+    (throw (IllegalStateException.
             (format "Cannot find properties file: %s" filename)))))
-
-

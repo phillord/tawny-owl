@@ -15,13 +15,18 @@
 ;; You should have received a copy of the GNU Lesser General Public License
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
 
-(ns tawny.memorise
+(ns
+    ^{:doc "Save IRI to Clojure identifier mappers between invocations"
+      :author "Phillip Lord"}
+    tawny.memorise
   (:require [tawny.owl]
             [tawny.lookup]
             [clojure.set]))
 
 
-(defn- change-values-to-string-set [map]
+(defn- change-values-to-string-set
+  "Resolve vars into their values"
+  [map]
   (into {}
         (for [[k v] map]
           [k #{(tawny.lookup/var-str v)}])))
@@ -37,7 +42,11 @@ Both current and old are maps of IRI to set of string names"
                 (merge-with
                  clojure.set/difference old current))))
 
-(defn merge-with-distinct [x y]
+(defn- merge-with-distinct
+  "Merges two maps, with key to set of values.
+Returns a sorted map."
+  [x y]
+  ;; sort just to maintain print order when memorising
   (into (sorted-map) (merge-with clojure.set/union x y)))
 
 
@@ -48,19 +57,22 @@ This function returns a map from the IRI to the var object(s) which hold it"
   ([]
      (memorise-map *ns*))
   ([namespace]
-     (into {} (for [[k v] (tawny.lookup/iri-to-var namespace)] [k v]))))
+     (tawny.lookup/iri-to-var *ns*)))
 
 
 (defn generate-obsolete-mapping
+  "Takes a list of old labels for an OWLEntity, and the var containing that
+OWLEntity. For each old label, the old label is interned, with a closure that
+returns the OWLEntity, while printing a warning message."
   [old-mappings mapping]
   (doall
-   (map 
+   (map
     (fn [x]
       (println "Generating mapping to obsolete symbol:" x " to " mapping)
       (intern *ns*
-              (symbol x) 
+              (symbol x)
               (fn []
-                (println x " has changed its symbol please use " 
+                (println x " has changed its symbol please use "
                          mapping " instead")
                 (var-get mapping))))
     old-mappings)))
@@ -68,28 +80,28 @@ This function returns a map from the IRI to the var object(s) which hold it"
 
 
 (defn fetch-remembered-entities []
-  (or  
+  "Fetch the remembered entities. This returns a map between an IRI (as a
+string) and a set of string labels."
+  (or
    (:remember (deref (tawny.owl/ontology-options)))
    {}))
 
 
 (defn fetch-old-and-current-entities []
+  "Fetch all entity mappings. This retusn a map "
   (merge-with-distinct
     (change-values-to-string-set (memorise-map))
     (fetch-remembered-entities)))
 
-(defn- check-old-mappings 
+(defn- check-old-mappings
   "Check old mappings that we have remembered against those that we would
 memorise now. Check that old mappings are still in memorise, otherwise create
 a new mapping.
 
 remember is a map iri to a set of names
-memorise is a map iri to current var
-
-"
+memorise is a map iri to current var"
   [remember memorise]
-
-  (let 
+  (let
       ;; memorise is iri to var, so need to get this as a string
       [memorise-iri-to-str
        (change-values-to-string-set memorise)
@@ -100,25 +112,25 @@ memorise is a map iri to current var
 
     ;; generate new symbols for everything
     (doseq [[iri old-symbol-string] missing-mappings]
-
       (generate-obsolete-mapping
        old-symbol-string (get memorise iri)))))
 
-
-
 (defn- memory-merge
-"Accepts key and values as pairs, but preserves duplicate values for the
-same keys, as all values are represented as sets"
+"Accepts key and values as pairs, but preserves values for the
+duplicate keys. Returns a single map, with all values as sets."
   [items]
-  (reduce 
-   (partial merge-with 
+  (reduce
+   ;; merge everything into one big map
+   (partial merge-with
             clojure.set/union)
+   ;; turn list into a list of single element maps
+   ;; with set values
    (map #(hash-map (first %) (hash-set (second %)))
         (partition 2 items))))
 
-
-(defn memory 
-  "Returns a map of IRI to set of string names for that concept"
+(defn memory
+  "Returns a map of IRI to set of string names for that concept.
+This function is used to wrap saved mappings on invoked on load."
   [& list]
   (memory-merge list))
 
@@ -131,17 +143,18 @@ same keys, as all values are represented as sets"
        (doseq [name v]
          (.write w (format "\"%s\" \"%s\"\n" k name))))
      (.write w "\n)")))
-     
+
 (defn remember
-  "Restore the current memorise information from file"
+  "Restore the current memorise information from file.
+This loads the memorise information, stores this with the ontology. A message
+is printed when obsolete terms are found"
   [file]
-   (let [iri-to-name-mapping
-         ;; think this is going to be very dependant on the current directory.
-         ;; So it's not going to work if another project imports the OBI
-         ;; namespace.
-         
-         ;; the file contains a single "memory" form.
-         (load-file file)]
+  (let [iri-to-name-mapping
+        ;; think this is going to be very dependant on the current directory.
+        ;; So it's not going to work if another project imports the OBI
+        ;; namespace.
+        ;; the file contains a single "memory" form.
+        (load-file file)]
      ;; store everything that we load, because we will need to save out
      ;; everything we load.
      (dosync
@@ -149,4 +162,3 @@ same keys, as all values are represented as sets"
        (tawny.owl/ontology-options)
        merge {:remember iri-to-name-mapping}))
      (check-old-mappings iri-to-name-mapping (memorise-map))))
-

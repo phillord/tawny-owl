@@ -44,7 +44,7 @@
 
 ;; this isn't working and I really don't know why
 ;; it seems to work on lein test but kills all tests
-;; when run in repl with clojure-test mode. 
+;; when run in repl with clojure-test mode.
 
 ;; works fine in fixture above so leave it there
 (defn reasoner-gui-fixture [tests]
@@ -112,13 +112,13 @@
 
 (deftest no-reasoner-set
   (is
-   (thrown? 
+   (thrown?
     IllegalStateException
-    (dosync 
-     (ref-set r/vreasoner-factory nil)
+    (dosync
+     (ref-set (var-get #'r/vreasoner-factory) nil)
      (r/reasoner to)))))
 
-(deftest empty-consistent? 
+(deftest empty-consistent?
   ;; empty only is consistent
   (is
    (every?
@@ -126,7 +126,7 @@
     (far #(r/consistent? to)))))
 
 
-(deftest ind-consistent? 
+(deftest ind-consistent?
   ;; with individual
   (is
    (every?

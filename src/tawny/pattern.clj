@@ -19,7 +19,9 @@
   (:require [tawny.owl :as o]))
 
 
-(defmacro value-partition [& definition]
+(defmacro value-partition
+  "Builds a value-partition pattern."
+  [& definition]
   (let [documentation#
         (if (string? (first definition))
           (list :comment (first definition))
@@ -37,7 +39,7 @@
          (str "has"
               (name superclass#)))]
 
-    ;; need to think what to do about the doc string. 
+    ;; need to think what to do about the doc string.
     `(do
        ;; need a forward declaration
        (o/defclass ~superclass#)
@@ -48,10 +50,9 @@
        (o/declare-classes
         ~@values# :subclass ~superclass#)
 
-       ;; put in covering axiom once we worked out how to do this. 
+       ;; put in covering axiom once we worked out how to do this.
        (o/defclass ~superclass#
          ~@documentation#
          )
 
        (o/add-disjoint-union ~superclass# ~values#))))
-

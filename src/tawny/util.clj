@@ -45,7 +45,10 @@ single list. Keys must be separated by at least one value."
   [keys list]
   (groupify-by (fn [x] (some #(= x %) keys)) list))
 
-(defn- merge-hash-map [& list]
+(defn- merge-hash-map
+  "Give a list turn into a map like apply hash-map, but assumes that the
+values are lists and concats duplicates."
+  [& list]
   (reduce
    (partial merge-with concat)
    (map
@@ -95,7 +98,9 @@ single list. Keys must be separated by at least one value."
       (format "Expected only keys %s; Got %s" thekeys (keys hash)))))
   hash)
 
-(defmacro quote-word [& symbols]
+(defmacro quote-word
+  "Given a list of symbols, return a list of names."
+  [& symbols]
   `(do
      (list
       ~@(map
@@ -103,27 +108,36 @@ single list. Keys must be separated by at least one value."
            (name symbol))
          symbols))))
 
-
 ;; hook system
-(defn make-hook []
+(defn make-hook
+  "Make a hook."
+  []
   (atom []))
 
-(defn add-hook [hook func]
+(defn add-hook
+  "Add func to hook."
+  [hook func]
   (do
     (when-not
         (some #{func} @hook)
       (swap! hook conj func))
     @hook))
 
-(defn remove-hook [hook func]
+(defn remove-hook
+  "Remove func from hook."
+  [hook func]
   (swap! hook
          (partial
           remove #{func})))
 
-(defn clear-hook [hook]
+(defn clear-hook
+  "Empty the hook."
+  [hook]
   (reset! hook []))
 
 (defn run-hook
+  "Run the hook with optional arguments. Hook functions are run in the order
+that they were added."
   ([hook]
      (doseq [func @hook] (func)))
   ([hook & rest]
@@ -158,10 +172,9 @@ rest can be any tree structure, then, f with x and all values in rest. "
       (partial f x)
       (filter (comp not nil?) (flatten args))))))
 
-
-
-
 ;; on
-(defn on [val f]
+(defn on
+  "Call f on val if val is not null."
+  [val f]
   (when val
     (f val)))

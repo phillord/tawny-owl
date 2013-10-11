@@ -17,7 +17,7 @@
 
 (ns ^{:doc "Build ontologies in OWL."
       :author "Phillip Lord"}
-    tawny.owl
+  tawny.owl
   (:require
    [clojure.walk :only postwalk]
    [clojure.set]
@@ -40,7 +40,6 @@
    (java.util Collections)
    (org.semanticweb.owlapi.model AddAxiom RemoveAxiom AddImport
                                  AddOntologyAnnotation)))
-
 
 ;;; Begin resource section
 
@@ -102,10 +101,9 @@ macro." }
 
 This may be deprecated in future. Where relevant, functions now accept an
 ontology as a first argument."
- [o & body]
+  [o & body]
   `(binding [tawny.owl/*current-bound-ontology* ~o]
      ~@body))
-
 
 (defn get-current-ontology-maybe
   "Gets the current ontology, or nil if there is not one."
@@ -127,8 +125,6 @@ ontology"
          ;; so break
          (throw (IllegalStateException. "Current ontology has not been set")))))
 
-
-
 (defmacro defnwithfn
   "Define a new var like defn, but compose FUNCTION with BODY before
 rather than just using BODY directly."
@@ -145,7 +141,11 @@ rather than just using BODY directly."
   ^{:doc "Hook called when the default ontology is used"}
   default-ontology-hook (util/make-hook))
 
-(defn default-ontology-maybe [f & args]
+(defn default-ontology-maybe
+  "Invoke f ensuring the first argument is an ontology or nil.
+The logic used is the same as default-ontology except that no error is
+signalled if there is no current-ontology."
+  [f & args]
   (let [pre-ontology
         (drop-while #(not (= :ontology %)) args)
         ontology (second pre-ontology)]
@@ -161,7 +161,13 @@ rather than just using BODY directly."
           (util/run-hook default-ontology-hook)
           (apply f (get-current-ontology-maybe) args))))))
 
-(defn default-ontology [f & args]
+(defn default-ontology
+  "Invoke f ensuring that the first argument is an OWLOntology.
+If the first element of args is an OWLOntology, this just means apply the
+ontology. If not, and args contains a :ontology o subsequence, invoke (f o
+args). If neither mechanism specifies an ontology, call get-current-ontology.
+If there is no current ontology, then an error will be thrown."
+  [f & args]
   (let [pre-ontology
         (drop-while #(not (= :ontology %)) args)
         ontology (second pre-ontology)]
@@ -196,26 +202,32 @@ The 'm' stands for maybe."
      ~@body))
 
 (defn broadcast-ontology-maybe
+  "Like broadcast-ontology but does not signal an error if there is no current
+ontology."
   [f & args]
   (apply default-ontology-maybe
-    (fn broadcast-ontology-maybe [o & narg]
-      (doall
-       (map (partial f o (first narg))
-            (filter identity
-                    (flatten
-                     (rest narg))))))
-    args))
+         (fn broadcast-ontology-maybe [o & narg]
+           (doall
+            (map (partial f o (first narg))
+                 (filter identity
+                         (flatten
+                          (rest narg))))))
+         args))
 
 (defn broadcast-ontology
+  "Given a function which expects an ontology and two other arguments, ensure
+that the first argument is an ontology (see default-ontology for details),
+then f repeatedly against the second args and all flatten subsequent
+arguments."
   [f & args]
   (apply default-ontology
-    (fn [o & narg]
-      (doall
-       (map (partial f o (first narg))
-            (filter identity
-                    (flatten
-                     (rest narg))))))
-    args))
+         (fn [o & narg]
+           (doall
+            (map (partial f o (first narg))
+                 (filter identity
+                         (flatten
+                          (rest narg))))))
+         args))
 
 (defmacro defbdontfn
   "Like the defn and defdontfn, but broadcasts. That is it expects a three arg
@@ -234,7 +246,6 @@ Uses the default ontology if not supplied and throws an IllegalStateException
   [name & body]
   `(defnwithfn ~name #'broadcast-ontology-maybe
      ~@body))
-
 
 ;;; Axiom mainpulation
 (defdontfn add-axiom
@@ -325,8 +336,11 @@ the moment it is very simple."
   (util/run-hook intern-owl-entity-hook var)
   var)
 
-;; I am convinced that there is way to define the next two functions in terms
-;; of each other. Just don't know what it is.
+;; In the idea world, these would be one function. However, they can't be. The
+;; intern version works where we do not know the symbol at compile time. This
+;; is generally useful for read'ing and the like. The symbol created cannot be
+;; used in the same form because the compiler doesn't know that it has been
+;; defined.
 (defn intern-owl-string
   "Interns an OWL Entity. Compared to the clojure.core/intern function this
 signals a hook, and adds :owl true to the metadata. NAME must be a strings"
@@ -336,8 +350,12 @@ signals a hook, and adds :owl true to the metadata. NAME must be a strings"
               (with-meta
                 (symbol name)
                 {:owl true})
-               entity))))
+              entity))))
 
+;; While this version uses def semantics -- the point here is that the def
+;; form is expanded at compile time, the compiler recognises that the form has
+;; been defined, and so allows subsequent referencing of the symbol within the
+;; same form.
 (defmacro intern-owl
   "Intern an OWL Entity. Compared to the clojure.core/intern function this
 signals a hook, and adds :owl true to the metadata. NAME must be a symbol"
@@ -348,10 +366,12 @@ signals a hook, and adds :owl true to the metadata. NAME must be a symbol"
        (def ~(vary-meta name
                         merge
                         {:owl true})
-              ~entity))))
+         ~entity))))
 
 ;;; Begin OWL2 datatypes
-(def owl2datatypes
+(def
+  ^{:doc "A map of keywords to the OWL2Datatypes values"}
+  owl2datatypes
   (into {}
         (for [k (org.semanticweb.owlapi.vocab.OWL2Datatype/values)]
           [(keyword (.name k)) k])))
@@ -369,6 +389,8 @@ signals a hook, and adds :owl true to the metadata. NAME must be a symbol"
     (add-axiom o axiom)))
 
 (defn- add-a-name-annotation
+  "Add a tawny-name annotation to named-entity, unless the :noname
+ontology option has been specified, in which case do nothing."
   [o named-entity name]
   (when
       (and
@@ -389,7 +411,7 @@ signals a hook, and adds :owl true to the metadata. NAME must be a symbol"
 or the ontology. Broadcasts over annotations."
    :arglists '([ontology named-entity & annotations]
                  [named-entity & annotations]
-                 [ontology & annotations][annotations])}
+                   [ontology & annotations][annotations])}
   [o & args]
   (if (named-object? (first args))
     (add-a-simple-annotation
@@ -414,8 +436,8 @@ converting it from a string or IRI if necessary."
     o
     (iri-for-name o property))
    :default
-  (throw (IllegalArgumentException.
-          (format "Expecting an OWL annotation property: %s" property)))))
+   (throw (IllegalArgumentException.
+           (format "Expecting an OWL annotation property: %s" property)))))
 
 (defmontfn annotation
   "Creates a new annotation property. If literal is a string it is
@@ -454,6 +476,7 @@ with the literal function."
   (.getRDFSLabel ontology-data-factory))
 
 (defmontfn label
+  "Return an OWL label annotation."
   [o & args]
   (apply annotation o label-property args))
 
@@ -461,6 +484,7 @@ with the literal function."
   (.getRDFSComment ontology-data-factory))
 
 (defmontfn owl-comment
+  "Return an OWL comment annotation."
   [o & args]
   (apply annotation o owl-comment-property args))
 
@@ -468,6 +492,7 @@ with the literal function."
   (.getRDFSIsDefinedBy ontology-data-factory))
 
 (defmontfn is-defined-by
+  "Return an is defined by annotation."
   [o & args]
   (apply annotation o is-defined-by-property args))
 
@@ -475,6 +500,7 @@ with the literal function."
   (.getRDFSSeeAlso ontology-data-factory))
 
 (defmontfn see-also
+  "Returns a see-also annotation."
   [o & args]
   (apply annotation o
          see-also-property args))
@@ -483,15 +509,17 @@ with the literal function."
   (.getOWLBackwardCompatibleWith ontology-data-factory))
 
 (defmontfn backward-compatible-with
+  "Returns a backward compatible with annotation."
   [o & args]
   (apply annotation o
-              backward-compatible-with-property
-              args))
+         backward-compatible-with-property
+         args))
 
 (def incompatible-with-property
   (.getOWLIncompatibleWith ontology-data-factory))
 
 (defmontfn incompatible-with
+  "Returns an incompatible with annotation."
   [o & args]
   (apply annotation o
          incompatible-with-property
@@ -501,21 +529,24 @@ with the literal function."
   (.getOWLVersionInfo ontology-data-factory))
 
 (defmontfn version-info
+  "Returns a version info annotation."
   [o & args]
   (apply annotation o
-              version-info-property
-              args))
+         version-info-property
+         args))
 
 (def deprecated-property
   (.getOWLDeprecated ontology-data-factory))
 
 (defmontfn deprecated
+  "Returns a deprecated annotation."
   [o & args]
   (apply annotation o
          deprecated-property
          args))
 
 (defbmontfn add-label
+  "Add labels to the named entities."
   [o named-entity label]
   (add-annotation
    o
@@ -523,6 +554,7 @@ with the literal function."
    [(tawny.owl/label label)]))
 
 (defbmontfn add-comment
+  "Add comments to the named entities."
   [o named-entity comment]
   (add-annotation o named-entity
                   [(owl-comment comment)]))
@@ -563,11 +595,11 @@ with the literal function."
    :arglists '([ontology name & frames] [name & frames])}
   [o name & frames]
   (annotation-property-explicit o
-   name
-   (util/check-keys
-    (util/hashify frames)
-    (list* :ontology
-           (keys annotation-property-handlers)))))
+                                name
+                                (util/check-keys
+                                 (util/hashify frames)
+                                 (list* :ontology
+                                        (keys annotation-property-handlers)))))
 
 (defn- get-annotation-property
   "Gets an annotation property with the given name."
@@ -598,6 +630,7 @@ See 'defclass' for more details on the syntax."
        assoc ns o))))
 
 (defn- remove-ontology-from-namespace-map
+  "Remove an ontology from the namespace map"
   [o]
   (dosync
    (doseq
@@ -613,8 +646,6 @@ See 'defclass' for more details on the syntax."
   ^{:doc "Hook called immediately after an ontology is removed from the
 owl-ontology-manager."}
   remove-ontology-hook (util/make-hook))
-
-
 
 (defn remove-ontology-maybe
   "Removes the ontology with the given ID from the manager.
@@ -632,7 +663,10 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
       (remove-ontology-from-namespace-map o)
       (util/run-hook remove-ontology-hook o))))
 
-(defn- add-an-ontology-name [o n]
+(defn- add-an-ontology-name
+  "Adds an tawny-name annotation to ontology, unless the :noname ontology
+  options is specified in which case do nothing."
+  [o n]
   (when
       (and
        (not (get @(ontology-options o)
@@ -641,25 +675,32 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
     (add-an-ontology-annotation
      o o (tawny-name n))))
 
-(defn- set-iri-gen [o f]
+(defn- set-iri-gen
+  "Add an IRI gen function to the ontology options."
+  [o f]
   (if f
     (dosync
      (alter (ontology-options o)
             merge {:iri-gen f}))))
 
-(defn- set-prefix [o p]
+(defn- set-prefix
+  "Sets a prefix for the ontology."
+  [o p]
   (if p
     (.setPrefix
      (.getOntologyFormat
       owl-ontology-manager o)
      p (.toString (get-iri o)))))
 
-
-(defn- add-see-also [o s]
+(defn- add-see-also
+  "Adds a see also annotation to the ontology"
+  [o s]
   (if s
     (add-annotation o (see-also o s))))
 
-(defn- add-version-info [o v]
+(defn- add-version-info
+  "Adds a version info annotation to the ontology."
+  [o v]
   (if v
     (add-version-info o v)))
 
@@ -670,7 +711,7 @@ ontology or an IRI"
   ([o]
      (owl-import (get-current-ontology) o))
   ([ontology-into o]
-     (let [iri (if (instance? OWLOntology o) 
+     (let [iri (if (instance? OWLOntology o)
                  (get-iri o)
                  o)]
        (.applyChange owl-ontology-manager
@@ -789,6 +830,8 @@ method of OWLOntology."
     (.getEntitiesInSignature o iri true)
     iri)
    ;; single item in anything we know about
+   ;; perhaps this is not sure a good idea, since the result will depend on
+   ;; loaded ontologies, which might change for different invocations.
    (check-entity-set
     (apply
      clojure.set/union
@@ -798,8 +841,8 @@ method of OWLOntology."
 
 (defdontfn entity-for-string
   "Returns the OWLObject for a given string.
-
-See 'entity-for-iri' for more details."
+See 'entity-for-iri' for more details. Attempts both ontology specific iri to name
+conversion, and direct use of string as an IRI."
   [o string]
   (or (entity-for-iri o (iri-for-name o string))
       ;; string name somewhere?
@@ -915,10 +958,10 @@ an IRI with no transformation. nil is returned when the result is not clear.
    :literal
    (instance? IRI entity)
    (guess-individual-literal o
-    (entity-for-iri o entity))
+                             (entity-for-iri o entity))
    (string? entity)
    (guess-individual-literal o
-    (entity-for-string o entity))
+                             (entity-for-string o entity))
    :default
    (throw (IllegalArgumentException.
            (str "Cannot tell if this is individual or literal:" entity)))))
@@ -970,12 +1013,15 @@ converting it from a string or IRI if necessary."
     ontology-data-factory property)
    (instance? String property)
    (ensure-data-property o
-    (iri-for-name o property))
+                         (iri-for-name o property))
    :default
    (throw (IllegalArgumentException.
            (format "Expecting an OWL data property: %s" property)))))
 
-(defn- ensure-datatype [o datatype]
+(defn- ensure-datatype
+  "Ensure that 'datatype' is an OWLDatatype. Will convert from an keyword for
+  builtin datatypes."
+  [o datatype]
   (cond
    (instance? OWLDatatype datatype)
    datatype
@@ -992,7 +1038,10 @@ converting it from a string or IRI if necessary."
    (throw (IllegalArgumentException.
            (str "Was expecting a datatype. Got " datatype ".")))))
 
-(defn- ensure-data-range [o data-range]
+(defn- ensure-data-range
+  "Ensure that 'data-range' is a OWLDataRange either directly or
+as a datatype."
+  [o data-range]
   (cond
    (instance? org.semanticweb.owlapi.model.OWLDataRange data-range)
    data-range
@@ -1059,10 +1108,10 @@ interpret this as a string and create a new OWLIndividual."
         ]
     (list
      (add-axiom o
-      (.getOWLDisjointUnionAxiom
-       ontology-data-factory
-       (ensure-class o clazz)
-       (java.util.HashSet. ensured-subclasses))))))
+                (.getOWLDisjointUnionAxiom
+                 ontology-data-factory
+                 (ensure-class o clazz)
+                 (java.util.HashSet. ensured-subclasses))))))
 
 (defdontfn add-class
   "Adds a class to the ontology."
@@ -1074,6 +1123,7 @@ interpret this as a string and create a new OWLIndividual."
 
 ;; a class can have only a single haskey, so ain't no point broadcasting this.
 (defdontfn add-has-key
+  "Adds a has-key to the class."
   [o class propertylist]
   ;; nil or empty list safe
   (if (seq propertylist)
@@ -1106,19 +1156,19 @@ interpret this as a string and create a new OWLIndividual."
   "Adds all the entities in rangelist as range to a property."
   [o property range]
   (add-axiom o
-         (.getOWLObjectPropertyRangeAxiom
-          ontology-data-factory
-          (ensure-object-property o property)
-          (ensure-class o range))))
+             (.getOWLObjectPropertyRangeAxiom
+              ontology-data-factory
+              (ensure-object-property o property)
+              (ensure-class o range))))
 
 (defbdontfn add-inverse
   "Adds all the entities in inverselist as inverses to a property."
   [o property inverse]
   (add-axiom o
-         (.getOWLInverseObjectPropertiesAxiom
-          ontology-data-factory
-          (ensure-object-property o property)
-          (ensure-object-property o inverse))))
+             (.getOWLInverseObjectPropertiesAxiom
+              ontology-data-factory
+              (ensure-object-property o property)
+              (ensure-object-property o inverse))))
 
 
 (defbdontfn add-superproperty
@@ -1133,6 +1183,7 @@ a superproperty."
 
 ;; broadcasts specially
 (defdontfn add-subpropertychain
+  "Adds a property chain to property."
   [o property superpropertylist]
   (when superpropertylist
     (let [property (ensure-object-property o property)
@@ -1142,10 +1193,10 @@ a superproperty."
       (list
        ;; add individual entities are a single chain
        (add-axiom o
-        (.getOWLSubPropertyChainOfAxiom
-         ontology-data-factory
-         (map (partial ensure-object-property o) properties)
-         property))
+                  (.getOWLSubPropertyChainOfAxiom
+                   ontology-data-factory
+                   (map (partial ensure-object-property o) properties)
+                   property))
        ;; add sequential entities as a chain in their own right
        (map (partial add-subpropertychain
                      o property)
@@ -1226,12 +1277,14 @@ value for each frame."
 
 (defmontfn
   guess-type-args
-  {:private true}
+  {:doc  "Broadcasting version of guess-type"
+   :private true}
   [o & args]
   (guess-type o args))
 
 (defmontfn guess-individual-literal-args
-  {:private true}
+  {:doc "Broadcasting version of guess-individual-literal"
+   :private true}
   [o & args]
   (guess-individual-literal o args))
 
@@ -1251,10 +1304,13 @@ value for each frame."
 (defmulti at-most #'guess-type-args)
 (defmulti has-value #'guess-type-args)
 
-(defn guess-type-error [& args]
+(defn guess-type-error
+  "Throws an exception always"
+  [& args]
   (throw (IllegalArgumentException.
           (str "Unable to determine the type of: " args))))
 
+;; use .addMethod directly so we can use a single function repeatedly.
 (.addMethod owl-some nil guess-type-error)
 (.addMethod only nil guess-type-error)
 (.addMethod some-only nil guess-type-error)
@@ -1274,18 +1330,16 @@ value for each frame."
 ;; "long cuts" for consistency with some
 (def owl-only only)
 
-
-;; restrictions! name clash -- we can do nothing about this, so accept the
-;; inconsistency and bung owl on the front.
 (defbmontfn object-some
   {:doc "Returns an OWL some values from restriction."
-    :arglists '([property & clazzes] [ontology property & clazzes])}
+   :arglists '([property & clazzes] [ontology property & clazzes])}
   [o property class]
   (.getOWLObjectSomeValuesFrom
    ontology-data-factory
    (ensure-object-property o property)
    (ensure-class o class)))
 
+;; use add method because we want object-some to have independent life!
 (.addMethod owl-some :object object-some)
 
 (defbmontfn object-only
@@ -1298,7 +1352,6 @@ value for each frame."
    (ensure-class o class)))
 
 (.addMethod only :object object-only)
-
 
 ;; union, intersection
 (defmontfn object-and
@@ -1330,7 +1383,7 @@ value for each frame."
      ontology-data-factory
      (java.util.HashSet.
       (util/domap #(ensure-class o %)
-             (flatten classes))))))
+                  (flatten classes))))))
 
 (.addMethod owl-or :object object-or)
 
@@ -1357,7 +1410,7 @@ all values from restrictions."
     o
     property classes)
    (object-only o property
-         (apply object-or o classes))))
+                (apply object-or o classes))))
 
 (.addMethod some-only :object object-some-only)
 
@@ -1386,7 +1439,6 @@ all values from restrictions."
 
 (.addMethod at-most :object object-at-most)
 
-
 (defmontfn object-exactly
   "Returns an OWL exact cardinality restriction."
   [o cardinality property & class]
@@ -1411,16 +1463,20 @@ all values from restrictions."
 
 (.addMethod oneof :individual object-oneof)
 
-(defmontfn object-has-value [o property individual]
+(defmontfn object-has-value
+  "Adds an OWL has-value restriction."
+  [o property individual]
   (.getOWLObjectHas-Value ontology-data-factory
-   (ensure-object-property o property)
-   (ensure-individual o individual)))
+                          (ensure-object-property o property)
+                          (ensure-individual o individual)))
 
 (.addMethod has-value :object object-has-value)
 
-(defmontfn has-self [o property]
+(defmontfn has-self
+  "Returns an OWL has self restriction."
+  [o property]
   (.getOWLObjectHasSelf ontology-data-factory
-   (ensure-object-property o property)))
+                        (ensure-object-property o property)))
 
 (def
   ^{:private true} owl-class-handlers
@@ -1489,10 +1545,10 @@ All arguments must of an instance of OWLClassExpression"
             (ensure-class o x))
           list))]
     (add-axiom o
-     (.getOWLDisjointClassesAxiom
-      ontology-data-factory
-      (into-array OWLClassExpression
-                  classlist)))))
+               (.getOWLDisjointClassesAxiom
+                ontology-data-factory
+                (into-array OWLClassExpression
+                            classlist)))))
 
 (defdontfn disjoint-classes
   "Makes all the arguments disjoint.
@@ -1500,17 +1556,16 @@ All arguments must be an instance of OWLClassExpression."
   [o & list]
   (disjoint-classes-list o list))
 
-
 (defbdontfn add-type
   {:doc "Adds CLAZZES as a type to individual to current ontology
 or ONTOLOGY if present."
    :arglists '([individual & clazzes] [o individual & clazzes])}
   [o individual clazz]
   (add-axiom o
-   (.getOWLClassAssertionAxiom
-    ontology-data-factory
-    (ensure-class o clazz)
-    individual)))
+             (.getOWLClassAssertionAxiom
+              ontology-data-factory
+              (ensure-class o clazz)
+              individual)))
 
 (defbdontfn add-fact
   {:doc "Add FACTS to an INDIVIDUAL in the current ontology or
@@ -1518,8 +1573,7 @@ or ONTOLOGY if present."
    :arglists '([individual & facts] [ontology individual & facts])}
   [o individual fact]
   (add-axiom o
-   (fact individual)))
-
+             (fact individual)))
 
 (defmulti get-fact guess-type-args)
 (defmulti get-fact-not guess-type-args)
@@ -1538,15 +1592,18 @@ toward an individual TO."
   (fn fact-not [from]
     (get-fact-not o property from to)))
 
-
-(defmontfn object-get-fact [_ property from to]
+(defmontfn object-get-fact
+  "Returns an OWL Object property assertion axiom."
+  [_ property from to]
   (.getOWLObjectPropertyAssertionAxiom
    ontology-data-factory
    property from to))
 
 (.addMethod get-fact :object object-get-fact)
 
-(defmontfn object-get-fact-not [_ property from to]
+(defmontfn object-get-fact-not
+  "Returns a negative OWL Object property assertion axiom."
+  [_ property from to]
   (.getOWLNegativeObjectPropertyAssertionAxiom
    ontology-data-factory
    property from to))
@@ -1560,21 +1617,21 @@ or to ONTOLOGY if present."
    :arglists '([ontology & individuals] [& individuals])}
   [o & individuals]
   (add-axiom o
-   (.getOWLSameIndividualAxiom
-    ontology-data-factory
-    (set (flatten individuals)))))
+             (.getOWLSameIndividualAxiom
+              ontology-data-factory
+              (set (flatten individuals)))))
 
 (defmontfn add-different
   {:doc "Adds all arguments as different individuals to the current
   ontology unless first arg is an ontology in which case this is used"}
   [o & individuals]
   (add-axiom o
-   (.getOWLDifferentIndividualsAxiom
-    ontology-data-factory
-    (set (flatten individuals)))))
+             (.getOWLDifferentIndividualsAxiom
+              ontology-data-factory
+              (set (flatten individuals)))))
 
 ;; need to support all the different frames here...
-;; need to use hashify
+;; need to use hashify -- need to convert to handlers
 (defdontfn individual
   "Returns a new individual."
   [o name & frames]
@@ -1586,7 +1643,7 @@ or to ONTOLOGY if present."
               o)
         individual (ensure-individual o name)]
     (add-axiom o
-     (.getOWLDeclarationAxiom ontology-data-factory individual))
+               (.getOWLDeclarationAxiom ontology-data-factory individual))
     (when (:type hframes)
       (add-type o individual
                 (:type hframes)))
@@ -1614,7 +1671,9 @@ or to ONTOLOGY if present."
 
 (load "owl_data")
 
-(defn- var-get-maybe [var-maybe]
+(defn- var-get-maybe
+  "Given a var return it's value, given a value return the value."
+  [var-maybe]
   (if (var? var-maybe)
     (var-get var-maybe)
     var-maybe))
@@ -1632,8 +1691,8 @@ See also 'as-subclasses'."
    :arglist '([ontology prop1 prop2] [prop1 prop2])}
   [o p1 p2]
   (add-inverse o
-   (var-get-maybe p1)
-   (var-get-maybe p2)))
+               (var-get-maybe p1)
+               (var-get-maybe p2)))
 
 (defdontfn
   as-subclasses
@@ -1698,8 +1757,8 @@ See `declare-classes' where frames (or just default frames) are not needed.
 "
   [& classes]
   `(list ~@(map
-          (fn [x#]
-            `(defclass ~@x#)) classes)))
+            (fn [x#]
+              `(defclass ~@x#)) classes)))
 
 ;; predicates
 (defdontfn direct-superclasses
@@ -1723,9 +1782,9 @@ expressions."
     (concat (list (first classlist))
             ;; can't use recur, not in tail position
             (superclasses-1 o
-                          (rest classlist))
+                            (rest classlist))
             (superclasses-1 o
-                          (direct-superclasses o (first classlist))))))
+                            (direct-superclasses o (first classlist))))))
 
 (defdontfn superclasses
   "Return all subclasses of class"
@@ -1804,8 +1863,8 @@ expressions."
   to ONTOLOGY. Entities added to ONTOLOGY are removed from ONTOLOGY; so if
   they are added to a different ontology explicitly, they will remain there
   after the completion of this form."
- :arglists '([bindings & body] [ontology bindings & body])
- }
+   :arglists '([bindings & body] [ontology bindings & body])
+   }
 
   [& args]
   (let [o (take-while #(not (vector? %)) args)
@@ -1862,26 +1921,25 @@ effectively unchanged."
      `(do ~@body)
      (symbol? (bindings 0))
      `(with-ontology ~o
-       (let ~(subvec bindings 0 2)
-         (with-probe-axioms ~o
-           ~(subvec bindings 2)
-           ;; try block just so we can use finally
-           (try
-             ~@body
-             (finally
-               (tawny.owl/remove-axiom ~o ~(bindings 0)))))))
+        (let ~(subvec bindings 0 2)
+          (with-probe-axioms ~o
+            ~(subvec bindings 2)
+            ;; try block just so we can use finally
+            (try
+              ~@body
+              (finally
+                (tawny.owl/remove-axiom ~o ~(bindings 0)))))))
      :else
      (throw (IllegalArgumentException.
              "with-probe-axioms only allows Symbols in bindings")))))
 
-
 (defn owl-thing
-  "Object representing OWL thing."
+  "Returns OWL thing."
   []
   (.getOWLThing ontology-data-factory))
 
 (defn owl-nothing
-  "Object representing OWL nothing."
+  "Returns OWL nothing."
   []
   (.getOWLNothing ontology-data-factory))
 
@@ -1915,8 +1973,7 @@ f to the symbol after a defclass"
   [f x]
   (clojure.walk/postwalk
    (partial alter-symbol-after-def-form f)
-   x
-   ))
+   x))
 
 (defmacro with-prefix
   "Adds a prefix to all defclass macros in scope.
@@ -1928,7 +1985,6 @@ This is a convienience macro and is lexically scoped."
          body)]
     `(do ~@newbody)))
 
-
 (defmacro with-suffix
   "Adds a suffix to all defclass macros in scope.
 This is a convienience macro and is lexically scoped."
@@ -1938,7 +1994,6 @@ This is a convienience macro and is lexically scoped."
          (partial suffix-symbol suffix)
          body)]
     `(do ~@newbody)))
-
 
 (defmulti refine
   "Takes an existing definition, adds it to the current ontology, and then
@@ -1998,7 +2053,6 @@ See also 'refine'
           (assoc (meta newsymbol#)
             :owl true))
        (tawny.owl/refine ~symb ~@args))))
-
 
 (defmacro defcopy
   "Takes an existing definition from another namespace and copies it into the

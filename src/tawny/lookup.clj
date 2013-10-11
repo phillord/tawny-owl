@@ -126,10 +126,14 @@ OWLObject for all namespaces in which tawny has created an ontology."
 ;; this actually gives us the var -- we could build things up as we go?
 ;; although this means we also have to cope with uninterns and the like as
 ;; they come. ultimately we are duplicating elsewhere?
-(defn- kill-iri-cache [var]
+(defn- kill-iri-cache
+  "Dump the iri cache each time we add a new owl entity."
+  [var]
   ;;  (println "blitzing iri-cache")
   (reset! all-iri-to-var-cache nil))
 
+;; call back hook added -- we have to do this as a hook as it avoids
+;; owl referencing lookup.
 (tawny.util/add-hook
  tawny.owl/intern-owl-entity-hook
  #'kill-iri-cache)

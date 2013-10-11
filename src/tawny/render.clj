@@ -14,14 +14,13 @@
 
 ;; You should have received a copy of the GNU Lesser General Public License
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
-
-
-
-(ns tawny.render
+(ns
+    ^{:doc "Renders OWL Entities into tawny.owl forms"
+      :author "Phillip Lord"}
+  tawny.render
   (:require [tawny.owl :as owl]
             [tawny.lookup]
-            [tawny.util]
-            )
+            [tawny.util])
   (:import
            (java.util Set)
            (org.semanticweb.owlapi.model
@@ -80,27 +79,40 @@ infer. For example, use data-some or object-some, rather than owl-some." }
 
 
 (defmacro
-  ^{:private true} exp
+  ^{:private true
+    :doc "If *explicit* is true return the first form (which should be the
+symbol for the iterning version), else return the second (which should be the
+non-interning equivalent)."}
+  exp
   [a b]
   `(if *explicit* '~b '~a))
 
-(defn named-entity-as-string [entity]
+(defn named-entity-as-string
+  "Return a string identifier for an entity"
+  [entity]
   (-> entity
       (.getIRI)
       (.toURI)
       (.toString)))
 
-(defn ontologies []
+(defn ontologies
+  "Fetch all known ontologies."
+  []
   (.getOntologies owl/owl-ontology-manager))
 
-(defn setmap [f c]
+(defn setmap
+  "Apply f to list c, union the results."
+  [f c]
   (apply clojure.set/union (map f c)))
 
 (declare form)
 
-(defmulti as-form class)
+(defmulti as-form
+  "Render one of the main OWLEntities as one of the main functions
+in tawny." class)
 
-(defmethod as-form OWLClass [c]
+(defmethod as-form OWLClass
+  [c]
   (let [ont (ontologies)
         super (.getSuperClasses c ont)
         equiv (.getEquivalentClasses c ont)
@@ -136,24 +148,6 @@ infer. For example, use data-some or object-some, rather than owl-some." }
           (cons :annotation
                 (form annotation)))
       )))
-
-
-;; subproperty chain from Ontology it would appear!
-;; if (!isFiltered(AxiomType.SUB_PROPERTY_CHAIN_OF)) {
-;;     for (OWLOntology ontology : getOntologies()) {
-;;         for (OWLSubPropertyChainOfAxiom ax : ontology.getAxioms(AxiomType.SUB_PROPERTY_CHAIN_OF)) {
-;;             if (ax.getSuperProperty().equals(property)) {
-;;                 if (isDisplayed(ax)) {
-;;                     SectionMap map = new SectionMap();
-;;                     map.add(ax.getPropertyChain(), ax);
-;;                     writeSection(SUB_PROPERTY_CHAIN, map, " o ", false, ontology);
-;;                     axioms.add(ax);
-;;                 }
-;;             }
-;;         }
-;;     }
-;; }
-
 
 (defmethod as-form OWLObjectProperty [p]
   (let [ont (ontologies)
@@ -253,8 +247,6 @@ infer. For example, use data-some or object-some, rather than owl-some." }
                   (form [:fact fact])
                   (form [:factnot factnot])))))))
 
-
-
 (defmethod as-form OWLDataProperty [p]
   (let [ont (ontologies)
         domain (.getDomains p ont)
@@ -315,7 +307,10 @@ infer. For example, use data-some or object-some, rather than owl-some." }
   '(unknown as-form))
 
 
-(defmulti form class)
+(defmulti form
+  "Render any OWLEntity or collections containing these entities as Clojure
+forms."
+  class)
 
 ;; how to get from {:a {1 2}} {:b {3 4}}
 ;; to [:a 1][:a 2]
@@ -345,7 +340,10 @@ infer. For example, use data-some or object-some, rather than owl-some." }
    [[k v] m]
    `(~(form k) ~(form v))))
 
-(defn- entity-or-iri [c]
+(defn- entity-or-iri
+  "Return either the interned var holding an entity, or an IRI,
+depending on the value of *terminal-strategy*"
+  [c]
   (case *terminal-strategy*
     :resolve
     (let [res (tawny.lookup/resolve-entity c)]
@@ -442,7 +440,6 @@ infer. For example, use data-some or object-some, rather than owl-some." }
   (list
    (.toString v)))
 
-
 (def
   ^{:private true}
   owldatatypes-inverted
@@ -463,7 +460,10 @@ infer. For example, use data-some or object-some, rather than owl-some." }
 ;; to render as a keyword. Alternatively, it might be a DataRange which is
 ;; going to render as one or more span elements. The former needs to be
 ;; include directly, the latter needs not
-(defn- list** [& args]
+(defn- list**
+  "Operates like list if the list or list* depending on whether the last
+element is a list."
+  [& args]
   (if (seq? (last args))
     (apply list* args)
     (apply list args)))
@@ -506,8 +506,9 @@ infer. For example, use data-some or object-some, rather than owl-some." }
         (form (.getProperty c))
         (form (.getFiller c))))
 
-
-(defn- numeric-literal [l]
+(defn- numeric-literal
+  "Returns a number from one of the numerous typed wrappers."
+  [l]
   (cond
    (.isInteger l)
    (.parseInteger l)
@@ -550,26 +551,23 @@ infer. For example, use data-some or object-some, rather than owl-some." }
     x
     (entity-or-iri d)))
 
-
 (defmethod form org.semanticweb.owlapi.model.OWLObjectHasValue [p]
   (list (exp has-value object-has-value)
         (form (.getProperty p))
         (form (.getValue p))))
 
-
 (defmethod form org.semanticweb.owlapi.model.OWLObjectHasSelf [s]
   (list 'has-self (form (.getProperty s))))
-
 
 (defmethod form org.semanticweb.owlapi.model.OWLDataHasValue [p]
   (list (exp has-value data-has-value)
         (form (.getProperty p))
         (form (.getValue p))))
 
-
 (defmethod form String [e]
   e)
 
+;; obviously this is error trap!
 (defmethod form :default [e]
   (do
     (println "Unknown form" (class e))

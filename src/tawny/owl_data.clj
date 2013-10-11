@@ -16,9 +16,6 @@
 ;; along with this program. If not, see http://www.gnu.org/licenses/.
 (in-ns 'tawny.owl)
 
-
-
-
 (defbdontfn add-data-domain
   {:doc "Adds a domain to a data property."
    :arglists '([property & domains] [o property & domains])}
@@ -40,6 +37,7 @@
     (ensure-data-range o range))))
 
 (defbdontfn add-data-superproperty
+  "Adds a super property to a data property."
   [o property super]
   (add-axiom o
              (.getOWLSubDataPropertyOfAxiom
@@ -64,6 +62,7 @@
               ontology-data-factory (ensure-data-property o property))))
 
 (defbdontfn add-data-equivalent
+  "Adds a equivalent data properties axiom."
   [o property equivalent]
   (add-axiom
    o (.getOWLEquivalentDataPropertiesAxiom
@@ -110,6 +109,7 @@
       keys))))
 
 (defmacro defdproperty
+  "Defines a new datatype property and interns as a var."
   [dataname & frames]
   `(let [namestring# (name '~dataname)
          datatype# (tawny.owl/datatype-property namestring#
@@ -138,6 +138,7 @@ which is an OWLDatatype object.
 
 
 (defbdontfn add-datatype-equivalent
+  "Adds a datatype equivalent axiom"
   [o datatype equivalent]
   (add-axiom
    o (.getOWLDatatypeDefinitionAxiom
@@ -151,7 +152,9 @@ which is an OWLDatatype object.
    :label add-label
    :equivalent add-datatype-equivalent})
 
-(defdontfn datatype-explicit [o name frames]
+(defdontfn datatype-explicit
+  "Defines a new datatype."
+  [o name frames]
   (let [o
         (or (first (get frames :ontology))
             o)
@@ -166,7 +169,9 @@ which is an OWLDatatype object.
       (f o datatype (get frames k)))
     datatype))
 
-(defdontfn datatype [o name & frames]
+(defdontfn datatype
+  "Defines a new datatype."
+  [o name & frames]
   (let [keys
         (list* :ontology
                (keys datatype-handlers))]
@@ -177,6 +182,7 @@ which is an OWLDatatype object.
       keys))))
 
 (defmacro defdatatype
+  "Defines a new datatype and interns it as a var."
   [dataname & frames]
   `(let [namestring# (name '~dataname)
          datatype# (tawny.owl/datatype namestring#
@@ -184,6 +190,7 @@ which is an OWLDatatype object.
      (intern-owl ~dataname datatype#)))
 
 (defmontfn data-and
+  "Returns the intersection of two data ranges."
   [_ & types]
   (.getOWLDataIntersectionOf
    ontology-data-factory
@@ -192,6 +199,7 @@ which is an OWLDatatype object.
 (.addMethod owl-and :data data-and)
 
 (defmontfn data-or
+  "Returns the union of two data ranges."
   [o & types]
   (.getOWLDataUnionOf
    ontology-data-factory
@@ -200,6 +208,7 @@ which is an OWLDatatype object.
 (.addMethod owl-or :data data-or)
 
 (defmontfn data-not
+  "Returns the complement of two data ranges."
   [o type]
   (.getOWLDataComplementOf
    ontology-data-factory
@@ -208,6 +217,7 @@ which is an OWLDatatype object.
 (.addMethod owl-not :data data-not)
 
 (defbmontfn data-some
+  "Returns a data some values from restriction."
   [o property data-range]
   (.getOWLDataSomeValuesFrom
    ontology-data-factory
@@ -217,16 +227,18 @@ which is an OWLDatatype object.
 (.addMethod owl-some :data data-some)
 
 (defbmontfn data-only
+  "Returns a data all values from restriction."
   [o property datatype]
   (.getOWLDataAllValuesFrom
    ontology-data-factory
    (ensure-data-property o property)
    (ensure-data-range o datatype)))
 
-
 (.addMethod only :data data-only)
 
-(defmontfn data-oneof [o & literal]
+(defmontfn data-oneof
+  "Returns a data one of restriction."
+  [o & literal]
   (.getOWLDataOneOf
    ontology-data-factory
    (into #{}
@@ -234,7 +246,9 @@ which is an OWLDatatype object.
 
 (.addMethod oneof :literal data-oneof)
 
-(defmontfn data-has-value [o property literal]
+(defmontfn data-has-value
+  "Returns a data has value restriction."
+  [o property literal]
   (.getOWLDataHasValue ontology-data-factory
    (ensure-data-property o property)
    (if (instance? OWLLiteral literal)
@@ -243,55 +257,72 @@ which is an OWLDatatype object.
 
 (.addMethod has-value :data data-has-value)
 
-
-(defmontfn data-exactly [o number property]
+(defmontfn data-exactly
+  "Returns a data exact cardinality restriction."
+  [o number property]
   (.getOWLDataExactCardinality
    ontology-data-factory
    number (ensure-data-property o property)))
 
 (.addMethod exactly :data data-exactly)
 
-(defmontfn data-at-most [o number property]
+(defmontfn data-at-most
+  "Returns a data max cardinality restriction."
+  [o number property]
   (.getOWLDataMaxCardinality
    ontology-data-factory number
    (ensure-data-property o property)))
 
 (.addMethod at-most :data data-at-most)
 
-(defmontfn data-at-least [o number property]
+(defmontfn data-at-least
+  "Returns a data min cardinality restriction."
+  [o number property]
   (.getOWLDataMinCardinality
    ontology-data-factory number
    (ensure-data-property o property)))
 
 (.addMethod at-least :data data-at-least)
 
-(defn owl-min [from]
+(defn owl-min
+  "Returns a data min exclusion restriction."
+  [from]
   (.getOWLDatatypeMinExclusiveRestriction
    ontology-data-factory from))
 
-(defn owl-max [to]
+(defn owl-max
+  "Returns a data max exclusion restriction."
+  [to]
   (.getOWLDatatypeMaxExclusiveRestriction
    ontology-data-factory to))
 
 (defn min-max
+  "Returns a min-max exclusive restriction."
   [from to]
   (.getOWLDatatypeMinMaxExclusiveRestriction
    ontology-data-factory from to))
 
-(defn min-inc [from]
+(defn min-inc
+  "Returns a min inclusive restriction."
+  [from]
   (.getOWLDatatypeMinInclusiveRestriction
    ontology-data-factory from))
 
-(defn max-inc [to]
+(defn max-inc
+  "Returns a max inclusive restriction."
+  [to]
   (.getOWLDatatypeMaxInclusiveRestriction
    ontology-data-factory to))
 
 (defn min-max-inc
+  "Returns a min max inclusive restriction."
   [from to]
   (.getOWLDatatypeMinMaxInclusiveRestriction
    ontology-data-factory from to))
 
 (defmacro span
+  "Returns a numeric datatype restriction, identified by symbol.
+For example, (span < 10) returns a max exclusive restriction."
   [comparitor & args]
   (cond
    (= comparitor '<)
@@ -309,15 +340,18 @@ which is an OWLDatatype object.
    :default
    (throw (IllegalArgumentException. (str "Unknown comparitor" comparitor)))))
 
-
-(defmontfn data-get-fact [o property from to]
+(defmontfn data-get-fact
+  "Returns a data fact."
+  [o property from to]
   (.getOWLDataPropertyAssertionAxiom
    ontology-data-factory
    (ensure-data-property o property) from to))
 
 (.addMethod get-fact :data data-get-fact)
 
-(defmontfn data-get-fact-not [o property from to]
+(defmontfn data-get-fact-not
+  "Returns a data negative fact."
+  [o property from to]
   (.getOWLNegativeDataPropertyAssertionAxiom
    ontology-data-factory
    (ensure-data-property o property) from to))

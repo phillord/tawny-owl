@@ -1,4 +1,24 @@
-(ns tawny.read
+;; The contents of this file are subject to the LGPL License, Version 3.0.
+;;
+;; Copyright (C) 2013, Phillip Lord, Newcastle University
+;;
+;; This program is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU Lesser General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or (at your
+;; option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License
+;; for more details.
+;;
+;; You should have received a copy of the GNU Lesser General Public License
+;; along with this program. If not, see http://www.gnu.org/licenses/.
+
+(ns
+    ^{:doc "Read external OWL files and use them in tawny"
+      :author "Phillip Lord"}
+  tawny.read
   (:require [tawny.owl]
             [clojure.string :only replace])
   (:refer-clojure :exclude [read])
@@ -8,12 +28,16 @@
    (org.semanticweb.owlapi.apibinding OWLManager)
    (org.semanticweb.owlapi.model IRI OWLNamedObject OWLOntologyID)))
 
-(tawny.owl/defmontfn default-filter [o e]
+(tawny.owl/defmontfn default-filter
+  "Filter for only named objects with an IRI the same as the ontology IRI."
+  [o e]
   (and (instance? OWLNamedObject e)
        (= (tawny.owl/get-iri o)
           (.getStart (.getIRI e)))))
 
-(defn- default-transform [e]
+(defn default-transform
+  "Extract the fragment from each IRI."
+  [e]
   (.. e (getIRI) (getFragment)))
 
 (defn iri-starts-with-filter
@@ -80,6 +104,8 @@ Clojure symbol. Use this composed with a entity transform function"
      r)))
 
 (defn intern-entity
+  "Intern the OWL entity, applying transform to the entity to generate a name
+to intern."
   ([e]
      (intern-entity e fragment-transform))
   ([e transform]
@@ -111,17 +137,26 @@ OWLOntologyIRIMapper instance."
          (for [[k v] iri-map]
            [k (clojure.java.io/resource v)]))))
 
-(defn read [& rest]
-  (let [{:keys [location iri file prefix filter transform version-iri
+(defn read
+  "Reads an ontology, and interns entities as vars. This takes a number of
+keyword arguments. Arguments are,
+:iri, :version-iri -- currently these must be specified in the read form,
+although they will also be present in th e OWL source.
+:location -- the location of the source -- this can be anything that can be
+passed to .loadOntologyFromOntologyDocument on the OWLOntologyManager.
+:prefix -- a prefix for the ontology
+:filter -- a filter function -- only entities returning true are interned.
+:transform -- entities are interned using a name returned by this function
+:mapper -- an OWLOntologyIRIMapper which is to be used for loading. See
+iri-mapper and resource-iri-mapper."
+  [& rest]
+  (let [{:keys [location iri prefix filter transform version-iri
                 mapper]} rest
-
         jiri (IRI/create iri)
         viri (if version-iri
                (IRI/create version-iri))
-
         ontologyid
         (OWLOntologyID. jiri viri)
-
         owlontology
         (do
           (tawny.owl/remove-ontology-maybe ontologyid)
@@ -145,7 +180,6 @@ OWLOntologyIRIMapper instance."
           (.setPrefix format prefix (.toString iri))
           (throw (IllegalArgumentException.
                   "Attempt to provide a prefix to an ontology that is not using a prefix format")))))
-
     ;; this is the ontology for the namespace so stuff it place
     (tawny.owl/ontology-to-namespace owlontology)
     ;;
@@ -155,14 +189,11 @@ OWLOntologyIRIMapper instance."
         ;; grab each entity, put classes, object properties and so forth into
         ;; current system.
         (intern-entity x
-                       (or transform default-transform))
-        )
-
+                       (or transform default-transform)))
       ;; filter this so that it only puts stuff with the given IRI prefix
       (doall
        (clojure.core/filter (or filter default-filter)
                                    (.getSignature owlontology)))))
-
     owlontology))
 
 
@@ -178,7 +209,9 @@ directly on the OWL API."
   [iri]
   (tawny.owl/iri iri))
 
-(defmacro defread [symbol & rest]
+(defmacro defread
+  "Like read, but interns the ontology in symbol."
+  [symbol & rest]
   `(do
     (def ~symbol
       (tawny.read/read ~@rest))))

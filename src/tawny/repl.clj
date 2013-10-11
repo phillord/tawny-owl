@@ -160,7 +160,9 @@ once."
                    (.getDocumentIRI))))))
 
 
-(defn new-manager []
+(defn new-manager
+  "Returns a new OWLOntologyManager."
+  []
   (org.semanticweb.owlapi.apibinding.OWLManager/createOWLOntologyManager
    tawny.owl/ontology-data-factory))
 

@@ -15,7 +15,9 @@
 ;; You should have received a copy of the GNU Lesser General Public License
 ;; along with this program. If not, see http://www.gnu.org/licenses/.
 
-(ns tawny.english
+(ns ^{:doc "Shorter aliases for tawny.owl classes with an owl- disambiguation"
+      :author "Phillip Lord"}
+    tawny.english
   (:require [tawny.owl])
   (:refer-clojure :exclude [and or not some class]))
 

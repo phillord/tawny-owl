@@ -9,6 +9,29 @@
   :scheduled_release_ALL: 0.12 1.0 1.1
   :END:
 
+
+** Comment spaces
+
+comment functions should remove new lines and indents so that Clojure new
+lines don't appear in OWL
+
+** Individual to handlers
+Thought I had done this, but no.
+
+** Write OBO generator docs
+** Memorise lookup unnecessary
+
+During load, we change IRIs to vars, but only use the var in one place, and
+only where we have obsolete mappings. Not sure this makes sense.
+
+** Memorise read rather than load
+
+Currently implemented using load -- this forces byte compilation of the saved
+file. This imposes file size limits due to the java class format. Probably
+not good.
+
+Can use clojure.edn which just returns data instead.
+
 ** name annotation
 
 Forces everything into OWL full. This is clearly not ideal.
@@ -35,6 +58,7 @@ We need an ability to switch this off. Add an ontology option maybe?
 This exposes too much implementation detail, I think. Should probably use a
 atom rather than a ref (since changes are never synchronised with anything
 else). 
+
 
 ** Memorise, obo
 

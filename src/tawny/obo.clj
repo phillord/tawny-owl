@@ -15,23 +15,39 @@
 ;; You should have received a copy of the GNU Lesser General Public License
 ;; along with this program. If not, see http://www.gnu.org/licenses/.
 
-(ns tawny.obo
+(ns
+    ^{:doc "Support for numeric, incrementing identifiers, OBO style."
+      :author "Phillip Lord"}
+    tawny.obo
   (:use [tawny.owl])
   (:require [tawny.lookup] [clojure.set])
   (:import (org.semanticweb.owlapi.model IRI
             )))
 
-(def obo-pre-iri
+
+(def
+  ^{:doc "Root of IRI that is used for temporary IRIs"}
+  obo-pre-iri
   "http://purl.org/ontolink/preiri/")
 
 (defn obo-iri-generate-or-retrieve
-  [name remembered current]
+  "Given an OWLEntity name return either the remembered name if there is one,
+or the current, or generate a new temporary name"
+[name remembered current]
   (or (get remembered name)
       (get current name)
       (str obo-pre-iri "#"
            (java.util.UUID/randomUUID))))
 
-(defn obo-iri-generate [name]
+(defn obo-iri-generate
+  "Generator function for numeric style IRIs. New OWLEntities will be given
+an temporary ID, while existing OWLEntities will reuse a numeric, incrementing
+ID. For full usage details see numeric.md documentation.
+
+Implemented using ontology-options functionality. Newly created IDs are stored
+in :name-to-iri-current, while IDs loaded from file are stored in
+:name-to-iri-remembered."
+  [name]
   (let [options (deref (tawny.owl/ontology-options))
         current
         (get options :name-to-iri-current {})
@@ -45,7 +61,9 @@
             (assoc current name iri)))
     (IRI/create iri)))
 
-(defn obo-read-map [file]
+(defn obo-read-map
+  "Read a properties file, and return a hashmap of Clojure identifier to IRI."
+  [file]
   (with-open [r (clojure.java.io/reader file)]
     (apply hash-map
            (flatten
@@ -54,7 +72,9 @@
               [name iri])))))
 
 ;; pull everything from file
-(defn obo-restore-iri [file]
+(defn obo-restore-iri
+  "Read an existing properties file containing identifier to IRI data."
+  [file]
   (let [name-to-iri-map
         (obo-read-map file)]
     (dosync
@@ -62,10 +82,15 @@
             merge {:name-to-iri-remembered name-to-iri-map}))))
 
 (defn preiri?
+  "Return true if the (string) IRI is a auto-generated 'pre' IRI."
   [iri]
   (.startsWith iri obo-pre-iri))
 
-(defn obo-sort [map]
+(defn obo-sort
+  "Sort identifiers. This is just to give a defined and repeatable order to
+the save file, and is not functionality important for other reasons. Final
+IRIs are placed before pre-IRIs, and both are organised alphabetically."
+  [map]
   (sort-by second
            (fn [x y]
              (cond
@@ -83,10 +108,9 @@
            map))
 
 (defn obo-save-map
+  "Save a map into a properties file. Assumes entities are easily stringifiable."
   [file map]
   (with-open [w (clojure.java.io/writer file)]
-    ;; we could probably do with sorting this.
-
     (doseq
         [[name iri]
          (obo-sort map)]
@@ -97,6 +121,7 @@
 
 ;; store everything to a file
 (defn obo-store-iri
+  "Save both existing and new identifier to IRI mappings into the given file."
   [file]
   (let [options (deref (tawny.owl/ontology-options))
         remembered (:name-to-iri-remembered options)
@@ -114,7 +139,10 @@
                    (:name-to-iri-current options)
                    remembered-filtered))))
 
-(defn extract-obsolete [remembered current]
+(defn extract-obsolete
+  "Extract identifiers for which there are mapping to a full IRI, but which no
+longer exist in the ontology. There are, effectively, obsolete terms."
+  [remembered current]
   (let
       ;; Fetch the only the remebered keys that do not start with the
       ;; temporary prefix. They will not be remembered next time we save
@@ -126,7 +154,9 @@
                        name))]
     (apply dissoc remembered-filtered (keys current))))
 
-(defn obo-report-obsolete []
+(defn obo-report-obsolete
+  "Print a list of obsolete terms"
+  []
   (let [options (deref (tawny.owl/ontology-options))]
     (doseq [[name iri]
             (extract-obsolete
@@ -137,7 +167,12 @@
               name iri))))
 
 
-(defn update-map-with-new-iri [name-to-iri prefix]
+(defn update-map-with-new-iri
+  "Assigns new permanent identifiers to map. In detail, this expects an map
+between identifiers and IRI. For all those IRIs which return true for preiri?,
+a new numeric identifier is created, incrementing from the current largest."
+
+[name-to-iri prefix]
   (let ;; fetch the numeric part of IDs beginning with the prefix.
       [ids
        (map (fn [[name iri]]
@@ -162,7 +197,10 @@
 
 ;; given a file, replace all the preiri's with real ones, at the repl, asking
 ;; as we go
-(defn obo-generate-permanent-iri [file prefix]
+(defn obo-generate-permanent-iri
+  "Given a file, replace all the preiris with permanent, incrementing, numeric
+IDs."
+  [file prefix]
   ;; and finally update the IDs
   (obo-save-map
    file

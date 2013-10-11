@@ -14,7 +14,11 @@
   ;; We need to nobble the annotation for this ontology.
   :noname true)
 
-(defaproperty name)
+(defaproperty name
+  :label "name"
+  :comment "Name is the identifier for this entity inside tawny. It may be
+  used as a symbol in Clojure so must follow the rules for Clojure."
+  )
 
 
 (save-ontology tawny "resources/tawny.owl" :owl)
