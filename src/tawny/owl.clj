@@ -1616,23 +1616,36 @@ toward an individual TO."
 or to ONTOLOGY if present."
    :arglists '([ontology & individuals] [& individuals])}
   [o & individuals]
-  (add-axiom o
-             (.getOWLSameIndividualAxiom
-              ontology-data-factory
-              (set (flatten individuals)))))
+  (let [individuals (filter (comp not nil?) (flatten individuals))]
+    (when individuals
+      (add-axiom o
+                 (.getOWLSameIndividualAxiom
+                  ontology-data-factory
+                  (set individuals))))))
 
 (defmontfn add-different
   {:doc "Adds all arguments as different individuals to the current
   ontology unless first arg is an ontology in which case this is used"}
   [o & individuals]
-  (add-axiom o
-             (.getOWLDifferentIndividualsAxiom
-              ontology-data-factory
-              (set (flatten individuals)))))
+  (let [individuals (filter (comp not nil?) (flatten individuals))]
+    (when individuals
+      (add-axiom o
+                 (.getOWLDifferentIndividualsAxiom
+                  ontology-data-factory
+                  (set individuals))))))
+
 
 ;; need to support all the different frames here...
 ;; need to use hashify -- need to convert to handlers
-(defdontfn individual
+(def
+  ^{:private true}
+  individual-handlers
+  {:type add-type
+   :fact add-fact
+   :same add-same
+   :different add-different})
+
+(defdontfn individual-explicit
   "Returns a new individual."
   [o name & frames]
   (let [hframes
@@ -1644,23 +1657,19 @@ or to ONTOLOGY if present."
         individual (ensure-individual o name)]
     (add-axiom o
                (.getOWLDeclarationAxiom ontology-data-factory individual))
-    (when (:type hframes)
-      (add-type o individual
-                (:type hframes)))
-    (when (:fact hframes)
-      (add-fact o individual
-                (:fact hframes)))
-    (when (:same hframes)
-      (add-same o individual
-                (:same hframes)))
-    (when (:different hframes)
-      (add-different o individual
-                     (:different hframes)))
-    (when (instance? String name)
-      (add-a-simple-annotation
-       o individual (tawny-name name)))
-
+    (add-a-name-annotation o individual name)
+    (doseq [[k f] individual-handlers]
+      (f o individual (get frames k)))
     individual))
+
+(defdontfn individual
+  [o name & frames]
+  (individual-explicit
+   o name
+   (util/check-keys
+    (util/hashify frames)
+    (list* :ontology
+           (keys individual-handlers)))))
 
 (defmacro defindividual
   "Declare a new individual."
