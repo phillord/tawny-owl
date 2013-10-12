@@ -14,15 +14,13 @@
 
 ;; You should have received a copy of the GNU Lesser General Public License
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
-
 (ns
     ^{:doc "Save IRI to Clojure identifier mappers between invocations"
       :author "Phillip Lord"}
     tawny.memorise
   (:require [tawny.owl]
             [tawny.lookup]
-            [clojure.set]))
-
+            [clojure set edn pprint]))
 
 (defn- change-values-to-string-set
   "Resolve vars into their values"
@@ -30,7 +28,6 @@
   (into {}
         (for [[k v] map]
           [k #{(tawny.lookup/var-str v)}])))
-
 
 (defn- find-missing-mappings
   "Find mappings in old that are not present in current.
@@ -49,7 +46,6 @@ Returns a sorted map."
   ;; sort just to maintain print order when memorising
   (into (sorted-map) (merge-with clojure.set/union x y)))
 
-
 (defn memorise-map
   "Returns a map of entities to remember.
 
@@ -58,7 +54,6 @@ This function returns a map from the IRI to the var object(s) which hold it"
      (memorise-map *ns*))
   ([namespace]
      (tawny.lookup/iri-to-var *ns*)))
-
 
 (defn generate-obsolete-mapping
   "Takes a list of old labels for an OWLEntity, and the var containing that
@@ -77,15 +72,12 @@ returns the OWLEntity, while printing a warning message."
                 (var-get mapping))))
     old-mappings)))
 
-
-
 (defn fetch-remembered-entities []
   "Fetch the remembered entities. This returns a map between an IRI (as a
 string) and a set of string labels."
   (or
    (:remember (deref (tawny.owl/ontology-options)))
    {}))
-
 
 (defn fetch-old-and-current-entities []
   "Fetch all entity mappings. This retusn a map "
@@ -128,21 +120,11 @@ duplicate keys. Returns a single map, with all values as sets."
    (map #(hash-map (first %) (hash-set (second %)))
         (partition 2 items))))
 
-(defn memory
-  "Returns a map of IRI to set of string names for that concept.
-This function is used to wrap saved mappings on invoked on load."
-  [& list]
-  (memory-merge list))
-
 (defn memorise
    "Save current memorise information in file."
    [file]
    (with-open [w (clojure.java.io/writer file)]
-     (.write w "(tawny.memorise/memory\n")
-     (doseq [[k v] (fetch-old-and-current-entities)]
-       (doseq [name v]
-         (.write w (format "\"%s\" \"%s\"\n" k name))))
-     (.write w "\n)")))
+     (clojure.pprint/pprint (fetch-old-and-current-entities) w)))
 
 (defn remember
   "Restore the current memorise information from file.
@@ -154,7 +136,10 @@ is printed when obsolete terms are found"
         ;; So it's not going to work if another project imports the OBI
         ;; namespace.
         ;; the file contains a single "memory" form.
-        (load-file file)]
+        (with-open
+            [r (java.io.PushbackReader.
+                (clojure.java.io/reader file))]
+          (clojure.edn/read r))]
      ;; store everything that we load, because we will need to save out
      ;; everything we load.
      (dosync

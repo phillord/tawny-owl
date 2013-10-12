@@ -23,7 +23,6 @@
 (defn test-memorise-map []
   (m/memorise-map *ns*))
 
-
 (defn bind-some-vars []
   (eval
    '(do
@@ -114,18 +113,6 @@
        {"iri1" #{"symbol1" "symbol2"}})))
 
   )
-
-
-(deftest memory
-  (is
-   (= {"a" #{"1"}}
-      (m/memory "a" "1")
-      ))
-  (is
-   (= {"a" #{"1" "2"}}
-      (m/memory "a" "1" "a" "2")
-      )))
-
 
 (deftest change-values-to-string-set
   (is
