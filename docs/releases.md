@@ -17,9 +17,11 @@ Release Notes
  - characteristics on properties now use keywords (:functional instead of functional).
  - function names have been regularised (see
    [documentation](nameconventions.md)) resulting in many name changes.
- - The format for `memorize.clj` has changed significantly; this allows
+ - The format for `memorise.clj` has changed significantly; this allows
    arbitarily sized files to be created. There is no converter from the old
    file format, but I will write one if it is needed.
+ - The format for `obo.clj` has changed to using EDN, rather than a bespoke
+   properties file. As with `memorise.clj` there is no converter.
 
 # 0.12
 
