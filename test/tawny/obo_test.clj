@@ -37,6 +37,7 @@
           (deref (tawny.owl/ontology-options))))))
   (is (= 1
          (o/with-ontology
+
            (gen-test-ontology)
            (obo/obo-iri-generate "bob")
            (count (:name-to-iri-current
@@ -45,7 +46,7 @@
 (deftest obo-read-write
   (is
    (let [read
-         (obo/obo-read-map (clojure.java.io/resource "test-read-obo.props"))]
+         (obo/obo-read-map (clojure.java.io/resource "test-read-obo.edn"))]
      (and (map? read)
           (= 3 (count read))
           (= "http://a" (get read "A")))))
@@ -53,12 +54,12 @@
   (is
    (do
      (obo/obo-save-map
-      (File/createTempFile "obo_test" ".props")
+      (File/createTempFile "obo_test" ".edn")
       {"A" "http://a" "B" "http://b"})
      true))
 
   (is
-   (let [file (File/createTempFile "obo_test" ".props")
+   (let [file (File/createTempFile "obo_test" ".edn")
          map {"A" "http://a" "B" "http://b"}]
      (obo/obo-save-map file map)
      (= map

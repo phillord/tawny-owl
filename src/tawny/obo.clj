@@ -12,17 +12,16 @@
 ;; FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License
 ;; for more details.
 
-;; You should have received a copy of the GNU Lesser General Public License
-;; along with this program. If not, see http://www.gnu.org/licenses/.
+;; You should have received a copy of the GNU Lesser General Public License;
+; along with this program. If not, see http://www.gnu.org/licenses/.
 
 (ns
     ^{:doc "Support for numeric, incrementing identifiers, OBO style."
       :author "Phillip Lord"}
     tawny.obo
   (:use [tawny.owl])
-  (:require [tawny.lookup] [clojure.set])
-  (:import (org.semanticweb.owlapi.model IRI
-            )))
+  (:require [tawny.lookup] [clojure edn pprint])
+  (:import (org.semanticweb.owlapi.model IRI)))
 
 
 (def
@@ -64,12 +63,11 @@ in :name-to-iri-current, while IDs loaded from file are stored in
 (defn obo-read-map
   "Read a properties file, and return a hashmap of Clojure identifier to IRI."
   [file]
-  (with-open [r (clojure.java.io/reader file)]
+  (with-open [r
+              (java.io.PushbackReader.
+               (clojure.java.io/reader file))]
     (apply hash-map
-           (flatten
-            (for [line (line-seq r)
-                  :let [[name iri] (clojure.string/split line #"=")]]
-              [name iri])))))
+           (clojure.edn/read r))))
 
 ;; pull everything from file
 (defn obo-restore-iri
@@ -111,13 +109,7 @@ IRIs are placed before pre-IRIs, and both are organised alphabetically."
   "Save a map into a properties file. Assumes entities are easily stringifiable."
   [file map]
   (with-open [w (clojure.java.io/writer file)]
-    (doseq
-        [[name iri]
-         (obo-sort map)]
-      (.write w (format "%s=%s"
-                        name
-                        iri))
-      (.newLine w))))
+    (clojure.pprint/pprint (flatten (obo-sort map)) w)))
 
 ;; store everything to a file
 (defn obo-store-iri
