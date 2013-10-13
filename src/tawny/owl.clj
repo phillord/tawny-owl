@@ -702,7 +702,7 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
   "Adds a version info annotation to the ontology."
   [o v]
   (if v
-    (add-version-info o v)))
+    (add-an-ontology-annotation o v)))
 
 ;; owl imports
 (defn owl-import
