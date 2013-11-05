@@ -38,11 +38,11 @@ Returns error message or namespace if everything is fine."
   [namespace]
   (let [ns (find-ns (symbol namespace))]
     (cond
-     (nil? @tawny.reasoner/vreasoner-factory)
+     (nil? @#'tawny.reasoner/vreasoner-factory)
      "No reasoner has been set"
      (nil? ns)
      "Namespace not recognised"
-     (nil? (tawny.owl/get-current-ontology ns))
+     (nil? (tawny.owl/get-current-ontology-maybe ns))
      "No ontology in namespace"
      :default
      ns)))
