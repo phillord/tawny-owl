@@ -590,3 +590,42 @@ This is actually a bit of a pain, because I have to blitz all the reasoners
 when changing factory. So, it's probably not worth doing.   
 
    
+
+* name annotation
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2013-10-11 Fri 22:26
+  :ARCHIVE_FILE: ~/src/knowledge/tawny-owl/org/todo.org
+  :ARCHIVE_OLPATH: Issues
+  :ARCHIVE_CATEGORY: todo
+  :END:
+
+Forces everything into OWL full. This is clearly not ideal.
+
+Possiblilites? Auto import?
+(def
+  owl-self-ont
+  (.loadOntologyFromOntologyDocument 
+  owl-ontology-manager
+  (iri (clojure.java.io/resource "tawny.owl"))))
+
+(owl-import owl-self-ont) 
+
+when creating a new ontology fixes the problem. Can't create this ontology in
+tawny because of a disaster bootstrap problem.
+
+In protege, this will force loading everytime.
+
+We need an ability to switch this off. Add an ontology option maybe?
+
+
+
+* Individual to handlers
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2013-10-11 Fri 22:26
+  :ARCHIVE_FILE: ~/src/knowledge/tawny-owl/org/todo.org
+  :ARCHIVE_OLPATH: Issues
+  :ARCHIVE_CATEGORY: todo
+  :END:
+Thought I had done this, but no.
+
+
