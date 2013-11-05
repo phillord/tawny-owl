@@ -16,21 +16,21 @@
   :repl-options {
                  ;; This expression will run when first opening a REPL, in the
                  ;; namespace from :init-ns or :main if specified
-                 :init (require 'tawny.repl)
+                 ;;:init (require 'tawny.repl)
                  }
 
   :dependencies [
                  ;; owl API
-                 [net.sourceforge.owlapi/owlapi-api "3.4.6-SNAPSHOT"]
-                 [net.sourceforge.owlapi/owlapi-apibinding "3.4.6-SNAPSHOT"]
-                 [net.sourceforge.owlapi/owlapi-distribution "3.4.6-SNAPSHOT"]
+                 [net.sourceforge.owlapi/owlapi-api "3.4.8"]
+                 [net.sourceforge.owlapi/owlapi-apibinding "3.4.8"]
+                 [net.sourceforge.owlapi/owlapi-distribution "3.4.8"]
 
                  ;; clojure
                  [org.clojure/clojure "1.5.1"]
 
                  ;; reasoners
-                 [org.semanticweb.elk/elk-owlapi "0.4.0"]
-                 [com.hermit-reasoner/org.semanticweb.hermit "1.3.8.1"]
+                 [org.semanticweb.elk/elk-owlapi "0.4.1"]
+                 [com.hermit-reasoner/org.semanticweb.hermit "1.3.8.2"]
 
                  ;; need to access log4j to control elk.
                  [log4j/log4j "1.2.17"]])
