@@ -29,7 +29,7 @@
   (tawny.owl/remove-ontology-maybe
    (OWLOntologyID. (IRI/create "http://purl.obolibrary.org/obo/go.owl")))
   (.loadOntologyFromOntologyDocument
-   tawny.owl/owl-ontology-manager
+   (tawny.owl/owl-ontology-manager)
    (IRI/create (clojure.java.io/resource "go-snippet.owl"))))
 
 
@@ -39,7 +39,7 @@
      (try
        ;; at some point this needs support in tawny.
        (.addIRIMapper
-        tawny.owl/owl-ontology-manager
+        (tawny.owl/owl-ontology-manager)
         (SimpleIRIMapper.
          (IRI/create "http://www.w3.org/TR/2003/PR-owl-guide-20031209/food")
          (IRI/create (clojure.java.io/resource "food.rdf"))))
@@ -53,9 +53,9 @@
        (finally
          (doseq
              [o
-              (.getOntologies tawny.owl/owl-ontology-manager)]
+              (.getOntologies (tawny.owl/owl-ontology-manager))]
            (tawny.owl/remove-ontology-maybe (.getOntologyID o)))
-         (.clearIRIMappers tawny.owl/owl-ontology-manager))))))
+         (.clearIRIMappers (tawny.owl/owl-ontology-manager)))))))
 
 
 (deftest read-with-mapper
@@ -72,7 +72,7 @@
      (finally
          (doseq
              [o
-              (.getOntologies tawny.owl/owl-ontology-manager)]
+              (.getOntologies (tawny.owl/owl-ontology-manager))]
            (tawny.owl/remove-ontology-maybe (.getOntologyID o)))))))
 
 (deftest go-snippet-as-resource

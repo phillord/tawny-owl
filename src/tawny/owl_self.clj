@@ -25,12 +25,12 @@
 (defn- tawny-annotation
   [property literal]
   (.getOWLAnnotation
-   ontology-data-factory property
-   (.getOWLLiteral ontology-data-factory literal "en")))
+   (owl-data-factory) property
+   (.getOWLLiteral (owl-data-factory) literal "en")))
 
 (defn- tawny-annotation-property
   [iri]
-  (.getOWLAnnotationProperty ontology-data-factory iri))
+  (.getOWLAnnotationProperty (owl-data-factory) iri))
 
 (def ^{:private true} tawny-base-url
   "http://www.purl.org/ontolink/tawny")

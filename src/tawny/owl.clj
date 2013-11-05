@@ -47,15 +47,21 @@
 ;; namespaces that contain ontologies. Resetting all of these when owl.clj is
 ;; eval'd is a pain, hence they are all defonce.
 (defonce
-  ^{:doc "A java object which is the main factory for all other objects"
-    }
-  ontology-data-factory
-  (OWLManager/getOWLDataFactory))
+  ^{:doc "Returns the main factory for all other objects"
+    :dynamic true}
+  owl-data-factory
+  ;; this is a closure rather than a var because it is more adapatable if I
+  ;; change my mind about how to do this, and also as a target for
+  ;; monkey-patching.
+  (let [df (OWLManager/getOWLDataFactory)]
+    (fn [] df)))
 
 (defonce
-  ^{:doc "The single OWLOntologyManager used by tawny."}
+  ^{:doc "The single OWLOntologyManager used by tawny."
+    :dynamic true}
   owl-ontology-manager
-  (OWLManager/createOWLOntologyManager ontology-data-factory))
+  (let [om (OWLManager/createOWLOntologyManager (owl-data-factory))]
+    (fn [] om)))
 
 (defonce
   ^{:doc "Map between namespaces and ontologies"}
@@ -251,7 +257,7 @@ Uses the default ontology if not supplied and throws an IllegalStateException
 (defdontfn add-axiom
   "Adds an axiom from the given ontology, or the current one."
   [o axiom]
-  (.applyChange owl-ontology-manager
+  (.applyChange (owl-ontology-manager)
                 (AddAxiom. o axiom))
   axiom)
 
@@ -261,7 +267,7 @@ Uses the default ontology if not supplied and throws an IllegalStateException
   (doall
    (map (fn [axiom]
           (do
-            (.applyChange owl-ontology-manager
+            (.applyChange (owl-ontology-manager)
                           (RemoveAxiom. o axiom))))
         (flatten axiom-list))))
 
@@ -280,10 +286,10 @@ adds three axioms -- it declares a, makes it a subclass of b, and equivalent
 of c."
   [o entity]
   (let [remover
-        (OWLEntityRemover. owl-ontology-manager
+        (OWLEntityRemover. (owl-ontology-manager)
                            (hash-set o))]
     (.accept entity remover)
-    (.applyChanges owl-ontology-manager
+    (.applyChanges (owl-ontology-manager)
                    (.getChanges remover))))
 
 ;;; Begin Ontology options
@@ -384,7 +390,7 @@ signals a hook, and adds :owl true to the metadata. NAME must be a symbol"
   [o named-entity annotation]
   (let [axiom
         (.getOWLAnnotationAssertionAxiom
-         ontology-data-factory
+         (owl-data-factory)
          (.getIRI named-entity) annotation)]
     (add-axiom o axiom)))
 
@@ -403,7 +409,7 @@ ontology option has been specified, in which case do nothing."
   "Adds an annotation to an ontology."
   [o o annotation]
   (.applyChange
-   owl-ontology-manager
+   (owl-ontology-manager)
    (AddOntologyAnnotation. o annotation)))
 
 (defdontfn add-annotation
@@ -430,7 +436,7 @@ converting it from a string or IRI if necessary."
    property
    (instance? IRI property)
    (.getOWLAnnotationProperty
-    ontology-data-factory property)
+    (owl-data-factory) property)
    (instance? String property)
    (ensure-annotation-property
     o
@@ -449,7 +455,7 @@ with the literal function."
       (annotation o annotation-property literal "en")
       (instance? OWLLiteral literal)
       (.getOWLAnnotation
-       ontology-data-factory
+       (owl-data-factory)
        (ensure-annotation-property o annotation-property)
        literal)
       :default
@@ -457,23 +463,23 @@ with the literal function."
               "annotation takes a String or OWLLiteral"))))
   ([o annotation-property literal language]
      (annotation o annotation-property
-                 (.getOWLLiteral ontology-data-factory literal language))))
+                 (.getOWLLiteral (owl-data-factory) literal language))))
 
 (defbdontfn add-super-annotation
   "Adds a set of superproperties to the given subproperty."
   [o subproperty superproperty]
-  (.applyChange owl-ontology-manager
+  (.applyChange (owl-ontology-manager)
                 (AddAxiom.
                  o
                  (.getOWLSubAnnotationPropertyOfAxiom
-                  ontology-data-factory
+                  (owl-data-factory)
                   subproperty
                   (ensure-annotation-property o superproperty)))))
 
 
 ;; various annotation types
 (def label-property
-  (.getRDFSLabel ontology-data-factory))
+  (.getRDFSLabel (owl-data-factory)))
 
 (defmontfn label
   "Return an OWL label annotation."
@@ -481,7 +487,7 @@ with the literal function."
   (apply annotation o label-property args))
 
 (def owl-comment-property
-  (.getRDFSComment ontology-data-factory))
+  (.getRDFSComment (owl-data-factory)))
 
 (defmontfn owl-comment
   "Return an OWL comment annotation."
@@ -489,7 +495,7 @@ with the literal function."
   (apply annotation o owl-comment-property args))
 
 (def is-defined-by-property
-  (.getRDFSIsDefinedBy ontology-data-factory))
+  (.getRDFSIsDefinedBy (owl-data-factory)))
 
 (defmontfn is-defined-by
   "Return an is defined by annotation."
@@ -497,7 +503,7 @@ with the literal function."
   (apply annotation o is-defined-by-property args))
 
 (def see-also-property
-  (.getRDFSSeeAlso ontology-data-factory))
+  (.getRDFSSeeAlso (owl-data-factory)))
 
 (defmontfn see-also
   "Returns a see-also annotation."
@@ -506,7 +512,7 @@ with the literal function."
          see-also-property args))
 
 (def backward-compatible-with-property
-  (.getOWLBackwardCompatibleWith ontology-data-factory))
+  (.getOWLBackwardCompatibleWith (owl-data-factory)))
 
 (defmontfn backward-compatible-with
   "Returns a backward compatible with annotation."
@@ -516,7 +522,7 @@ with the literal function."
          args))
 
 (def incompatible-with-property
-  (.getOWLIncompatibleWith ontology-data-factory))
+  (.getOWLIncompatibleWith (owl-data-factory)))
 
 (defmontfn incompatible-with
   "Returns an incompatible with annotation."
@@ -526,7 +532,7 @@ with the literal function."
          args))
 
 (def version-info-property
-  (.getOWLVersionInfo ontology-data-factory))
+  (.getOWLVersionInfo (owl-data-factory)))
 
 (defmontfn version-info
   "Returns a version info annotation."
@@ -536,7 +542,7 @@ with the literal function."
          args))
 
 (def deprecated-property
-  (.getOWLDeprecated ontology-data-factory))
+  (.getOWLDeprecated (owl-data-factory)))
 
 (defmontfn deprecated
   "Returns a deprecated annotation."
@@ -577,10 +583,10 @@ with the literal function."
         (ensure-annotation-property o name)
         ]
     ;; add the property
-    (.addAxiom owl-ontology-manager
+    (.addAxiom (owl-ontology-manager)
                o
                (.getOWLDeclarationAxiom
-                ontology-data-factory
+                (owl-data-factory)
                 property))
     ;; add a name annotation
     (add-a-name-annotation o property name)
@@ -605,7 +611,7 @@ with the literal function."
   "Gets an annotation property with the given name."
   [o property]
   (.getOWLAnnotationProperty
-   ontology-data-factory
+   (owl-data-factory)
    (iri-for-name o property)))
 
 (defmacro defaproperty
@@ -651,17 +657,18 @@ owl-ontology-manager."}
   "Removes the ontology with the given ID from the manager.
 This calls the relevant hooks, so is better than direct use of the OWL API. "
   [ontologyid]
-  (when (.contains owl-ontology-manager ontologyid)
-    (let [o (.getOntology owl-ontology-manager ontologyid)]
+  (when (.contains (owl-ontology-manager) ontologyid)
+    (let [o (.getOntology (owl-ontology-manager) ontologyid)]
       (.removeOntology
-       owl-ontology-manager o)
+       (owl-ontology-manager) o)
       ;; remove the ontology options
       (dosync
        (swap! ontology-options-atom
               dissoc o))
       ;; remove the ontology from the namespace map
       (remove-ontology-from-namespace-map o)
-      (util/run-hook remove-ontology-hook o))))
+      (util/run-hook remove-ontology-hook o)
+      o)))
 
 (defn- add-an-ontology-name
   "Adds an tawny-name annotation to ontology, unless the :noname ontology
@@ -689,7 +696,7 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
   (if p
     (.setPrefix
      (.getOntologyFormat
-      owl-ontology-manager o)
+      (owl-ontology-manager) o)
      p (.toString (get-iri o)))))
 
 (defn- add-see-also
@@ -714,10 +721,10 @@ ontology or an IRI"
      (let [iri (if (instance? OWLOntology o)
                  (get-iri o)
                  o)]
-       (.applyChange owl-ontology-manager
+       (.applyChange (owl-ontology-manager)
                      (AddImport. ontology-into
                                  (.getOWLImportsDeclaration
-                                  ontology-data-factory
+                                  (owl-data-factory)
                                   iri))))))
 ;; ontology
 (def ^{:private true} ontology-handlers
@@ -749,7 +756,7 @@ ontology or an IRI"
     (remove-ontology-maybe
      (OWLOntologyID. iri))
     (let [ontology
-          (.createOntology owl-ontology-manager iri)]
+          (.createOntology (owl-ontology-manager) iri)]
       (if noname
         (dosync
          (alter
@@ -857,7 +864,7 @@ is given."
   (first
    (keys
     (.getPrefixName2PrefixMap
-     (.getOntologyFormat owl-ontology-manager
+     (.getOntologyFormat (owl-ontology-manager)
                          o)))))
 
 (defdontfn save-ontology
@@ -888,7 +895,7 @@ If no ontology is given, use the current-ontology"
        (.flush file-writer)
        (.setPrefix this-format (get-prefix o)
                    (str (.toString (get-iri o)) "#"))
-       (.saveOntology owl-ontology-manager o
+       (.saveOntology (owl-ontology-manager) o
                       this-format output-stream))))
 
 ;;; Begin OWL entity guess/ensure
@@ -978,7 +985,7 @@ or throw an exception if it cannot be converted."
    (instance? OWLObjectProperty prop)
    prop
    (instance? IRI prop)
-   (.getOWLObjectProperty ontology-data-factory prop)
+   (.getOWLObjectProperty (owl-data-factory) prop)
    (string? prop)
    (ensure-object-property o (iri-for-name o prop))
    :default
@@ -995,7 +1002,7 @@ else if clz is a OWLClassExpression add that."
    (instance? org.semanticweb.owlapi.model.OWLClassExpression clz)
    clz
    (instance? IRI clz)
-   (.getOWLClass ontology-data-factory clz)
+   (.getOWLClass (owl-data-factory) clz)
    (string? clz)
    (ensure-class o (iri-for-name o clz))
    true
@@ -1010,7 +1017,7 @@ converting it from a string or IRI if necessary."
    property
    (instance? IRI property)
    (.getOWLDataProperty
-    ontology-data-factory property)
+    (owl-data-factory) property)
    (instance? String property)
    (ensure-data-property o
                          (iri-for-name o property))
@@ -1026,14 +1033,14 @@ converting it from a string or IRI if necessary."
    (instance? OWLDatatype datatype)
    datatype
    (instance? org.semanticweb.owlapi.vocab.OWL2Datatype datatype)
-   (.getDatatype datatype ontology-data-factory)
+   (.getDatatype datatype (owl-data-factory))
    (keyword? datatype)
    (if-let [d (get owl2datatypes datatype)]
      (ensure-datatype o d)
      (throw (IllegalArgumentException.
              (str "Was expecting a datatype. Got " datatype "."))))
    (instance? IRI datatype)
-   (.getOWLDatatype datatype ontology-data-factory)
+   (.getOWLDatatype datatype (owl-data-factory))
    :default
    (throw (IllegalArgumentException.
            (str "Was expecting a datatype. Got " datatype ".")))))
@@ -1056,7 +1063,7 @@ interpret this as a string and create a new OWLIndividual."
   (cond (instance? org.semanticweb.owlapi.model.OWLIndividual individual)
         individual
         (instance? IRI individual)
-        (.getOWLNamedIndividual ontology-data-factory
+        (.getOWLNamedIndividual (owl-data-factory)
                                 individual)
         (string? individual)
         (ensure-individual o (iri-for-name o individual))
@@ -1073,7 +1080,7 @@ interpret this as a string and create a new OWLIndividual."
   [o name subclass]
   (add-axiom o
              (.getOWLSubClassOfAxiom
-              ontology-data-factory
+              (owl-data-factory)
               (ensure-class o name)
               (ensure-class o subclass))))
 
@@ -1084,7 +1091,7 @@ interpret this as a string and create a new OWLIndividual."
   [o name equivalent]
   (add-axiom o
              (.getOWLEquivalentClassesAxiom
-              ontology-data-factory
+              (owl-data-factory)
               (ensure-class o name)
               (ensure-class o equivalent))))
 
@@ -1095,7 +1102,7 @@ interpret this as a string and create a new OWLIndividual."
   (add-axiom
    o
    (.getOWLDisjointClassesAxiom
-    ontology-data-factory
+    (owl-data-factory)
     (into-array OWLClassExpression
                 [(ensure-class o name)
                  (ensure-class o disjoint)]))))
@@ -1109,7 +1116,7 @@ interpret this as a string and create a new OWLIndividual."
     (list
      (add-axiom o
                 (.getOWLDisjointUnionAxiom
-                 ontology-data-factory
+                 (owl-data-factory)
                  (ensure-class o clazz)
                  (java.util.HashSet. ensured-subclasses))))))
 
@@ -1118,7 +1125,7 @@ interpret this as a string and create a new OWLIndividual."
   [o name]
   (add-axiom o
              (.getOWLDeclarationAxiom
-              ontology-data-factory
+              (owl-data-factory)
               (ensure-class o name))))
 
 ;; a class can have only a single haskey, so ain't no point broadcasting this.
@@ -1139,7 +1146,7 @@ interpret this as a string and create a new OWLIndividual."
             (IllegalArgumentException.
              "Unable to determine type of property")))]
       (add-axiom o
-                 (.getOWLHasKeyAxiom ontology-data-factory
+                 (.getOWLHasKeyAxiom (owl-data-factory)
                                      (ensure-class o class)
                                      (into #{} propertylist))))))
 
@@ -1148,7 +1155,7 @@ interpret this as a string and create a new OWLIndividual."
   [o property domain]
   (add-axiom o
              (.getOWLObjectPropertyDomainAxiom
-              ontology-data-factory
+              (owl-data-factory)
               (ensure-object-property o property)
               (ensure-class o domain))))
 
@@ -1157,7 +1164,7 @@ interpret this as a string and create a new OWLIndividual."
   [o property range]
   (add-axiom o
              (.getOWLObjectPropertyRangeAxiom
-              ontology-data-factory
+              (owl-data-factory)
               (ensure-object-property o property)
               (ensure-class o range))))
 
@@ -1166,7 +1173,7 @@ interpret this as a string and create a new OWLIndividual."
   [o property inverse]
   (add-axiom o
              (.getOWLInverseObjectPropertiesAxiom
-              ontology-data-factory
+              (owl-data-factory)
               (ensure-object-property o property)
               (ensure-object-property o inverse))))
 
@@ -1177,7 +1184,7 @@ a superproperty."
   [o property superproperty]
   (add-axiom o
              (.getOWLSubObjectPropertyOfAxiom
-              ontology-data-factory
+              (owl-data-factory)
               (ensure-object-property o property)
               (ensure-object-property o superproperty))))
 
@@ -1194,7 +1201,7 @@ a superproperty."
        ;; add individual entities are a single chain
        (add-axiom o
                   (.getOWLSubPropertyChainOfAxiom
-                   ontology-data-factory
+                   (owl-data-factory)
                    (map (partial ensure-object-property o) properties)
                    property))
        ;; add sequential entities as a chain in their own right
@@ -1223,7 +1230,7 @@ a superproperty."
             "Characteristic is not recognised:" characteristic)))
   (add-axiom o
              ((get charfuncs characteristic)
-              ontology-data-factory (ensure-object-property o property))))
+              (owl-data-factory) (ensure-object-property o property))))
 
 (def ^{:private true} object-property-handlers
   {
@@ -1249,7 +1256,7 @@ value for each frame."
       ;; add the property
       (add-axiom o
                  (.getOWLDeclarationAxiom
-                  ontology-data-factory property))
+                  (owl-data-factory) property))
       ;; add a name annotation
       (add-a-name-annotation o property name)
       ;; apply the handlers
@@ -1335,7 +1342,7 @@ value for each frame."
    :arglists '([property & clazzes] [ontology property & clazzes])}
   [o property class]
   (.getOWLObjectSomeValuesFrom
-   ontology-data-factory
+   (owl-data-factory)
    (ensure-object-property o property)
    (ensure-class o class)))
 
@@ -1347,7 +1354,7 @@ value for each frame."
    :arglists '([property & clazzes] [ontology property & clazzes])}
   [o property class]
   (.getOWLObjectAllValuesFrom
-   ontology-data-factory
+   (owl-data-factory)
    (ensure-object-property o property)
    (ensure-class o class)))
 
@@ -1362,7 +1369,7 @@ value for each frame."
       (throw (IllegalArgumentException. "owl-and must have at least two classes")))
 
     (.getOWLObjectIntersectionOf
-     ontology-data-factory
+     (owl-data-factory)
      (java.util.HashSet.
       (util/domap
        #(ensure-class o %)
@@ -1380,7 +1387,7 @@ value for each frame."
       (throw (IllegalArgumentException. "owl-or must have at least two classes")))
 
     (.getOWLObjectUnionOf
-     ontology-data-factory
+     (owl-data-factory)
      (java.util.HashSet.
       (util/domap #(ensure-class o %)
                   (flatten classes))))))
@@ -1395,7 +1402,7 @@ value for each frame."
   {:pre [(= 1
             (count (flatten class)))]}
   (.getOWLObjectComplementOf
-   ontology-data-factory
+   (owl-data-factory)
    (ensure-class o (first (flatten class)))))
 
 (.addMethod owl-not :object object-not)
@@ -1421,7 +1428,7 @@ all values from restrictions."
   {:pre [(= 1
             (count (flatten class)))]}
   (.getOWLObjectMinCardinality
-   ontology-data-factory cardinality
+   (owl-data-factory) cardinality
    (ensure-object-property o property)
    (ensure-class o (first (flatten class)))))
 
@@ -1433,7 +1440,7 @@ all values from restrictions."
   {:pre [(= 1
             (count (flatten class)))]}
   (.getOWLObjectMaxCardinality
-   ontology-data-factory cardinality
+   (owl-data-factory) cardinality
    (ensure-object-property o property)
    (ensure-class o (first (flatten class)))))
 
@@ -1445,7 +1452,7 @@ all values from restrictions."
   {:pre [(= 1
             (count (flatten class)))]}
   (.getOWLObjectExactCardinality
-   ontology-data-factory cardinality
+   (owl-data-factory) cardinality
    (ensure-object-property o property)
    (ensure-class o (first (flatten class)))))
 
@@ -1455,7 +1462,7 @@ all values from restrictions."
   "Returns an OWL one of property restriction."
   [o & individuals]
   (.getOWLObjectOneOf
-   ontology-data-factory
+   (owl-data-factory)
    (java.util.HashSet.
     (doall
      (map (partial ensure-individual o)
@@ -1466,7 +1473,7 @@ all values from restrictions."
 (defmontfn object-has-value
   "Adds an OWL has-value restriction."
   [o property individual]
-  (.getOWLObjectHas-Value ontology-data-factory
+  (.getOWLObjectHas-Value (owl-data-factory)
                           (ensure-object-property o property)
                           (ensure-individual o individual)))
 
@@ -1475,7 +1482,7 @@ all values from restrictions."
 (defmontfn has-self
   "Returns an OWL has self restriction."
   [o property]
-  (.getOWLObjectHasSelf ontology-data-factory
+  (.getOWLObjectHasSelf (owl-data-factory)
                         (ensure-object-property o property)))
 
 (def
@@ -1546,7 +1553,7 @@ All arguments must of an instance of OWLClassExpression"
           list))]
     (add-axiom o
                (.getOWLDisjointClassesAxiom
-                ontology-data-factory
+                (owl-data-factory)
                 (into-array OWLClassExpression
                             classlist)))))
 
@@ -1563,7 +1570,7 @@ or ONTOLOGY if present."
   [o individual clazz]
   (add-axiom o
              (.getOWLClassAssertionAxiom
-              ontology-data-factory
+              (owl-data-factory)
               (ensure-class o clazz)
               individual)))
 
@@ -1596,7 +1603,7 @@ toward an individual TO."
   "Returns an OWL Object property assertion axiom."
   [_ property from to]
   (.getOWLObjectPropertyAssertionAxiom
-   ontology-data-factory
+   (owl-data-factory)
    property from to))
 
 (.addMethod get-fact :object object-get-fact)
@@ -1605,7 +1612,7 @@ toward an individual TO."
   "Returns a negative OWL Object property assertion axiom."
   [_ property from to]
   (.getOWLNegativeObjectPropertyAssertionAxiom
-   ontology-data-factory
+   (owl-data-factory)
    property from to))
 
 (.addMethod get-fact-not :object object-get-fact-not)
@@ -1620,7 +1627,7 @@ or to ONTOLOGY if present."
     (when individuals
       (add-axiom o
                  (.getOWLSameIndividualAxiom
-                  ontology-data-factory
+                  (owl-data-factory)
                   (set individuals))))))
 
 (defmontfn add-different
@@ -1631,7 +1638,7 @@ or to ONTOLOGY if present."
     (when individuals
       (add-axiom o
                  (.getOWLDifferentIndividualsAxiom
-                  ontology-data-factory
+                  (owl-data-factory)
                   (set individuals))))))
 
 
@@ -1656,7 +1663,7 @@ or to ONTOLOGY if present."
               o)
         individual (ensure-individual o name)]
     (add-axiom o
-               (.getOWLDeclarationAxiom ontology-data-factory individual))
+               (.getOWLDeclarationAxiom (owl-data-factory) individual))
     (add-a-name-annotation o individual name)
     (doseq [[k f] individual-handlers]
       (f o individual (get frames k)))
@@ -1945,12 +1952,12 @@ effectively unchanged."
 (defn owl-thing
   "Returns OWL thing."
   []
-  (.getOWLThing ontology-data-factory))
+  (.getOWLThing (owl-data-factory)))
 
 (defn owl-nothing
   "Returns OWL nothing."
   []
-  (.getOWLNothing ontology-data-factory))
+  (.getOWLNothing (owl-data-factory)))
 
 ;; add a prefix or suffix to contained defclass
 (defn- alter-symbol-after-def-form

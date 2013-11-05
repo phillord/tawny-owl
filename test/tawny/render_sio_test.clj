@@ -9,7 +9,7 @@
    (org.semanticweb.owlapi.model.OWLOntologyID.
     (tawny.owl/iri "http://semanticscience.org/ontology/sio.owl")))
   (.loadOntologyFromOntologyDocument
-   owl-ontology-manager
+   (owl-ontology-manager)
    (tawny.owl/iri (clojure.java.io/resource "sio.owl"))))
 
 (declare sio)

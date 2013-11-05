@@ -98,7 +98,7 @@ non-interning equivalent)."}
 (defn ontologies
   "Fetch all known ontologies."
   []
-  (.getOntologies owl/owl-ontology-manager))
+  (.getOntologies (owl/owl-ontology-manager)))
 
 (defn setmap
   "Apply f to list c, union the results."
@@ -229,7 +229,7 @@ in tawny." class)
       ~@(when (< 0 (count types))
           (cons :type
                 (form types)))
-      "here is a s tring"
+      "here is a string"
       ~@(when (< 0 (count same))
           (cons :same
                 (form same)))
@@ -445,7 +445,7 @@ depending on the value of *terminal-strategy*"
   owldatatypes-inverted
   (into {}
         (for [[k v] owl/owl2datatypes]
-          [(.getDatatype v owl/ontology-data-factory) k])))
+          [(.getDatatype v (owl/owl-data-factory)) k])))
 
 (defmethod form OWLLiteral [l]
   (list*

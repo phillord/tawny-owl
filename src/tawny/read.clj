@@ -162,19 +162,19 @@ iri-mapper and resource-iri-mapper."
           (tawny.owl/remove-ontology-maybe ontologyid)
           (when mapper
             (.addIRIMapper
-             tawny.owl/owl-ontology-manager
+             (tawny.owl/owl-ontology-manager)
              mapper))
           (try
             (.loadOntologyFromOntologyDocument
-             tawny.owl/owl-ontology-manager
+             (tawny.owl/owl-ontology-manager)
              location)
             (finally
               (when mapper
                 (.removeIRIMapper
-                 tawny.owl/owl-ontology-manager
+                 (tawny.owl/owl-ontology-manager)
                  mapper)))))]
     (when prefix
-      (let [format (.getOntologyFormat tawny.owl/owl-ontology-manager
+      (let [format (.getOntologyFormat (tawny.owl/owl-ontology-manager)
                                        owlontology)]
         (if (.isPrefixOWLOntologyFormat format)
           (.setPrefix format prefix (.toString iri))

@@ -164,7 +164,7 @@ once."
   "Returns a new OWLOntologyManager."
   []
   (org.semanticweb.owlapi.apibinding.OWLManager/createOWLOntologyManager
-   tawny.owl/ontology-data-factory))
+   (tawny.owl/owl-data-factory)))
 
 (defn load-ontology
   "Loads and returns an ontology directly through the OWL API.
