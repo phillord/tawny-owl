@@ -221,9 +221,7 @@
           :active t :style radio :selected tawny-mode-protege-track-timer]
          ["Do Not Track Entity" tawny-mode-protege-track-toggle
           :help "Do not track the nearest entity to the cursor in Protege"
-          :active t :style radio :selected (not tawny-mode-protege-track-timer)]
-         
-         )
+          :active t :style radio :selected (not tawny-mode-protege-track-timer)])
         ["Display Documentation" tawny-doc
          :help "Display documentation for entity at point"]
         )
