@@ -4,3 +4,4 @@
 ./test-*
 ./test.*
 docs/*html
+/catalog-v001.xml
