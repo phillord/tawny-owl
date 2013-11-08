@@ -26,8 +26,8 @@ easy to achieve with a code base, but tawny manages this with `memorise.clj`.
 
 The memorization functionality stores the mappings between label and
 identifiers when ever a downstream OWL file is read. When a file is read for a
-second time, Tawny checks these mappings to see any of the identifiers has a
-new label. In this case, tawny effectively generates an alias to the entity
+second time, Tawny checks these mappings to see if any of the identifiers has
+a new label. In this case, tawny effectively generates an alias to the entity
 using both the old and new label. However, use of the old label will result in
 a deprecation warning, printed to the repl. This means that downstream
 ontologies will still work, while allowing developers to migrate to new
@@ -54,3 +54,8 @@ function.
 Memorise generates a print statement for all the obsolete mappings that it
 finds, and will generate another print statement whenever the obsolete term is
 actually used.
+
+
+## Next
+
+ - [OBO style, numeric identifiers](obo.md)
