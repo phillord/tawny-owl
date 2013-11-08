@@ -113,10 +113,10 @@
 
 
 (deftest save-ontology []
-  (is (do (o/save-ontology to "test.omn")
+  (is (do (o/save-ontology to "target/test.omn")
           true))
   (is (do (o/save-ontology
-           (o/ontology :name "bob") "test2.omn")
+           (o/ontology :name "bob") "target/test2.omn")
           true)))
 
 (deftest iri-for-name []
@@ -615,13 +615,10 @@ Assumes that fixture has been run
       (o/owl-class to "y")
       (o/owl-class to "z"))
 
-     (o/save-ontology to "to.omn" :omn)
-
      (and
       (o/disjoint? to
        (o/owl-class to "y")
        (o/owl-class to "z"))
-      
       (o/superclass? to
        (o/owl-class to "y")
        x)
