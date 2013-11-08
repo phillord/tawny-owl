@@ -9,6 +9,46 @@
   :scheduled_release_ALL: 0.12 1.0 1.1
   :END:
 
+** Relative paths
+
+Second notes -- this actually fails. The problem is that the :file metadata
+is, itself, often relative -- for example within leiningen.
+
+I think that I need to move to loading via resources (this will work cleanly
+with protege). Writing is harder -- we have the ability to specify a relative
+location, but only to save if a) it exists and b) it's writable. Otherwise,
+OBO style ontologies will try and write the jar packaged. Not good.
+
+
+Tawny uses relative paths at several places -- obo-restore-iri for example. 
+This is a pain in the ass because it fails when using protege-nrepl, which
+has a root dir defined by protege. It would also fail if I loaded two
+projects into Protege at once.
+
+Solution -- use paths relative to the source directory.
+
+So:
+
+(tawny.obo/obo-restore-iri "./src/tawny/obo/pizza/pizza_iri.edn")
+
+would become 
+
+(tawny.obo/obo-restore-iri (path-dir pizzaontology) "pizza.edn")
+
+like wise
+
+(tawny.obo/obo-store-iri (path-dir pizzaontology) "pizza_iri.edn")
+
+
+path-dir is a macro which gets the location of the file in which
+pizzaontology is defined -- any symbol would actually work here. We could
+even be disasterous and do 
+
+(path-dir)
+
+and have path-dir define it's own symbol, but that's too evil.
+
+
 ** Comment spaces
 
 comment functions should remove new lines and indents so that Clojure new
