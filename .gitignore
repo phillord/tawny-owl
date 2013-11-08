@@ -5,3 +5,5 @@
 ./test.*
 docs/*html
 /catalog-v001.xml
+/.sync.clj
+/.lein-repl-history
