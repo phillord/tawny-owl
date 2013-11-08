@@ -1,10 +1,7 @@
 (defproject uk.org.russet/tawny-owl "1.0-SNAPSHOT"
   :description "tawny-owl enables building OWL ontologies in a programmatic environment."
   :url "http://www.russet.org.uk/blog/tawny-owl"
-  :repositories [["maven" "http://repo1.maven.org/maven2"]
-                 ;; for when I am pre-release
-                 ["phillord" "http://homepages.cs.ncl.ac.uk/phillip.lord/maven"]
-                 ]
+  :repositories [["maven" "http://repo1.maven.org/maven2"]]
 
   :scm {:url "https://github.com/phillord/tawny-owl.git"
         :name "git"}
