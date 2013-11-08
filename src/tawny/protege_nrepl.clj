@@ -112,9 +112,11 @@ API which leaves the GUI in an inconsistent state."
                   javax.swing.JOptionPane/WARNING_MESSAGE)
                  javax.swing.JOptionPane/YES_OPTION))
            (-> (org.protege.editor.core.ProtegeManager/getInstance)
-               (.disposeOfEditorKit editorkit))
-           (.removeWindowListener frame this)
-           (.dispose frame)))))))
+               (.disposeOfEditorKit editorkit)))
+         (.removeWindowListener frame this)
+         (.dispose frame))))))
+
+
 
 (defn kill-import-warning []
   (.setMissingImportHandler
