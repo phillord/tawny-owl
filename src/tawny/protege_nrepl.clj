@@ -134,7 +134,6 @@ API which leaves the GUI in an inconsistent state."
     (protege.model/active-ontology ontology)))
 
 (defn display-maybe [ns entity]
-  (.println System/out (str "display:" entity))
   (when-let
       [entity
        (first
