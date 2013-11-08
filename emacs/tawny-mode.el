@@ -147,14 +147,18 @@
     "\\\"" ""
     string)))
 
-
 ;; Protege section
 (defvar tawny-mode-protege-entity-last nil)
 (defun tawny-mode-protege-entity ()
   (interactive)
   (let* ((thing
           (substring-no-properties
-           (thing-at-point 'word)))
+           (thing-at-point 'symbol)))
+         (thing-split
+          (split-string thing "/"))
+         (thing
+          (or (cadr thing-split)
+              (car thing-split)))
          (form
           (format "(do (require 'tawny.protege-nrepl) (tawny.protege-nrepl/display-maybe \"%s\" \"%s\"))"
                   (clojure-find-ns) thing)))
@@ -177,6 +181,9 @@
 
 (defvar tawny-mode-protege-track-timer
   nil)
+
+(defun tawny-mode-protege-entity-idle ()
+  (tawny-mode-protege-entity))
 
 (defun tawny-mode-protege-track-toggle ()
   (interactive)
