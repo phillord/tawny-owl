@@ -379,6 +379,14 @@ Assumes that fixture has been run
   (is (thrown? IllegalArgumentException
                (o/individual to "indA" :nottypes "a"))))
 
+(deftest individual-type []
+  (is
+   (let [cls (owl-class to "cls")
+         ind (individual to "ind" :type cls)]
+     (tawny.util/in?
+      (.getTypes ind)
+      cls))))
+
 (deftest defindividual []
   (is (do (o/defindividual testind :ontology to)
           testind)))

@@ -5,11 +5,13 @@ Release Notes
 
 ## Code Changes
  - Introduced `integration_test` namespace for errors that could be in several
-   places. 
+   places.
 
 ## Bug Fixes
  - `iequivalent-classes` was removing top and bottom. This makes sense
    `isuper` and `isubclasses` but was breaking a pitfall example.
+ - `individual-explicit` was incorrectly declared as variadic and so silently
+   ignoring all frames.
 
 # 1.0 (rc1)
 

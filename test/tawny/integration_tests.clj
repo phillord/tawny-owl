@@ -42,3 +42,10 @@
            (owl-class
             ont "C" :equivalent (only R B))]
        (r/iequivalent-class? ont C (owl-thing))))))
+
+(deftest bottom
+  (is
+   (let [ont (ontology :iri "http://bottom")
+         bottom (individual ont "bottom" :type (owl-nothing))]
+     (not
+      (r/consistent? ont)))))

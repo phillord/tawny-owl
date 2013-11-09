@@ -1568,6 +1568,7 @@ All arguments must be an instance of OWLClassExpression."
 or ONTOLOGY if present."
    :arglists '([individual & clazzes] [o individual & clazzes])}
   [o individual clazz]
+  (println "adding type")
   (add-axiom o
              (.getOWLClassAssertionAxiom
               (owl-data-factory)
@@ -1579,6 +1580,7 @@ or ONTOLOGY if present."
   ONTOLOGY if present. Facts are produced with `fact' and `fact-not'."
    :arglists '([individual & facts] [ontology individual & facts])}
   [o individual fact]
+  (println "add-fact" fact)
   (add-axiom o
              (fact individual)))
 
@@ -1654,7 +1656,7 @@ or to ONTOLOGY if present."
 
 (defdontfn individual-explicit
   "Returns a new individual."
-  [o name & frames]
+  [o name frames]
   (let [hframes
         (util/check-keys
          (util/hashify frames)
@@ -1665,7 +1667,11 @@ or to ONTOLOGY if present."
     (add-axiom o
                (.getOWLDeclarationAxiom (owl-data-factory) individual))
     (add-a-name-annotation o individual name)
+    (println frames)
+    (println individual-handlers)
     (doseq [[k f] individual-handlers]
+      (println "k:" k "f:" f)
+      (println (get frames k))
       (f o individual (get frames k)))
     individual))
 
