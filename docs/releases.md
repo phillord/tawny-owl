@@ -1,7 +1,17 @@
 Release Notes
 =============
 
-# 1.0
+# 1.0 (rc2)
+
+## Code Changes
+ - Introduced `integration_test` namespace for errors that could be in several
+   places. 
+
+## Bug Fixes
+ - `iequivalent-classes` was removing top and bottom. This makes sense
+   `isuper` and `isubclasses` but was breaking a pitfall example.
+
+# 1.0 (rc1)
 
 ## Code Changes
  - Lookup implementation has been enhanced for performance. This also affects

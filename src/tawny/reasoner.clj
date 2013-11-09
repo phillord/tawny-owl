@@ -296,13 +296,12 @@ Returns a clojure set, and does not return top or bottom."
       true false)))
 
 (defdontfn iequivalent-classes
-  "Returns equivalent classes to name in ontology. Returns a set
-and does not return top or bottom."
+  "Returns equivalent classes to name in ontology. Returns a set which
+may include top or bottom."
   [ontology name]
-  (no-top-bottom
-   (.getEntities
-    (.getEquivalentClasses (reasoner ontology)
-                           (#'tawny.owl/ensure-class ontology name)))))
+  (.getEntities
+   (.getEquivalentClasses (reasoner ontology)
+                          (#'tawny.owl/ensure-class ontology name))))
 
 (defdontfn iequivalent-class?
   "Returns true if name and equiv are equivalent in ontology."
