@@ -20,7 +20,7 @@
   (:require [tawny.reasoner :as r]))
 
 (defn reasoner
-  "Fixture which sets up the reasoner factor to be used, and makes
+  "Fixture which sets up the reasoner factory to be used, and makes
 turns the progress monitor off."
   [reasoner]
   (fn [tests]
