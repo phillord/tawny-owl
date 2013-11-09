@@ -381,10 +381,10 @@ Assumes that fixture has been run
 
 (deftest individual-type []
   (is
-   (let [cls (owl-class to "cls")
-         ind (individual to "ind" :type cls)]
+   (let [cls (o/owl-class to "cls")
+         ind (o/individual to "ind" :type cls)]
      (tawny.util/in?
-      (.getTypes ind)
+      (.getTypes ind to)
       cls))))
 
 (deftest defindividual []
