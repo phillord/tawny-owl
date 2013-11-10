@@ -9,6 +9,53 @@
   :scheduled_release_ALL: 0.12 1.0 1.1
   :END:
 
+** let-ontology
+
+A macro for easing
+
+(let [ont (ontology)
+      cl (owl-class ont)
+      cl2 (owl-class ont)]
+   (coherent? ont))
+
+style code -- want instead
+
+(let-ont [ont (ontology)
+          cl (owl-class)
+          cl2 (owl-class)])
+
+
+
+Possible expansions:
+
+(let [ont (ontology)]
+  (with-current-ontology
+     (let [cl (owl-class)
+           cl2 (owl-class)])))
+
+This is nice and simple, but uses dynamic scoping of the current ontology
+which is a bit unpredicatable if we call anything else. 
+
+Another possibility is to expand to the form above, but simply adding "ont"
+as the first value. But this fails for 
+
+(let-ont [ont (ontology)
+          cl (if condition
+                 (owl-class "a")
+                 (owl-class "b"))]
+     (consistent?))
+
+cause the if form would end up as 
+
+(if ont condition
+   (owl-class "a")
+   (owl-class "b"))
+
+which is not ideal. Another possibility would be to check for tawny functions
+using clojure.walk. Okay, but fails if we define things like (sio-class).
+      
+
+
 ** Relative paths
 
 Second notes -- this actually fails. The problem is that the :file metadata

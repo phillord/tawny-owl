@@ -1,0 +1,35 @@
+
+* Introduction
+
+This describes the roadmap for future features in tawny.
+
+
+* v1.1
+
+** Features
+
+*** tawny-mode.el, port to cider
+
+tawny-mode.el currently depends on nrepl.el which is now deprecated in terms
+of cider, which contains nrepl-client.el. Mostly, this should be a name
+change, but things will have changed somewhat by the time we get there.
+
+*** Explanation
+
+Tawny needs to uncover explanation code. Currently, most people use this
+through protege, but as code can be quite slow, it would be good to have this
+working in concert with testing, so that consistency test errors automate
+explanation.
+
+* Beyond
+
+** Features
+
+*** Better support for querying
+
+Currently, querying ontologies is painful and requires recourse to the OWL
+API. tawny.query allows some of this, but only returns a map. Need some
+predicates and extractor functions for common calls.
+
+
+
