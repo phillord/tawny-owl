@@ -1700,7 +1700,9 @@ See also 'as-subclasses'."
    :arglists '([ontology & classes] [& classes])}
   [o & classes]
   (disjoint-classes-list
-   o (map var-get-maybe classes)))
+   o (map var-get-maybe
+          (flatten
+           classes))))
 
 (defdontfn as-inverse
   {:doc "Declare the two properties as inverse"
@@ -1999,7 +2001,7 @@ This is a convienience macro and is lexically scoped."
         (alter-all-symbol-after-def-form
          (partial prefix-symbol prefix)
          body)]
-    `(do ~@newbody)))
+    `(list ~@newbody)))
 
 (defmacro with-suffix
   "Adds a suffix to all defclass macros in scope.
@@ -2009,7 +2011,7 @@ This is a convienience macro and is lexically scoped."
         (alter-all-symbol-after-def-form
          (partial suffix-symbol suffix)
          body)]
-    `(do ~@newbody)))
+    `(list ~@newbody)))
 
 (defmulti refine
   "Takes an existing definition, adds it to the current ontology, and then
