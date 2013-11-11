@@ -21,6 +21,7 @@
   (:require
    [clojure.walk :only postwalk]
    [clojure.set]
+   [clojure.java.io]
    [tawny.util :as util])
   (:import
    (org.semanticweb.owlapi.model OWLOntologyManager OWLOntology IRI
@@ -762,7 +763,8 @@ ontology or an IRI"
          (alter
           (tawny.owl/ontology-options ontology)
           merge {:noname true}))
-        (owl-import ontology tawny-iri))
+        (owl-import ontology
+                    (tawny-ontology)))
       (doseq [[k f] ontology-handlers]
         (f ontology (get options k)))
       ontology)))

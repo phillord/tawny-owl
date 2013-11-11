@@ -46,3 +46,18 @@
 
 (defn- tawny-name [literal]
   (tawny-annotation tawny-name-property literal))
+
+(def ^{:private true}
+  vtawny-ontology (ref nil))
+
+(defn- tawny-ontology
+  "Lazy load and return the tawny ontology."
+  []
+  (if-not @vtawny-ontology
+    (dosync
+     (ref-set
+      vtawny-ontology
+      (.loadOntologyFromOntologyDocument
+       (tawny.owl/owl-ontology-manager)
+       (iri (clojure.java.io/resource "tawny.owl")))))
+    @vtawny-ontology))
