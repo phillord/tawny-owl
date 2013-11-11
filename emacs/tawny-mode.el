@@ -19,7 +19,6 @@
 (require 'clojure-mode)
 (require 'easymenu)
 
-
 (defun tawny-mode-check-for-nrepl-buffer ()
   (if (find-if
            (lambda (buffer)
@@ -151,24 +150,32 @@
 (defvar tawny-mode-protege-entity-last nil)
 (defun tawny-mode-protege-entity ()
   (interactive)
-  (let* ((thing
-          (substring-no-properties
-           (thing-at-point 'symbol)))
-         (thing-split
-          (split-string thing "/"))
-         (thing
-          (or (cadr thing-split)
-              (car thing-split)))
-         (form
-          (format "(do (require 'tawny.protege-nrepl) (tawny.protege-nrepl/display-maybe \"%s\" \"%s\"))"
-                  (clojure-find-ns) thing)))
-    (unless (equal thing tawny-mode-protege-entity-last)
-      (setq tawny-mode-protege-entity-last thing)
-      (nrepl-send-string
-       form
-       (tawny-mode-nrepl-protege-display-handler (current-buffer))
-       nrepl-buffer-ns
-       (nrepl-current-tooling-session)))))
+  (when (equal major-mode 'clojure-mode)
+    (let* ((thing
+            (substring-no-properties
+             (thing-at-point 'symbol)))
+           (thing-split
+            (split-string thing "/"))
+           (thing
+            (or (cadr thing-split)
+                (car thing-split)))
+           (form
+            (format
+             (concat
+              "(try (require 'tawny.protege-nrepl)"
+              ;; use eval we get compilation errors if tawny.protege-nrepl isn't
+              ;; defined.
+              "(eval '(tawny.protege-nrepl/display-maybe \"%s\" \"%s\"))"
+              "(catch Exception exp :not-protege)"
+              ")")
+             (clojure-find-ns) thing)))
+      (unless (equal thing tawny-mode-protege-entity-last)
+        (setq tawny-mode-protege-entity-last thing)
+        (nrepl-send-string
+         form
+         (tawny-mode-nrepl-protege-display-handler (current-buffer))
+         nrepl-buffer-ns
+         (nrepl-current-tooling-session))))))
 
 (defun tawny-mode-nrepl-protege-display-handler (buffer)
   (nrepl-make-response-handler
