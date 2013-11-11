@@ -21,6 +21,13 @@ through protege, but as code can be quite slow, it would be good to have this
 working in concert with testing, so that consistency test errors automate
 explanation.
 
+
+** Tests
+
+Start to re-write the OWL tests, into tawny and check the results.
+
+http://www.w3.org/TR/owl-test/
+
 * Beyond
 
 ** Features

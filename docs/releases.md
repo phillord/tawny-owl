@@ -12,6 +12,11 @@ Release Notes
    `isuper` and `isubclasses` but was breaking a pitfall example.
  - `individual-explicit` was incorrectly declared as variadic and so silently
    ignoring all frames.
+ - `with-suffix` and `with-prefix` were only returning their last form which
+   prevented their use within `as-disjoints` and equivalent.
+ - `tawny.owl` was not necessarily being loaded correctly, leading to profile
+   violations. It is not loaded as a class resource lazily when necessary.
+ - `tawny-emacs.el` was crashing with "Track Entites" should now be fixed.
 
 # 1.0 (rc1)
 
@@ -34,6 +39,14 @@ Release Notes
    file format, but I will write one if it is needed.
  - The format for `obo.clj` has changed to using EDN, rather than a bespoke
    properties file. As with `memorise.clj` there is no converter.
+
+# 1.0
+
+## New Features
+
+ - tawny-emacs.el now has explicit support for Protege
+ - A new `protege-nrepl.clj` namespace which hooks tawny into core Protege
+   data structures.
 
 # 0.12
 
