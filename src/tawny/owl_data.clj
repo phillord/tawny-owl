@@ -143,7 +143,7 @@ which is an OWLDatatype object.
   (add-axiom
    o (.getOWLDatatypeDefinitionAxiom
       (owl-data-factory) datatype
-      (ensure-datatype o equivalent))))
+      (ensure-data-range o equivalent))))
 
 (def ^{:private true}
   datatype-handlers

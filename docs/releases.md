@@ -1,7 +1,13 @@
 Release Notes
 =============
 
-# 1.0 (rc2)
+# 1.0.1
+
+## Bug Fixes
+ - `datatype` equivalents were limited to other datatypes. Now any datarange
+   is usable.
+
+# 1.0
 
 ## Code Changes
  - Introduced `integration_test` namespace for errors that could be in several
