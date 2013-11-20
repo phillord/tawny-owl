@@ -229,7 +229,6 @@ in tawny." class)
       ~@(when (< 0 (count types))
           (cons :type
                 (form types)))
-      "here is a string"
       ~@(when (< 0 (count same))
           (cons :same
                 (form same)))
