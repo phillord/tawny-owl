@@ -152,7 +152,7 @@
     complement
     (do
       (ontology-abc)
-      (o/disjoint-classes to "a" "b")
+      (o/as-disjoint to "a" "b")
       (far #(r/consistent? to))))))
 
   
@@ -163,35 +163,33 @@
     complement
     (do
       (ontology-abc-indc)
-      (o/disjoint-classes to "a" "b")
+      (o/as-disjoint to "a" "b")
       (far #(r/consistent? to))))))
 
 (deftest unsatisfiable []
-
   (is
    (every?
     #(= 0 (count %))
     (do (ontology-abc)
         (far #(r/unsatisfiable to)))))
-
   (is
    (every?
     #(= 1 (count %))
     (do
       (ontology-abc)
-      (o/disjoint-classes to "a" "b")
+      (o/as-disjoint to "a" "b")
       (far #(r/unsatisfiable to))))))
 
 ;; had lots of problems getting this working so lets try with a single reasoner
 (deftest single-coherent
   (is
-   (do 
+   (do
      (r/reasoner-factory :hermit)
      (ontology-abc)
      (r/coherent? to))))
 
 
-(deftest coherent 
+(deftest coherent
   (is
    (every?
     identity
@@ -207,7 +205,7 @@
     not
     (do
       (ontology-abc)
-      (o/disjoint-classes to "a" "b")
+      (o/as-disjoint to "a" "b")
       (far #(r/coherent? to))))))
 
 
@@ -243,7 +241,7 @@
     (do
       (ontology-abc)
       (o/with-probe-axioms to
-        [a (o/disjoint-classes to "a" "b")]
+        [a (o/as-disjoint to "a" "b")]
         (doall (far #(r/coherent? to)))))))
 
   ;; add a disjoint test whether it breaks after
@@ -253,7 +251,7 @@
     (do 
       (ontology-abc)
       (o/with-probe-axioms to
-        [a (o/disjoint-classes to "a" "b")])
+        [a (o/as-disjoint to "a" "b")])
       (doall (far #(r/coherent? to)))))))
 
 

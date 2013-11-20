@@ -70,6 +70,39 @@
       (ensure-data-property o property)
       (ensure-data-property o equivalent))))
 
+(defdontfn equivalent-data-properties
+  [o properties]
+  (let [properties
+        (doall
+         (map (partial ensure-data-property o) properties))]
+    (add-axiom
+     o (.getOWLEquivalentDataPropertiesAxiom
+        (owl-data-factory)
+        (into-array OWLDataPropertyExpression
+                    properties)))))
+
+(defbdontfn add-data-disjoint
+  {:doc "Adds a disjoint data property axiom to the ontology"}
+  [o name disjoint]
+  (add-axiom
+   o
+   (.getOWLDisjointDataPropertiesAxiom
+    (owl-data-factory)
+    (into-array OWLDataPropertyExpression
+                [(ensure-data-property o name)
+                 (ensure-data-property o disjoint)]))))
+
+(defdontfn disjoint-data-properties
+  [o properties]
+  (let [properties
+        (doall
+         (map (partial ensure-data-property o) properties))]
+    (add-axiom
+     o (.getOWLDisjointDataPropertiesAxiom
+        (owl-data-factory)
+        (into-array OWLDataPropertyExpression
+                    properties)))))
+
 (def ^{:private true}
   datatype-property-handlers
   {:annotation add-annotation,
@@ -77,6 +110,7 @@
    :range add-data-range,
    :subproperty add-data-superproperty
    :characteristic add-data-characteristics
+   :disjoint add-data-disjoint
    :equivalent add-data-equivalent
    :comment add-comment
    :label add-label})
@@ -196,7 +230,7 @@ which is an OWLDatatype object.
    (owl-data-factory)
    (into #{} types)))
 
-(.addMethod owl-and :data data-and)
+(.addMethod owl-and ::data data-and)
 
 (defmontfn data-or
   "Returns the union of two data ranges."
@@ -205,7 +239,7 @@ which is an OWLDatatype object.
    (owl-data-factory)
    (into #{} (map (partial ensure-data-range o) types))))
 
-(.addMethod owl-or :data data-or)
+(.addMethod owl-or ::data data-or)
 
 (defmontfn data-not
   "Returns the complement of two data ranges."
@@ -214,7 +248,7 @@ which is an OWLDatatype object.
    (owl-data-factory)
    (ensure-data-range o type)))
 
-(.addMethod owl-not :data data-not)
+(.addMethod owl-not ::data data-not)
 
 (defbmontfn data-some
   "Returns a data some values from restriction."
@@ -224,7 +258,7 @@ which is an OWLDatatype object.
    (ensure-data-property o property)
    (ensure-data-range o data-range)))
 
-(.addMethod owl-some :data data-some)
+(.addMethod owl-some ::data data-some)
 
 (defbmontfn data-only
   "Returns a data all values from restriction."
@@ -234,7 +268,7 @@ which is an OWLDatatype object.
    (ensure-data-property o property)
    (ensure-data-range o datatype)))
 
-(.addMethod only :data data-only)
+(.addMethod only ::data data-only)
 
 (defmontfn data-oneof
   "Returns a data one of restriction."
@@ -244,7 +278,7 @@ which is an OWLDatatype object.
    (into #{}
          literal)))
 
-(.addMethod oneof :literal data-oneof)
+(.addMethod oneof ::literal data-oneof)
 
 (defmontfn data-has-value
   "Returns a data has value restriction."
@@ -255,7 +289,7 @@ which is an OWLDatatype object.
      literal
      (tawny.owl/literal literal))))
 
-(.addMethod has-value :data data-has-value)
+(.addMethod has-value ::data data-has-value)
 
 (defmontfn data-exactly
   "Returns a data exact cardinality restriction."
@@ -264,7 +298,7 @@ which is an OWLDatatype object.
    (owl-data-factory)
    number (ensure-data-property o property)))
 
-(.addMethod exactly :data data-exactly)
+(.addMethod exactly ::data data-exactly)
 
 (defmontfn data-at-most
   "Returns a data max cardinality restriction."
@@ -273,7 +307,7 @@ which is an OWLDatatype object.
    (owl-data-factory) number
    (ensure-data-property o property)))
 
-(.addMethod at-most :data data-at-most)
+(.addMethod at-most ::data data-at-most)
 
 (defmontfn data-at-least
   "Returns a data min cardinality restriction."
@@ -282,7 +316,7 @@ which is an OWLDatatype object.
    (owl-data-factory) number
    (ensure-data-property o property)))
 
-(.addMethod at-least :data data-at-least)
+(.addMethod at-least ::data data-at-least)
 
 (defn owl-min
   "Returns a data min exclusion restriction."
@@ -347,7 +381,7 @@ For example, (span < 10) returns a max exclusive restriction."
    (owl-data-factory)
    (ensure-data-property o property) from to))
 
-(.addMethod get-fact :data data-get-fact)
+(.addMethod get-fact ::data data-get-fact)
 
 (defmontfn data-get-fact-not
   "Returns a data negative fact."
@@ -356,4 +390,4 @@ For example, (span < 10) returns a max exclusive restriction."
    (owl-data-factory)
    (ensure-data-property o property) from to))
 
-(.addMethod get-fact-not :data data-get-fact-not)
+(.addMethod get-fact-not ::data data-get-fact-not)

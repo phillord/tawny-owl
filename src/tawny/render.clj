@@ -564,6 +564,10 @@ element is a list."
         (form (.getProperty p))
         (form (.getValue p))))
 
+(defmethod form org.semanticweb.owlapi.model.OWLObjectInverseOf [p]
+  (list 'inverse (form (.getInverse p))))
+ 
+
 (defmethod form String [e]
   e)
 

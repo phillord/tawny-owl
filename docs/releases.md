@@ -6,6 +6,21 @@ Release Notes
 ## Bug Fixes
  - `datatype` equivalents were limited to other datatypes. Now any datarange
    is usable.
+=======
+## New Features
+ - Introduced new functions for declaring disjoint object and data properties.
+   `as-disjoint` now supports all of these.
+ - Introduced new function, `as-equivalent` which works for classes, object or
+   date properties.
+ - Both `equivalent?` and `disjoints?` now work for data and object properties
+   also.
+ - `inverse` function allows for anonymous reference to the inverse of a
+   property expression.
+
+## Breaking Changes
+ - `disjoint-classes` list has been removed, and `disjoint-classes-list` has
+   been renamed to `disjoint-classes`!
+
 
 # 1.0
 

@@ -309,11 +309,12 @@
 
 (deftest disjoint-classes []
   (is
-   (do (#'o/disjoint-classes to "a" "b" "c")))
+   (do (#'o/disjoint-classes to ["a" "b" "c"])))
 
   (is
-   (do (#'o/disjoint-classes to
-        (o/owl-class "a" :ontology to) (o/owl-class "b" :ontology to)))))
+   (do (#'o/disjoint-classes 
+        to
+        [(o/owl-class "a" :ontology to) (o/owl-class "b" :ontology to)]))))
 
 (deftest owl-class
   (is (= 1
@@ -371,7 +372,9 @@ Assumes that fixture has been run
 
 
 (deftest disjoint-classes []
-  (is (not (nil? (#'o/disjoint-classes to "a" "b" "c")))))
+  (is (not (nil?
+            (#'o/disjoint-classes
+             to ["a" "b" "c"])))))
 
 (deftest individual []
   (is (o/individual to "ind"))
@@ -448,7 +451,7 @@ Assumes that fixture has been run
       (do
         (ontology-c-with-two-parents)
         (o/with-probe-axioms to
-          [a (#'o/disjoint-classes to "a" "b")]
+          [a (o/as-disjoint to "a" "b")]
           (-> to
               (.getDisjointClassesAxioms
                (o/owl-class to "a"))
@@ -460,7 +463,8 @@ Assumes that fixture has been run
       (do
         (ontology-c-with-two-parents)
         (o/with-probe-axioms to
-          [a (#'o/disjoint-classes to "a" "b")])
+          [a (#'o/disjoint-classes
+              to ["a" "b"])])
 
         (-> to
             (.getDisjointClassesAxioms
@@ -542,8 +546,25 @@ Assumes that fixture has been run
 
 
 (deftest dataproperty
-  (is (instance? org.semanticweb.owlapi.model.OWLDataProperty 
+  (is (instance? org.semanticweb.owlapi.model.OWLDataProperty
                  (o/datatype-property "hello" :ontology to))))
+
+
+
+
+(deftest as-disjoint
+  (is
+   (o/as-disjoint to
+    (o/owl-class to "a")
+    (o/owl-class to "b")))
+  (is
+   (o/as-disjoint to
+    (o/object-property to "r")
+    (o/object-property to "s")))
+  (is
+   (o/as-disjoint to
+    (o/datatype-property to "d")
+    (o/datatype-property to "e"))))
 
 
 
@@ -551,8 +572,28 @@ Assumes that fixture has been run
   (is
    (let [a (o/owl-class to "a")
          b (o/owl-class to "b")]
-     (#'o/disjoint-classes to a b)
-     (o/disjoint? to a b))))
+     (#'o/disjoint-classes to [a b])
+     (o/disjoint? to a b)))
+  (is
+   (not
+    (let [a (o/owl-class to "a")
+          b (o/owl-class to "b")
+          c (o/owl-class to "c")]
+      (#'o/disjoint-classes to [a b])
+      (o/disjoint? to a c))))
+  (is
+   (let [r (o/object-property to "r")
+         s (o/object-property to "s")
+         t (o/object-property to "t")]
+     (o/as-disjoint to r s)
+     (o/disjoint? to r s)))
+  (is
+   (not
+    (let [r (o/object-property to "r")
+          s (o/object-property to "s")
+          t (o/object-property to "t")]
+      (o/as-disjoint to r s)
+      (o/disjoint? to r t)))))
 
 
 
@@ -643,31 +684,41 @@ Assumes that fixture has been run
 
 
 (deftest guess
-  (is (= :object
+  (is (= :tawny.owl/class
          (o/guess-type to
           (o/owl-class to "a"))))
 
-  (is (= :annotation
+  (is (isa?
+       (o/guess-type
+        to
+        (o/owl-class to "a"))
+       :tawny.owl/object))
+
+  (is (= :tawny.owl/annotation
          (o/guess-type to
           (o/annotation-property to "b"))))
 
-  (is (= :object
+  (is (= :tawny.owl/class
          (do
            (o/owl-class to "c")
            (o/guess-type to "c"))))
 
-
-  (is (= :object
+  (is (= :tawny.owl/class
          (o/guess-type to
           (list (o/owl-class to "d") "e" "f"))))
 
-  (is (= :object
+  (is (isa?
+         (o/guess-type to
+          (list (o/owl-class to "d") "e" "f"))
+         :tawny.owl/object))
+
+  (is (= :tawny.owl/class
          (o/guess-type to
           (list "e" "f" (o/owl-class to "d"))))))
 
 
 (deftest veggiepizza
-  (is (= :object
+  (is (= :tawny.owl/class
          (do
            (o/guess-type to
             (o/with-probe-entities to
@@ -773,3 +824,42 @@ Assumes that fixture has been run
     (o/owl-comment to
      (o/literal to "comment"
                  :type :RDF_PLAIN_LITERAL)))))
+
+(deftest as-equivalent
+  (is
+   (o/as-equivalent to
+    (o/owl-class to "a")
+    (o/owl-class to "b")))
+  (is
+   (o/as-equivalent to
+    (o/object-property to "r")
+    (o/object-property to "s")))
+  (is
+   (o/as-equivalent to
+    (o/datatype-property to "d")
+    (o/datatype-property to "e"))))
+
+
+(deftest equivalent?
+  (is
+   (let [a (o/owl-class to "a")
+         b (o/owl-class to "b")
+         c (o/owl-class to "c")]
+     (o/as-equivalent
+      to a b)
+     (and (o/equivalent? to a b)
+          (not (o/equivalent? to a c)))))
+  (is
+   (let [a (o/object-property to "r")
+         b (o/object-property to "s")
+         c (o/object-property to "t")]
+     (o/as-equivalent to a b)
+     (and (o/equivalent? to a b)
+          (not (o/equivalent? to b c)))))
+  (is
+   (let [a (o/datatype-property to "r")
+         b (o/datatype-property to "s")
+         c (o/datatype-property to "t")]
+     (o/as-equivalent to a b)
+     (and (o/equivalent? to a b)
+          (not (o/equivalent? to b c))))))

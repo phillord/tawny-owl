@@ -27,6 +27,7 @@
    (org.semanticweb.owlapi.model OWLOntologyManager OWLOntology IRI
                                  OWLClassExpression OWLClass OWLAnnotation
                                  OWLIndividual OWLDatatype
+                                 OWLObjectPropertyExpression
                                  OWLNamedObject OWLOntologyID
                                  OWLAnnotationProperty OWLObjectProperty
                                  OWLDataProperty OWLDataRange
@@ -901,8 +902,14 @@ If no ontology is given, use the current-ontology"
                       this-format output-stream))))
 
 ;;; Begin OWL entity guess/ensure
+(derive ::class ::object)
+(derive ::object-property ::object)
+(derive ::object-property ::property)
+(derive ::data-property ::property)
+(derive ::data-property ::data)
+
 (defmontfn guess-type
-  "Guesses the type of the entity. Returns :object, :data or :annotation or
+  "Guesses the type of the entity. Returns ::object, :data or :annotation or
 nil where the type cannot be guessed. IllegalArgumentException is thrown for
 arguments which make no sense (not an OWLObject, IRI, String or number).
 
@@ -915,21 +922,28 @@ using the current ontology rules, and check again. Finally, check convert to
 an IRI with no transformation. nil is returned when the result is not clear.
 "
   [o entity]
-  (let [oneof? (partial some (fn[n] (instance? n entity)))]
+  (let [oneof? (fn[& rest]
+                 (some
+                  #(instance? % entity) rest))]
     (cond
      ;; it's a collection -- find the first entity
      (coll? entity)
      (some (partial guess-type o) entity)
      ;; return if individual, class, datatype
      (oneof?
-      [OWLClassExpression OWLObjectProperty])
-     :object
+      OWLClassExpression)
+     ::class
+     (oneof? OWLObjectPropertyExpression)
+     ::object-property
      (oneof?
-      [OWLAnnotationProperty])
-     :annotation
+      OWLAnnotationProperty)
+     ::annotation
      (oneof?
-      [OWLDataRange OWLDataPropertyExpression])
-     :data
+      OWLDataPropertyExpression)
+     ::data-property
+     (oneof?
+      OWLDataRange)
+     ::data
      ;; up to this point, o can be nil -- after this point, we need to know
      ;; the ontology we are searching in.
      ;; if an IRI, see if it is the current ontology
@@ -938,7 +952,7 @@ an IRI with no transformation. nil is returned when the result is not clear.
      ;; keyword -- these are builtin OWL2Datatypes
      (and (keyword? entity)
           (get owl2datatypes entity))
-     :data
+     ::data
      ;; string name in current ontology?
      (string? entity)
      (guess-type o (entity-for-string o entity))
@@ -962,9 +976,9 @@ an IRI with no transformation. nil is returned when the result is not clear.
    (coll? entity)
    (some (partial guess-individual-literal o) entity)
    (instance? OWLIndividual entity)
-   :individual
+   ::individual
    (instance? OWLLiteral entity)
-   :literal
+   ::literal
    (instance? IRI entity)
    (guess-individual-literal o
                              (entity-for-iri o entity))
@@ -984,7 +998,7 @@ or throw an exception if it cannot be converted."
   (cond
    (fn? prop)
    (ensure-object-property o (prop))
-   (instance? OWLObjectProperty prop)
+   (instance? OWLObjectPropertyExpression prop)
    prop
    (instance? IRI prop)
    (.getOWLObjectProperty (owl-data-factory) prop)
@@ -1139,9 +1153,9 @@ interpret this as a string and create a new OWLIndividual."
     (let [type (guess-type o propertylist)
           propertylist
           (cond
-           (= :object type)
+           (isa? type ::object)
            (map (partial ensure-object-property o) propertylist)
-           (= :data type)
+           (isa? type ::data)
            (map (partial ensure-data-property o) propertylist)
            :default
            (throw
@@ -1179,6 +1193,10 @@ interpret this as a string and create a new OWLIndividual."
               (ensure-object-property o property)
               (ensure-object-property o inverse))))
 
+(defmontfn inverse [o property]
+  (.getOWLObjectInverseOf
+   (owl-data-factory)
+   (ensure-object-property o property)))
 
 (defbdontfn add-superproperty
   "Adds all items in superpropertylist to property as
@@ -1211,6 +1229,47 @@ a superproperty."
                      o property)
             lists)))))
 
+(defbdontfn add-equivalent-property
+  "Adds a equivalent data properties axiom."
+  [o property equivalent]
+  (add-axiom
+   o (.getOWLEquivalentObjectPropertiesAxiom
+      (owl-data-factory)
+      (ensure-object-property o property)
+      (ensure-object-property o equivalent))))
+
+(defdontfn equivalent-properties
+  [o properties]
+  (let [properties
+        (map (partial
+               ensure-object-property o) properties)]
+    (add-axiom
+     o (.getOWLEquivalentObjectPropertiesAxiom
+        (owl-data-factory)
+        (into-array OWLObjectPropertyExpression
+                    properties)))))
+
+(defbdontfn add-disjoint-property
+  {:doc "Adds a disjoint property axiom to the ontology"}
+  [o name disjoint]
+  (add-axiom
+   o
+   (.getOWLDisjointObjectPropertiesAxiom
+    (owl-data-factory)
+    (into-array OWLObjectPropertyExpression
+                [(ensure-object-property o name)
+                 (ensure-object-property o disjoint)]))))
+
+(defdontfn disjoint-properties
+  [o properties]
+  (let [properties
+        (doall
+         (map (partial ensure-object-property o) properties))]
+    (add-axiom
+     o (.getOWLDisjointObjectPropertiesAxiom
+        (owl-data-factory)
+        (into-array OWLObjectPropertyExpression
+                    properties)))))
 
 (def
   ^{:private true}
@@ -1242,6 +1301,8 @@ a superproperty."
    :subproperty add-superproperty
    :characteristic add-characteristics
    :subpropertychain add-subpropertychain
+   :disjoint add-disjoint-property
+   :equivalent add-equivalent-property
    :annotation add-annotation
    :label add-label
    :comment add-comment})
@@ -1349,7 +1410,7 @@ value for each frame."
    (ensure-class o class)))
 
 ;; use add method because we want object-some to have independent life!
-(.addMethod owl-some :object object-some)
+(.addMethod owl-some ::object object-some)
 
 (defbmontfn object-only
   {:doc "Returns an OWL all values from restriction."
@@ -1360,7 +1421,7 @@ value for each frame."
    (ensure-object-property o property)
    (ensure-class o class)))
 
-(.addMethod only :object object-only)
+(.addMethod only ::object object-only)
 
 ;; union, intersection
 (defmontfn object-and
@@ -1379,7 +1440,7 @@ value for each frame."
        classes)))))
 
 ;; add to multi method
-(.addMethod owl-and :object object-and)
+(.addMethod owl-and ::object object-and)
 
 (defmontfn object-or
   "Returns an OWL union of restriction."
@@ -1394,7 +1455,7 @@ value for each frame."
       (util/domap #(ensure-class o %)
                   (flatten classes))))))
 
-(.addMethod owl-or :object object-or)
+(.addMethod owl-or ::object object-or)
 
 ;; lots of restrictions return a list which can be of size one. so all these
 ;; functions take a list but ensure that it is of size one.
@@ -1407,7 +1468,7 @@ value for each frame."
    (owl-data-factory)
    (ensure-class o (first (flatten class)))))
 
-(.addMethod owl-not :object object-not)
+(.addMethod owl-not ::object object-not)
 
 (defmontfn object-some-only
   "Returns an restriction combines the OWL some values from and
@@ -1421,7 +1482,7 @@ all values from restrictions."
    (object-only o property
                 (apply object-or o classes))))
 
-(.addMethod some-only :object object-some-only)
+(.addMethod some-only ::object object-some-only)
 
 ;; cardinality
 (defmontfn object-at-least
@@ -1434,7 +1495,7 @@ all values from restrictions."
    (ensure-object-property o property)
    (ensure-class o (first (flatten class)))))
 
-(.addMethod at-least :object object-at-least)
+(.addMethod at-least ::object object-at-least)
 
 (defmontfn object-at-most
   "Returns an OWL at-most cardinality restriction."
@@ -1446,7 +1507,7 @@ all values from restrictions."
    (ensure-object-property o property)
    (ensure-class o (first (flatten class)))))
 
-(.addMethod at-most :object object-at-most)
+(.addMethod at-most ::object object-at-most)
 
 (defmontfn object-exactly
   "Returns an OWL exact cardinality restriction."
@@ -1458,7 +1519,7 @@ all values from restrictions."
    (ensure-object-property o property)
    (ensure-class o (first (flatten class)))))
 
-(.addMethod exactly :object object-exactly)
+(.addMethod exactly ::object object-exactly)
 
 (defmontfn object-oneof
   "Returns an OWL one of property restriction."
@@ -1470,7 +1531,7 @@ all values from restrictions."
      (map (partial ensure-individual o)
           (flatten individuals))))))
 
-(.addMethod oneof :individual object-oneof)
+(.addMethod oneof ::individual object-oneof)
 
 (defmontfn object-has-value
   "Adds an OWL has-value restriction."
@@ -1479,7 +1540,7 @@ all values from restrictions."
                           (ensure-object-property o property)
                           (ensure-individual o individual)))
 
-(.addMethod has-value :object object-has-value)
+(.addMethod has-value ::object object-has-value)
 
 (defmontfn has-self
   "Returns an OWL has self restriction."
@@ -1541,11 +1602,11 @@ combination of the two. The class object is stored in a var called classname."
          class# (tawny.owl/owl-class string-name# ~@frames)]
      (intern-owl ~classname class#)))
 
-(defdontfn disjoint-classes-list
+(defdontfn disjoint-classes
   "Makes all elements in list disjoint.
 All arguments must of an instance of OWLClassExpression"
   [o list]
-  {:pre [(seq? list)
+  {:pre [(sequential? list)
          (> (count list) 1)]}
   (let [classlist
         (doall
@@ -1559,11 +1620,23 @@ All arguments must of an instance of OWLClassExpression"
                 (into-array OWLClassExpression
                             classlist)))))
 
-(defdontfn disjoint-classes
-  "Makes all the arguments disjoint.
-All arguments must be an instance of OWLClassExpression."
-  [o & list]
-  (disjoint-classes-list o list))
+(defdontfn equivalent-classes
+  "Makes all elements in list equivalent.
+All arguments must of an instance of OWLClassExpression"
+  [o list]
+  {:pre [(sequential? list)
+         (> (count list) 1)]}
+  (let [classlist
+        (doall
+         (map
+          (fn [x]
+            (ensure-class o x))
+          list))]
+    (add-axiom o
+               (.getOWLEquivalentClassesAxiom
+                (owl-data-factory)
+                (into-array OWLClassExpression
+                            classlist)))))
 
 (defbdontfn add-type
   {:doc "Adds CLAZZES as a type to individual to current ontology
@@ -1608,7 +1681,7 @@ toward an individual TO."
    (owl-data-factory)
    property from to))
 
-(.addMethod get-fact :object object-get-fact)
+(.addMethod get-fact ::object object-get-fact)
 
 (defmontfn object-get-fact-not
   "Returns a negative OWL Object property assertion axiom."
@@ -1617,7 +1690,7 @@ toward an individual TO."
    (owl-data-factory)
    property from to))
 
-(.addMethod get-fact-not :object object-get-fact-not)
+(.addMethod get-fact-not ::object object-get-fact-not)
 
 (defdontfn
   add-same
@@ -1697,14 +1770,43 @@ or to ONTOLOGY if present."
     var-maybe))
 
 (defdontfn as-disjoint
-  {:doc "All entities declared in scope are declared as disjoint.
-See also 'as-subclasses'."
-   :arglists '([ontology & classes] [& classes])}
-  [o & classes]
-  (disjoint-classes-list
-   o (map var-get-maybe
-          (flatten
-           classes))))
+  {:doc "All entities are declared as disjoint. Entities may be
+any structure and may also be a var. See also 'as-subclasses'."
+   :arglists '([ontology & entities] [& entities])}
+  [o & entities]
+  (let [entities
+        (map var-get-maybe (flatten entities))]
+    (case
+        (apply guess-type-args o
+               (map var-get-maybe
+                    (flatten
+                     entities)))
+      ::class
+      (disjoint-classes o entities)
+      ::object-property
+      (disjoint-properties o entities)
+      ::data-property
+      (disjoint-data-properties o entities)
+      (throw (IllegalArgumentException.
+              "Unable to determine the type of entities.")))))
+
+(defdontfn as-equivalent
+  [o & entities]
+  (let [entities
+        (map var-get-maybe (flatten entities))]
+    (case
+        (apply guess-type-args o
+               (map var-get-maybe
+                    (flatten
+                     entities)))
+      ::class
+      (equivalent-classes o entities)
+      ::object-property
+      (equivalent-properties o entities)
+      ::data-property
+      (equivalent-data-properties o entities)
+      (throw (IllegalArgumentException.
+              "Unable to determine the type of entities.")))))
 
 (defdontfn as-inverse
   {:doc "Declare the two properties as inverse"
@@ -1736,7 +1838,7 @@ The first item may be an ontology, followed by options.
      subclasses)
     (when
         (:disjoint options)
-      (disjoint-classes-list o subclasses))
+      (disjoint-classes o subclasses))
     (when (:cover options)
       (add-equivalent o superclass
                       (owl-or o subclasses)))))
@@ -1853,17 +1955,41 @@ expressions."
     (some #(.equals subclasscls %) (subclasses o name))))
 
 (defdontfn disjoint?
-  "Returns t iff classes are asserted to be disjoint."
+  "Returns t iff entities (classes or properties) are asserted to be
+  disjoint."
   [o a b]
-  (contains?
-   (.getDisjointClasses a o)
-   b))
+  (let [type (guess-type-args o a b)]
+    (cond
+     (isa? type ::class)
+     (contains?
+      (.getDisjointClasses a o)
+      b)
+     ;; works for either data or object properties
+     (isa? type ::property)
+     (contains?
+      (.getDisjointProperties a o)
+      b)
+     :default
+     (throw
+      (IllegalArgumentException.
+       "Cannot determine disjoint for this form of entity")))))
 
 (defdontfn equivalent?
   "Returns t iff classes are asserted to be equivalent."
   [o a b]
-  (contains?
-   (.getEquivalentClasses a o) b))
+  (let [type (guess-type-args o a b)]
+    (cond
+     (isa? type ::class)
+     (contains?
+      (.getEquivalentClasses a o) b)
+     (isa? type ::property)
+     (contains?
+      (.getEquivalentProperties a o)
+      b)
+     :default
+     (throw
+      (IllegalArgumentException.
+       "Cannot determine equivalence for this type of entity")))))
 
 (defdontfn inverse?
   "Returns t iff properties are asserted to be inverse"
