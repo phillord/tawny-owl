@@ -7,3 +7,4 @@ docs/*html
 /catalog-v001.xml
 /.sync.clj
 /.lein-repl-history
+/dev-resources/sio_rendered.clj

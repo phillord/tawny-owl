@@ -18,10 +18,10 @@
 (defn render-sio [tests]
   (def sio (read-sio))
   ;; target/classes is in the classpath which makes life easier.
-  (spit "target/classes/sio_rendered.clj" "(in-ns 'sio-header)\n")
+  (spit "dev-resources/sio_rendered.clj" "(in-ns 'sio-header)\n")
   (doseq [n (.getSignature sio)]
     (binding [tawny.render/*explicit* true]
-      (spit "target/classes/sio_rendered.clj"
+      (spit "dev-resources/sio_rendered.clj"
             (str
              (tawny.render/as-form n) "\n")
             :append true)))
