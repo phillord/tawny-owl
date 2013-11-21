@@ -161,6 +161,9 @@ which is an OWLDatatype object.
 "
   [o literal & {:keys [lang type]}]
   (cond
+   ;; null operation
+   (instance? OWLLiteral literal)
+   literal
    lang
    (.getOWLLiteral (owl-data-factory) literal lang)
    type
@@ -169,7 +172,6 @@ which is an OWLDatatype object.
                    (ensure-datatype o type))
    :default
    (.getOWLLiteral (owl-data-factory) literal)))
-
 
 (defbdontfn add-datatype-equivalent
   "Adds a datatype equivalent axiom"
@@ -272,11 +274,11 @@ which is an OWLDatatype object.
 
 (defmontfn data-oneof
   "Returns a data one of restriction."
-  [o & literal]
+  [o & literals]
   (.getOWLDataOneOf
    (owl-data-factory)
    (into #{}
-         literal)))
+         (map (partial literal o) literals))))
 
 (.addMethod oneof ::literal data-oneof)
 

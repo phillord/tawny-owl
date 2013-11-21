@@ -717,6 +717,20 @@ Assumes that fixture has been run
           (list "e" "f" (o/owl-class to "d"))))))
 
 
+(deftest literal-args
+  (is
+   (= :tawny.owl/literal
+       (o/guess-individual-literal to 10)))
+  (is
+   (= :tawny.owl/literal
+      (o/guess-individual-literal to "bob")))
+
+  (is
+   (= :tawny.owl/individual
+      (do (o/individual to "bob")
+          (o/guess-individual-literal to "bob")))))
+
+
 (deftest veggiepizza
   (is (= :tawny.owl/class
          (do
@@ -737,7 +751,22 @@ Assumes that fixture has been run
   (is
    (instance?
     org.semanticweb.owlapi.model.OWLDataOneOf
-    (o/oneof to (o/literal to "hello")))))
+    (o/oneof to (o/literal to "hello"))))
+
+  (is
+   (instance?
+    org.semanticweb.owlapi.model.OWLDataOneOf
+    (o/oneof to 10)))
+
+  (is
+   (instance?
+    org.semanticweb.owlapi.model.OWLDataOneOf
+    (o/oneof to 10 11 12 13)))
+
+  (is
+   (instance?
+    org.semanticweb.owlapi.model.OWLDataOneOf
+    (o/oneof to true))))
 
 
 (deftest add-different

@@ -983,8 +983,15 @@ an IRI with no transformation. nil is returned when the result is not clear.
    (guess-individual-literal o
                              (entity-for-iri o entity))
    (string? entity)
-   (guess-individual-literal o
-                             (entity-for-string o entity))
+   (if-let [owlentity (entity-for-string o entity)]
+     (guess-individual-literal
+      o owlentity)
+     ::literal)
+   (number? entity)
+   ::literal
+   (or (= true entity)
+       (= false entity))
+   ::literal
    :default
    (throw (IllegalArgumentException.
            (str "Cannot tell if this is individual or literal:" entity)))))
