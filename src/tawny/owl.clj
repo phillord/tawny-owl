@@ -1536,7 +1536,7 @@ all values from restrictions."
 (defmontfn object-has-value
   "Adds an OWL has-value restriction."
   [o property individual]
-  (.getOWLObjectHas-Value (owl-data-factory)
+  (.getOWLObjectHasValue (owl-data-factory)
                           (ensure-object-property o property)
                           (ensure-individual o individual)))
 
