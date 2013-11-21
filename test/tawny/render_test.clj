@@ -25,7 +25,9 @@
   (alter-var-root
    #'to
    (fn [x]
-     (o/ontology :iri "http://iri/" :prefix "iri")))
+     (o/ontology :iri "http://iri/"
+                 :noname true
+                 :prefix "iri")))
   (test))
 
 (use-fixtures :each createtestontology)
@@ -77,7 +79,73 @@
                   (o/owl-some to "rD" (o/span < 1)))))))
 
 
+(deftest individual-fact-1
+  (is
+   (= '(individual (iri "http://iri/#I")
+                   :fact
+                   (fact (iri "http://iri/#r")
+                         (iri "http://iri/#I2")))
+      (r/as-form
+       (o/individual to "I"
+                     :fact (o/fact to (o/object-property to "r")
+                                   (o/individual to "I2")))))))
 
-;;(eval (tawny.render/as-form (first (.getSignature (read-sio)))))
+(deftest individual-fact-2
+  (is
+   (= '(individual (iri "http://iri/#I")
+                   :fact
+                   (fact-not (iri "http://iri/#r")
+                             (iri "http://iri/#I2")))
+      (r/as-form
+       (o/individual to "I"
+                     :fact (o/fact-not to (o/object-property to "r")
+                                   (o/individual to "I2")))))))
 
 
+(deftest individual-3
+  (is
+   (=
+    `(individual (iri "http://iri/#I")
+                :fact
+                (fact (iri "http://iri/#r")
+                         (iri "http://iri/#I2"))
+                (fact-not (iri "http://iri/#r")
+                          (iri "http://iri/#I2"))))
+   (r/as-form
+    (o/individual to "I"
+                  :fact
+                     (o/fact to (o/object-property to "r")
+                             (o/individual to "I2"))
+                     (o/fact-not to (o/object-property to "r")
+                                 (o/individual to "I2"))))))
+
+
+(deftest individual-data
+  (is
+   (=
+    '(individual
+      (iri "http://iri/#I")
+      :fact (fact (iri "http://iri/#d")
+                  (literal "10" :type :XSD_INTEGER)))
+    (r/as-form
+     (o/individual to "I"
+                   :fact
+                   (o/fact to (o/datatype-property to "d")
+                           10))))))
+
+
+(deftest individual-data-2
+  (is
+   (= '(individual (iri "http://iri/#I")
+                   :fact
+                   (fact (iri "http://iri/#r")
+                         (iri "http://iri/#I2"))
+                   (fact (iri "http://iri/#d")
+                         (literal "10" :type :XSD_INTEGER)))
+      (r/as-form
+       (o/individual to "I"
+                     :fact
+                     (o/fact to (o/datatype-property to "d")
+                             10)
+                     (o/fact to (o/object-property to "r")
+                             (o/individual to "I2")))))))

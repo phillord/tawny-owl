@@ -209,17 +209,13 @@ in tawny." class)
         (setmap
          #(.getAnnotations p %) ont)
         fact
-        (clojure.set/union
-         (apply clojure.set/union
-                (map #(.getDataPropertyValues p %) ont))
-         (apply clojure.set/union
-                (map #(.getObjectPropertyValues p %) ont)))
+        (merge
+         (into {} (setmap #(.getDataPropertyValues p %) ont))
+         (into {} (setmap #(.getObjectPropertyValues p %) ont)))
         factnot
-        (clojure.set/union
-         (apply clojure.set/union
-                (map #(.getNegativeDataPropertyValues p %) ont))
-         (apply clojure.set/union
-                (map #(.getNegativeObjectPropertyValues p %) ont)))
+        (merge
+         (into {} (setmap #(.getNegativeDataPropertyValues p %) ont))
+         (into {} (setmap #(.getNegativeObjectPropertyValues p %) ont)))
         ind (form p)
         ]
     `(~(if (symbol? ind)
@@ -244,7 +240,7 @@ in tawny." class)
           (doall (concat
                   [:fact]
                   (form [:fact fact])
-                  (form [:factnot factnot])))))))
+                  (form [:fact-not factnot])))))))
 
 (defmethod as-form OWLDataProperty [p]
   (let [ont (ontologies)
