@@ -16,6 +16,9 @@ Release Notes
    also.
  - `inverse` function allows for anonymous reference to the inverse of a
    property expression.
+ - `oneof` now takes accepts strings, numbers and booleans as literals without
+   requiring `literal`.
+ - Unqualified cardinality is now supported without using of `owl-thing`
 
 ## Breaking Changes
  - `disjoint-classes` list has been removed, and `disjoint-classes-list` has
