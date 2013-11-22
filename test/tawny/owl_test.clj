@@ -892,3 +892,17 @@ Assumes that fixture has been run
      (o/as-equivalent to a b)
      (and (o/equivalent? to a b)
           (not (o/equivalent? to b c))))))
+
+
+(deftest object-at-most
+  (is
+   (let [p (o/object-property to "p")
+         c (o/owl-class to "c")]
+     (= c
+        (.getFiller
+         (o/object-at-most to 1 p c)))))
+  (is
+   (let [p (o/object-property to "p")]
+     (=  (o/owl-thing)
+         (.getFiller
+          (o/object-at-most to 1 p))))))

@@ -1492,27 +1492,41 @@ all values from restrictions."
 (.addMethod some-only ::object object-some-only)
 
 ;; cardinality
+(defmacro with-optional-class
+  "Calls form as is, or adds n to it iff n is not nil.
+n is evaluated only once, so can have side effects."
+  [o n form]
+  (let [nn (gensym "n")]
+    `(let [~nn (first (flatten ~n))]
+       (if (nil? ~nn)
+         ~form
+         ~(concat
+           form
+           `((ensure-class ~o ~nn)))))))
+
+
 (defmontfn object-at-least
   "Returns an OWL at-least cardinality restriction."
   [o cardinality property & class]
-  {:pre [(= 1
+  {:pre [(> 2
             (count (flatten class)))]}
-  (.getOWLObjectMinCardinality
-   (owl-data-factory) cardinality
-   (ensure-object-property o property)
-   (ensure-class o (first (flatten class)))))
+  ;; we only take a single class here, but it could be in any form because of
+  ;; the broadcasting functions
+  (with-optional-class
+    o class
+    (.getOWLObjectMinCardinality
+     (owl-data-factory) cardinality
+     (ensure-object-property o property))))
 
 (.addMethod at-least ::object object-at-least)
 
 (defmontfn object-at-most
   "Returns an OWL at-most cardinality restriction."
   [o cardinality property & class]
-  {:pre [(= 1
-            (count (flatten class)))]}
-  (.getOWLObjectMaxCardinality
-   (owl-data-factory) cardinality
-   (ensure-object-property o property)
-   (ensure-class o (first (flatten class)))))
+  (with-optional-class o class
+    (.getOWLObjectMaxCardinality
+     (owl-data-factory) cardinality
+     (ensure-object-property o property))))
 
 (.addMethod at-most ::object object-at-most)
 
@@ -1521,10 +1535,10 @@ all values from restrictions."
   [o cardinality property & class]
   {:pre [(= 1
             (count (flatten class)))]}
-  (.getOWLObjectExactCardinality
-   (owl-data-factory) cardinality
-   (ensure-object-property o property)
-   (ensure-class o (first (flatten class)))))
+  (with-optional-class o class
+    (.getOWLObjectExactCardinality
+     (owl-data-factory) cardinality
+     (ensure-object-property o property))))
 
 (.addMethod exactly ::object object-exactly)
 
