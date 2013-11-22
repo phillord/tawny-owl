@@ -3,10 +3,6 @@ Release Notes
 
 # 1.0.1
 
-## Bug Fixes
- - `datatype` equivalents were limited to other datatypes. Now any datarange
-   is usable.
-=======
 ## New Features
  - Introduced new functions for declaring disjoint object and data properties.
    `as-disjoint` now supports all of these.
@@ -23,6 +19,10 @@ Release Notes
 ## Breaking Changes
  - `disjoint-classes` list has been removed, and `disjoint-classes-list` has
    been renamed to `disjoint-classes`!
+
+## Bug Fixes
+ - `datatype` equivalents were limited to other datatypes. Now any datarange
+   is usable.
 
 
 # 1.0
