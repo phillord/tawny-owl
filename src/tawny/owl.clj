@@ -1523,6 +1523,8 @@ n is evaluated only once, so can have side effects."
 (defmontfn object-at-most
   "Returns an OWL at-most cardinality restriction."
   [o cardinality property & class]
+  {:pre [(> 2
+            (count (flatten class)))]}
   (with-optional-class o class
     (.getOWLObjectMaxCardinality
      (owl-data-factory) cardinality
@@ -1533,7 +1535,7 @@ n is evaluated only once, so can have side effects."
 (defmontfn object-exactly
   "Returns an OWL exact cardinality restriction."
   [o cardinality property & class]
-  {:pre [(= 1
+  {:pre [(> 2
             (count (flatten class)))]}
   (with-optional-class o class
     (.getOWLObjectExactCardinality
