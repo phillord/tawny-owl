@@ -3,6 +3,10 @@ Release Notes
 
 # 1.0.1
 
+## Documentation
+ - Have added more exemplar ontologies. The OWL primer ontology has now been
+   ported to Tawny.
+
 ## New Features
  - Introduced new functions for declaring disjoint object and data properties.
    `as-disjoint` now supports all of these.
@@ -23,6 +27,9 @@ Release Notes
 ## Bug Fixes
  - `datatype` equivalents were limited to other datatypes. Now any datarange
    is usable.
+
+## Dependencies
+ - OWL API to 3.4.9. Hermit to 1.3.8.3
 
 
 # 1.0

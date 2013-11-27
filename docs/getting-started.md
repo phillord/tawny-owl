@@ -36,6 +36,12 @@ examples from the tawny-pizza -- the traditional
 A working version of this ontology ported to Tawny is
 [available](https://github.com/phillord/tawny-pizza).
 
+For a more complete exemplar, using most of the expressivity of OWL, we have
+rewritten the [family ontology](https://github.com/phillord/owl-primer) from
+the [OWL Primer](http://www.w3.org/TR/owl2-primer/). Finally, for a "real"
+ontology in development, please see the
+[karyotype ontology](https://github.com/jaydchan/tawny-karyotype).
+
 
 ## Creating a new project
 
