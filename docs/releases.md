@@ -1,7 +1,7 @@
 Release Notes
 =============
 
-# 1.0.1
+# 1.1.0
 
 ## Documentation
  - Have added more exemplar ontologies. The OWL primer ontology has now been
@@ -19,6 +19,8 @@ Release Notes
  - `oneof` now takes accepts strings, numbers and booleans as literals without
    requiring `literal`.
  - Unqualified cardinality is now supported without using of `owl-thing`
+ - The JFact reasoner is now supported.
+ - New aliases have been added to `tawny.english`.
 
 ## Breaking Changes
  - `disjoint-classes` list has been removed, and `disjoint-classes-list` has
