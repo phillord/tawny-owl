@@ -97,12 +97,12 @@
 ;; for all reasoners
 (defn far [func]
   (far-reasoner func
-                '(:elk :hermit)))
+                '(:elk :hermit :jfact)))
 
 ;; for all dl reasoners
 (defn fadlr [func]
   (far-reasoner func
-                '(:hermit)))
+                '(:hermit :jfact)))
 ;; (map
 ;;  (fn [x]
 ;;    (r/reasoner-factory x)

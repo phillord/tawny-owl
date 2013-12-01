@@ -28,6 +28,7 @@
                  ;; reasoners
                  [org.semanticweb.elk/elk-owlapi "0.4.1"]
                  [com.hermit-reasoner/org.semanticweb.hermit "1.3.8.3"]
+                 [net.sourceforge.owlapi/jfact "1.2.0"]
 
                  ;; need to access log4j to control elk.
                  [log4j/log4j "1.2.17"]])
