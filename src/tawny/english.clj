@@ -26,7 +26,6 @@
 (def not tawny.owl/owl-not)
 (def some tawny.owl/owl-some)
 (def class tawny.owl/owl-class)
-(def import tawny.owl/import)
 (def < tawny.owl/owl-max)
 (def > tawny.owl/owl-min)
 (def >< tawny.owl/min-max)
