@@ -74,6 +74,7 @@ space, if it the var is not in the current namespace."
   "Given an OWLNamedObject, return the IRI."
   [entity]
   (-> entity
+      tawny.owl/as-named-object
       (.getIRI)
       (.toString)))
 

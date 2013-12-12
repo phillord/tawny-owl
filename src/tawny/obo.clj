@@ -25,7 +25,8 @@
 
 
 (def
-  ^{:doc "Root of IRI that is used for temporary IRIs"}
+  ^{:doc "Root of IRI that is used for temporary IRIs"
+    :tag 'String}
   obo-pre-iri
   "http://purl.org/ontolink/preiri/")
 
@@ -58,7 +59,7 @@ in :name-to-iri-current, while IDs loaded from file are stored in
             assoc
             :name-to-iri-current
             (assoc current name iri)))
-    (IRI/create iri)))
+    (tawny.owl/iri iri)))
 
 (defn obo-read-map
   "Read a properties file, and return a hashmap of Clojure identifier to IRI."
@@ -81,7 +82,7 @@ in :name-to-iri-current, while IDs loaded from file are stored in
 
 (defn preiri?
   "Return true if the (string) IRI is a auto-generated 'pre' IRI."
-  [iri]
+  [^String iri]
   (.startsWith iri obo-pre-iri))
 
 (defn obo-sort
@@ -163,11 +164,10 @@ longer exist in the ontology. There are, effectively, obsolete terms."
   "Assigns new permanent identifiers to map. In detail, this expects an map
 between identifiers and IRI. For all those IRIs which return true for preiri?,
 a new numeric identifier is created, incrementing from the current largest."
-
-[name-to-iri prefix]
+  [name-to-iri ^String prefix]
   (let ;; fetch the numeric part of IDs beginning with the prefix.
       [ids
-       (map (fn [[name iri]]
+       (map (fn [[name ^String iri]]
               (if (.startsWith iri prefix)
                 (Integer/parseInt (.substring iri (.length prefix)))
                 0))

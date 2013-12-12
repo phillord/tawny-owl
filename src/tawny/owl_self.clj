@@ -23,7 +23,7 @@
 ;; this is much the same as the external annotation but a requires an
 ;; annotation property object
 (defn- tawny-annotation
-  [property literal]
+  [property ^String literal]
   (.getOWLAnnotation
    (owl-data-factory) property
    (.getOWLLiteral (owl-data-factory) literal "en")))

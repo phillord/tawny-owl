@@ -41,15 +41,13 @@
   [filename locale]
   (if-let [resource
            (clojure.java.io/resource filename)]
-    (let [props
+    (let [^java.util.Properties props
           (with-open
               [r (clojure.java.io/reader
                   resource)]
             (let [props (java.util.Properties.)]
               (.load props r)
-              props)
-            )
-          ]
+              props))]
       (doseq [[k v] (tawny.lookup/name-to-var *ns*)]
         ;; when there is a label
         (let [label (.getProperty props k)]

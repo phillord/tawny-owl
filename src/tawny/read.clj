@@ -19,25 +19,30 @@
     ^{:doc "Read external OWL files and use them in tawny"
       :author "Phillip Lord"}
   tawny.read
-  (:require [tawny.owl]
+  (:require [tawny owl util]
             [clojure.string :only replace])
   (:refer-clojure :exclude [read])
   (:import
    (java.io File)
    (java.net URL)
    (org.semanticweb.owlapi.apibinding OWLManager)
-   (org.semanticweb.owlapi.model IRI OWLNamedObject OWLOntologyID)))
+   (org.semanticweb.owlapi.model
+    OWLAnnotation OWLLiteral
+    IRI OWLNamedObject OWLOntologyID
+    OWLOntology OWLEntity)))
 
 (tawny.owl/defmontfn default-filter
   "Filter for only named objects with an IRI the same as the ontology IRI."
   [o e]
-  (and (instance? OWLNamedObject e)
+  (and (tawny.owl/named-object? e)
        (= (tawny.owl/get-iri o)
-          (.getStart (.getIRI e)))))
+          (.getStart
+           (.getIRI
+            (tawny.owl/as-named-object e))))))
 
 (defn default-transform
   "Extract the fragment from each IRI."
-  [e]
+  [^OWLNamedObject e]
   (.. e (getIRI) (getFragment)))
 
 (defn iri-starts-with-filter
@@ -46,24 +51,25 @@ starts-with. Use this partially applied with a filter for 'read'."
   [starts-with e]
   (and (instance? OWLNamedObject e)
        (.startsWith
-        (.toString (.getIRI e))
+        (.toString
+         (.getIRI ^OWLNamedObject e))
         starts-with)))
 
 (tawny.owl/defmontfn filter-for-labels
   "Filter annotations on an entity for labels"
-  [o e]
+  [^OWLOntology o ^OWLEntity e]
   (filter
-   #(some-> %
+   #(some-> ^OWLAnnotation %
         (.getProperty)
         (.isLabel))
    (.getAnnotations e o)))
 
 (tawny.owl/defmontfn label-transform
   "Get text from label annotation"
-  [o e]
+  [^OWLOntology o ^OWLEntity e]
   (some-> (filter-for-labels o e)
-      (first)
-      (.getValue)
+      ^OWLAnnotation (first)
+      ^OWLLiteral (.getValue)
       (.getLiteral)))
 
 (tawny.owl/defmontfn noisy-nil-label-transform
@@ -86,7 +92,7 @@ starts-with. Use this partially applied with a filter for 'read'."
 
 (defn fragment-transform
   "Create an entity name from the IRI fragment"
-  [e]
+  [^OWLNamedObject e]
   (-> e
       (.getIRI)
       (.getFragment)))
@@ -96,7 +102,7 @@ starts-with. Use this partially applied with a filter for 'read'."
 Clojure symbol. Use this composed with a entity transform function"
   [s]
   (let [r (clojure.string/replace s #"[() /]" "_")
-        f (first r)]
+        ^Character f (first r)]
     (str
      (if (or (Character/isLetter f)
              (= \_ f))
@@ -123,7 +129,7 @@ to intern."
   "Given a map of Ontology IRI strings to document IRI strings, return an
 OWLOntologyIRIMapper instance."
   (proxy [org.semanticweb.owlapi.model.OWLOntologyIRIMapper] []
-    (getDocumentIRI [o-iri]
+    (getDocumentIRI [^IRI o-iri]
       (if-let [retn (get iri-map (.toString o-iri))]
         (tawny.owl/iri retn)
         nil))))
@@ -152,12 +158,12 @@ iri-mapper and resource-iri-mapper."
   [& rest]
   (let [{:keys [location iri prefix filter transform version-iri
                 mapper]} rest
-        jiri (IRI/create iri)
+        jiri (tawny.owl/iri iri)
         viri (if version-iri
-               (IRI/create version-iri))
+               (tawny.owl/iri version-iri))
         ontologyid
         (OWLOntologyID. jiri viri)
-        owlontology
+        ^OWLOntology owlontology
         (do
           (tawny.owl/remove-ontology-maybe ontologyid)
           (when mapper
@@ -165,9 +171,13 @@ iri-mapper and resource-iri-mapper."
              (tawny.owl/owl-ontology-manager)
              mapper))
           (try
-            (.loadOntologyFromOntologyDocument
-             (tawny.owl/owl-ontology-manager)
-             location)
+            ;; use the with types thing!
+            (tawny.util/with-types
+              [location [java.io.File java.io.InputStream
+                         IRI org.semanticweb.owlapi.io.OWLOntologyDocumentSource]]
+              (.loadOntologyFromOntologyDocument
+               (tawny.owl/owl-ontology-manager)
+               location))
             (finally
               (when mapper
                 (.removeIRIMapper
@@ -177,7 +187,8 @@ iri-mapper and resource-iri-mapper."
       (let [format (.getOntologyFormat (tawny.owl/owl-ontology-manager)
                                        owlontology)]
         (if (.isPrefixOWLOntologyFormat format)
-          (.setPrefix format prefix (.toString iri))
+          (.setPrefix (.asPrefixOWLOntologyFormat format)
+                      prefix (.toString iri))
           (throw (IllegalArgumentException.
                   "Attempt to provide a prefix to an ontology that is not using a prefix format")))))
     ;; this is the ontology for the namespace so stuff it place

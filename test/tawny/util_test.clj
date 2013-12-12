@@ -82,3 +82,17 @@
       (u/on 10
             identity)))
   )
+
+
+(deftest with-types
+  ;; the actual, "don't reflect" bit of this macro is hard to check!
+  (is (thrown? IllegalArgumentException
+               (let [name "string"]
+                 (u/with-types [name []] name))))
+  (is (thrown? IllegalArgumentException
+               (let [name (Object.)]
+                 (u/with-types [name [String]] name))))
+
+  (is
+   (let [name "Hello"]
+     (u/with-types [name [String]] name))))

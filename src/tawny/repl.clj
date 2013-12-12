@@ -24,7 +24,17 @@
             [tawny.render]
             [clojure.pprint]
             )
-  (:import [java.io StringWriter PrintWriter]))
+  (:import [java.io StringWriter PrintWriter]
+           [org.semanticweb.owlapi.model
+            OWLAnnotation
+            OWLEntity
+            OWLOntology
+            OWLNamedObject
+            OWLOntologyLoaderListener$LoadingEvent
+            OWLOntologyLoaderListener$LoadingFinishedEvent
+            IRI OWLOntologyManager
+            ]
+           ))
 
 (defn fetch-doc
   "Given an owlobject and potentially ontology, return documentation.
@@ -32,20 +42,25 @@ The documentation is generated over the live object (owlobjects are mutable).
 It includes all labels, comments and a rendered version of the owlobject."
   ([owlobject]
      (fetch-doc owlobject (o/get-current-ontology)))
-  ([owlobject ontology]
-     (let [annotation (.getAnnotations owlobject ontology)
+  ([^OWLEntity owlobject ^OWLOntology ontology]
+     (let [annotation
+           (.getAnnotations owlobject ontology)
+           
            label
            (filter
-            #(-> %
-                 (.getProperty)
-                 (.isLabel))
+            (fn [^OWLAnnotation a]
+              (-> a
+                   (.getProperty)
+                   (.isLabel)))
+
             annotation)
 
            comment
            (filter
-            #(-> %
-                 (.getProperty)
-                 (.isComment))
+            (fn [^OWLAnnotation a]
+              (-> a
+                  (.getProperty)
+                  (.isComment)))
             annotation)
 
            iri (-> owlobject
@@ -68,12 +83,12 @@ It includes all labels, comments and a rendered version of the owlobject."
 
        (line "IRI: " iri)
        (line "Labels:")
-       (doseq [l label]
+       (doseq [^OWLAnnotation l label]
          (line "\t" (.getValue l)))
 
        (line "Comments:")
 
-       (doseq [c comment]
+       (doseq [^OWLAnnotation c comment]
          (line "\t" (.getValue c)))
        (line "Full Definition:")
        (line
@@ -140,7 +155,8 @@ once."
   "Returns a OWLOntologyLoaderListener that logs to println."
   []
   (proxy [org.semanticweb.owlapi.model.OWLOntologyLoaderListener] []
-    (finishedLoadingOntology[event]
+    (finishedLoadingOntology
+      [^OWLOntologyLoaderListener$LoadingFinishedEvent event]
       (println "Finished Loading:"
                (-> event
                    (.getOntologyID)
@@ -149,7 +165,8 @@ once."
                  "...succeeded"))
       (if-not (.isSuccessful event)
         (println "Exception" (.printStackTrace (.getException event)))))
-    (startedLoadingOntology [event]
+    (startedLoadingOntology
+      [^OWLOntologyLoaderListener$LoadingEvent event]
       (println "Started Loading:"
                (or (-> event
                        (.getOntologyID)
@@ -160,7 +177,7 @@ once."
                    (.getDocumentIRI))))))
 
 
-(defn new-manager
+(defn ^OWLOntologyManager new-manager
   "Returns a new OWLOntologyManager."
   []
   (org.semanticweb.owlapi.apibinding.OWLManager/createOWLOntologyManager
@@ -171,7 +188,7 @@ once."
 This is function is meant for usage at the REPL; see 'tawny.read' for more
 integrated solution. If an manager is passed in, it should not already have
 loaded an ontology with the same name."
-  ([iri manager]
+  ([^IRI iri ^OWLOntologyManager manager]
      (let [listener
            (println-load-listener)]
        (.addOntologyLoaderListener
@@ -193,7 +210,7 @@ to file names. Save ontologies in 'root' or the resources directory."
       (let [manager (new-manager)
             ontology (load-ontology iri manager)]
         (into {}
-              (for [k (.getOntologies manager)]
+              (for [^OWLOntology k (.getOntologies manager)]
                 [(-> k
                      (.getOntologyID)
                      (.getOntologyIRI)

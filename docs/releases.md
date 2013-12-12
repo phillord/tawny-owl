@@ -21,10 +21,17 @@ Release Notes
  - Unqualified cardinality is now supported without using of `owl-thing`
  - The JFact reasoner is now supported.
  - New aliases have been added to `tawny.english`.
+ - All namespaces now load without reflection warnings, having been heavily
+   type-hinted. This should introduce no changes but many namespaces run much
+   faster; `tawny.owl` about 2x, `tawny.render` perhaps 5x for very
+   approximate benchmarks.
 
 ## Breaking Changes
  - `disjoint-classes` list has been removed, and `disjoint-classes-list` has
    been renamed to `disjoint-classes`!
+ - `tawny.protege-nrepl` has now been removed; its had dependencies that were
+   not explicitly specified as it ran inside protege. It is now in a project
+   of its own, called `tawny.protege`.
 
 ## Bug Fixes
  - `datatype` equivalents were limited to other datatypes. Now any datarange

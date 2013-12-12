@@ -31,13 +31,17 @@
       JPanel
       JProgressBar
       WindowConstants)
-    (java.awt GraphicsEnvironment)
-    (org.semanticweb.elk.owlapi ElkReasonerFactory)
-    (org.apache.log4j
-     Level
-     Logger)
-    (org.semanticweb.owlapi.reasoner SimpleConfiguration)
-    (org.semanticweb.HermiT Reasoner)))
+   (java.awt GraphicsEnvironment)
+   (org.semanticweb.owlapi.model OWLOntology)
+   (org.semanticweb.owlapi.reasoner
+    OWLReasoner OWLReasonerFactory
+    NodeSet)
+   (org.semanticweb.elk.owlapi ElkReasonerFactory)
+   (org.apache.log4j
+    Level
+    Logger)
+   (org.semanticweb.owlapi.reasoner SimpleConfiguration)
+   (org.semanticweb.HermiT Reasoner)))
 
 ;; defonce semantics because a new reasoner factory should cause us
 ;; to drop all existing reasoners.
@@ -55,7 +59,7 @@
   reasoner-list
   (ref ()))
 
-(defn reasoner-factory
+(defn ^OWLReasonerFactory reasoner-factory
   "Return or set the reasoner factory. The reasoner must be either
 :hermit or :elk."
   ([]
@@ -65,7 +69,7 @@
   ([reasoner]
      (dosync
       ;; blitz the reasoners
-      (doseq [r @reasoner-list]
+      (doseq [^OWLReasoner r @reasoner-list]
         (.dispose r))
       ;; blitz the reasoner list
       (ref-set reasoner-list ())
@@ -165,7 +169,7 @@
   []
   (reset! *reasoner-progress-monitor* reasoner-progress-monitor-silent))
 
-(defn reasoner-for-ontology
+(defn ^OWLReasoner reasoner-for-ontology
   "Return an reasoner for the given ontology if it exists. Normally
 the reasoner function is better to use."
   [ontology]
@@ -174,13 +178,13 @@ the reasoner function is better to use."
     #(= (System/identityHashCode
          ontology)
         (System/identityHashCode
-         (.getRootOntology %)))
+         (.getRootOntology ^OWLReasoner %)))
     @reasoner-list)))
 
 ;; we need to cache these 'cause reasoners listen to changes could just use
 ;; memoized function taking jontology as param Probably need to write a new
 ;; ProgressMonitor to communicate with emacs.
-(defdontfn reasoner
+(defdontfn ^OWLReasoner reasoner
   "Returns a reasoner for the given ontology, creating a new one if necessary
 from the current reasoner-factory."
   [ontology]
@@ -192,6 +196,7 @@ from the current reasoner-factory."
              (reasoner-factory)
              ontology
              (SimpleConfiguration.
+              ^org.semanticweb.owlapi.reasoner.ReasonerProgressMonitor
               ((deref *reasoner-progress-monitor*))))]
         (dosync
          (ref-set reasoner-list (conj @reasoner-list reas)))
@@ -248,7 +253,7 @@ ontology is inconsistent"
 
 (defn entities
   "Return all entities for a nodeset."
-  [nodeset]
+  [^NodeSet nodeset]
   (into #{} (.getFlattened nodeset)))
 
 (defn no-top-bottom

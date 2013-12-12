@@ -145,7 +145,7 @@ that they were added."
 
 
 ;; unlazy map function
-(defn domap
+(defn ^java.util.Collection domap
   "Unlazy map function, for when the map function has side effects.
 
 Typing (doall (map)) all the time is hard work!"
@@ -175,6 +175,51 @@ rest can be any tree structure, then, f with x and all values in rest. "
 ;; on
 (defn on
   "Call f on val if val is not null."
-  [val f]
-  (when val
+  [val f] 
+ (when val
     (f val)))
+
+;; prepare for some strange macros
+
+;; Taken from https://github.com/mikera/vectorz-clj
+;; How does it make sense to have a macro which expands to something like
+;; (let [x y] x)
+;; which surely should be a non-op?
+(defmacro tag-symbol [tag form]
+  "Given form, return the same form but with attached :tag metadata
+defining the return type of that form."
+  ;; create a local tagged-sym which is a gensym but with metadata attached.
+  (let [tagged-sym (vary-meta (gensym) assoc :tag tag)]
+    `(let [~tagged-sym ~form] ~tagged-sym)))
+
+(defmacro with-types
+  [spec & body]
+  "Given a spec of the form [symbol [types]] evaluate body if
+and only the value of symbol is an instance? of one of types. The symbol is
+type-hinted to the type of the first of types to match.
+
+The main aim for this is to avoid reflective calls to overloaded methods in
+Java. So if we have an overloaded static method call:
+
+C.met(String)
+C.met(Double)
+C.met(Boolean)
+
+  (with-types [val [String Double Boolean]]
+    (C/met val)
+
+will call met without reflection, so long as val is one of String, Double or
+Boolean. If none of the types are matched, an IllegalArgumentException will be
+thrown."
+  (let [hint-var# (first spec)
+        types# (second spec)]
+    (if (seq types#)
+      (let [type# (first types#)]
+        `(let [~hint-var#
+               (tawny.util/tag-symbol ~type# ~hint-var#)]
+           (if (instance? ~type# ~hint-var#)
+             ~@body
+             (with-types
+               [~hint-var# ~(vec (rest types#))]
+               ~@body))))
+      `(throw (IllegalArgumentException. "No types have been matched")))))

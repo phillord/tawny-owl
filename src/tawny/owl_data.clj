@@ -48,8 +48,9 @@
   ^{:private true}
   datacharfuncs
   {
-   :functional #(.getOWLFunctionalDataPropertyAxiom %1 %2)
-   })
+   :functional #(.getOWLFunctionalDataPropertyAxiom
+                 ^OWLDataFactory %1
+                 ^OWLDataProperty %2)})
 
 (defbdontfn add-data-characteristics
   "Add a list of characteristics to the property."
@@ -78,6 +79,7 @@
     (add-axiom
      o (.getOWLEquivalentDataPropertiesAxiom
         (owl-data-factory)
+        ^"[Lorg.semanticweb.owlapi.model.OWLDataPropertyExpression;"
         (into-array OWLDataPropertyExpression
                     properties)))))
 
@@ -88,6 +90,7 @@
    o
    (.getOWLDisjointDataPropertiesAxiom
     (owl-data-factory)
+    ^"[Lorg.semanticweb.owlapi.model.OWLDataPropertyExpression;"
     (into-array OWLDataPropertyExpression
                 [(ensure-data-property o name)
                  (ensure-data-property o disjoint)]))))
@@ -100,6 +103,7 @@
     (add-axiom
      o (.getOWLDisjointDataPropertiesAxiom
         (owl-data-factory)
+        ^"[Lorg.semanticweb.owlapi.model.OWLDataPropertyExpression;"
         (into-array OWLDataPropertyExpression
                     properties)))))
 
@@ -165,13 +169,15 @@ which is an OWLDatatype object.
    (instance? OWLLiteral literal)
    literal
    lang
-   (.getOWLLiteral (owl-data-factory) literal lang)
+   (.getOWLLiteral (owl-data-factory) ^String literal ^String lang)
    type
    (.getOWLLiteral (owl-data-factory)
-                   literal
+                   ^String literal
                    (ensure-datatype o type))
    :default
-   (.getOWLLiteral (owl-data-factory) literal)))
+   (util/with-types
+     [literal [String Long Double Boolean]]
+     (.getOWLLiteral (owl-data-factory) literal))))
 
 (defbdontfn add-datatype-equivalent
   "Adds a datatype equivalent axiom"
@@ -230,18 +236,22 @@ which is an OWLDatatype object.
   [_ & types]
   (.getOWLDataIntersectionOf
    (owl-data-factory)
+   ^java.util.Set
    (into #{} types)))
 
-(.addMethod owl-and ::data data-and)
+(defmethod owl-and ::data [& rest]
+  (apply data-and rest))
 
 (defmontfn data-or
   "Returns the union of two data ranges."
   [o & types]
   (.getOWLDataUnionOf
    (owl-data-factory)
+   ^java.util.Set
    (into #{} (map (partial ensure-data-range o) types))))
 
-(.addMethod owl-or ::data data-or)
+(defmethod owl-or ::data [& rest]
+  (apply data-or rest))
 
 (defmontfn data-not
   "Returns the complement of two data ranges."
@@ -250,7 +260,8 @@ which is an OWLDatatype object.
    (owl-data-factory)
    (ensure-data-range o type)))
 
-(.addMethod owl-not ::data data-not)
+(defmethod owl-not ::data [& rest]
+  (apply data-not rest))
 
 (defbmontfn data-some
   "Returns a data some values from restriction."
@@ -260,7 +271,8 @@ which is an OWLDatatype object.
    (ensure-data-property o property)
    (ensure-data-range o data-range)))
 
-(.addMethod owl-some ::data data-some)
+(defmethod owl-some ::data [& rest]
+  (apply data-some rest))
 
 (defbmontfn data-only
   "Returns a data all values from restriction."
@@ -270,17 +282,20 @@ which is an OWLDatatype object.
    (ensure-data-property o property)
    (ensure-data-range o datatype)))
 
-(.addMethod only ::data data-only)
+(defmethod only ::data [& rest]
+  (apply data-only rest))
 
 (defmontfn data-oneof
   "Returns a data one of restriction."
   [o & literals]
   (.getOWLDataOneOf
    (owl-data-factory)
+   ^java.util.Set
    (into #{}
          (map (partial literal o) literals))))
 
-(.addMethod oneof ::literal data-oneof)
+(defmethod oneof ::literal [& rest]
+  (apply data-oneof rest))
 
 (defmontfn data-has-value
   "Returns a data has value restriction."
@@ -291,7 +306,8 @@ which is an OWLDatatype object.
      literal
      (tawny.owl/literal literal))))
 
-(.addMethod has-value ::data data-has-value)
+(defmethod has-value ::data [& rest]
+  (apply data-has-value rest))
 
 (defmontfn data-exactly
   "Returns a data exact cardinality restriction."
@@ -300,7 +316,8 @@ which is an OWLDatatype object.
    (owl-data-factory)
    number (ensure-data-property o property)))
 
-(.addMethod exactly ::data data-exactly)
+(defmethod exactly ::data [& rest]
+  (apply data-exactly rest))
 
 (defmontfn data-at-most
   "Returns a data max cardinality restriction."
@@ -309,7 +326,8 @@ which is an OWLDatatype object.
    (owl-data-factory) number
    (ensure-data-property o property)))
 
-(.addMethod at-most ::data data-at-most)
+(defmethod at-most ::data [& rest]
+  (apply data-at-most rest))
 
 (defmontfn data-at-least
   "Returns a data min cardinality restriction."
@@ -318,41 +336,42 @@ which is an OWLDatatype object.
    (owl-data-factory) number
    (ensure-data-property o property)))
 
-(.addMethod at-least ::data data-at-least)
+(defmethod at-least ::data [& rest]
+  (apply data-at-least rest))
 
 (defn owl-min
   "Returns a data min exclusion restriction."
-  [from]
+  [^long from]
   (.getOWLDatatypeMinExclusiveRestriction
    (owl-data-factory) from))
 
 (defn owl-max
   "Returns a data max exclusion restriction."
-  [to]
+  [^long to]
   (.getOWLDatatypeMaxExclusiveRestriction
    (owl-data-factory) to))
 
 (defn min-max
   "Returns a min-max exclusive restriction."
-  [from to]
+  [^long from ^long to]
   (.getOWLDatatypeMinMaxExclusiveRestriction
    (owl-data-factory) from to))
 
 (defn min-inc
   "Returns a min inclusive restriction."
-  [from]
+  [^long from]
   (.getOWLDatatypeMinInclusiveRestriction
    (owl-data-factory) from))
 
 (defn max-inc
   "Returns a max inclusive restriction."
-  [to]
+  [^long to]
   (.getOWLDatatypeMaxInclusiveRestriction
    (owl-data-factory) to))
 
 (defn min-max-inc
   "Returns a min max inclusive restriction."
-  [from to]
+  [^long from ^long to]
   (.getOWLDatatypeMinMaxInclusiveRestriction
    (owl-data-factory) from to))
 
@@ -378,12 +397,14 @@ For example, (span < 10) returns a max exclusive restriction."
 
 (defmontfn data-get-fact
   "Returns a data fact."
-  [o property from to]
-  (.getOWLDataPropertyAssertionAxiom
-   (owl-data-factory)
-   (ensure-data-property o property) from to))
+  [^OWLOntology o property ^OWLIndividual from to]
+  (util/with-types [to [OWLLiteral String Double Boolean Long]]
+    (.getOWLDataPropertyAssertionAxiom
+     (owl-data-factory)
+     (ensure-data-property o property) from to)))
 
-(.addMethod get-fact ::data data-get-fact)
+(defmethod get-fact ::data [& rest]
+  (apply data-get-fact rest))
 
 (defmontfn data-get-fact-not
   "Returns a data negative fact."
@@ -392,4 +413,5 @@ For example, (span < 10) returns a max exclusive restriction."
    (owl-data-factory)
    (ensure-data-property o property) from to))
 
-(.addMethod get-fact-not ::data data-get-fact-not)
+(defmethod get-fact-not ::data [& rest]
+  (apply data-get-fact-not rest))

@@ -23,7 +23,7 @@
         ]
     (println "Default ontology used")
     (doseq
-        [l (take 30 st)
+        [^StackTraceElement l (take 30 st)
          :when (every?
                 #(not
                   (.contains

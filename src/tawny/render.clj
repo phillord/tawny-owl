@@ -29,27 +29,33 @@
             OWLAnnotationValue
             OWLClass
             OWLDataAllValuesFrom
+            OWLDataComplementOf
             OWLDataExactCardinality
             OWLDataHasValue
             OWLDataMaxCardinality
             OWLDataMinCardinality
             OWLDataProperty
             OWLDataSomeValuesFrom
+            OWLDatatypeRestriction
             OWLFacetRestriction
             OWLIndividual
             OWLLiteral
+            OWLNamedIndividual
+            OWLNamedObject
             OWLObjectAllValuesFrom
             OWLObjectComplementOf
             OWLObjectExactCardinality
             OWLObjectHasSelf
             OWLObjectHasValue
             OWLObjectIntersectionOf
+            OWLObjectInverseOf
             OWLObjectMaxCardinality
             OWLObjectMinCardinality
             OWLObjectOneOf
             OWLObjectSomeValuesFrom
             OWLObjectUnionOf
             OWLObjectProperty
+            OWLOntology
             OWLProperty
             )
            (org.semanticweb.owlapi.vocab
@@ -89,13 +95,13 @@ non-interning equivalent)."}
 
 (defn named-entity-as-string
   "Return a string identifier for an entity"
-  [entity]
+  [^OWLNamedObject entity]
   (-> entity
       (.getIRI)
       (.toURI)
       (.toString)))
 
-(defn ontologies
+(defn ^java.util.Set ontologies
   "Fetch all known ontologies."
   []
   (.getOntologies (owl/owl-ontology-manager)))
@@ -112,7 +118,7 @@ non-interning equivalent)."}
 in tawny." class)
 
 (defmethod as-form OWLClass
-  [c]
+  [^OWLClass c]
   (let [ont (ontologies)
         super (.getSuperClasses c ont)
         equiv (.getEquivalentClasses c ont)
@@ -149,7 +155,8 @@ in tawny." class)
                 (form annotation)))
       )))
 
-(defmethod as-form OWLObjectProperty [p]
+(defmethod as-form OWLObjectProperty 
+  [^OWLObjectProperty p]
   (let [ont (ontologies)
         domain (.getDomains p ont)
         range (.getRanges p ont)
@@ -200,14 +207,15 @@ in tawny." class)
           (cons :characteristic
                 characteristic)))))
 
-(defmethod as-form OWLIndividual [p]
+(defmethod as-form OWLNamedIndividual
+  [^OWLNamedIndividual p]
   (let [ont (ontologies)
         types (.getTypes p ont)
         same (setmap #(.getSameIndividuals p %) ont)
         diff (setmap #(.getDifferentIndividuals p %) ont)
         annotation
         (setmap
-         #(.getAnnotations p %) ont)
+         (fn [^OWLOntology o] (.getAnnotations p o)) ont)
         fact
         (merge
          (into {} (setmap #(.getDataPropertyValues p %) ont))
@@ -242,7 +250,8 @@ in tawny." class)
                   (form [:fact fact])
                   (form [:fact-not factnot])))))))
 
-(defmethod as-form OWLDataProperty [p]
+(defmethod as-form OWLDataProperty 
+  [^OWLDataProperty p]
   (let [ont (ontologies)
         domain (.getDomains p ont)
         range (.getRanges p ont)
@@ -271,10 +280,11 @@ in tawny." class)
           (cons :characteristic
                 characteristic)))))
 
-(defmethod as-form OWLAnnotationProperty [p]
+(defmethod as-form OWLAnnotationProperty
+  [^OWLAnnotationProperty p]
   (let [ont (ontologies)
         super
-        (setmap #(.getSuperProperties p %) ont)
+        (setmap (fn [^OWLOntology o] (.getSuperProperties p o)) ont)
         ann
         (setmap #(.getAnnotations p %) ont)
         prop (form p)]
@@ -358,27 +368,32 @@ depending on the value of *terminal-strategy*"
 (defmethod form OWLIndividual [i]
   (entity-or-iri i))
 
-(defmethod form OWLObjectOneOf [o]
+(defmethod form OWLObjectOneOf
+  [^OWLObjectOneOf o]
   (list*
    (exp oneof object-oneof)
-        (form (.getIndividuals o))))
+   (form (.getIndividuals o))))
 
-(defmethod form OWLObjectSomeValuesFrom [s]
+(defmethod form OWLObjectSomeValuesFrom
+  [^OWLObjectSomeValuesFrom s]
   (list
    (exp owl-some object-some)
-        (form (.getProperty s))
-        (form (.getFiller s))))
+   (form (.getProperty s))
+   (form (.getFiller s))))
 
-(defmethod form OWLObjectUnionOf [u]
+(defmethod form OWLObjectUnionOf
+  [^OWLObjectUnionOf u]
    (list*
     (exp owl-or object-or)
     (form (.getOperands u))))
 
-(defmethod form OWLObjectIntersectionOf [c]
+(defmethod form OWLObjectIntersectionOf
+  [^OWLObjectIntersectionOf c]
   (list*
    (exp owl-and object-or) (form (.getOperands c))))
 
-(defmethod form OWLObjectAllValuesFrom [a]
+(defmethod form OWLObjectAllValuesFrom
+  [^OWLObjectAllValuesFrom a]
   (list
    (exp
     only
@@ -386,38 +401,43 @@ depending on the value of *terminal-strategy*"
         (form (.getProperty a))
         (form (.getFiller a))))
 
-(defmethod form OWLObjectComplementOf [c]
+(defmethod form OWLObjectComplementOf
+  [^OWLObjectComplementOf c]
   (list
    (exp owl-not
         object-not)
         (form (.getOperand c))))
 
-(defmethod form OWLObjectExactCardinality [c]
+(defmethod form OWLObjectExactCardinality
+  [^OWLObjectExactCardinality c]
   (list
    (exp exactly object-exactly)
    (.getCardinality c)
         (form (.getProperty c))
         (form (.getFiller c))))
 
-(defmethod form OWLObjectMaxCardinality [c]
+(defmethod form OWLObjectMaxCardinality
+  [^OWLObjectMaxCardinality c]
   (list
    (exp at-most object-at-most) (.getCardinality c)
         (form (.getProperty c))
         (form (.getFiller c))))
 
-(defmethod form OWLObjectMinCardinality [c]
+(defmethod form OWLObjectMinCardinality
+  [^OWLObjectMinCardinality c]
   (list (exp at-least object-at-least)
         (.getCardinality c)
         (form (.getProperty c))
         (form (.getFiller c))))
 
-(defmethod form OWLAnnotation [a]
+(defmethod form OWLAnnotation
+  [^OWLAnnotation a]
   (let [v (.getValue a)]
     (cond
-     (.isLabel a)
+     (.. a getProperty isLabel)
      (list 'label
            (form v))
-     (.isComment a)
+     (.. a getProperty isComment)
      (list 'owl-comment
            (form v))
      :default
@@ -431,7 +451,8 @@ depending on the value of *terminal-strategy*"
 
 ;; this can be improved somewhat -- not converting classes into something
 ;; readable.
-(defmethod form OWLAnnotationValue [v]
+(defmethod form OWLAnnotationValue
+  [^Object v]
   (list
    (.toString v)))
 
@@ -439,10 +460,12 @@ depending on the value of *terminal-strategy*"
   ^{:private true}
   owldatatypes-inverted
   (into {}
-        (for [[k v] owl/owl2datatypes]
+        (for [[k
+               ^OWL2Datatype v] owl/owl2datatypes]
           [(.getDatatype v (owl/owl-data-factory)) k])))
 
-(defmethod form OWLLiteral [l]
+(defmethod form OWLLiteral
+  [^OWLLiteral l]
   (list*
    'literal
    (.getLiteral l)
@@ -463,38 +486,44 @@ element is a list."
     (apply list* args)
     (apply list args)))
 
-(defmethod form OWLDataSomeValuesFrom[d]
+(defmethod form OWLDataSomeValuesFrom
+  [^OWLDataSomeValuesFrom d]
   (list**
    (exp owl-some data-some)
    (form (.getProperty d))
    (form (.getFiller d))))
 
-(defmethod form org.semanticweb.owlapi.model.OWLDataAllValuesFrom [a]
+(defmethod form OWLDataAllValuesFrom
+  [^OWLDataAllValuesFrom a]
   (list
    (exp only data-only)
         (form (.getProperty a))
         (form (.getFiller a))))
 
-(defmethod form org.semanticweb.owlapi.model.OWLDataComplementOf [c]
+(defmethod form OWLDataComplementOf
+  [^OWLDataComplementOf c]
   (list
    (exp owl-not data-not)
-        (form (.getOperand c))))
+        (form (.getDataRange c))))
 
-(defmethod form org.semanticweb.owlapi.model.OWLDataExactCardinality [c]
+(defmethod form OWLDataExactCardinality
+  [^OWLDataExactCardinality c]
   (list
    (exp exactly data-exactly)
    (.getCardinality c)
         (form (.getProperty c))
         (form (.getFiller c))))
 
-(defmethod form org.semanticweb.owlapi.model.OWLDataMaxCardinality [c]
+(defmethod form OWLDataMaxCardinality
+  [^OWLDataMaxCardinality c]
   (list
    (exp at-most data-at-most)
    (.getCardinality c)
         (form (.getProperty c))
         (form (.getFiller c))))
 
-(defmethod form org.semanticweb.owlapi.model.OWLDataMinCardinality [c]
+(defmethod form OWLDataMinCardinality
+  [^OWLDataMinCardinality c]
   (list
    (exp at-least data-at-least)
    (.getCardinality c)
@@ -503,7 +532,7 @@ element is a list."
 
 (defn- numeric-literal
   "Returns a number from one of the numerous typed wrappers."
-  [l]
+  [^OWLLiteral l]
   (cond
    (.isInteger l)
    (.parseInteger l)
@@ -523,21 +552,23 @@ element is a list."
         }
        d))
 
-(defmethod form org.semanticweb.owlapi.model.OWLDatatypeRestriction [d]
+(defmethod form OWLDatatypeRestriction
+  [^OWLDatatypeRestriction d]
   (let [dt (.getDatatype d)]
     (cond
      (or
       (.isDouble dt)
       (.isFloat dt)
       (.isInteger dt))
-     (for [fr (.getFacetRestrictions d)]
+     (for [^OWLFacetRestriction fr (.getFacetRestrictions d)]
        (list 'span
              (numeric-facet (.getFacet fr))
              (numeric-literal (.getFacetValue fr))))
      :default
      (throw (Exception. "Can't render non-numeric datatype")))))
 
-(defmethod form OWLFacetRestriction [d]
+(defmethod form OWLFacetRestriction
+  [^OWLFacetRestriction d]
   (list (form (.getFacet d)) (form (.getFacetValue d))))
 
 (defmethod form org.semanticweb.owlapi.model.OWLDatatype [d]
@@ -546,22 +577,26 @@ element is a list."
     x
     (entity-or-iri d)))
 
-(defmethod form org.semanticweb.owlapi.model.OWLObjectHasValue [p]
+(defmethod form org.semanticweb.owlapi.model.OWLObjectHasValue
+  [^OWLObjectHasValue p]
   (list (exp has-value object-has-value)
         (form (.getProperty p))
         (form (.getValue p))))
 
-(defmethod form org.semanticweb.owlapi.model.OWLObjectHasSelf [s]
+(defmethod form org.semanticweb.owlapi.model.OWLObjectHasSelf
+  [^OWLObjectHasSelf s]
   (list 'has-self (form (.getProperty s))))
 
-(defmethod form org.semanticweb.owlapi.model.OWLDataHasValue [p]
+(defmethod form org.semanticweb.owlapi.model.OWLDataHasValue
+  [^OWLDataHasValue p]
   (list (exp has-value data-has-value)
         (form (.getProperty p))
         (form (.getValue p))))
 
-(defmethod form org.semanticweb.owlapi.model.OWLObjectInverseOf [p]
+(defmethod form OWLObjectInverseOf
+  [^OWLObjectInverseOf p]
   (list 'inverse (form (.getInverse p))))
- 
+
 
 (defmethod form String [e]
   e)
