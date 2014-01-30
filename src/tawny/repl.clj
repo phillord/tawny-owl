@@ -195,7 +195,7 @@ loaded an ontology with the same name."
         manager listener)
        (.loadOntologyFromOntologyDocument
         manager
-        (tawny.owl/iri iri))))
+        iri)))
   ([iri]
      (load-ontology iri (new-manager))))
 
