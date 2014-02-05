@@ -22,7 +22,7 @@ straight-forward to do using the OWL API directly. Consider this example, from
       (tawny.owl/remove-ontology-maybe
        (OWLOntologyID. (IRI/create "http://purl.obolibrary.org/obo/go.owl")))
       (.loadOntologyFromOntologyDocument
-       tawny.owl/owl-ontology-manager
+       (tawny.owl/owl-ontology-manager)
        (IRI/create (clojure.java.io/resource "go-snippet.owl"))))
 
 This loads a small section of the Gene Ontology for use in various test cases.
@@ -42,7 +42,7 @@ Broken down:
 
     ;; load this into memory as an OWLOntology
     (.loadOntologyFromOntologyDocument
-      tawny.owl/owl-ontology-manager
+      (tawny.owl/owl-ontology-manager)
       (IRI/create (clojure.java.io/resource "go-snippet.owl")))
 
 This object can be used in every way like an Ontology object created directly
@@ -57,11 +57,11 @@ this document. Importing in this sense means making axioms in the imported
 ontology available in the current ontology. It can be achieved with a single
 OWL form.
 
-    (owlimport pizza/pizza)
+    (tawny.owl/owl-import pizza/pizza)
 
 The process of importing an ontology is critical if you wish it to impact on
 reasoning. If we wish to use classes, for instance, in the pizza ontology, we
-must both `require` or `use` these classes, and `owlimport` them. For example:
+must both `require` or `use` these classes, and `owl-import` them. For example
 
     (ns pizza.mypizza
       (:use [tawny.owl])
@@ -73,7 +73,7 @@ must both `require` or `use` these classes, and `owlimport` them. For example:
       :prefix "my:"
       )
 
-    ;;(owlimport p/pizzaontology)
+    ;;(owl-import p/pizzaontology)
 
     (defclass ImpossiblePizza
       :subclass p/VegetarianPizza
@@ -84,11 +84,11 @@ must both `require` or `use` these classes, and `owlimport` them. For example:
     (println (tawny.reasoner/coherent?))
 
 It might be expected that these statements would print `false` -- that the
-ontology is not coherent. In fact, with the `owlimport` statement commented
+ontology is not coherent. In fact, with the `owl-import` statement commented
 out, `ImpossiblePizza` is satisfiable -- while the concepts share the same
 IRIs as those from the pizza ontology this is *all* that they share; the
 axioms describing `VegetarianPizza` and `HamTopping` are not included. With
-the `owlimport` statement the ontology behaves as might be expected, and is
+the `owl-import` statement the ontology behaves as might be expected, and is
 incoherent.
 
 
@@ -102,7 +102,7 @@ use tawny without these variables, and instead using strings. So, for example,
 we could do the following:
 
     ;; using the function from above
-    (owlimport (get-go-ontology))
+    (owl-import (get-go-ontology))
 
     (defclass A
         :subclass
@@ -196,4 +196,3 @@ ontology loaded in this way is saved using `tawny.owl/save-ontology` all
 axioms will be saved, not just those filtered out.
 
 ## Next
-
