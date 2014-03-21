@@ -5,14 +5,35 @@ Tawny-OWL
 
 ## Introduction
 
-This package allows users to construct OWL ontologies in a fully programmatic
-environment, namely Clojure. This means the user can take advantage of
-programmatic language to automate and abstract the ontology over the
-development process; also, rather than requiring the creation of ontology
-specific development environments, a normal programming IDE can be used;
-finally, a human readable text format means that we can integrate with the
-standard tooling for versioning and distributed development. A longer
-[getting started](docs/getting-started.md) document is available.
+<img src="docs/tawny-cartoon-only-owl.png"
+ alt="Tawny Logo" title="Tawny OWL Logo" height="300" align="right" />
+
+Tawny-OWL allows construction of OWL ontologies, in a evaluative, functional
+and fully programmatic environment. Think of it as the ontology engineering
+equivalent of [R](http://www.r-project.org/). It has many advantages over
+traditional ontology engineering tools, also described in a
+[video introduction](https://vimeo.com/89782389).
+
+- An interactive shell or REPL to explore and create ontologies.
+- Source code, with comments, editable using any of a range of IDEs.
+- Fully extensible -- new syntaxes, new data sources can be added by users
+- Patterns can be created for individual ontologies; related classes can be
+  built easily, accurated and maintainably.
+- A unit test framework with fully reasoning.
+- A clean syntax for versioning with any VCS, integrated with the IDE
+- Support for packaging, dependency resolution and publication
+- Enabled continuous integration with both ontology and software dependencies
+
+Tawny-OWL is implemented as a domain-specific language but built over a full
+programming language called [Clojure](http://www.clojure.org). Many of the
+features described (REPL, patterns, unit tests, extensibility) derive directly
+from the Clojure language, or from general-purpose programming tools (IDEs,
+versioning, continuous integration). The core ontology features are
+implemented directly using the [OWL API](http://owlapi.sourceforge.net/).
+These features are, therefore, industry strength, standards-compliant and
+well-supported independently of the Tawny-OWL developers. A longer
+[getting started](docs/getting-started.md) document is available which
+describes these features further.
 
 OWL is a W3C standard ontology representation language; an ontology is a fully
 computable set of statements, describing the things and their relationships.
@@ -22,9 +43,27 @@ knowledge such as [genetics](http://www.geneontology.org/) or
 describe anything, including [e-commerce](http://purl.org/goodrelations/). For
 more tutorial information, please see http://ontogenesis.knowledgeblog.org.
 
-The core library, `owl.clj` provides an API which looks similar to Manchester
-OWL syntax, but is nonetheless fully programmatically extensible; all
-namespaces are [described](docs/namespaces.md) elsewhere.
+A longer [getting started](docs/getting-started.md) document is available. The
+core library, `owl.clj` provides an API which looks similar to Manchester OWL
+syntax, but is nonetheless fully programmatically extensible; all namespaces
+are [described](docs/namespaces.md) elsewhere.
+
+## For the Clojure developer
+
+Tawny-OWL is predominately designed as a programmatic application for ontology
+development, but it can be used as an API. OWL ontologies are a set of
+statements about things and their relationshops; underneath these statements
+map to a subset of first-order logic which makes it possible to answer 
+questions about these statements using highly-optimized reasoners.
+
+Currently, the use of ontologies as a tool within general-purpose programming
+is relatively under-developed. Part of the intention behind Tawny-OWL is to
+embed ontologies deeply within a programatic framework, to see whether
+ontologies are useful in this way.
+
+Further information on the use of Tawny-OWL is available in the
+[documentation](docs/tawny-as-an-api.md).
+
 
 ## Motivation
 
