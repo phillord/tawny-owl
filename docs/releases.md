@@ -39,7 +39,7 @@ Release Notes
 
 ## Dependencies
  - OWL API to 3.4.9. Hermit to 1.3.8.3
-
+ - Clojure 1.6
 
 # 1.0
 

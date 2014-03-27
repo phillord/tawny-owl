@@ -23,7 +23,7 @@
                  [net.sourceforge.owlapi/owlapi-distribution "3.4.10"]
 
                  ;; clojure
-                 [org.clojure/clojure "1.5.1"]
+                 [org.clojure/clojure "1.6.0"]
 
                  ;; reasoners
                  [org.semanticweb.elk/elk-owlapi "0.4.1"]
