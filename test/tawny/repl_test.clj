@@ -33,7 +33,7 @@
 (o/declare-classes testsuperclass)
 
 (o/defclass testclass
-  :subclass testsuperclass
+  :super testsuperclass
   :label "This is label in English"
   :annotation (o/label "Questi e una targhetta in Italiano" "it")
   :comment "This is a comment")

@@ -1,4 +1,4 @@
-2013-07-24  Phillip Lord  <phillip.lord@newcastle.ac.uk>
+013-07-24  Phillip Lord  <phillip.lord@newcastle.ac.uk>
 
 	* owl_data.clj: Completion of OWL, with support for datatypes.
 

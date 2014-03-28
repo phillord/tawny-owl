@@ -140,7 +140,7 @@ in tawny." class)
       ~(form c)
       ~@(when (< 0 (count super))
           (cons
-           :subclass
+           :super
            (form super)))
       ~@(when (< 0 (count equiv))
           (cons
@@ -294,7 +294,7 @@ in tawny." class)
          'annotation-property)
       ~(form p)
       ~@(when (< 0 (count super))
-          (cons :subproperty
+          (cons :super
                 (form super)))
       ~@(when (< 0 (count ann))
           (cons :annotation

@@ -629,3 +629,67 @@ We need an ability to switch this off. Add an ontology option maybe?
 Thought I had done this, but no.
 
 
+
+* Regularisiation
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2014-04-03 Thu 16:12
+  :ARCHIVE_FILE: ~/src/knowledge/tawny-owl/org/todo.org
+  :ARCHIVE_CATEGORY: todo
+  :END:
+  
+** Plan [24/24]
+
+All the old keywords will be retained, but plugged through a deprecated
+function. I have no choice to totally change the semantics of add-subclass
+and so forth.
+
+What about data properties?
+
+ - [X] create deprecated-add-subclass
+ - [X] create deprecated-add-subproperty-chain
+ - [X] create new add-subclass
+ - [X] create add-superclass
+ - [X] create new add-subproperty-chain
+ - [X] create deprecated-add-subproperty (copy of add-superproperty but
+   deprecated) for use with :subproperty keyword
+ - [X] create new add-subproperty (which adds a subpropety)
+ - [X] create deprecated add-data-subproperty (copy of add-data-superproperty)
+ - [X] create new add-data-subproperty
+ - [X] add :super, :sub to class handlers
+ - [X] add :super, :sub to object property handler
+ - [X] add :super, :sub to data proeprty handler
+ - [X] unit test add-subclass, add-superclass
+ - [X] test :super, :sub for class in REPL
+ - [X] unit test :super, :sub for class
+ - [X] test :super, :sub for oproperty in REPL
+ - [X] unit test :super, :sub for oproperty
+ - [X] test :super, :sub for dproperty in REPL
+ - [X] unit test :super, :sub for dproperty
+ - [X] Update *all* test cases to deprecated :subclass
+ - [X] Update *all* test cases to drepcated :subproperty
+ - [X] Rendering!
+ - [X] Check for all doc strings
+ - [X] Update the /doc documentation
+
+We need to regularise the syntax.
+
+add-* x y 
+
+should y as an * to x
+
+so
+
+add-annotation entity annotation
+
+adds annotation to entity.
+
+
+** Breakages
+ - add-subclass x y adds y as a superclass of x.
+ - :subclass frame adds superclasses! (subclassof)
+ - :subproperty adds a superproperty! (consistent with :subclass)
+ - add-subproperty-chain adds superproperties!
+ - :subpropertychain likewise
+ - :subproperty adds a superproperty
+
+

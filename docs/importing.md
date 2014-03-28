@@ -76,7 +76,7 @@ must both `require` or `use` these classes, and `owl-import` them. For example
     ;;(owl-import p/pizzaontology)
 
     (defclass ImpossiblePizza
-      :subclass p/VegetarianPizza
+      :super p/VegetarianPizza
       (owl-some p/hasTopping p/HamTopping))
 
 
@@ -105,7 +105,7 @@ we could do the following:
     (owl-import (get-go-ontology))
 
     (defclass A
-        :subclass
+        :super
             (owl-class ""
                 :name "http://purl.obolibrary.org/obo/GO_0000002"))
 

@@ -100,7 +100,7 @@ definition of vegetarian pizza is behaving as expected.
        (not
         (o/with-probe-entities
           [c (o/owlclass "probe"
-                         :subclass p/VegetarianPizza p/CajunPizza)]
+                         :super p/VegetarianPizza p/CajunPizza)]
           (r/coherent?)))))
 
 The expected inference is checked in the first `is` clause, while the second

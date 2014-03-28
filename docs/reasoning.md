@@ -40,7 +40,7 @@ We can also introduce non-sensical classes which cannot make sense under any
 circumstances. Here we introduce the simplest example:
 
     (defclass A
-        :subclass B (owl-not B))
+        :super B (owl-not B))
 
 This class never has any classes.
 
@@ -112,7 +112,7 @@ It is also possible to infer class relationships, using a computational
 reasoner. For instance:
 
     (defclass MargheritaPizza
-        :subclass Pizza
+        :super Pizza
             (some-only hasTopping MozzarellaTopping TomatoTopping))
 
 

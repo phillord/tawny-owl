@@ -140,7 +140,7 @@ to the definition of `B`.
     ;; Full Definition:
     ;; (tawny.owl/defclass
     ;;  http://iri/#B
-    ;;  :subclass
+    ;;  :super
     ;;  (owlsome http://iri/#P http://iri/#B)
     ;;  :annotation
     ;;  (owlcomment "B is a test class" "en")

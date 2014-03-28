@@ -8,20 +8,20 @@ Tawny-OWL has a fairly flexible syntax, and provides a number of mechanisms
 for specifying restrictions to classes and properties, including the macros
 covered in [getting started](getting-started.md). The most basic syntax,
 though, is the *frame* syntax; each frame is defined by a Clojure *keyword*.
-There are three logical frames for classes, `:subclass`, `:equivalent` and
+There are four logical frames for classes, `:super`, `:sub`,`:equivalent` and
 `:disjoint`. The simplest use of these is with another named class. For
 example, using a Pizza example, cheese toppings could be defined as follows:
 
     (defclass CheeseTopping)
 
     (defclass GoatsCheeseTopping
-        :subclass CheeseTopping)
+        :super CheeseTopping)
     (defclass GorgonzolaTopping
-        :subclass CheeseTopping)
+        :super CheeseTopping)
     (defclass MozzarellaTopping
-        :subclass CheeseTopping)
+        :super CheeseTopping)
     (defclass ParmesanTopping
-        :subclass CheeseTopping)
+        :super CheeseTopping)
 
 Likewise, equivalent and disjoint classes can be expressed in this way.
 For named classes, it is often easier to use `as-subclasses` macros.
@@ -72,7 +72,7 @@ have been created before they are used. A more naturalistic interpretation of
 OWL would allow statements like so:
 
     (defclass A
-        :subclass (owl-some hasPart B))
+        :super (owl-some hasPart B))
     (defclass B)
     (defoproperty hasPart)
 
@@ -87,7 +87,7 @@ your statements, which would work well in this case.
 
     (defclass B)
     (defclass A
-        :subclass (owl-some hasPart B))
+        :super (owl-some hasPart B))
 
 In many cases where classes need to refer to each other this is often not
 possible. For instance:
@@ -109,8 +109,8 @@ in the next section).
     (defoproperty hasPart)
     (defclass B)
     (defclass A
-        :subclass (owl-some hasPart B))
-    (owl-class B :subclass
+        :super (owl-some hasPart B))
+    (owl-class B :super
         (owl-some isPartOf A))
 
 In this case, we define `B` with no frames, and then refine it later, adding
@@ -120,11 +120,11 @@ once.
 
     (declare-classes B C)
     (defclass A
-        :subclass (owl-some hasPart B C))
+        :super (owl-some hasPart B C))
     ;; more definitions of B and C
-    (owl-class B :subclass
+    (owl-class B :super
         (owl-some isPartOf A))
-    (owl-class C :subclass
+    (owl-class C :super
         (owl-some isPartOf A))
 
 ## Tawny without variables
@@ -141,7 +141,7 @@ simply return the OWL API objects created -- the macros forms such as `defclass`
 return the Clojure [Var](http://clojure.org/vars) object for consistency with
 the rest of Clojure. For example:
 
-    (owl-class "A" :subclass "B" "C")
+    (owl-class "A" :super "B" "C")
 
 will return a class with name "A", a subclass of "B" and "C". If "B" and "C"
 do not exist, then these will also be created. These functions are not pure,
@@ -151,8 +151,8 @@ however so multiple calls will return the same class. It is possible to mix
 this form of call freely with the `defclass` forms:
 
     (defclass A)
-    (owl-class "B" :subclass A)
-    (defclass C :subclass "B")
+    (owl-class "B" :super A)
+    (defclass C :super "B")
 
 This is not a particularly good idea from an engineering point of view. It is
 also important to note that the using strings to define classes and other
@@ -162,7 +162,7 @@ this.
 
     tawny.owl> (defoproperty B)
     #<OWLObjectPropertyImpl <http://iri/#B>>
-    tawny.owl> (defclass A :subclass B)
+    tawny.owl> (defclass A :super B)
     IllegalArgumentException Expecting a class. Got: <http://iri/#B>
         tawny.owl/ensure-class (owl.clj:356)
 
@@ -170,7 +170,7 @@ The equivalent string based system does not:
 
     tawny.owl> (object-property "B")
     #<OWLObjectPropertyImpl <http://iri/#B>>
-    tawny.owl> (owl-class "A" :subclass "B")
+    tawny.owl> (owl-class "A" :super "B")
     #<OWLClassImpl <http://iri/#A>>
 
 Any attempt to reason over an ontology with these statements is likely to

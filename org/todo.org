@@ -1,4 +1,10 @@
 
+* Before Release
+
+- [ ] Finish Regularisation
+- [ ] fact,fact-not to is and (owl)not
+- [ ] Eastwood with no errors?
+
 
 * Issues
   

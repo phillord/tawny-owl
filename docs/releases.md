@@ -1,7 +1,17 @@
 Release Notes
 =============
 
-# 1.1.0
+# 1.1
+
+The 1.1 release has largely been about regularisation of the syntax, enchanced
+performance and added a few pieces of OWL missing from 1.0.
+
+Regularisation is the biggest change and is, unfortunately, a breaking change.
+Original Tawny mimicked Manchester syntax; it's "subclassof" frame is
+back-to-front -- the filler is a superclass of the entity in question. Tawny
+now uses ":sub", ":super" as slot names; ":subclass" and ":subproperty" are
+deprecated and will be removed at a later date.
+
 
 ## Documentation
  - Have added more exemplar ontologies. The OWL primer ontology has now been
@@ -12,6 +22,7 @@ Release Notes
    `as-disjoint` now supports all of these.
  - Introduced new function, `as-equivalent` which works for classes, object or
    date properties.
+ - `suboproperties', `suboproperty?' and related functions added.
  - Both `equivalent?` and `disjoints?` now work for data and object properties
    also.
  - `inverse` function allows for anonymous reference to the inverse of a
@@ -32,6 +43,8 @@ Release Notes
  - `tawny.protege-nrepl` has now been removed; its had dependencies that were
    not explicitly specified as it ran inside protege. It is now in a project
    of its own, called `tawny.protege`.
+ - `add-subclass` functionality has now reversed its functionality -- the
+   second class is now the subclass rather than the superclass.
 
 ## Bug Fixes
  - `datatype` equivalents were limited to other datatypes. Now any datarange

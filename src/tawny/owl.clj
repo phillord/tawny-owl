@@ -35,7 +35,7 @@
     OWLNamedObject OWLOntologyID
     OWLAnnotationProperty OWLObjectProperty
     OWLDataFactory OWLOntologyFormat
-    OWLDataProperty OWLDataRange OWLProperty
+    OWLDataProperty OWLDataRange OWLProperty OWLPropertyExpression
     OWLDataPropertyExpression OWLLiteral)
    (org.semanticweb.owlapi.apibinding OWLManager)
    (org.coode.owlapi.manchesterowlsyntax ManchesterOWLSyntaxOntologyFormat)
@@ -55,7 +55,11 @@
 ;; eval'd is a pain, hence they are all defonce. Access is via a fn, because
 ;; this is more adapatable and also because I monkey patch them inside
 ;; protege. They used to be closures but this was a pain to type hint
-(defonce vowl-data-factory (atom nil))
+(defonce
+  ^{:doc "The OWLDataFactory used for Tawny."
+    :private true}
+  vowl-data-factory (atom nil))
+
 (defn ^OWLDataFactory owl-data-factory []
   "Returns the main factory for all other objects."
   (when-not @vowl-data-factory
@@ -63,7 +67,11 @@
             (OWLManager/getOWLDataFactory)))
   @vowl-data-factory)
 
-(defonce vowl-ontology-manager (atom nil))
+(defonce
+  ^{:doc "The OWLOntologyManager used for Tawny."
+    :private true}
+  vowl-ontology-manager (atom nil))
+
 (defn ^OWLOntologyManager owl-ontology-manager []
   "The single OWLOntologyManager used by Tawny."
   (when-not @vowl-ontology-manager
@@ -488,6 +496,10 @@ with the literal function."
                   (ensure-annotation-property o superproperty)))))
 
 
+(def deprecated-add-sub-annotation
+  add-super-annotation)
+
+
 ;; various annotation types
 (def label-property
   (.getRDFSLabel (owl-data-factory)))
@@ -579,7 +591,8 @@ with the literal function."
 
 (def ^{:private true} annotation-property-handlers
   {
-   :subproperty add-super-annotation
+   :super add-super-annotation
+   :subproperty deprecated-add-sub-annotation
    :annotation add-annotation
    :comment add-comment
    :label add-label
@@ -1062,6 +1075,25 @@ converting it from a string or IRI if necessary."
    (throw (IllegalArgumentException.
            (format "Expecting an OWL data property: %s" property)))))
 
+(defn-
+  ^OWLPropertyExpression
+  ensure-property [o prop]
+  "Ensures that the entity in question is an OWLPropertyExpression.
+If prop is ambiguous (for example, a string or IRI that whose type has not
+been previously defined) this will create an OWLObjectProperty rather than
+an OWLDataProperty"
+  (let [type
+        (or
+          ;; guess the type -- if we can't then object-property it's because
+          ;; we don't know and not because it's illegal
+          (guess-type o prop)
+          ::object-property)]
+    (case type
+      ::object-property
+      (ensure-object-property o prop)
+      ::data-property
+      (ensure-data-property o prop))))
+
 (defn- ^OWLDatatype ensure-datatype
   "Ensure that 'datatype' is an OWLDatatype. Will convert from an keyword for
   builtin datatypes."
@@ -1111,15 +1143,34 @@ interpret this as a string and create a new OWLIndividual."
 
 ;; Begin add-owl objects
 (defbdontfn
+  add-superclass
+  {:doc "Adds one or more superclasses to name in ontology."
+   :arglists '([name & superclass] [ontology name & superclass])}
+  [o name superclass]
+  (add-axiom o
+             (.getOWLSubClassOfAxiom
+              (owl-data-factory)
+              (ensure-class o name)
+              (ensure-class o superclass))))
+
+(defbdontfn
   add-subclass
-  {:doc "Adds one or more subclass to name in ontology."
+  {:doc "Adds one or more subclasses to name in ontology."
    :arglists '([name & subclass] [ontology name & subclass])}
   [o name subclass]
   (add-axiom o
              (.getOWLSubClassOfAxiom
               (owl-data-factory)
-              (ensure-class o name)
-              (ensure-class o subclass))))
+              (ensure-class o subclass)
+              (ensure-class o name))))
+
+(def deprecated-add-subclass
+  ^{:doc "This maintains the functionality of the old add-subclass function
+which actually added superclasses. The new add-subclass does the
+opposite of this."
+    :deprecated "1.1"
+    :arglists '([name & superclass] [ontology name & superclass])}
+  #'add-superclass)
 
 (defbdontfn add-equivalent
   {:doc "Adds an equivalent axiom to the ontology."
@@ -1219,7 +1270,9 @@ interpret this as a string and create a new OWLIndividual."
               (ensure-object-property o property)
               (ensure-object-property o inverse))))
 
-(defmontfn inverse [o property]
+(defmontfn inverse
+  "Creates an objet inverse of expression."
+  [o property]
   (.getOWLObjectInverseOf
    (owl-data-factory)
    (ensure-object-property o property)))
@@ -1234,8 +1287,26 @@ a superproperty."
               (ensure-object-property o property)
               (ensure-object-property o superproperty))))
 
+(defbdontfn add-subproperty
+  "Adds all items in superpropertylist to property as
+a superproperty."
+  [o property subproperty]
+  (add-axiom o
+             (.getOWLSubObjectPropertyOfAxiom
+              (owl-data-factory)
+              (ensure-object-property o subproperty)
+              (ensure-object-property o property))))
+
+
+(def ^{:deprecated "1.1"
+       :doc "This is the same as add-superproperty but marked as deprecated
+and used as the handler for :subproperty."
+       } deprecated-add-superproperty
+  add-superproperty)
+
+
 ;; broadcasts specially
-(defdontfn add-subpropertychain
+(defdontfn add-subchain
   "Adds a property chain to property."
   [o property superpropertylist]
   (when superpropertylist
@@ -1251,9 +1322,16 @@ a superproperty."
                    (map (partial ensure-object-property o) properties)
                    property))
        ;; add sequential entities as a chain in their own right
-       (map (partial add-subpropertychain
+       (map (partial add-subchain
                      o property)
             lists)))))
+
+(def
+  ^{:doc "This is the same as add-subchain, but marked as deprecated
+and used as the handler for :subpropertychain."
+    :deprecated "1.1"} deprecated-add-subpropertychain
+  add-subchain)
+
 
 (defbdontfn add-equivalent-property
   "Adds a equivalent data properties axiom."
@@ -1265,6 +1343,7 @@ a superproperty."
       (ensure-object-property o equivalent))))
 
 (defdontfn equivalent-properties
+  "Adds properties as equivalent to the ontology."
   [o properties]
   (let [properties
         (map (partial
@@ -1277,7 +1356,7 @@ a superproperty."
                     properties)))))
 
 (defbdontfn add-disjoint-property
-  {:doc "Adds a disjoint property axiom to the ontology"}
+  "Adds a disjoint property axiom to the ontology"
   [o name disjoint]
   (add-axiom
    o
@@ -1333,9 +1412,12 @@ a superproperty."
    :domain add-domain
    :range add-range
    :inverse add-inverse
-   :subproperty add-superproperty
+   :sub add-subproperty
+   :super add-superproperty
+   :subproperty deprecated-add-superproperty
    :characteristic add-characteristics
-   :subpropertychain add-subpropertychain
+   :subchain add-subchain
+   :subpropertychain deprecated-add-subpropertychain
    :disjoint add-disjoint-property
    :equivalent add-equivalent-property
    :annotation add-annotation
@@ -1629,7 +1711,9 @@ n is evaluated only once, so can have side effects."
 
 (def
   ^{:private true} owl-class-handlers
-  {:subclass add-subclass
+  {:subclass deprecated-add-subclass
+   :sub add-subclass
+   :super add-superclass
    :equivalent add-equivalent
    :disjoint add-disjoint
    :annotation add-annotation
@@ -1875,6 +1959,7 @@ any structure and may also be a var. See also 'as-subclasses'."
               "Unable to determine the type of entities.")))))
 
 (defdontfn as-equivalent
+  "Declare the properties or classes as disjoint."
   [o & entities]
   (let [entities
         (map var-get-maybe (flatten entities))]
@@ -1917,9 +2002,7 @@ The first item may be an ontology, followed by options.
          var-get-maybe
          (flatten (drop-while keyword? rest)))]
     ;; first we deal with subclasses
-    (util/domap
-     #(add-subclass o % superclass)
-     subclasses)
+    (add-subclass o superclass subclasses)
     (when
         (:disjoint options)
       (disjoint-classes o subclasses))
@@ -1970,16 +2053,16 @@ See `declare-classes' where frames (or just default frames) are not needed.
 (defn- recurse-ontology-tree
   "Recurse the ontology tree starting from class and calling
 f to get the neighbours."
-  [o f class]
-  (loop [classes #{}
+  [o f entity]
+  (loop [entities #{}
          explored #{}
-         frontier (f o class)]
+         frontier (f o entity)]
     (if (empty? frontier)
-      classes
+      entities
       (let [v (first frontier)
             neighbours (seq (f o v))]
         (recur
-         (conj classes v)
+         (conj entities v)
          (into explored neighbours)
          (into (rest frontier) (remove explored neighbours)))))))
 
@@ -2020,13 +2103,13 @@ direct or indirect superclass of itself."
       ())))
 
 (defdontfn subclasses
-  "Return all subclasses of class"
+  "Return all subclasses of class."
   [o class]
   (recurse-ontology-tree
    o direct-subclasses class))
 
 (defdontfn subclass?
-  "Returns true if name has subclass as a subclass"
+  "Returns true if name has subclass as a subclass."
   [o name subclass]
   (let [namecls (ensure-class o name)
         subclasscls (ensure-class o subclass)]
@@ -2074,6 +2157,49 @@ direct or indirect superclass of itself."
   [^OWLOntology o ^OWLObjectProperty p1 ^OWLObjectProperty p2]
   (contains?
    (.getInverses p1 o) p2))
+
+
+(defdontfn direct-superproperties
+  "Return all direct superproperties of property."
+  [^OWLOntology o property]
+  (.getSuperProperties
+   (ensure-property o property) o))
+
+(defdontfn superproperties
+  "Return all superproperties of a property."
+  [o property]
+  (recurse-ontology-tree
+   o direct-superproperties
+   (ensure-property o property)))
+
+(defdontfn superproperty?
+  "Return true if superproperty is a superproperty of property."
+  [o property superproperty]
+  (some #(.equals
+          (ensure-property o superproperty) %)
+        (superproperties o property)))
+
+(defdontfn direct-subproperties
+  "Returns all direct subproperties of property."
+  [^OWLOntology o
+   property]
+  (.getSubProperties
+   (ensure-property o property) o))
+
+(defdontfn subproperties
+  "Returns all subproperties of property."
+  [o property]
+  (recurse-ontology-tree
+   o direct-subproperties
+   (ensure-property o property)))
+
+(defdontfn subproperty?
+  "Returns true if property is a subproperty of subproperty."
+  [o property subproperty]
+  (some #(.equals
+          (ensure-property o subproperty) %)
+        (subproperties o property)))
+
 ;; some test useful macros
 
 ;; currently doesn't support an ontology argument

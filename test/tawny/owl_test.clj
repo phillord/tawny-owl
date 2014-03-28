@@ -135,7 +135,7 @@
     (o/defoproperty a :ontology to))))
 
 
-(deftest oproperty
+(deftest oproperty []
   (is
    (instance? org.semanticweb.owlapi.model.OWLObjectProperty
               (o/object-property to "r"))))
@@ -145,17 +145,59 @@
                  (#'o/ensure-class to "hello"))))
 
 
-(deftest add-subclass
+(deftest add-subclass []
   (is
    (do
      (o/add-subclass to "a" "b")
      (= 2 (.size (.getClassesInSignature
                   to)))))
+
   (is
    (do
      (o/add-subclass to "a" "b")
+     (o/superclass? to "b" "a"))))
+
+(deftest add-superclass []
+  (is
+   (do
+     (o/add-superclass to "a" "b")
+     (= 2 (.size (.getClassesInSignature
+                  to)))))
+
+  (is
+   (do
+     (o/add-superclass to "a" "b")
+     (o/superclass? to "a" "b"))))
+
+
+(deftest deprecated-add-subclass
+  (is
+   (do
+     (o/deprecated-add-subclass to "a" "b")
+     (= 2 (.size (.getClassesInSignature
+                  to)))))
+  (is
+   (do
+     (o/deprecated-add-subclass to "a" "b")
+     (o/superclass? to "a" "b"))))
+
+
+(deftest add-superclass
+  (is
+   (do
+     (o/add-superclass to "a" "b")
+     (= 2 (.size (.getClassesInSignature
+                  to)))))
+  (is
+   (do
+     (o/add-superclass to "a" "b")
      (o/superclass? to "a" "b")))
   )
+
+
+
+
+
 
 (deftest add-equivalent []
   (let [equiv (#'o/add-equivalent to
@@ -178,7 +220,7 @@
               c (o/owl-class to "c")]
              (o/add-has-key to c (list p))))))))
 
-(deftest add-subpropertychain
+(deftest add-subchain
   (is
    (not
     (nil?
@@ -187,7 +229,7 @@
              p2 (o/object-property to "p2")
              p3 (o/object-property to "p3")
              ]
-         (o/add-subpropertychain to
+         (o/add-subchain to
           p1 (list p2 p3)))))))
 
   (is
@@ -198,7 +240,7 @@
              p2 (o/object-property to "p2")
              p3 (o/object-property to "p3")
              ]
-         (o/add-subpropertychain to
+         (o/add-subchain to
           p1 (list [p2 p3])))))))
 
   (is
@@ -210,7 +252,7 @@
                p4 (o/object-property to "p4")
                p5 (o/object-property to "p5")
              ]
-         (o/add-subpropertychain to
+         (o/add-subchain to
           p1 (list p2 p3 [p4 p5])))))))
   )
 
@@ -339,11 +381,11 @@ Assumes that fixture has been run
   []
 
   (o/owl-class "a" :ontology to)
-  (o/owl-class "b" :subclass "a" :ontology to)
-  (o/owl-class "c" :subclass "b" :ontology to)
+  (o/owl-class "b" :super "a" :ontology to)
+  (o/owl-class "c" :super "b" :ontology to)
 
   (o/owl-class "d" :ontology to)
-  (o/owl-class "e" :subclass "b" "d" :ontology to)
+  (o/owl-class "e" :super "b" "d" :ontology to)
   )
 
 (deftest superclass? []
@@ -360,6 +402,13 @@ Assumes that fixture has been run
          (test-class-with-hierarchy)
          (o/superclass? to "c" "e")))))
 
+(deftest superclasses []
+  (is
+   (let [a (o/owl-class to "a")
+         b (o/owl-class to "b")
+         c (o/owl-class to "c")]
+     (o/add-superclass to a b)
+     (o/superclass? to a b))))
 
 (deftest subclass? []
   (is
@@ -441,7 +490,7 @@ Assumes that fixture has been run
 (defn ontology-c-with-two-parents []
   (o/owl-class to "a")
   (o/owl-class to "b")
-  (o/owl-class to "c" :subclass "a" "b"))
+  (o/owl-class to "c" :super "a" "b"))
 
 
 (deftest with-probe-axioms
@@ -784,7 +833,7 @@ Assumes that fixture has been run
    (do
      (o/with-probe-entities to
        [dp (o/datatype-property to "a")
-        sdp (o/datatype-property to "b" :subproperty dp)]
+        sdp (o/datatype-property to "b" :super dp)]
        true)))
   (is
    (every? #(instance?
@@ -954,3 +1003,52 @@ Assumes that fixture has been run
          (o/add-subclass to a b)
          (o/add-subclass to b a)
          (o/subclasses to a))))))
+
+
+(deftest super-frame-class []
+  (is
+   (let [a (o/owl-class to "a")
+         b (o/owl-class to "b" :super a)]
+     (o/superclass? to "b" "a"))))
+
+
+(deftest sub-frame-class []
+  (is
+   (let [a (o/owl-class to "a")
+         b (o/owl-class to "b" :sub a)]
+     (o/subclass? to "b" "a"))))
+
+
+(deftest super-frame-property []
+  (is
+   (let [r (o/object-property to "r")
+         s (o/object-property to "s"
+                              :super r)]
+     (o/superproperty? to s r))))
+
+(deftest sub-frame-property []
+  (is
+   (let [r (o/object-property to "r")
+         s (o/object-property to "s"
+                              :sub r)]
+     (o/subproperty? to s r))))
+
+(deftest super-frame-data-property []
+  (is
+   (let [h (o/datatype-property to "h")
+         j (o/datatype-property to "j"
+                            :super h)]
+     (o/superproperty? to j h))))
+
+(deftest sub-frame-data-property []
+  (is
+   (let [h (o/datatype-property to "h")
+         j (o/datatype-property to "j"
+                              :sub h)]
+     (o/subproperty? to j h)))
+
+   (is
+   (let [h (o/datatype-property to "h")
+         j (o/datatype-property to "j"
+                              :sub h)]
+     (o/superproperty? to h j))))

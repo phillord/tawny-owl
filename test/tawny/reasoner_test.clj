@@ -67,7 +67,7 @@
 (defn ontology-abc []
   (o/owl-class to "a")
   (o/owl-class to "b")
-  (o/owl-class to "c" :subclass "a" "b"))
+  (o/owl-class to "c" :super "a" "b"))
 
 (defn ontology-abc-indc []
   (ontology-abc)
@@ -81,7 +81,7 @@
               (o/object-some to "p" "b"))
   (o/owl-class to "b")
   (o/owl-class to "c"
-              :subclass 
+              :super
               (o/object-some to "p" "b")))
 
 

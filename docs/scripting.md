@@ -39,7 +39,7 @@ prefix for us, which saves a bit of typing.
             "KalamataOlives"
             "Lettuce"
             "Peas"]]
-      (owlclass (str n "Topping") :subclass VegetableTopping))
+      (owlclass (str n "Topping") :super VegetableTopping))
 
 This version does *not* create vars, so attempts afterwards to use
 `CarrotTopping` will fail. It is relatively easy to add vars also, using a
@@ -54,7 +54,7 @@ This version does *not* create vars, so attempts afterwards to use
           "Cumin"
           ]]
       (tawny.read/intern-entity
-       (owlclass (str n "Topping") :subclass VegetableTopping)))
+       (owlclass (str n "Topping") :super VegetableTopping)))
 
 This achieves the same thing, but also adds vars. The same thing can be done
 with properties, by using the `objectproperty` function. So far, we have never
@@ -128,7 +128,7 @@ essentially add new syntax. For consider this annotation property from
 `tawny.upper`.
 
     (defannotationproperty Scope
-      :subclass owlcommentproperty
+      :super owlcommentproperty
       :comment "The scope provides context to the definition and describes that
       parts of the domain which are (or are not) intended to be described by definition.")
 
@@ -152,17 +152,12 @@ This form of extensibility is also used in `tawny.pizza` where a new function
 is created to describe a pizza.
 
     (defn generate-named-pizza [& pizzalist]
-      (doall
-       (map
-        (fn [[namedpizza & toppings]]
-          (add-subclass
-           namedpizza
-           ;; use apply because we have a single list, someonly expects a list of
-           ;; arguments.
-           (apply someonly
-                  ;; toppings is alread a list!
-                  (cons hasTopping toppings))))
-        pizzalist)))
+       (doseq
+         [[named & toppings] pizzalist]
+        (owl-class
+          named
+          :super (some-only hasTopping pizzalist))))
+
 
     (generate-named-pizza
         [CapricciosaPizza AnchoviesTopping MozzarellaTopping
@@ -209,7 +204,7 @@ from the `tawny.pizza`
     (defoproperty hasBase
       :domain Pizza)
     (owlclass Pizza
-              :subclass
+              :super
               (owlsome hasTopping PizzaTopping)
               (owlsome hasBase PizzaBase))
 

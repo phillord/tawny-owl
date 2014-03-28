@@ -14,7 +14,7 @@ Given classes such as:
 
     (defclass A)
     (defclass B
-        :subclass A)
+        :super A)
     (defclass C
         :equivalent B)
 

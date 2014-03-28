@@ -33,7 +33,7 @@ equivalent macros which define vars at the same time. They all have a similar
 form taking keyword arguments, although again this is specialised so that each
 keyword can take multiple values.
 
-    (owl-class "a" :subclass "b" "c" "d")
+    (owl-class "a" :super "b" "c" "d")
 
 In most cases, it is possible to use either strings or existing OWL API
 objects; however, it must be possible for tawny to differentiate between the
@@ -122,9 +122,9 @@ been used with the `some-only` function to enable
 [closure](http://ontogenesis.knowledgeblog.org/1001) (not Clojure!) axioms.
 The `some-only` function returns several restrictions at once, as a list.
 
-    (owl-class "class" :subclass (some-only "r" "a" "b" "c"))
+    (owl-class "class" :super (some-only "r" "a" "b" "c"))
     ;; this is the same as...
-    (owl-class "class" :subclass
+    (owl-class "class" :super
         (owl-some "r" "a")
         (owl-some "r" "b")
         (owl-some "r" "c")
@@ -133,7 +133,7 @@ The `some-only` function returns several restrictions at once, as a list.
 As the `owl-some` function also broadcasts, this can also be written more
 simply as:
 
-    (owl-class "class" :subclass
+    (owl-class "class" :super
         (owl-some "r" "a" "b" "c")
         (only "r" (owl-or "a" "b" "c")))
 

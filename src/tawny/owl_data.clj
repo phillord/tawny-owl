@@ -36,6 +36,16 @@
     (ensure-data-property o property)
     (ensure-data-range o range))))
 
+(defbdontfn add-data-subproperty
+  "Adds a sub property to a data property."
+  [o property sub]
+  (add-axiom
+   o
+   (.getOWLSubDataPropertyOfAxiom
+    (owl-data-factory)
+    (ensure-data-property o sub)
+    (ensure-data-property o property))))
+
 (defbdontfn add-data-superproperty
   "Adds a super property to a data property."
   [o property super]
@@ -44,6 +54,15 @@
               (owl-data-factory)
               (ensure-data-property o property)
               (ensure-data-property o super))))
+
+(def
+  ^{:deprecated "1.1"
+    :doc "The same as add-data-superproperty but deprecated.
+This is to deprecated the :superproperty frame"}
+  deprecated-add-data-superproperty
+  add-data-superproperty)
+
+
 (def
   ^{:private true}
   datacharfuncs
@@ -112,7 +131,9 @@
   {:annotation add-annotation,
    :domain add-data-domain,
    :range add-data-range,
-   :subproperty add-data-superproperty
+   :subproperty deprecated-add-data-superproperty
+   :sub add-data-subproperty
+   :super add-data-superproperty
    :characteristic add-data-characteristics
    :disjoint add-data-disjoint
    :equivalent add-data-equivalent
