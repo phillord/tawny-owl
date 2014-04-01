@@ -1966,6 +1966,23 @@ See `declare-classes' where frames (or just default frames) are not needed.
             (fn [x#]
               `(defclass ~@x#)) classes)))
 
+;; tree recursing
+(defn- recurse-ontology-tree
+  "Recurse the ontology tree starting from class and calling
+f to get the neighbours."
+  [o f class]
+  (loop [classes #{}
+         explored #{}
+         frontier (f o class)]
+    (if (empty? frontier)
+      classes
+      (let [v (first frontier)
+            neighbours (seq (f o v))]
+        (recur
+         (conj classes v)
+         (into explored neighbours)
+         (into (rest frontier) (remove explored neighbours)))))))
+
 ;; predicates
 (defdontfn direct-superclasses
   "Returns the direct superclasses of name.
@@ -1978,27 +1995,16 @@ expressions."
       (.getSuperClasses clz o)
       ())))
 
-;; does the OWL API really not do this for me?
-(defn- superclasses-1
-  "Returns all subclasses of all classes in classlist."
-  [o classlist]
-  ;; if there are no subclasses return empty list
-  (if (= 0 (count classlist))
-    (list)
-    (concat (list (first classlist))
-            ;; can't use recur, not in tail position
-            (superclasses-1 o
-                            (rest classlist))
-            (superclasses-1 o
-                            (direct-superclasses o (first classlist))))))
-
 (defdontfn superclasses
-  "Return all subclasses of class"
+  "Return all superclasses of class.
+class is not returned unless it is explicitly stated to be a
+direct or indirect superclass of itself."
   [o class]
-  (superclasses-1 o (direct-superclasses o class)))
+  (recurse-ontology-tree
+   o direct-superclasses class))
 
 (defdontfn superclass?
-  "Returns true is name has superclass as a superclass"
+  "Returns true if name is asserted to be a superclass."
   [o name superclass]
   (let [namecls (ensure-class o name)
         superclasscls (ensure-class o superclass)]
@@ -2013,23 +2019,11 @@ expressions."
                       o)
       ())))
 
-(defn- subclasses-1
-  "Returns all subclasses of all classes in classlist."
-  [o classlist]
-  ;; if there are no subclasses return empty list
-  (if (= 0 (count classlist))
-    (list)
-    (concat (list (first classlist))
-            ;; can't use recur, not in tail position
-            (subclasses-1 o
-                          (rest classlist))
-            (subclasses-1 o
-                          (direct-subclasses o (first classlist))))))
-
 (defdontfn subclasses
   "Return all subclasses of class"
   [o class]
-  (subclasses-1 o (direct-subclasses o class)))
+  (recurse-ontology-tree
+   o direct-subclasses class))
 
 (defdontfn subclass?
   "Returns true if name has subclass as a subclass"

@@ -906,3 +906,51 @@ Assumes that fixture has been run
      (=  (o/owl-thing)
          (.getFiller
           (o/object-at-most to 1 p))))))
+
+
+;; superclass (and subclass) is complicated
+(deftest superclass-recurse []
+  (is
+   (= 0
+      (count
+       (let [a (o/owl-class to "a")]
+         (o/superclasses to a)))))
+  (is
+   (= 1
+      (count
+       (let [a (o/owl-class to "a")]
+         (o/add-subclass to a a)
+         (o/superclasses to a)))))
+
+  (is
+   (= 2
+      (count
+       (let [a (o/owl-class to "a")
+             b (o/owl-class to "b")
+             ]
+         (o/add-subclass to a b)
+         (o/add-subclass to b a)
+         (o/superclasses to a))))))
+
+(deftest subclass-recurse []
+  (is
+   (= 0
+      (count
+       (let [a (o/owl-class to "a")]
+         (o/subclasses to a)))))
+  (is
+   (= 1
+      (count
+       (let [a (o/owl-class to "a")]
+         (o/add-subclass to a a)
+         (o/subclasses to a)))))
+
+  (is
+   (= 2
+      (count
+       (let [a (o/owl-class to "a")
+             b (o/owl-class to "b")
+             ]
+         (o/add-subclass to a b)
+         (o/add-subclass to b a)
+         (o/subclasses to a))))))
