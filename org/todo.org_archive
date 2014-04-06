@@ -693,3 +693,135 @@ adds annotation to entity.
  - :subproperty adds a superproperty
 
 
+
+* Individuals
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2014-04-06 Sun 11:57
+  :ARCHIVE_FILE: ~/src/knowledge/tawny-owl/org/todo.org
+  :ARCHIVE_CATEGORY: todo
+  :END:
+
+** Problem
+
+I don't like the current syntax for individuals which looks like this..
+
+(defindividual Bill
+  :fact
+  (fact hasWife Mary)
+  (fact-not hasDaughter Susan))
+
+The multiple uses pf "fact" are really ugly. It would be much nicer to write:
+
+(defindividual Bill
+  :fact
+  (hasWife Mary)
+  (owl-not hasDaughter Susan))
+
+This is however difficult for two reasons. Firstly "hasWife" is an object
+property and so not a function
+
+** Solution
+
+Rename fact to "is" and make "owl-not" work.
+
+(defindividual Bill
+  :fact
+  (is hasWife Mary)
+  (owl-not hasDaughter Susan))
+
+Now guess-type is pretty close to working
+
+user> (defindividual i)
+#'user/i
+user> (defoproperty r)
+#'user/r
+user> (defdproperty d)
+#'user/d
+
+
+user> (guess-type [r i])
+:tawny.owl/object-property
+user> (guess-type [d 10])
+:tawny.owl/data-property
+
+in this case it all works -- that we get an object property distinguishes
+what we want  (in fact at the moment, this calls object-not which crashes). 
+
+
+(guess-type ["f" i])
+nil
+(guess-type ["d" 10])
+nil
+
+There are some untyped edge cases which are problematic. Having a literal or
+a number indicates the type of "f" and "d" but these are not being returned. 
+
+We could add a different nil handler for owl-not -- currently this just
+throws an error. We'd need to check whether the second arg with
+guess-individual-literal and then move from there.
+
+Last edge case is something like
+
+(guess-type ["d" "hello"])
+
+since "hello" is a string (i.e. a literal), we can probably infer that "d" is
+a datatype property. But this seems dodgy to me, so we won't.
+
+These changes would mean that 
+
+(owl-not r i)
+
+would now return a fact, while currently this crashes with an assertion fail
+error. Of course this will still crash soon after
+
+(defclass C :subclass (fact r i))
+
+crashes with and ArityException. This is ensure-class gets called on the
+returned closure. This in turn detects that it is a function and so calls it,
+but with no values -- this is to support deprecated classes in OBO stuff, but
+clearly it doesn't make sense here.
+
+It's not a very good exception really. And there is no way to check for it,
+since we can't know the arity of the closure, except by calling it -- which
+we need to catch and rethrow.
+
+
+** Second Solution
+
+I've been making this much more complex than necessary (not a first!)
+
+We can distinguish based on arity! object-not current has arity of 1,
+likewise data-not, so arity 2 has to be fact-not (assuming it is sane).
+
+fact-not already distinguishes correctly what to do based on type. So, all we
+need to do is change owl-not into owl-not-impl and make it a private
+function. Then have an owl-not arity overloaded function which calls
+owl-not-impl for arity 1, and fact-not for arity 2. All of these function
+should crash sanely if they get the wrong type!
+
+Surprisingly, this works!
+
+
+** is nameclashes with clojure.test
+
+which is a pain so probably not the thing to do
+
+(defindividual Bill
+  :fact
+  (hasWife Mary)
+  (owl-not hasDaughter Susan))
+
+- (. hasWife Mary) clashes with java interop
+- (, hasWife Mary) , is whitespace
+- (| hasWife Mary) unintuitive
+- (am hasWife Mary) -- different person of is
+
+Decided not to care!
+
+
+** Plan
+
+ - [X] Done most of it
+ - [X] Don't forget is
+ - [X] Update documentation!
+

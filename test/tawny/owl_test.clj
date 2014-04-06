@@ -317,7 +317,18 @@
   (is (instance?
        org.semanticweb.owlapi.model.OWLDataComplementOf
        (o/owl-not to :XSD_FLOAT)))
-)
+  (is (fn?
+       (let [i (o/individual to "i")
+             r (o/object-property to "r")]
+         (o/owl-not to r i))))
+  (is (instance?
+       org.semanticweb.owlapi.model.OWLNegativeObjectPropertyAssertionAxiom
+       (let [i (o/individual to "i")
+             j (o/individual to "j")
+             r (o/object-property to "r")]
+         ((o/owl-not to r i) j))))
+
+  )
 
 (deftest some-only []
   (is

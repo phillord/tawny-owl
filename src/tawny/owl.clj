@@ -1488,12 +1488,26 @@ value for each frame."
 (defmulti some-only #'guess-type-args)
 (defmulti owl-and #'guess-type-args)
 (defmulti owl-or #'guess-type-args)
-(defmulti owl-not #'guess-type-args)
 (defmulti exactly #'guess-type-args)
 (defmulti oneof #'guess-individual-literal-args)
 (defmulti at-least #'guess-type-args)
 (defmulti at-most #'guess-type-args)
 (defmulti has-value #'guess-type-args)
+
+;; this is the outlier because it is also used for individuals, so is called
+;; overloaded on arity
+(defmulti
+  ^{:private true}
+  owl-not-one #'guess-type-args)
+
+;; use declare here because I just don't want to owl-not later
+(declare fact-not)
+
+(defmontfn owl-not
+  ([o entity]
+     (owl-not-one o entity))
+  ([o property entity]
+     (fact-not o property entity)))
 
 (defn guess-type-error
   "Throws an exception always"
@@ -1516,7 +1530,7 @@ value for each frame."
 (defmethod owl-or nil [& rest]
   (apply guess-type-error rest))
 
-(defmethod owl-not nil [& rest]
+(defmethod owl-not-one nil [& rest]
   (apply guess-type-error rest))
 
 (defmethod exactly nil [& rest]
@@ -1611,7 +1625,7 @@ value for each frame."
    (owl-data-factory)
    (ensure-class o (first (flatten class)))))
 
-(defmethod owl-not ::object [& rest]
+(defmethod owl-not-one ::object [& rest]
   (apply object-not rest))
 
 (defmontfn object-some-only
@@ -1675,8 +1689,10 @@ n is evaluated only once, so can have side effects."
 (defmontfn object-exactly
   "Returns an OWL exact cardinality restriction."
   [o cardinality property & class]
-  {:pre [(> 2
-            (count (flatten class)))]}
+  {:pre [(and
+          (number? cardinality)
+          (> 2
+             (count (flatten class))))]}
   (with-optional-class o class
     (.getOWLObjectExactCardinality
      (owl-data-factory) cardinality
@@ -1829,15 +1845,22 @@ or ONTOLOGY if present."
 (defmulti get-fact-not guess-type-args)
 
 (defmontfn fact
-  "Returns a fact asserting a relationship with PROPERTY toward an
-individual TO."
+  "Returns a fact assertion a relation by PROPERTY which can be
+either an object or data property toward either an individual or literal
+TO. This is the same as the function `is'."
   [o property to]
   (fn fact [from]
     (get-fact o property from to)))
 
+(def ^{:doc "Returns a fact assertion a relation by PROPERTY which can be
+either an object or data property toward either an individual or literal
+TO"}
+  is
+  fact)
+
 (defmontfn fact-not
   "Returns a fact asserting the lack of a relationship along PROPERTY
-toward an individual TO."
+toward an either an individual or literal TO."
   [o property to]
   (fn fact-not [from]
     (get-fact-not o property from to)))

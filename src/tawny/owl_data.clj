@@ -281,7 +281,7 @@ which is an OWLDatatype object.
    (owl-data-factory)
    (ensure-data-range o type)))
 
-(defmethod owl-not ::data [& rest]
+(defmethod owl-not-one ::data [& rest]
   (apply data-not rest))
 
 (defbmontfn data-some

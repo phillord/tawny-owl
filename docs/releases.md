@@ -18,6 +18,8 @@ deprecated and will be removed at a later date.
    ported to Tawny.
 
 ## New Features
+ - Individual facts can now be defined by the `is` function (rather than
+   `fact`) and `owl-not` (or `tawny.english\not`).
  - Introduced new functions for declaring disjoint object and data properties.
    `as-disjoint` now supports all of these.
  - Introduced new function, `as-equivalent` which works for classes, object or
@@ -38,6 +40,8 @@ deprecated and will be removed at a later date.
    approximate benchmarks.
 
 ## Breaking Changes
+ - `owl-not` now also supports individuals -- this is technically a breaking
+   change because `owl-not` previously had arity 1, now also has arity 2.
  - `disjoint-classes` list has been removed, and `disjoint-classes-list` has
    been renamed to `disjoint-classes`!
  - `tawny.protege-nrepl` has now been removed; its had dependencies that were
