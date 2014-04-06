@@ -18,9 +18,9 @@
 (ns
     ^{:doc "Tests which cut across tawny and could be anywhere"}
   tawny.integration-tests
-  (:use [clojure.test]
-        [tawny.owl])
+  (:use [clojure.test])
   (:require [tawny.reasoner :as r]
+            [tawny.owl :as o]
             [tawny.fixture]))
 
 
@@ -30,22 +30,22 @@
   (is
    (do
      (let [ont
-           (ontology :iri "http://onlyness")
+           (o/ontology :iri "http://onlyness")
            A
-           (owl-class ont "A")
+           (o/owl-class ont "A")
            B
-           (owl-class ont "B")
+           (o/owl-class ont "B")
            R
-           (object-property
+           (o/object-property
             ont "R" :domain A :range B)
            C
-           (owl-class
-            ont "C" :equivalent (only R B))]
-       (r/iequivalent-class? ont C (owl-thing))))))
+           (o/owl-class
+            ont "C" :equivalent (o/only R B))]
+       (r/iequivalent-class? ont C (o/owl-thing))))))
 
 (deftest bottom
   (is
-   (let [ont (ontology :iri "http://bottom")
-         bottom (individual ont "bottom" :type (owl-nothing))]
+   (let [ont (o/ontology :iri "http://bottom")
+         bottom (o/individual ont "bottom" :type (o/owl-nothing))]
      (not
       (r/consistent? ont)))))

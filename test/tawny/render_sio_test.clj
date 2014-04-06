@@ -1,5 +1,5 @@
 (ns tawny.render-sio-test
-  (:use [tawny.owl])
+  (:require [tawny.owl])
   (:use [clojure.test])
   (:require [tawny.render])
   )
@@ -9,7 +9,7 @@
    (org.semanticweb.owlapi.model.OWLOntologyID.
     (tawny.owl/iri "http://semanticscience.org/ontology/sio.owl")))
   (.loadOntologyFromOntologyDocument
-   (owl-ontology-manager)
+   (tawny.owl/owl-ontology-manager)
    (tawny.owl/iri (clojure.java.io/resource "sio.owl"))))
 
 (declare sio)
