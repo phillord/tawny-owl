@@ -339,7 +339,7 @@ or the current-ontology"
 
 (defdontfn iri-for-name
   "Returns an IRI object for the given name.
-g
+
 This is likely to become a property of the ontology at a later date, but at
 the moment it is very simple."
   [o name]
@@ -497,6 +497,8 @@ with the literal function."
 
 
 (def deprecated-add-sub-annotation
+  "The same as add-super-annotation used to implement the old
+add-sub-annotation functionality."
   add-super-annotation)
 
 
@@ -1372,6 +1374,7 @@ and used as the handler for :subpropertychain."
                  (ensure-object-property o disjoint)]))))
 
 (defdontfn disjoint-properties
+  "Make all the properties in PROPERTIES disjoint."
   [o properties]
   (let [properties
         (doall
@@ -1448,7 +1451,6 @@ value for each frame."
         (f o property (get frames k))))
     property))
 
-
 (defdontfn object-property
   "Returns a new object property in the current ontology."
   [o name & frames]
@@ -1483,27 +1485,59 @@ value for each frame."
 ;; which can be (unambiguous) OWLObjects, potentially ambiguous IRIs or
 ;; strings. If we really can tell, we guess at objects because I like objects
 ;; better.
-(defmulti owl-some #'guess-type-args)
-(defmulti only #'guess-type-args)
-(defmulti some-only #'guess-type-args)
-(defmulti owl-and #'guess-type-args)
-(defmulti owl-or #'guess-type-args)
-(defmulti exactly #'guess-type-args)
-(defmulti oneof #'guess-individual-literal-args)
-(defmulti at-least #'guess-type-args)
-(defmulti at-most #'guess-type-args)
-(defmulti has-value #'guess-type-args)
+(defmulti owl-some
+  "Returns an existential restriction with another class or a data range."
+  #'guess-type-args)
+(defmulti only
+  "Returns a universal rescriction with another class or data range."
+#'guess-type-args)
+
+(defmulti some-only
+  "Returns a list containing existential restrictions to each of the arguments,
+and universal relationship to the union of each of the arguments."
+  #'guess-type-args)
+
+(defmulti owl-and
+  "Returns an intersection restriction to all of the arguments."
+  #'guess-type-args)
+
+(defmulti owl-or
+  "Returns an union restriction to all of the arguments."
+  #'guess-type-args)
+
+(defmulti exactly
+  "Returns an exact cardinality restriction."
+  #'guess-type-args)
+
+(defmulti oneof
+  "Returns a one-of restriction to the arguments of individuals or
+data ranges."
+  #'guess-individual-literal-args)
+
+(defmulti at-least
+  "Returns a minimum cardinality restriction."
+  #'guess-type-args)
+
+(defmulti at-most
+  "Returns a maximum cardinality restriction."
+  #'guess-type-args)
+
+(defmulti has-value
+  "Returns a has-value restriction."
+  #'guess-type-args)
 
 ;; this is the outlier because it is also used for individuals, so is called
 ;; overloaded on arity
 (defmulti
-  ^{:private true}
+  ^{:private true
+    :doc "Returns a data or object complement of restriction."}
   owl-not-one #'guess-type-args)
 
 ;; use declare here because I just don't want to owl-not later
 (declare fact-not)
 
 (defmontfn owl-not
+  "Returns a complement of restriction or negative property assertion axiom."
   ([o entity]
      (owl-not-one o entity))
   ([o property entity]
