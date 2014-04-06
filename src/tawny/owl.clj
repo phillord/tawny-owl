@@ -1045,18 +1045,22 @@ or throw an exception if it cannot be converted."
   "If clz is a String return a class of with that name,
 else if clz is a OWLClassExpression add that."
   [o clz]
-  (cond
-   (fn? clz)
-   (ensure-class o (clz))
-   (instance? org.semanticweb.owlapi.model.OWLClassExpression clz)
-   clz
-   (instance? IRI clz)
-   (.getOWLClass (owl-data-factory) clz)
-   (string? clz)
-   (ensure-class o (iri-for-name o clz))
-   true
-   (throw (IllegalArgumentException.
-           (str "Expecting a class. Got: " clz)))))
+  (let [except
+        #(throw (IllegalArgumentException.
+                 (str "Expecting a class. Got: " clz)))]
+    (cond
+     (fn? clz)
+     (try
+       (ensure-class o (clz))
+       (catch clojure.lang.ArityException e
+         (except)))
+     (instance? org.semanticweb.owlapi.model.OWLClassExpression clz)
+     clz
+     (instance? IRI clz)
+     (.getOWLClass (owl-data-factory) clz)
+     (string? clz)
+     (ensure-class o (iri-for-name o clz))
+     true (except))))
 
 (defn-
   ^OWLDataProperty ensure-data-property [o property]
