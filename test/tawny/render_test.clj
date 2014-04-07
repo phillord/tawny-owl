@@ -1,6 +1,6 @@
 ;; The contents of this file are subject to the LGPL License, Version 3.0.
 ;;
-;; Copyright (C) 2013, Phillip Lord, Newcastle University
+;; Copyright (C) 2013, 2014, Phillip Lord, Newcastle University
 ;;
 ;; This program is free software: you can redistribute it and/or modify it
 ;; under the terms of the GNU Lesser General Public License as published by
@@ -149,3 +149,25 @@
                              10)
                      (o/fact to (o/object-property to "r")
                              (o/individual to "I2")))))))
+
+(deftest oproperty-super-test
+  (is
+   (= '(object-property
+        (iri "http://iri/#r")
+        :super
+        (iri "http://iri/#s"))
+      (r/as-form
+       (o/object-property to "r"
+                          :super
+                          (o/iri-for-name to "s"))))))
+
+(deftest dproperty-super-test
+  (is
+   (= '(datatype-property
+        (iri "http://iri/#g")
+        :super
+        (iri "http://iri/#h"))
+      (r/as-form
+       (o/datatype-property to "g"
+                          :super
+                          (o/iri-for-name to "h"))))))

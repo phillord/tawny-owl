@@ -155,13 +155,13 @@ in tawny." class)
                 (form annotation)))
       )))
 
-(defmethod as-form OWLObjectProperty 
+(defmethod as-form OWLObjectProperty
   [^OWLObjectProperty p]
   (let [ont (ontologies)
         domain (.getDomains p ont)
         range (.getRanges p ont)
         inverseof (.getInverses p ont)
-        subpropertyof (.getSuperProperties p ont)
+        superprop (.getSuperProperties p ont)
         characteristic
         (filter identity
                 (list
@@ -194,6 +194,9 @@ in tawny." class)
          'defoproperty
          'object-property)
       ~prop
+      ~@(when (< 0 (count superprop))
+          (cons :super
+                (form superprop)))
       ~@(when (< 0 (count domain))
           (cons :domain
                 (form domain)))
@@ -250,12 +253,12 @@ in tawny." class)
                   (form [:fact fact])
                   (form [:fact-not factnot])))))))
 
-(defmethod as-form OWLDataProperty 
+(defmethod as-form OWLDataProperty
   [^OWLDataProperty p]
   (let [ont (ontologies)
         domain (.getDomains p ont)
         range (.getRanges p ont)
-        subpropertyof (.getSuperProperties p ont)
+        superprop (.getSuperProperties p ont)
         characteristic
         (filter identity
                 (list
@@ -270,6 +273,9 @@ in tawny." class)
          'defdproperty
          'datatype-property)
       ~prop
+      ~@(when (< 0 (count superprop))
+          (cons :super
+                (form superprop)))
       ~@(when (< 0 (count domain))
           (cons :domain
                 (form domain)))

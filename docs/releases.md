@@ -51,6 +51,7 @@ deprecated and will be removed at a later date.
    second class is now the subclass rather than the superclass.
 
 ## Bug Fixes
+- rendering of object and data properties now reports superproperties.
 - `superclasses` and `subclasses` no longer crash on circular class hierarchies
 - `datatype` equivalents were limited to other datatypes. Now any datarange
    is usable.
