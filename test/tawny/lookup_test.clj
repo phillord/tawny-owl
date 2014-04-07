@@ -1,6 +1,6 @@
 ;; The contents of this file are subject to the LGPL License, Version 3.0
 
-;; Copyright (C) 2013, Phillip Lord, Newcastle University
+;; Copyright (C) 2013, 2014, Phillip Lord, Newcastle University
 
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU Lesser General Public License as published by
@@ -21,6 +21,14 @@
    [tawny.owl :as o]
    [tawny.lookup :as l]))
 
+(defn test-ontology
+  ([]
+     (test-ontology *ns*))
+  ([ns]
+     (let [o (o/ontology :iri "http://iri/" :prefix "test:")]
+       (o/ontology-to-namespace o)
+       (intern ns 'a-test-ontology o))))
+
 (def lookup-test-namespace (find-ns 'tawny.lookup-test))
 
 ;; test it don't crash -- all I can do
@@ -33,7 +41,7 @@
   (is
    (= 3
       (try
-        (o/test-ontology)
+        (test-ontology)
         (o/declare-classes a b c)
         (count (l/iri-to-var lookup-test-namespace))
         (finally
@@ -45,7 +53,7 @@
   (is
    (= "tawny.lookup-test/hello"
       (try
-        (o/test-ontology)
+        (test-ontology)
         (def hello (o/owl-class "test"))
         (l/resolve-entity (o/owl-class "test")
                         (l/iri-to-var lookup-test-namespace))

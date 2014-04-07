@@ -815,23 +815,6 @@ The following keys must be supplied.
        var#
        )))
 
-(defn test-ontology
-  "Define a test ontology.
-
-This function probably shouldn't be here, but one of the consequences of
-making the ontology implicit in all my functions is that playing on the repl
-is a pain, as the test ontology has to be defined first.
-
-This defines a minimal test ontology.
-
-"
-  ([]
-     (test-ontology *ns*))
-  ([ns]
-     (let [o (ontology :iri "http://iri/" :prefix "test:")]
-       (ontology-to-namespace o)
-       (intern ns 'a-test-ontology o))))
-
 ;;; Begin ontology look up functions
 (defn- check-entity-set
   [entity-set iri]

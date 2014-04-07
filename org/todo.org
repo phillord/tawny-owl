@@ -2,11 +2,12 @@
 
 * Before Release
 
-- [ ] fact,fact-not to is and (owl)not
-- [ ] owl-and and the other multi methods are not documented
+- [X] fact,fact-not to is and (owl)not
+- [X] owl-and and the other multi methods are not documented
 - [ ] Delete test-ontology function.
 - [ ] Eastwood with no errors?
 - [ ] Superproperty rendering is not happening!
+- [ ] Refine for individuals
 
 
 * Issues
