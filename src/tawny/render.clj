@@ -138,19 +138,19 @@ in tawny." class)
 
 
       ~(form c)
-      ~@(when (< 0 (count super))
+      ~@(when (pos? (count super))
           (cons
            :super
            (form super)))
-      ~@(when (< 0 (count equiv))
+      ~@(when (pos? (count equiv))
           (cons
            :equivalent
            (form equiv)))
-      ~@(when (< 0 (count disjoint))
+      ~@(when (pos? (count disjoint))
           (cons
            :disjoint
            (form disjoint)))
-      ~@(when (< 0 (count annotation))
+      ~@(when (pos? (count annotation))
           (cons :annotation
                 (form annotation)))
       )))
@@ -194,19 +194,19 @@ in tawny." class)
          'defoproperty
          'object-property)
       ~prop
-      ~@(when (< 0 (count superprop))
+      ~@(when (pos? (count superprop))
           (cons :super
                 (form superprop)))
-      ~@(when (< 0 (count domain))
+      ~@(when (pos? (count domain))
           (cons :domain
                 (form domain)))
-      ~@(when (< 0 (count range))
+      ~@(when (pos? (count range))
           (cons :range
                 (form range)))
-      ~@(when (< 0 (count inverseof))
+      ~@(when (pos? (count inverseof))
           (cons :inverse
                 (form inverseof)))
-      ~@(when (< 0 (count characteristic))
+      ~@(when (pos? (count characteristic))
           (cons :characteristic
                 characteristic)))))
 
@@ -233,20 +233,20 @@ in tawny." class)
          'defindividual
          'individual)
       ~(form p)
-      ~@(when (< 0 (count types))
+      ~@(when (pos? (count types))
           (cons :type
                 (form types)))
-      ~@(when (< 0 (count same))
+      ~@(when (pos? (count same))
           (cons :same
                 (form same)))
-      ~@(when (< 0 (count diff))
+      ~@(when (pos? (count diff))
           (cons :different
                 (form diff)))
-      ~@(when (< 0 (count annotation))
+      ~@(when (pos? (count annotation))
           (cons :annotation
                 (form annotation)))
       ~@(when (some
-               #(< 0 (count %))
+               #(pos? (count %))
                [fact factnot])
           (doall (concat
                   [:fact]
@@ -273,16 +273,16 @@ in tawny." class)
          'defdproperty
          'datatype-property)
       ~prop
-      ~@(when (< 0 (count superprop))
+      ~@(when (pos? (count superprop))
           (cons :super
                 (form superprop)))
-      ~@(when (< 0 (count domain))
+      ~@(when (pos? (count domain))
           (cons :domain
                 (form domain)))
-      ~@(when (< 0 (count range))
+      ~@(when (pos? (count range))
           (cons :range
                 (form range)))
-      ~@(when (< 0 (count characteristic))
+      ~@(when (pos? (count characteristic))
           (cons :characteristic
                 characteristic)))))
 
@@ -299,10 +299,10 @@ in tawny." class)
          'defaproperty
          'annotation-property)
       ~(form p)
-      ~@(when (< 0 (count super))
+      ~@(when (pos? (count super))
           (cons :super
                 (form super)))
-      ~@(when (< 0 (count ann))
+      ~@(when (pos? (count ann))
           (cons :annotation
                 (form ann))))))
 
@@ -314,7 +314,7 @@ in tawny." class)
 
 (defmethod as-form :default [_]
   (println "Unknown element in signature")
-  (. Thread dumpStack)
+  (Thread/dumpStack)
   '(unknown as-form))
 
 
@@ -460,7 +460,7 @@ depending on the value of *terminal-strategy*"
 (defmethod form OWLAnnotationValue
   [^Object v]
   (list
-   (.toString v)))
+   (str v)))
 
 (def
   ^{:private true}
@@ -611,5 +611,5 @@ element is a list."
 (defmethod form :default [e]
   (do
     (println "Unknown form" (class e))
-    (. Thread dumpStack)
+    (Thread/dumpStack)
     `(unknown form)))

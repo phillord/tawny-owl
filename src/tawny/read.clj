@@ -51,7 +51,7 @@ starts-with. Use this partially applied with a filter for 'read'."
   [starts-with e]
   (and (instance? OWLNamedObject e)
        (.startsWith
-        (.toString
+        (str
          (.getIRI ^OWLNamedObject e))
         starts-with)))
 
@@ -130,9 +130,8 @@ to intern."
 OWLOntologyIRIMapper instance."
   (proxy [org.semanticweb.owlapi.model.OWLOntologyIRIMapper] []
     (getDocumentIRI [^IRI o-iri]
-      (if-let [retn (get iri-map (.toString o-iri))]
-        (tawny.owl/iri retn)
-        nil))))
+      (when-let [retn (get iri-map (str o-iri))]
+        (tawny.owl/iri retn)))))
 
 (defn resource-iri-mapper
   [iri-map]
@@ -188,7 +187,7 @@ iri-mapper and resource-iri-mapper."
                                        owlontology)]
         (if (.isPrefixOWLOntologyFormat format)
           (.setPrefix (.asPrefixOWLOntologyFormat format)
-                      prefix (.toString iri))
+                      prefix (str iri))
           (throw (IllegalArgumentException.
                   "Attempt to provide a prefix to an ontology that is not using a prefix format")))))
     ;; this is the ontology for the namespace so stuff it place

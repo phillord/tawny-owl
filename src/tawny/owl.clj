@@ -171,7 +171,7 @@ The logic used is the same as default-ontology except that no error is
 signalled if there is no current-ontology."
   [f & args]
   (let [pre-ontology
-        (drop-while #(not (= :ontology %)) args)
+        (drop-while #(not= :ontology %) args)
         ontology (second pre-ontology)]
     (if (or
          (instance?
@@ -193,7 +193,7 @@ args). If neither mechanism specifies an ontology, call get-current-ontology.
 If there is no current ontology, then an error will be thrown."
   [f & args]
   (let [pre-ontology
-        (drop-while #(not (= :ontology %)) args)
+        (drop-while #(not= :ontology %) args)
         ontology (second pre-ontology)]
     (if
         (instance?
@@ -284,9 +284,8 @@ Uses the default ontology if not supplied and throws an IllegalStateException
   [o & axiom-list]
   (doall
    (map (fn [axiom]
-          (do
-            (.applyChange (owl-ontology-manager)
-                          (RemoveAxiom. o axiom))))
+          (.applyChange (owl-ontology-manager)
+                        (RemoveAxiom. o axiom)))
         (flatten axiom-list))))
 
 (defdontfn remove-entity
@@ -724,7 +723,7 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
      (.asPrefixOWLOntologyFormat
       (.getOntologyFormat
        (owl-ontology-manager) o))
-     p (.toString (get-iri o)))))
+     p (str (get-iri o)))))
 
 (defn- add-see-also
   "Adds a see also annotation to the ontology"
@@ -774,7 +773,7 @@ ontology or an IRI"
                                     (:name options))})
         iri (iri (get options :iri
                              (str
-                              (.toString (java.util.UUID/randomUUID))
+                              (java.util.UUID/randomUUID)
                               (if-let [name
                                        (get options :name)]
                                 (str "#" name)))))
@@ -824,11 +823,10 @@ The following keys must be supplied.
     (throw
      (IllegalArgumentException.
       (format "Can not uniquely determine type of IRI: %s,%s" iri entity-set))))
-  ;; IRI appears once; happiness
-  (if (= 1 (count entity-set))
-    (first entity-set)
-    ;; IRI appears not at all
-    nil))
+  ;; IRI appears once; happiness or
+  ;; IRI appears not at all
+  (when (= 1 (count entity-set))
+    (first entity-set)))
 
 (defdontfn entity-for-iri
   "Return the OWLObject for a given IRI if it exists, checking
@@ -903,10 +901,10 @@ If no ontology is given, use the current-ontology"
          (dorun
           (map #(.setPrefix
                  (.asPrefixOWLOntologyFormat this-format) (get-prefix %)
-                            (str (.toString (get-iri %)) "#"))
+                 (str (get-iri %) "#"))
                (vals @ontology-for-namespace)))
          (.setPrefix (.asPrefixOWLOntologyFormat this-format) (get-prefix o)
-                     (str (.toString (get-iri o)) "#")))
+                     (str (get-iri o) "#")))
        (.print file-writer prepend)
        (.flush file-writer)
        (.saveOntology (owl-ontology-manager) o
@@ -1769,16 +1767,15 @@ slightly faster.
   (let [o (or (first (get frames :ontology))
               o)
         class (ensure-class o name)]
-    (do
-      ;; add the class
-      (add-class o class)
-      ;; add an name annotation
-      (add-a-name-annotation o class name)
-      ;; apply the handlers to the frames
-      (doseq [[k f] owl-class-handlers]
-        (f o class (get frames k)))
-      ;; return the class object
-      class)))
+    ;; add the class
+    (add-class o class)
+    ;; add an name annotation
+    (add-a-name-annotation o class name)
+    ;; apply the handlers to the frames
+    (doseq [[k f] owl-class-handlers]
+      (f o class (get frames k)))
+    ;; return the class object
+    class))
 
 (defdontfn owl-class
   "Creates a new class in the current ontology. See 'defclass' for
@@ -2040,7 +2037,7 @@ The first item may be an ontology, followed by options.
                  [superclass options & classes]
                    [superclass & classes])}
   [o superclass & rest]
-  (let [options (into #{} (take-while keyword? rest))
+  (let [options (set (take-while keyword? rest))
         subclasses
         (map
          var-get-maybe
@@ -2273,7 +2270,7 @@ direct or indirect superclass of itself."
       (IllegalArgumentException.
        "with-probe-entities requires an even number of forms in binding vector"))
     (cond
-     (= (count bindings) 0)
+     (zero? (count bindings))
      `(do
         ~@body)
      (symbol? (bindings 0))
@@ -2311,7 +2308,7 @@ effectively unchanged."
       (IllegalArgumentException.
        "with-probe-axioms requires an even number of forms in binding vector"))
     (cond
-     (= (count bindings) 0)
+     (zero? (count bindings))
      `(do ~@body)
      (symbol? (bindings 0))
      `(with-ontology ~o

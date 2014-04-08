@@ -231,8 +231,7 @@ This method can throw an InconsistentOntologyException
   ;;                        (into-array InferenceType
   ;;                                    (list InferenceTyp
   ;;                                           e/CLASS_HIERARCHY)))
-  (do
-    (.isConsistent (reasoner ontology))))
+  (.isConsistent (reasoner ontology)))
 
 (defdontfn unsatisfiable
   "Returns all unsatisfiable classes from the current ontology
@@ -254,16 +253,16 @@ ontology is inconsistent"
 (defn entities
   "Return all entities for a nodeset."
   [^NodeSet nodeset]
-  (into #{} (.getFlattened nodeset)))
+  (set (.getFlattened nodeset)))
 
 (defn no-top-bottom
   "Delete top and bottom from a collection."
  [coll]
-  (into #{}
-        (filter #(not
-                  (or (= (owl/owl-thing) %1)
-                      (= (owl/owl-nothing) %1)))
-                coll)))
+  (set
+   (filter #(not
+             (or (= (owl/owl-thing) %1)
+                 (= (owl/owl-nothing) %1)))
+           coll)))
 
 (defdontfn isuperclasses
   "Return all superclasses in ontology for name. Returns a (clojure)

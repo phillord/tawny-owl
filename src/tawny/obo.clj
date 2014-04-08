@@ -184,7 +184,7 @@ a new numeric identifier is created, incrementing from the current largest."
      name-to-iri
      (apply hash-map (interleave preirinames
                                  (map #(format "%s%06d" prefix %)
-                                      (range (+ 1 biggest-numeric)
+                                      (range (inc biggest-numeric)
                                              Integer/MAX_VALUE)))))))
 
 ;; given a file, replace all the preiri's with real ones, at the repl, asking

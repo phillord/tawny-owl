@@ -25,9 +25,8 @@
   "Return the IRI for var if it is a named object
 or nil otherwise."
   [var]
-  (if (tawny.owl/named-object? (var-get var))
-    (.toString (.getIRI (tawny.owl/as-named-object (var-get var))))
-    nil))
+  (when (tawny.owl/named-object? (var-get var))
+    (str (.getIRI (tawny.owl/as-named-object (var-get var))))))
 
 (defn- vars-in-namespace
   "Return all the vars in the given namespace."
@@ -88,8 +87,7 @@ namespace."
   ([entity iri-to-var]
       (let [entity-str (named-entity-as-string entity)
             var (get iri-to-var entity-str)]
-        (if (nil? var)
-          nil
+        (when-not (nil? var)
           (var-maybe-qualified-str var)))))
 
 (defn name-to-var
@@ -120,9 +118,8 @@ OWLObject for all namespaces in which tawny has created an ontology."
   []
   (if @all-iri-to-var-cache
     @all-iri-to-var-cache
-    (do
-      (reset! all-iri-to-var-cache
-              (apply iri-to-var (namespace-with-ontology))))))
+    (reset! all-iri-to-var-cache
+            (apply iri-to-var (namespace-with-ontology)))))
 
 ;; this actually gives us the var -- we could build things up as we go?
 ;; although this means we also have to cope with uninterns and the like as

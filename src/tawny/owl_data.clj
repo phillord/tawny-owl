@@ -258,7 +258,7 @@ which is an OWLDatatype object.
   (.getOWLDataIntersectionOf
    (owl-data-factory)
    ^java.util.Set
-   (into #{} types)))
+   (set types)))
 
 (defmethod owl-and ::data [& rest]
   (apply data-and rest))
@@ -269,7 +269,7 @@ which is an OWLDatatype object.
   (.getOWLDataUnionOf
    (owl-data-factory)
    ^java.util.Set
-   (into #{} (map (partial ensure-data-range o) types))))
+   (set (map (partial ensure-data-range o) types))))
 
 (defmethod owl-or ::data [& rest]
   (apply data-or rest))
@@ -312,8 +312,7 @@ which is an OWLDatatype object.
   (.getOWLDataOneOf
    (owl-data-factory)
    ^java.util.Set
-   (into #{}
-         (map (partial literal o) literals))))
+   (set (map (partial literal o) literals))))
 
 (defmethod oneof ::literal [& rest]
   (apply data-oneof rest))

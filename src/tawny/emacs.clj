@@ -79,7 +79,7 @@ NAMESPACE"
   (clojure.string/join
    "\n"
    (map
-    #(.toString ^Object %)
+    #(str ^Object %)
     classes)))
 
 (defn get-unsatisfiable [namespace]

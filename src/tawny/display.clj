@@ -27,7 +27,7 @@
 
 (defn- pp-subclasses-1 [classlist prepend]
   ;; if there are no subclasses return empty list
-  (when-not (= 0 (count classlist))
+  (when-not (zero? (count classlist))
     (str prepend (first classlist) "\n"
          ;; can't use recur, not in tail position
          (pp-subclasses-1 (rest classlist) prepend)

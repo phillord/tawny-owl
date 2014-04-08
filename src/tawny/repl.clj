@@ -15,7 +15,6 @@
 ;; You should have received a copy of the GNU Lesser General Public License
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
 
-
 (ns ^{:author "Phillip Lord"
       :doc "Repl and documentation functions for OWL objects"}
     tawny.repl
@@ -71,10 +70,10 @@ It includes all labels, comments and a rendered version of the owlobject."
            pwriter (PrintWriter. writer)
            line (fn [& args]
                   (.println pwriter
-                            (str (apply str args))))]
+                            (str (clojure.string/join args))))]
        (line "")
        (line
-        (.toString (.getEntityType owlobject))
+        (str (.getEntityType owlobject))
         ": "
         (tawny.lookup/var-maybe-qualified-str
          (get
@@ -98,7 +97,7 @@ It includes all labels, comments and a rendered version of the owlobject."
            (tawny.render/as-form owlobject)
            writer)))
        (.close writer)
-       (.toString writer))))
+       (str writer))))
 
 (defn print-doc
   "Print the documentation for the owlobject. See fetch-doc for more on how
@@ -172,8 +171,7 @@ once."
                        (.getOntologyIRI))
                    "unknown")
                " from:"
-               (-> event
-                   (.getDocumentIRI))))))
+               (.getDocumentIRI event)))))
 
 
 (defn ^OWLOntologyManager new-manager
@@ -222,7 +220,7 @@ to file names. Save ontologies in 'root' or the resources directory."
                       stem
                       (if file-maybe
                         file-maybe
-                        (.toString (java.util.UUID/randomUUID)))
+                        (str (java.util.UUID/randomUUID)))
                       file (str root stem)]
                    (.saveOntology manager k
                                   (java.io.FileOutputStream.
