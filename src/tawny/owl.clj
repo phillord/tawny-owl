@@ -2418,6 +2418,9 @@ for example, building two interlocking ontologies with different OWL profiles.
 (defmethod refine OWLDatatype [& args]
   (apply datatype args))
 
+(defmethod refine OWLIndividual [& args]
+  (apply individual args))
+
 (defmacro defrefineto
   "Takes an existing definition, add more frames.
 The first argument should be a symbol that will hold the

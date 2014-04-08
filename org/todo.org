@@ -8,7 +8,7 @@
 - [ ] Eastwood with no errors?
 - [ ] Superproperty rendering is not happening!
 - [ ] Refine for individuals
-
+- [ ] Autosave function in REPL
 
 * Issues
   
