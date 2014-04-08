@@ -45,7 +45,6 @@ It includes all labels, comments and a rendered version of the owlobject."
   ([^OWLEntity owlobject ^OWLOntology ontology]
      (let [annotation
            (.getAnnotations owlobject ontology)
-           
            label
            (filter
             (fn [^OWLAnnotation a]
@@ -199,7 +198,6 @@ loaded an ontology with the same name."
   ([iri]
      (load-ontology iri (new-manager))))
 
-
 (defn materialize-ontology
   "Loads an ontology, attempts to resolve all of its imports, then
 saves the import clojure to the resources directory. Returns a map of IRI
@@ -230,3 +228,38 @@ to file names. Save ontologies in 'root' or the resources directory."
                                   (java.io.FileOutputStream.
                                    (java.io.File. file)))
                    stem)])))))
+
+(def *c
+  "The last change that an on-change listener saw."
+  nil)
+
+(defn on-change
+  "Evaluate FN everytime an ontology change happens"
+  [fn]
+  (let [listener
+         (proxy [org.semanticweb.owlapi.model.OWLOntologyChangeListener]
+             []
+             (ontologiesChanged
+              [l]
+               (set! *c l)
+               (fn)))]
+     (.addOntologyChangeListener
+      (o/owl-ontology-manager)
+      listener)
+     listener))
+
+(def auto-save-listener
+  "The current listener for handling auto-saves or nil." nil)
+
+(defn auto-save [filename format]
+  "Autosave the current ontology everytime any change happens."
+  (when-not auto-save-listener
+    (set! auto-save-listener
+     (on-change #(o/save-ontology filename format)))))
+
+(defn auto-save-off []
+  "Stop autosaving ontologies."
+  (when auto-save-listener
+    (.removeOntologyChangeListener
+     (o/owl-ontology-manager)
+     auto-save-listener)))

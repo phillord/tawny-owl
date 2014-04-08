@@ -4,11 +4,11 @@
 
 - [X] fact,fact-not to is and (owl)not
 - [X] owl-and and the other multi methods are not documented
-- [ ] Delete test-ontology function.
+- [X] Delete test-ontology function.
 - [ ] Eastwood with no errors?
-- [ ] Superproperty rendering is not happening!
-- [ ] Refine for individuals
-- [ ] Autosave function in REPL
+- [X] Superproperty rendering is not happening!
+- [X] Refine for individuals
+- [X] Autosave function in REPL
 
 * Issues
   
