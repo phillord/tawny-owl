@@ -1,14 +1,5 @@
 
 
-* Before Release
-
-- [X] fact,fact-not to is and (owl)not
-- [X] owl-and and the other multi methods are not documented
-- [X] Delete test-ontology function.
-- [ ] Eastwood with no errors?
-- [X] Superproperty rendering is not happening!
-- [X] Refine for individuals
-- [X] Autosave function in REPL
 
 * Issues
   
@@ -123,31 +114,11 @@ During load, we change IRIs to vars, but only use the var in one place, and
 only where we have obsolete mappings. Not sure this makes sense.
 
 
-** Memorise read rather than load
-
-Currently implemented using load -- this forces byte compilation of the saved
-file. This imposes file size limits due to the java class format. Probably
-not good.
-
-Can use clojure.edn which just returns data instead.
-
-
 ** Ontology options
 
 This exposes too much implementation detail, I think. Should probably use a
 atom rather than a ref (since changes are never synchronised with anything
 else). 
-
-
-** Memorise, obo
-
-Move to defontfn footing, and add some documentation!
-
-
-** Privacy
-
-consider "add" methods 
-
 
 
 ** Interpolation for comments
@@ -194,81 +165,3 @@ namespace when an ontology is re-evaled. Just do "tawny.lookup", then ns-umap
 the entire lot. 
 
 
-* Documentation 
-
-** Getting started with-clojure [5/5]
- - [X] Complete leiningen project file
- - [X] Namespaces, how they relate to files
- - [X] How to evaluate a file
- - [X] How to write a main method which dumps OWL files
- - [X] How to use Clojars.
-
-** Getting started [9/9]
-
- - [X] Namespace and tawny OWL imports
- - [X] Relationship between ontology and namespace
- - [X] Creating a new ontology
- - [X] Creating a new class
- - [X] Creating properties
- - [X] as-subclasses, as-disjoints macrs
- - [X] Removing classes again
- - [X] Saving ontologies
- - [X] Interaction with Protege
-
-** Adding restrictions [5/5]
- - [X] Adding superclasses, equivalents
- - [X] Building some,only
- - [X] And, or, not
- - [X] Forward declaration with declare-classes
- - [X] String based use of Tawny.
-
-** Name Clashes [1/1]
-
- - [X] A seperate document describing what to do about these. 
-
-** Querying the Ontology [2/2]
- - [X] Programmatically interacting with the ontology
- - [X] Not asserted and reasoned
-
-** Reasoning [4/4]
- - [X] What is reasoning
- - [X] Reasoning over a single ontology
- - [X] Reasoning predicates
- - [X] Reasoning with tawny-mode
-
-** Importing and Reading external ontologies [5/5]
- - [X] Difference between clojure import and OWL import.
- - [X] Reading an OWL file into Clojure
- - [X] What it means, in terms of Clojure
- - [X] transform and filter
- - [X] Filter is only in namespace, not save
-
-** Tawny Repl [1/1]
- - [X] Documentation lookup
- - [ ] Why documentation lookup is slow
-
-** Scripting with Tawny [1/1]
- - [X] Added NamedPizza's
-
-** Polyglot [1/1]
- - [X] Adding multi lingual labels
-   
-** Memorise [/]
- - [ ] What is the problem with read and transform
- - [ ] How memorise helps to solve this problem
- - [ ] How to save a memorisation state
- - [ ] How to load one again.
-
-** Render [/]
- - [ ] What render is for
- - [ ] How render is not necessary for reading
- - [ ] How render is used for documentation
- - [ ] And testing
-
-** Testing [6/6]
- - [X] What is unit testing, how does it look in Clojure
- - [X] How does unit testing apply to ontologies
- - [X] Predicates for use without reasoning
- - [X] How to set up reasoner in a fixture
- - [X] Predicates for use with reasoning
- - [X] probe-classes. 
