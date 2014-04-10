@@ -315,7 +315,7 @@ of c."
 
 ;; ontology options -- additional knowledge that I want to attach to each
 ;; ontology,  but which gets junked when the ontology does.
-(def ^{:doc "Ontology options. A map on a ref for each ontology"}
+(def ^{:doc "Ontology options. A map on a atom for each ontology"}
   ontology-options-atom (atom {}))
 
 ;; return options for ontology -- lazy (defn get-ontology-options [ontology])
