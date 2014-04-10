@@ -72,15 +72,17 @@ returns the OWLEntity, while printing a warning message."
                 (var-get mapping))))
     old-mappings)))
 
-(defn fetch-remembered-entities []
+(defn fetch-remembered-entities
   "Fetch the remembered entities. This returns a map between an IRI (as a
 string) and a set of string labels."
+  []
   (or
    (:remember (deref (tawny.owl/ontology-options)))
    {}))
 
-(defn fetch-old-and-current-entities []
-  "Fetch all entity mappings. This retusn a map "
+(defn fetch-old-and-current-entities
+  "Fetch all entity mappings. This returns a map "
+  []
   (merge-with-distinct
     (change-values-to-string-set (memorise-map))
     (fetch-remembered-entities)))

@@ -825,3 +825,19 @@ Decided not to care!
  - [X] Don't forget is
  - [X] Update documentation!
 
+
+* Before Release
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2014-04-10 Thu 11:29
+  :ARCHIVE_FILE: ~/src/knowledge/tawny-owl/org/todo.org
+  :ARCHIVE_CATEGORY: todo
+  :END:
+
+- [X] fact,fact-not to is and (owl)not
+- [X] owl-and and the other multi methods are not documented
+- [X] Delete test-ontology function.
+- [X] Eastwood with no errors?
+- [X] Superproperty rendering is not happening!
+- [X] Refine for individuals
+- [X] Autosave function in REPL
+

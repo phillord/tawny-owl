@@ -36,7 +36,7 @@
   [o e]
   (and (tawny.owl/named-object? e)
        (= (tawny.owl/get-iri o)
-          (.getStart
+          (.getNamespace
            (.getIRI
             (tawny.owl/as-named-object e))))))
 
@@ -125,18 +125,18 @@ to intern."
          (throw i)))))
 
 (defn iri-mapper
-  [iri-map]
   "Given a map of Ontology IRI strings to document IRI strings, return an
 OWLOntologyIRIMapper instance."
+  [iri-map]
   (proxy [org.semanticweb.owlapi.model.OWLOntologyIRIMapper] []
     (getDocumentIRI [^IRI o-iri]
       (when-let [retn (get iri-map (str o-iri))]
         (tawny.owl/iri retn)))))
 
 (defn resource-iri-mapper
-  [iri-map]
   "Given a map of Ontology IRI strings to resource strings, return an
   OWLOntologyIRIMapper instance."
+  [iri-map]
   (iri-mapper
    (into {}
          (for [[k v] iri-map]

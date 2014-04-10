@@ -185,15 +185,15 @@ rest can be any tree structure, then, f with x and all values in rest. "
 ;; How does it make sense to have a macro which expands to something like
 ;; (let [x y] x)
 ;; which surely should be a non-op?
-(defmacro tag-symbol [tag form]
+(defmacro tag-symbol
   "Given form, return the same form but with attached :tag metadata
 defining the return type of that form."
+  [tag form]
   ;; create a local tagged-sym which is a gensym but with metadata attached.
   (let [tagged-sym (vary-meta (gensym) assoc :tag tag)]
     `(let [~tagged-sym ~form] ~tagged-sym)))
 
 (defmacro with-types
-  [spec & body]
   "Given a spec of the form [symbol [types]] evaluate body if
 and only the value of symbol is an instance? of one of types. The symbol is
 type-hinted to the type of the first of types to match.
@@ -211,6 +211,7 @@ C.met(Boolean)
 will call met without reflection, so long as val is one of String, Double or
 Boolean. If none of the types are matched, an IllegalArgumentException will be
 thrown."
+  [spec & body]
   (let [hint-var# (first spec)
         types# (second spec)]
     (if (seq types#)

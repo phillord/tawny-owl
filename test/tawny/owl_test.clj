@@ -60,7 +60,6 @@
 (use-fixtures :each createandsavefixture)
 
 (deftest ontology
-  (is true)
   (is
    (not
     (nil?
@@ -112,18 +111,18 @@
 
 
 
-(deftest save-ontology []
+(deftest save-ontology
   (is (do (o/save-ontology to "target/test.omn")
           true))
   (is (do (o/save-ontology
            (o/ontology :name "bob") "target/test2.omn")
           true)))
 
-(deftest iri-for-name []
+(deftest iri-for-name
   (is (= (.toString (#'o/iri-for-name to "test"))
          "http://iri/#test")))
 
-(deftest ensure-object-property []
+(deftest ensure-object-property
   (is
    ;; check whether it makes an object out of a string
    (instance? org.semanticweb.owlapi.model.OWLObjectProperty
@@ -180,23 +179,6 @@
    (do
      (o/deprecated-add-subclass to "a" "b")
      (o/superclass? to "a" "b"))))
-
-
-(deftest add-superclass
-  (is
-   (do
-     (o/add-superclass to "a" "b")
-     (= 2 (.size (.getClassesInSignature
-                  to)))))
-  (is
-   (do
-     (o/add-superclass to "a" "b")
-     (o/superclass? to "a" "b")))
-  )
-
-
-
-
 
 
 (deftest add-equivalent []
@@ -573,6 +555,10 @@ Assumes that fixture has been run
                "hello1"))))
 
 
+(deftest add-version-info
+  (is
+   (#'o/add-version-info
+    to (o/label to "bob"))))
 
 (deftest add-annotation
   (is

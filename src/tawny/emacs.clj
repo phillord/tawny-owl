@@ -74,16 +74,18 @@ NAMESPACE"
         "Ontology is not consistent."))))
 
 
-(defn list-classes [classes]
+(defn list-classes
   "Given a set of classes, returns a string representation."
+  [classes]
   (clojure.string/join
    "\n"
    (map
     #(str ^Object %)
     classes)))
 
-(defn get-unsatisfiable [namespace]
+(defn get-unsatisfiable
   "Returns a string about unsatisfiable classes."
+  [namespace]
   (let [ns (check-namespace namespace)]
     (if (instance? String ns)
       ns

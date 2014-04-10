@@ -19,5 +19,3 @@
 
 (ns tawny.core
   (:use [tawny.owl]))
-
-

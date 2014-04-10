@@ -60,8 +60,9 @@
     :private true}
   vowl-data-factory (atom nil))
 
-(defn ^OWLDataFactory owl-data-factory []
+(defn ^OWLDataFactory owl-data-factory
   "Returns the main factory for all other objects."
+  []
   (when-not @vowl-data-factory
     (reset! vowl-data-factory
             (OWLManager/getOWLDataFactory)))
@@ -72,8 +73,9 @@
     :private true}
   vowl-ontology-manager (atom nil))
 
-(defn ^OWLOntologyManager owl-ontology-manager []
+(defn ^OWLOntologyManager owl-ontology-manager
   "The single OWLOntologyManager used by Tawny."
+  []
   (when-not @vowl-ontology-manager
     (reset! vowl-ontology-manager
             (OWLManager/createOWLOntologyManager (owl-data-factory))))
@@ -735,7 +737,9 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
   "Adds a version info annotation to the ontology."
   [o v]
   (if v
-    (add-an-ontology-annotation o v)))
+    ;; ontology annotation is a default ontology function, so need to pass
+    ;; ontology twice even if this makes little sense!
+    (add-an-ontology-annotation o o v)))
 
 ;; owl imports
 (defn owl-import
@@ -1046,9 +1050,10 @@ else if clz is a OWLClassExpression add that."
      true (except))))
 
 (defn-
-  ^OWLDataProperty ensure-data-property [o property]
+  ^OWLDataProperty ensure-data-property
   "Ensures that 'property' is an data property,
 converting it from a string or IRI if necessary."
+  [o property]
   (cond
    (instance? OWLDataProperty property)
    property
@@ -1064,11 +1069,12 @@ converting it from a string or IRI if necessary."
 
 (defn-
   ^OWLPropertyExpression
-  ensure-property [o prop]
+  ensure-property
   "Ensures that the entity in question is an OWLPropertyExpression.
 If prop is ambiguous (for example, a string or IRI that whose type has not
 been previously defined) this will create an OWLObjectProperty rather than
 an OWLDataProperty"
+  [o prop]
   (let [type
         (or
           ;; guess the type -- if we can't then object-property it's because

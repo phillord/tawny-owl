@@ -1,15 +1,5 @@
 
 
-* Before Release
-
-- [X] fact,fact-not to is and (owl)not
-- [X] owl-and and the other multi methods are not documented
-- [X] Delete test-ontology function.
-- [ ] Eastwood with no errors?
-- [X] Superproperty rendering is not happening!
-- [X] Refine for individuals
-- [X] Autosave function in REPL
-
 * Issues
   
   :PROPERTIES:
@@ -18,6 +8,8 @@
   :severity_ALL: mild medium high critical
   :scheduled_release_ALL: 0.12 1.0 1.1
   :END:
+
+** Default ontology support in tawny.memorise, tawny.obo
 
 ** let-ontology
 
