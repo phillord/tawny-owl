@@ -36,7 +36,7 @@ which is both a `Pizza` and have a `CheeseTopping` will be considered to be a
       (owl-and Pizza
                (owl-some hasTopping CheeseTopping)))
 
-We can also introduce non-sensical classes which cannot make sense under any
+We can also introduce nonsensical classes which cannot make sense under any
 circumstances. Here we introduce the simplest example:
 
     (defclass A
@@ -90,7 +90,7 @@ who to change this behaviour.
 ## Unsatisfiable
 
 A class which can never have any individuals is called `unsatisifiable` as
-the restrictions placed upon it can never be fulfiled or satisfied. To find
+the restrictions placed upon it can never be fulfilled or satisfied. To find
 the unsatisifiable classes, simply call;
 
     (r/unsatisfiable)
@@ -135,7 +135,7 @@ reasoning. To enable it, add
 
 to your `.emacs`. This function checks for some of the more common macros in
 `tawny.owl`, rather than turning on reasoning in all clojure buffers where it
-mostly does not make sense. This is a little cluny, but does not require a
+mostly does not make sense. This is a little clunky, but does not require a
 live nrepl buffer to operate.
 
 ## Reasoning GUIs

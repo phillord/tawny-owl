@@ -3,7 +3,7 @@ Release Notes
 
 # 1.1
 
-The 1.1 release has largely been about regularisation of the syntax, enchanced
+The 1.1 release has largely been about regularisation of the syntax, enhanced
 performance and added a few pieces of OWL missing from 1.0.
 
 Regularisation is the biggest change and is, unfortunately, a breaking change.
@@ -94,7 +94,7 @@ deprecated and will be removed at a later date.
  - function names have been regularised (see
    [documentation](nameconventions.md)) resulting in many name changes.
  - The format for `memorise.clj` has changed significantly; this allows
-   arbitarily sized files to be created. There is no converter from the old
+   arbitrarily sized files to be created. There is no converter from the old
    file format, but I will write one if it is needed.
  - The format for `obo.clj` has changed to using EDN, rather than a bespoke
    properties file. As with `memorise.clj` there is no converter.

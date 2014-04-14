@@ -56,7 +56,7 @@ This also highlights a second feature of tawny. The `defontology` macro
 creates an ontology, stores it in a var (called `a`) and makes this the
 default ontology (of which there can be one per namespace).
 
-While this is extremely convienient when using tawny to develop an ontology,
+While this is extremely convenient when using tawny to develop an ontology,
 it's fairly ugly for manipulating one; particularly because it it makes using
 several ontologies at once difficult. In the next section, we discuss how to
 avoid this problem.
@@ -180,14 +180,14 @@ The `*-explicit` functions
 
 The frame functions do a fair amount of checking and some cleverness to
 produce what is hopefully a good interface for the ontology developer.
-However, this comes at a computational and convienience cost for the use as an
+However, this comes at a computational and convenience cost for the use as an
 API. For instance, they will complain if an unknown frame is passed, and
 combining the keywords requires several passes through the arguments.
 
 Tawny provides a set of `*-explicit` functions which bypass all of this, but
 expect the frames as a pre-organised map. So,
 
-    ;; these two are equvialent
+    ;; these two are equivalent
     (owl-class "a" :label "a label")
     (owl-class-explicit "a" {:label "a label"})
 

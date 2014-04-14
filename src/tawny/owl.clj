@@ -213,7 +213,7 @@ If there is no current ontology, then an error will be thrown."
 if the first arg is not an ontology. Throws an IllegalStateException
 if there is no current ontology.
 
-The 'd' stands for definately."
+The 'd' stands for definitely."
   [name & body]
   `(defnwithfn ~name #'default-ontology
      ~@body))
@@ -259,7 +259,7 @@ arguments."
   "Like the defn and defdontfn, but broadcasts. That is it expects a three arg
 function, f with ontology, x and y, but defines a new function which takes
 ontology, x and rest, returning a list which is f applied to ontology, x and
-the flatttened elements of rest.
+the flattened elements of rest.
 
 Uses the default ontology if not supplied and throws an IllegalStateException
   if this is not set."
@@ -1766,7 +1766,7 @@ n is evaluated only once, so can have side effects."
   "Creates a class in the current ontology.
 Frames is a map, keyed on the frame name, value a list of items (of other
 lists) containing classes. This function has a rigid syntax, and the more
-flexible 'owl-class' is normally prefered. However, this function should be
+flexible 'owl-class' is normally preferred. However, this function should be
 slightly faster.
 "
   [o name frames]
@@ -2374,7 +2374,7 @@ f to the symbol after a defclass"
 
 (defmacro with-prefix
   "Adds a prefix to all defclass macros in scope.
-This is a convienience macro and is lexically scoped."
+This is a convenience macro and is lexically scoped."
   [prefix & body]
   (let [newbody
         (alter-all-symbol-after-def-form
@@ -2384,7 +2384,7 @@ This is a convienience macro and is lexically scoped."
 
 (defmacro with-suffix
   "Adds a suffix to all defclass macros in scope.
-This is a convienience macro and is lexically scoped."
+This is a convenience macro and is lexically scoped."
   [suffix & body]
   (let [newbody
         (alter-all-symbol-after-def-form
@@ -2441,7 +2441,7 @@ See also 'refine'.
   "Takes an existing definition, add more frames.
 
 The first element should be a namespace qualified symbol. The
-unqualifed part of this will be used in the current namespace.
+unqualified part of this will be used in the current namespace.
 
 See also 'refine'
 "
@@ -2457,7 +2457,7 @@ See also 'refine'
 (defmacro defcopy
   "Takes an existing definition from another namespace and copies it into the
 current namespace with no changes in semantics. This can be useful for
-convienience, where one namespace should contain all the OWLObjects of
+convenience, where one namespace should contain all the OWLObjects of
 another, or for forward declaration, where entities will be refined later.
 
 This does not add the existing definition to the current ontology. In most

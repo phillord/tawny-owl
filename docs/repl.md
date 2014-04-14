@@ -5,7 +5,7 @@ Clojure is an interactive language, in that it provides a REPL --
 read-eval-print-loop; what this means is that you can write code
 interactively, adding and removing functions, to test them out. This turns out
 to be a surprisingly useful feature of the language. This was one of the
-original motiviations for using Clojure, as adding and removing concepts
+original motivations for using Clojure, as adding and removing concepts
 without the need for a long compile-restart cycle seemed a critical feature.
 Here we describe use of the REPL and some features of tawny that aid it's use.
 

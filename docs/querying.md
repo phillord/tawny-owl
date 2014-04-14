@@ -27,7 +27,7 @@ shown as comments.
 Note that this *does not* return `C`, which might be expected; logically, as
 `C` is equivalent to `B`, and `B` is a subclass of `A` then it is true that
 `C` is a subclass of `A`. However, the OWL API cannot determine this without
-the use of interferencing, for which we must use `tawny.reasoner`.
+the use of inferencing, for which we must use `tawny.reasoner`.
 
 Tawny also provides a number of predicates for testing relationships.
 

@@ -62,7 +62,7 @@ These are:
 - `has-value`
 - `has-self`
 
-There is also a single convienience constructor: `some-only` which combines
+There is also a single convenience constructor: `some-only` which combines
 both `some` and `only` property restrictions in a single step.
 
 ## Forward Declarartions
@@ -114,8 +114,8 @@ in the next section).
         (owl-some isPartOf A))
 
 In this case, we define `B` with no frames, and then refine it later, adding
-more frames to the same entity. Tawny-OWL also provides a convienience
-`declare-classes` macro which allows the defintiion of multiple classes at
+more frames to the same entity. Tawny-OWL also provides a convenience
+`declare-classes` macro which allows the definition of multiple classes at
 once.
 
     (declare-classes B C)

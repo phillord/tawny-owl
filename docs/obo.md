@@ -58,7 +58,7 @@ to exist to be restored. So an empty file needs to be created manually.
 
 Next comes our ontology proper. Finally, we call the store-iri, to save any
 IRIs that have been created (and the ones restored originally). While new IRIs
-are random UUIDs they are persistant for a given identifier.
+are random UUIDs they are persistent for a given identifier.
 
     (tawny.obo/obo-store-iri "./src/tawny/obo/pizza/pizza_iri.edn")
 
