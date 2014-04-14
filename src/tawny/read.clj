@@ -210,10 +210,10 @@ iri-mapper and resource-iri-mapper."
 (defn iri-create
   "DEPRECATED: Use iri method in tawny.owl.
 
-A convienience method for creating IRIs.
+A convenience method for creating IRIs.
 
 Most namespaces that call use 'defread' will need to create an IRI.
-This convienience method avoids the need for importing and depending
+This convenience method avoids the need for importing and depending
 directly on the OWL API."
   {:deprecated "0.12"}
   [iri]

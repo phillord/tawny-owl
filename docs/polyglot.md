@@ -26,7 +26,7 @@ this:
     AsparagusTopping=
 
 The Clojure identifiers are used as keys; note this means `polyglot` will only
-work with entites present in the namespace. This function will overwrite any
+work with entities present in the namespace. This function will overwrite any
 existing file, so in practice it is likely only to called from the
 [repl](repl.md).
 

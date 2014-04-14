@@ -27,7 +27,7 @@ for a more detailed description.
 
 In general, the knowledge needs to be fairly complex to make use of an
 ontology worthwhile; ontologies largely describe things categorically, so are
-not useful, for instance, where there is a lot of probabalistic or numerical
+not useful, for instance, where there is a lot of probabilistic or numerical
 data; this is where a statistical model will work better.
 
 To a programmer, an ontology looks somewhat like a type system, although
@@ -57,7 +57,7 @@ provides a good overview for building ontologies in OWL, although it uses
 Protege rather than tawny.
 
 The [Good OD tutorial](http://purl.org/goodod/guideline) provides a good
-description of both the philosophical and comptational issues of ontology
+description of both the philosophical and computational issues of ontology
 building.
 
 [tawny-pizza](https://github.com/phillord/tawny-pizza) is a port of the Pizza

@@ -4,7 +4,7 @@ Naming Conventions
 
 The following naming conventions have been used in Tawny-OWL.
 
- - In general, `-` seperators have been used to split words in function names.
+ - In general, `-` separators have been used to split words in function names.
  - Where necessary `owl` prefixes have been used to distinguish from
    `clojure.core` functions. See [further documentation](nameclashes.md) for a
    rationale.

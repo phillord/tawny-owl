@@ -18,7 +18,7 @@ traditional ontology engineering tools, also described in a
 - Source code, with comments, editable using any of a range of IDEs.
 - Fully extensible -- new syntaxes, new data sources can be added by users
 - Patterns can be created for individual ontologies; related classes can be
-  built easily, accurated and maintainably.
+  built easily, accurately and maintainably.
 - A unit test framework with fully reasoning.
 - A clean syntax for versioning with any VCS, integrated with the IDE
 - Support for packaging, dependency resolution and publication
@@ -52,13 +52,13 @@ are [described](docs/namespaces.md) elsewhere.
 
 Tawny-OWL is predominately designed as a programmatic application for ontology
 development, but it can be used as an API. OWL ontologies are a set of
-statements about things and their relationshops; underneath these statements
+statements about things and their relationships; underneath these statements
 map to a subset of first-order logic which makes it possible to answer 
-questions about these statements using highly-optimized reasoners.
+questions about these statements using highly-optimised reasoners.
 
 Currently, the use of ontologies as a tool within general-purpose programming
 is relatively under-developed. Part of the intention behind Tawny-OWL is to
-embed ontologies deeply within a programatic framework, to see whether
+embed ontologies deeply within a programmatic framework, to see whether
 ontologies are useful in this way.
 
 Further information on the use of Tawny-OWL is available in the

@@ -87,7 +87,7 @@ infer. For example, use data-some or object-some, rather than owl-some." }
 (defmacro
   ^{:private true
     :doc "If *explicit* is true return the first form (which should be the
-symbol for the iterning version), else return the second (which should be the
+symbol for the interning version), else return the second (which should be the
 non-interning equivalent)."}
   exp
   [a b]

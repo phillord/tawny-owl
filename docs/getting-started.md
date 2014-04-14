@@ -17,7 +17,7 @@ to have a simple syntax, modelled after the
 simplest, it provides the ability to write ontologies with a clearly defined
 syntax. Individual classes or properties can be added and removed at will, or
 changed straight-forwardly, as with a GUI framework. However, as it provides
-a readable text syntax, it is more convienient to integrate with, for example,
+a readable text syntax, it is more convenient to integrate with, for example,
 version control systems; ontologies can be searched, and modified with a
 simple search and replace, or more complex regexps and so on.
 
@@ -27,7 +27,7 @@ possible to extend and build on the core library in arbitrary ways. Many
 classes can be created according to a pattern in a single statement; it is
 possible to add specialised support for your given domain, provide new syntax
 for your purposes. It is also possible to use Tawny as an
-[API](tawny-as-an-api.md) to maninpulate existing OWL, although it was not
+[API](tawny-as-an-api.md) to manipulate existing OWL, although it was not
 designed for this purpose and has some limitations.
 
 In this document, we will explore the basic usage of the library, using
@@ -74,7 +74,7 @@ single namespace called `pizza.pizza`. This maps to a file in
 As well as describing the namespace of the file (`pizza.pizza`), it also
 contains a `(:use [tawny.owl])` form; this imports all of the functions in the
 `tawny.owl` namespace, allowing them to be used without qualification; we also
-require three other namespaces from Tawny-OWL, which must be qualifed in use,
+require three other namespaces from Tawny-OWL, which must be qualified in use,
 and define short-cuts for these.
 
 In normal usage, Tawny-OWL uses a single ontology for in a single namespace.
@@ -211,7 +211,7 @@ generate the following ontology, represented in Manchester syntax:
         Red, Green, Blue
 
 
-Tawny-OWL can be considerably more succient than Manchester OWL.
+Tawny-OWL can be considerably more succinct than Manchester OWL.
 
 ## Adding and Removing entities interactively.
 
@@ -244,7 +244,7 @@ than the directory of the file that contains the `save-ontology` form.
 ## Visualising
 
 [Protege](http://protege.stanford.edu/) provides an excellent environment for
-visualisating and navigating through an ontology. It interacts quite nicely
+visualisation and navigating through an ontology. It interacts quite nicely
 with Tawny-OWL, as a viewer rather like using a Web Browser while developing a
 web site, or a PDF viewer while writing LaTeX.
 

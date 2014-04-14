@@ -89,7 +89,7 @@ form is sometimes necessary anyway. We may switch to providing the bare forms
 also. Regardless, the `owl` prefixed forms will remain.
 
 For those who like this option, the `tawny.english` namespace offers
-nameclashing versions of these functions. This can be used if prefered like
+nameclashing versions of these functions. This can be used if preferred like
 so:
 
     (ns my.ontology

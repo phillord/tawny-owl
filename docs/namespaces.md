@@ -32,7 +32,7 @@ meant for end-user use. Here we describe these purpose of each of these.
   OWLObject might be generated in many ways by tawny, or read in from a file. 
 * `repl.clj` -- functions for working in the REPL. This also hooks into the
   `clojure.repl` facilities, giving improved documentation lookup. 
-* `util.clj` -- embarrasing for an ontologist to admit, but this is the
+* `util.clj` -- embarrassing for an ontologist to admit, but this is the
   miscellaneous category.
   
   
