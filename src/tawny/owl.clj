@@ -1295,11 +1295,11 @@ and used as the handler for :subproperty."
 ;; broadcasts specially
 (defdontfn add-subchain
   "Adds a property chain to property."
-  [o property superpropertylist]
-  (when superpropertylist
+  [o property subpropertylist]
+  (when subpropertylist
     (let [property (ensure-object-property o property)
-          lists (filter sequential? superpropertylist)
-          properties (filter (comp not sequential?) superpropertylist)
+          lists (filter sequential? subpropertylist)
+          properties (filter (comp not sequential?) subpropertylist)
           ]
       (list
        ;; add individual entities are a single chain
