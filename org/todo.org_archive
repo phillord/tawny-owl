@@ -826,7 +826,6 @@ Decided not to care!
  - [X] Update documentation!
 
 
-<<<<<<< HEAD
 * Before Release
   :PROPERTIES:
   :ARCHIVE_TIME: 2014-04-10 Thu 11:29
@@ -841,7 +840,7 @@ Decided not to care!
 - [X] Superproperty rendering is not happening!
 - [X] Refine for individuals
 - [X] Autosave function in REPL
-=======
+
 * Documentation
   :PROPERTIES:
   :ARCHIVE_TIME: 2014-04-10 Thu 11:32
@@ -965,5 +964,4 @@ not good.
 
 Can use clojure.edn which just returns data instead.
 
->>>>>>> Pre-release to documentation cleanup.
 
