@@ -1,6 +1,6 @@
 ;; The contents of this file are subject to the LGPL License, Version 3.0.
 ;;
-;; Copyright (C) 2013, Phillip Lord, Newcastle University
+;; Copyright (C) 2013, 2014, Phillip Lord, Newcastle University
 ;;
 ;; This program is free software: you can redistribute it and/or modify it
 ;; under the terms of the GNU Lesser General Public License as published by
@@ -20,7 +20,8 @@
     tawny.query
   (:use [tawny.owl])
   (:use [tawny.render])
-  (:require [tawny.util]))
+  (:require [tawny.util])
+  (:require [clojure.core.logic :as l]))
 
 (def
   ^{:doc "Map between a form entity and a keyword"
@@ -39,12 +40,6 @@
    }
   )
 
-
-(defn- list-to-set [maybelist]
-  (if (seq? maybelist)
-    (apply hash-set maybelist)
-    maybelist))
-
 (defn into-map
   "Translates an owl object into a clojure map.
 The map is similar to the form used to define an entity. Keys are the keywords
@@ -54,17 +49,12 @@ used to define a restriction but with OWLObjects instead of clojure symbols.
 In addition a :type key is added which describes the type of the object."
   [owlobject]
   (let [render
-        (binding
-            [*terminal-strategy* :object
-             tawny.lookup/all-iri-to-var-cache
-             (tawny.lookup/all-iri-to-var)]
-          (as-form owlobject))]
+        (as-form owlobject :keyword :object)]
     (apply hash-map
            (concat
-            [:type (get typemap (first render))]
-            (map list-to-set
-                 (tawny.util/groupify
-                  (drop 2 render)))))))
+            [:type (list (first render))]
+            (tawny.util/groupify
+             (drop 2 render))))))
 
 (defn into-map-with
   "As into-map but merges result from other entities retrieved by (f entity).
@@ -79,3 +69,35 @@ present in the final map, however."
               (filter named-object?
                       (conj (f entity)
                             entity)))))
+
+
+
+(defn frameo [entity query
+              frame]
+  (l/fresh [a]
+         (l/featurec
+          entity
+          {frame a})
+         (l/everyg
+          #(l/membero %1 a)
+          (get query frame))))
+
+(defn every-frameo [entity query]
+  (println "bob")
+  (l/everyg
+   #(frameo entity query %1)
+   (keys query)))
+
+(defn noisydissoc [coll key]
+  (println "coll:key" coll ":" key))
+
+(defn matcher
+  [entity query]
+  (println "Here is a print statement")
+  (l/all
+   (every-frameo
+    (noisydissoc entity :type)
+    (noisydissoc query :type))
+   (l/featurec
+    (select-keys entity [:type])
+    (select-keys query [:type]))))
