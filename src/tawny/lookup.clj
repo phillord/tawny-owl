@@ -106,10 +106,8 @@ hold them for the given namespaces."
 
 ;; This is an expensive operation, so we cache it!
 (def
-  ^{:dynamic true
-    :private true
-    :doc "Holds a copy of the iri-to-var map
-for the duration of the form."}
+  ^{:private true
+    :doc "Cached copy of the IRI to var map. Automatically deleted on reload."}
   all-iri-to-var-cache (atom nil))
 
 (defn all-iri-to-var
