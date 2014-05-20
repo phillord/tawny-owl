@@ -254,11 +254,13 @@ which is an OWLDatatype object.
 
 (defmontfn data-and
   "Returns the intersection of two data ranges."
-  [_ & types]
+  [o & types]
   (.getOWLDataIntersectionOf
    (owl-data-factory)
    ^java.util.Set
-   (set types)))
+   (set
+    (map (partial ensure-data-range o)
+         types))))
 
 (defmethod owl-and ::data [& rest]
   (apply data-and rest))
