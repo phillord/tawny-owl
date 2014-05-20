@@ -467,12 +467,17 @@ converting it from a string or IRI if necessary."
 
 (defmontfn annotation
   "Creates a new annotation property. If literal is a string it is
-interpreted as a String in English. Alternatively, a literal created
+interpreted as a String in English. Alternatively, a literal creatd
 with the literal function."
   ([o annotation-property literal]
      (cond
       (instance? String literal)
       (annotation o annotation-property literal "en")
+      (instance? IRI literal)
+      (.getOWLAnnotation
+       (owl-data-factory)
+       (ensure-annotation-property o annotation-property)
+       literal)
       (instance? OWLLiteral literal)
       (.getOWLAnnotation
        (owl-data-factory)
