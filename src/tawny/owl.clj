@@ -1269,7 +1269,7 @@ opposite of this."
               (ensure-object-property o inverse))))
 
 (defmontfn inverse
-  "Creates an objet inverse of expression."
+  "Creates an object inverse of expression."
   [o property]
   (.getOWLObjectInverseOf
    (owl-data-factory)
