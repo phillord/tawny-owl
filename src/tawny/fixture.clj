@@ -17,7 +17,29 @@
 
 (ns tawny.fixture
   (:use [tawny.owl])
-  (:require [tawny.reasoner :as r]))
+  (:require [tawny.reasoner :as r])
+  (:require [clojure.test]))
+
+;; not technically a fixture, but make with-probe-axioms print out nice
+(defmethod clojure.test/assert-expr 'tawny.owl/with-probe-axioms [msg form]
+  `(tawny.owl/with-probe-axioms
+     ;; the test ontology
+     ~(second form)
+     ;; the vector
+     ~(nth form 2)
+     ;; the test
+     ~(clojure.test/assert-expr
+       (str "Using with-probe-axioms:" msg)
+       (nth form 3))))
+
+(defmethod clojure.test/assert-expr 'tawny.owl/with-probe-entities [msg form]
+  `(tawny.owl/with-probe-entities
+     ~(second form)
+     ~(nth form 2)
+     ~(clojure.test/assert-expr
+       (str "Using with-probe-entities:" msg)
+       (nth form 3))))
+
 
 (defn reasoner
   "Fixture which sets up the reasoner factory to be used, and makes
