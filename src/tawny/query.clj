@@ -53,8 +53,7 @@ In addition a :type key is added which describes the type of the object."
     (apply hash-map
            (concat
             [:type (list (first render))]
-            (tawny.util/groupify
-             (drop 2 render))))))
+            (drop 2 render)))))
 
 (defn into-map-with
   "As into-map but merges result from other entities retrieved by (f entity).
@@ -80,24 +79,13 @@ present in the final map, however."
           {frame a})
          (l/everyg
           #(l/membero %1 a)
+          ;; this get isn't going to work
+          ;; because we could have a logic var
           (get query frame))))
-
-(defn every-frameo [entity query]
-  (println "bob")
-  (l/everyg
-   #(frameo entity query %1)
-   (keys query)))
-
-(defn noisydissoc [coll key]
-  (println "coll:key" coll ":" key))
 
 (defn matcher
   [entity query]
-  (println "Here is a print statement")
-  (l/all
-   (every-frameo
-    (noisydissoc entity :type)
-    (noisydissoc query :type))
-   (l/featurec
-    (select-keys entity [:type])
-    (select-keys query [:type]))))
+  (l/everyg
+   #(frameo entity query %1)
+   ;; this keys isn't going to work because we could have a logic var
+   (keys query)))

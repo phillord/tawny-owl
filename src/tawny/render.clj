@@ -20,7 +20,8 @@
   tawny.render
   (:require [tawny.owl :as owl]
             [tawny.lookup]
-            [tawny.util])
+            [tawny.util]
+            [clojure.set])
   (:import
            (java.util Set)
            (org.semanticweb.owlapi.model
@@ -32,11 +33,14 @@
             OWLDataComplementOf
             OWLDataExactCardinality
             OWLDataHasValue
+            OWLDataIntersectionOf
             OWLDataMaxCardinality
             OWLDataMinCardinality
+            OWLDataOneOf
             OWLDataProperty
             OWLDataSomeValuesFrom
             OWLDatatypeRestriction
+            OWLDataUnionOf
             OWLFacetRestriction
             OWLIndividual
             OWLLiteral
@@ -64,34 +68,234 @@
            ))
 
 
-(def
-  ^{
-    :dynamic true
-    :doc "Strategy for determining action on reaching a terminal.
-:resolve means translate into the clojure symbol.2
-:object means leave as a Java object
-A set means recursively render the object unless it is the set."}
-  *terminal-strategy*
-  :resolve
-  )
+;; :owl-some
+;; :only
+;; :owl-and
+;; :owl-or
+;; :exactly
+;; :oneof
+;; :at-least
+;; :at-most
+;; :has-value
+;; :owl-not
+;; :span
+;; :iri
+;; :label
+;; :comment
+;; :annotation
+;; :literal
+;; :<
+;; :<=S
+;; :>
+;; :>=
+;; :has-self
+;; :inverse
 
-(def
-  ^{
-    :dynamic true
-    :doc "Use object/data explicit forms of functions, rather than trying to
-infer. For example, use data-some or object-some, rather than owl-some." }
-  *explicit*
-  false)
+(def ^{:private true}
+  unnamed-entity-map
+  {
+   [:explicit :keyword]
+   {
+    :object-some :object-some
+    :object-only :object-only
+    :object-and :object-and
+    :object-or :object-or
+    :object-exactly :object-exactly
+    :object-oneof :object-oneof
+    :object-at-least :object-at-least
+    :object-at-most :object-at-most
+    :object-has-value :object-has-value
+    :object-not :object-not
+
+    ;; object only so no explicit form
+    :object-has-self :has-self
+    :object-inverse :inverse
+
+    :data-some :data-some
+    :data-only :data-only
+    :data-and :data-and
+    :data-or :data-or
+    :data-exactly :data-exactly
+    :data-oneof :data-oneof
+    :data-at-least :data-at-least
+    :data-at-most :data-at-most
+    :data-has-value :data-has-value
+    :data-not :data-not
+
+    :object-fact :object-fact
+    :object-fact-not :object-fact-not
+    :data-fact :data-fact
+    :data-fact-not :data-fact-not
+
+    :span :span
+    :iri :iri
+    :label :label
+    :comment :comment
+    :annotation :annotation
+    :literal :literal
+    :< :<
+    :<= :<=
+    :> :>
+    :>= :>=
+    }
+
+   [:keyword]
+   {
+    :object-some :some
+    :object-only :only
+    :object-and :and
+    :object-or :or
+    :object-exactly :exactly
+    :object-oneof :oneof
+    :object-at-least :at-least
+    :object-at-most :at-most
+    :object-has-value :has-value
+    :object-not :not
+
+    :object-has-self :has-self
+    :object-inverse :inverse
+
+    :data-some :some
+    :data-only :only
+    :data-and :and
+    :data-or :or
+    :data-exactly :exactly
+    :data-oneof :oneof
+    :data-at-least :at-least
+    :data-at-most :at-most
+    :data-has-value :has-value
+    :data-not :not
+
+    :object-fact :fact
+    :object-fact-not :fact-not
+    :data-fact :fact
+    :data-fact-not :fact-not
 
 
-(defmacro
-  ^{:private true
-    :doc "If *explicit* is true return the first form (which should be the
-symbol for the interning version), else return the second (which should be the
-non-interning equivalent)."}
-  exp
-  [a b]
-  `(if *explicit* '~b '~a))
+    :span :span
+    :iri :iri
+    :label :label
+    :comment :comment
+    :annotation :annotation
+    :literal :literal
+    :< :<
+    :<= :<=
+    :> :>
+    :>= :>=
+    }
+
+   [:explicit]
+   {
+    :object-some 'object-some
+    :object-only 'object-only
+    :object-and 'object-and
+    :object-or 'object-or
+    :object-exactly 'object-exactly
+    :object-oneof 'object-oneof
+    :object-at-least 'object-at-least
+    :object-at-most 'object-at-most
+    :object-has-value 'object-has-value
+    :object-not 'object-not
+
+    ;; these are object only -- so no explicit form
+    :object-has-self 'has-self
+    :object-inverse 'inverse
+
+    :data-some 'data-some
+    :data-only 'data-only
+    :data-and 'data-and
+    :data-or 'data-or
+    :data-exactly 'data-exactly
+    :data-oneof 'data-oneof
+    :data-at-least 'data-at-least
+    :data-at-most 'data-at-most
+    :data-has-value 'data-has-value
+    :data-not 'data-not
+
+
+    ;; we don't have a public explicit syntax for facts yet, which is probably
+    ;; not ideal
+    :object-fact 'fact
+    :object-fact-not 'fact-not
+    :data-fact 'fact
+    :data-fact-not 'fact-not
+
+    :span 'span
+    :iri 'iri
+    :label 'label
+    :comment 'owl-comment
+    :annotation 'annotation
+    :literal 'literal
+    :< '<
+    :<= '<=
+    :> '>
+    :>= '>=
+    }
+
+   []
+   {
+    :object-some 'owl-some
+    :object-only 'only
+    :object-and 'owl-and
+    :object-or 'owl-or
+    :object-exactly 'exactly
+    :object-oneof 'oneof
+    :object-at-least 'at-least
+    :object-at-most 'at-most
+    :object-has-value 'has-value
+    :object-not 'owl-not
+    :object-has-self 'has-self
+    :object-inverse 'inverse
+
+    :data-some 'owl-some
+    :data-only 'only
+    :data-and 'owl-and
+    :data-or 'owl-or
+    :data-exactly 'exactly
+    :data-oneof 'oneof
+    :data-at-least 'at-least
+    :data-at-most 'at-most
+    :data-has-value 'has-value
+    :data-not 'owl-not
+    :data-has-self 'has-self
+    :data-inverse 'inverse
+
+    :object-fact 'fact
+    :object-fact-not 'fact-not
+    :data-fact 'fact
+    :data-fact-not 'fact-not
+
+    :span 'span
+    :iri 'iri
+    :label 'label
+    :comment 'owl-comment
+    :annotation 'annotation
+    :literal 'literal
+    :< '<
+    :<= '<=
+    :> '>
+    :>= '>=}})
+
+(def named-entity-map
+  {OWLClass [:class 'defclass 'owl-class]
+   OWLObjectProperty [:oproperty 'defoproperty 'object-property]
+   OWLNamedIndividual [:individual 'defindividual 'individual]
+   OWLDataProperty [:dproperty 'defdproperty 'datatype-property]
+   OWLAnnotationProperty [:aproperty 'defaproperty 'annotation-property]})
+
+(defn- unnamed-entity [entity-keyword options]
+  (get
+   (get options ::unnamed)
+   entity-keyword))
+
+(defn named-entity [type entity options]
+  (cond
+   (get options :keyword)
+   (first (get named-entity-map type))
+   (tawny.lookup/resolve-entity entity)
+   (second (get named-entity-map type))
+   :else
+   (nth (get named-entity-map type) 2)))
 
 (defn named-entity-as-string
   "Return a string identifier for an entity"
@@ -103,8 +307,13 @@ non-interning equivalent)."}
 
 (defn ^java.util.Set ontologies
   "Fetch all known ontologies."
-  []
-  (.getOntologies (owl/owl-ontology-manager)))
+  [options]
+  (or (get options :ontologies)
+      (and (get options :manager)
+           (.getOntologies
+            ^org.semanticweb.owlapi.model.OWLOntologyManager (get options :manager)))
+      (.getOntologies
+       (owl/owl-ontology-manager))))
 
 (defn setmap
   "Apply f to list c, union the results."
@@ -113,51 +322,54 @@ non-interning equivalent)."}
 
 (declare form)
 
-(defmulti as-form
+(defmulti ^{:private true} as-form-int
   "Render one of the main OWLEntities as one of the main functions
-in tawny." class)
+in tawny." (fn [c options]
+             (class c)))
 
-(defmethod as-form OWLClass
-  [^OWLClass c]
-  (let [ont (ontologies)
+(defmethod as-form-int OWLClass
+  [^OWLClass c options]
+  (let [ont (ontologies options)
         super (.getSuperClasses c ont)
         equiv (.getEquivalentClasses c ont)
         disjoint (.getDisjointClasses c ont)
         annotation
         (setmap
          #(.getAnnotations c %) ont)
-        cls (form c)
-        ]
-    `(
-      ;; seems like a nice idea, but cls is always a symbol because form
-      ;; OWLClass makes it so. Resolve-entity always returns a string, but
-      ;; we don't know what kind -- a var string or an IRI?
-      ~(if (symbol? cls)
-         'defclass
-         'owl-class)
+        cls (form c options)
+        ;; If we have :keywords each frame has a list after is, so just use
+        ;; list to make it. If we are returning symbols then we don't want a
+        ;; raw elements, so we use list*, which gives us the equivalent of a
+        ;; splice.
+        lst (if (get options :keyword)
+              list
+              list*)]
+    (concat
+     (list
+      (named-entity OWLClass c options)
+      (form c options))
 
+     (when (pos? (count super))
+       (lst :super
+            (form super options)))
 
-      ~(form c)
-      ~@(when (pos? (count super))
-          (cons
-           :super
-           (form super)))
-      ~@(when (pos? (count equiv))
-          (cons
-           :equivalent
-           (form equiv)))
-      ~@(when (pos? (count disjoint))
-          (cons
-           :disjoint
-           (form disjoint)))
-      ~@(when (pos? (count annotation))
-          (cons :annotation
-                (form annotation)))
-      )))
+     (when (pos? (count equiv))
+       (lst
+        :equivalent
+        (form equiv options)))
 
-(defmethod as-form OWLObjectProperty
-  [^OWLObjectProperty p]
-  (let [ont (ontologies)
+     (when (pos? (count disjoint))
+       (lst
+        :disjoint
+        (form disjoint options)))
+
+     (when (pos? (count annotation))
+       (lst :annotation
+            (form annotation options))))))
+
+(defmethod as-form-int OWLObjectProperty
+  [^OWLObjectProperty p options]
+  (let [ont (ontologies options)
         domain (.getDomains p ont)
         range (.getRanges p ont)
         inverseof (.getInverses p ont)
@@ -187,75 +399,95 @@ in tawny." class)
                   (.isReflexive p ont)
                   :reflexive)
                  ))
-        prop (form p)]
+        lst (if (get options :keyword)
+              list
+              list*)
+        ]
+    (concat
+     (list (named-entity OWLObjectProperty p options)
+           (form p options))
 
-    `(
-      ~(if (symbol? prop)
-         'defoproperty
-         'object-property)
-      ~prop
-      ~@(when (pos? (count superprop))
-          (cons :super
-                (form superprop)))
-      ~@(when (pos? (count domain))
-          (cons :domain
-                (form domain)))
-      ~@(when (pos? (count range))
-          (cons :range
-                (form range)))
-      ~@(when (pos? (count inverseof))
-          (cons :inverse
-                (form inverseof)))
-      ~@(when (pos? (count characteristic))
-          (cons :characteristic
-                characteristic)))))
+     (when (pos? (count superprop))
+          (lst :super
+               (form superprop options)))
 
-(defmethod as-form OWLNamedIndividual
-  [^OWLNamedIndividual p]
-  (let [ont (ontologies)
+     (when (pos? (count domain))
+       (lst :domain
+            (form domain options)))
+
+     (when (pos? (count range))
+       (lst :range
+             (form range options)))
+     (when (pos? (count inverseof))
+       (lst :inverse
+            (form inverseof options)))
+     (when (pos? (count characteristic))
+       (lst :characteristic
+            characteristic)))))
+
+(defrecord ^{:private true} FactList
+    [type facts])
+
+(defmethod as-form-int OWLNamedIndividual
+  [^OWLNamedIndividual p options]
+  (let [ont (ontologies options)
         types (.getTypes p ont)
         same (setmap #(.getSameIndividuals p %) ont)
         diff (setmap #(.getDifferentIndividuals p %) ont)
         annotation
         (setmap
          (fn [^OWLOntology o] (.getAnnotations p o)) ont)
-        fact
-        (merge
-         (into {} (setmap #(.getDataPropertyValues p %) ont))
-         (into {} (setmap #(.getObjectPropertyValues p %) ont)))
-        factnot
-        (merge
-         (into {} (setmap #(.getNegativeDataPropertyValues p %) ont))
-         (into {} (setmap #(.getNegativeObjectPropertyValues p %) ont)))
-        ind (form p)
-        ]
-    `(~(if (symbol? ind)
-         'defindividual
-         'individual)
-      ~(form p)
-      ~@(when (pos? (count types))
-          (cons :type
-                (form types)))
-      ~@(when (pos? (count same))
-          (cons :same
-                (form same)))
-      ~@(when (pos? (count diff))
-          (cons :different
-                (form diff)))
-      ~@(when (pos? (count annotation))
-          (cons :annotation
-                (form annotation)))
-      ~@(when (some
-               #(pos? (count %))
-               [fact factnot])
-          (doall (concat
-                  [:fact]
-                  (form [:fact fact])
-                  (form [:fact-not factnot])))))))
+        facts
+        (filter
+         (complement nil?)
+         (list
+          (let [fs
+                (into {} (setmap #(.getObjectPropertyValues p %) ont))]
+            (when (seq fs)
+              (FactList. :object-fact fs)))
+          (let [fs
+                (into {} (setmap #(.getDataPropertyValues p %) ont))]
+            (when (seq fs)
+              (FactList. :data-fact fs)))
+          (let [fs
+                (into {} (setmap #(.getNegativeObjectPropertyValues p %) ont))]
+            (when (seq fs)
+              (FactList. :object-fact-not fs)))
+          (let [fs
+                (into {} (setmap #(.getNegativeDataPropertyValues p %) ont))]
+            (when (seq fs)
+              (FactList. :data-fact-not fs)))))
+        ind (form p options)
+        lst (if (get options :keyword)
+              list
+              list*)]
+    (concat
+     (list
+      (named-entity OWLNamedIndividual p options)
+      (form p options))
+     (when (pos? (count types))
+       (lst :type
+            (form types options)))
+     (when (pos? (count same))
+       (lst :same
+            (form same options)))
+     (when (pos? (count diff))
+       (lst :different
+            (form diff options)))
+     (when (pos? (count annotation))
+       (lst :annotation
+            (form annotation options)))
+     ;; what is going on here!
+     (when (seq facts)
+       (lst
+        :fact
+        ;; so, we use a PersistentVector to distinguish here between postive
+        ;; and negative
+        (form facts options))))))
 
-(defmethod as-form OWLDataProperty
-  [^OWLDataProperty p]
-  (let [ont (ontologies)
+(defmethod as-form-int OWLDataProperty
+  [^OWLDataProperty p options]
+  (let [ont (ontologies options)
         domain (.getDomains p ont)
         range (.getRanges p ont)
         superprop (.getSuperProperties p ont)
@@ -266,199 +498,271 @@ in tawny." class)
                   (.isFunctional p ont)
                   :functional)
                  ))
-        prop (form p)]
+        prop (form p options)
+        lst (if (get options :keyword)
+              list
+              list*)]
+    (concat
+     (list
+      (named-entity OWLDataProperty p options)
+      prop)
+     (when (pos? (count superprop))
+       (lst :super
+             (form superprop options)))
+     (when (pos? (count domain))
+       (lst :domain
+            (form domain options)))
+     (when (pos? (count range))
+       (lst :range
+            (form range options)))
+     (when (pos? (count characteristic))
+       (lst :characteristic
+            characteristic)))))
 
-    `(
-      ~(if (symbol? prop)
-         'defdproperty
-         'datatype-property)
-      ~prop
-      ~@(when (pos? (count superprop))
-          (cons :super
-                (form superprop)))
-      ~@(when (pos? (count domain))
-          (cons :domain
-                (form domain)))
-      ~@(when (pos? (count range))
-          (cons :range
-                (form range)))
-      ~@(when (pos? (count characteristic))
-          (cons :characteristic
-                characteristic)))))
-
-(defmethod as-form OWLAnnotationProperty
-  [^OWLAnnotationProperty p]
-  (let [ont (ontologies)
+(defmethod as-form-int OWLAnnotationProperty
+  [^OWLAnnotationProperty p options]
+  (let [ont (ontologies options)
         super
         (setmap (fn [^OWLOntology o] (.getSuperProperties p o)) ont)
         ann
         (setmap #(.getAnnotations p %) ont)
-        prop (form p)]
-    `(
-      ~(if (symbol? prop)
-         'defaproperty
-         'annotation-property)
-      ~(form p)
-      ~@(when (pos? (count super))
-          (cons :super
-                (form super)))
-      ~@(when (pos? (count ann))
-          (cons :annotation
-                (form ann))))))
+        prop (form p options)
+        lst (if (get options :keyword)
+              list
+              list*)]
+    (concat
+     (list
+      (named-entity OWLAnnotationProperty p options)
+      (form p options))
+     (when (pos? (count super))
+       (lst :super
+            (form super options)))
+     (when (pos? (count ann))
+       (lst :annotation
+            (form ann options))))))
 
-(defmethod as-form org.semanticweb.owlapi.model.OWLDatatype [_]
-  ;; I think we can safely ignore this here -- if it declared, then it should
-  ;; be used elsewhere also. I think. Regardless, there is no read syntax in
-  ;; tawny at the moment.
-  )
+(defmethod as-form-int org.semanticweb.owlapi.model.OWLDatatype [f options]
+  ;; Really uncertain about this at the moment -- this used to be empty and I
+  ;; am worried that I have messed something up by adding it. Only time we
+  ;; tell here.
+  ;;
+  ;; Think this is wrong now  because we do have a read form and should be
+  ;; producing that.
+  ;;
+  ;; It' definately fucked for :keyword rendering -- and also comes up with
+  ;; inbuilt datatypes like xsd_string.
+  (form f options))
 
-(defmethod as-form :default [_]
-  (println "Unknown element in signature")
-  (Thread/dumpStack)
-  '(unknown as-form))
+(defn- branch?
+  "Returns true if we are out a branch of a form tree."
+  [elem]
+  (and (sequential? elem)
+       (every? sequential? elem)))
 
+(defn- semi-flatten
+  "Flattens a list except for lists that contain no other lists."
+  [s]
+  (if (branch? s)
+    (mapcat semi-flatten s)
+    (list s)))
 
-(defmulti form
+(defmethod as-form-int :default [f options]
+  (form f options)
+  (let [k
+        ;; many forms return lists, so we flatten here if we can to a single
+        ;; element list or we get lots of confusing sublists
+        (semi-flatten
+         (form f options))]
+    ;; as a special case if there is only one element in the list unpack that too
+    (if (next k)
+      k
+      (first k))))
+
+(defn as-form
+  [entity & options]
+  (let [;;a (println "options" options)
+        options (apply hash-map options)
+        ;;a (println "options now " options)
+        unnamed
+        (get
+         unnamed-entity-map
+         (filter
+          identity
+          [(and (get options :explicit)
+                :explicit)
+           (and (get options :keyword)
+                :keyword)]))
+        terminal
+        (or
+         (and (get options :resolve) :resolve)
+         (and (get options :object) :object)
+         :resolve)
+        options
+        (merge
+         {::unnamed unnamed
+          ::terminal terminal}
+         options)]
+    (as-form-int entity options)))
+
+(defmulti ^{:private true} form
   "Render any OWLEntity or collections containing these entities as Clojure
 forms."
-  class)
+  (fn [c options]
+    (class c)))
 
 ;; how to get from {:a {1 2}} {:b {3 4}}
 ;; to [:a 1][:a 2]
 ;; or support (fact I1 I2)?
 
-(defmethod form clojure.lang.IPersistentVector [v]
-  (let [f (symbol (name (first v)))]
-    (for [[ope ind]
-          (reduce
-           concat
-           (for [[k v] (second v)]
-             (for [x v]
-               [k x])))]
-      `(~f ~(form ope) ~(form ind)))))
+(defmethod form clojure.lang.ISeq [s options]
+  (doall (map #(form % options) s)))
 
-(defmethod form clojure.lang.ISeq [s]
-  (map form s))
+(defmethod form Set [s options]
+  (map #(form % options) s))
 
-(defmethod form Set [s]
-  ;; no lazy -- we are going to render the entire form anyway, and we are
-  ;; using a dynamic binding to cache the iri-to-var map. Lazy eval will break
-  ;; this big time.
-  (tawny.util/domap form s))
-
-(defmethod form java.util.Map [m]
-  (tawny.util/dofor
+(defmethod form java.util.Map [m options]
+  (for
    [[k v] m]
-   `(~(form k) ~(form v))))
+   `(~(form k options) ~(form v options))))
 
 (defn- entity-or-iri
   "Return either the interned var holding an entity, or an IRI,
 depending on the value of *terminal-strategy*"
-  [c]
-  (case *terminal-strategy*
-    :resolve
+  [c options]
+  (if-not
+      (= (get options ::terminal)
+         :object)
     (let [res (tawny.lookup/resolve-entity c)]
       (if res
         (symbol
          (tawny.lookup/resolve-entity c))
-        `(~'iri ~(tawny.lookup/named-entity-as-string c))))
-    :object
+        (list
+         (unnamed-entity :iri options)
+         (tawny.lookup/named-entity-as-string c))))
     c))
 
-(defmethod form OWLClass [c]
-  (entity-or-iri c))
 
-(defmethod form OWLProperty [p]
-  (entity-or-iri p))
+(defmethod form FactList [s options]
+  (let [type-sym (unnamed-entity (:type s) options)]
+    (mapcat
+     (fn create-fact-forms
+       [property]
+       (interleave
+         (repeat type-sym)
+         (repeat (form property options))
+         (map #(form % options)
+              (seq (get (:facts s) property)))))
+     ;; each of the properties
+     (keys (:facts s)))))
 
-(defmethod form OWLIndividual [i]
-  (entity-or-iri i))
+
+(defmethod form OWLClass [c options]
+  (entity-or-iri c options))
+
+(defmethod form OWLProperty [p options]
+  (entity-or-iri p options))
+
+(defmethod form OWLIndividual [i options]
+  (entity-or-iri i options))
 
 (defmethod form OWLObjectOneOf
-  [^OWLObjectOneOf o]
+  [^OWLObjectOneOf o options]
   (list*
-   (exp oneof object-oneof)
-   (form (.getIndividuals o))))
+   (unnamed-entity :object-oneof options)
+   (form (.getIndividuals o) options)))
 
 (defmethod form OWLObjectSomeValuesFrom
-  [^OWLObjectSomeValuesFrom s]
+  [^OWLObjectSomeValuesFrom s options]
   (list
-   (exp owl-some object-some)
-   (form (.getProperty s))
-   (form (.getFiller s))))
+   (unnamed-entity :object-some options)
+   (form (.getProperty s) options)
+   (form (.getFiller s) options)))
 
 (defmethod form OWLObjectUnionOf
-  [^OWLObjectUnionOf u]
+  [^OWLObjectUnionOf u options]
    (list*
-    (exp owl-or object-or)
-    (form (.getOperands u))))
+    (unnamed-entity :object-or options)
+    (form (.getOperands u) options)))
 
 (defmethod form OWLObjectIntersectionOf
-  [^OWLObjectIntersectionOf c]
+  [^OWLObjectIntersectionOf c options]
   (list*
-   (exp owl-and object-or) (form (.getOperands c))))
+   (unnamed-entity :object-and options)
+   (form (.getOperands c) options)))
 
 (defmethod form OWLObjectAllValuesFrom
-  [^OWLObjectAllValuesFrom a]
+  [^OWLObjectAllValuesFrom a options]
   (list
-   (exp
-    only
-    object-only)
-        (form (.getProperty a))
-        (form (.getFiller a))))
+   (unnamed-entity
+    :object-only options)
+   (form (.getProperty a) options)
+   (form (.getFiller a) options)))
 
 (defmethod form OWLObjectComplementOf
-  [^OWLObjectComplementOf c]
+  [^OWLObjectComplementOf c options]
   (list
-   (exp owl-not
-        object-not)
-        (form (.getOperand c))))
+   (unnamed-entity
+    :object-not options)
+   (form (.getOperand c) options)))
 
 (defmethod form OWLObjectExactCardinality
-  [^OWLObjectExactCardinality c]
+  [^OWLObjectExactCardinality c options]
   (list
-   (exp exactly object-exactly)
+   (unnamed-entity
+    :object-exactly options)
    (.getCardinality c)
-        (form (.getProperty c))
-        (form (.getFiller c))))
+   (form (.getProperty c) options)
+        (form (.getFiller c) options)))
 
 (defmethod form OWLObjectMaxCardinality
-  [^OWLObjectMaxCardinality c]
+  [^OWLObjectMaxCardinality c options]
   (list
-   (exp at-most object-at-most) (.getCardinality c)
-        (form (.getProperty c))
-        (form (.getFiller c))))
+   (unnamed-entity :object-at-most
+                   options)
+   (.getCardinality c)
+        (form (.getProperty c) options)
+        (form (.getFiller c) options)))
 
 (defmethod form OWLObjectMinCardinality
-  [^OWLObjectMinCardinality c]
-  (list (exp at-least object-at-least)
+  [^OWLObjectMinCardinality c options]
+  (list (unnamed-entity :object-at-least options)
         (.getCardinality c)
-        (form (.getProperty c))
-        (form (.getFiller c))))
+        (form (.getProperty c) options)
+        (form (.getFiller c) options)))
+
+(defn- list**
+  "Operates like list if the list or list* depending on whether the last
+element is a list."
+  [& args]
+  (if (seq? (last args))
+    (apply list* args)
+    (apply list args)))
 
 (defmethod form OWLAnnotation
-  [^OWLAnnotation a]
+  [^OWLAnnotation a options]
   (let [v (.getValue a)]
     (cond
      (.. a getProperty isLabel)
-     (list 'label
-           (form v))
+     (list (unnamed-entity :label options)
+           (form v options))
      (.. a getProperty isComment)
-     (list 'owl-comment
-           (form v))
+     (list (unnamed-entity :comment options)
+           (form v options))
      :default
-     (list
-      'annotation
-      (form (.getProperty a))
-      (form v)))))
+     (do
+       ;;(println "v is" v)
+       (list
+        (unnamed-entity :annotation options)
+        (form (.getProperty a) options)
+        (form v options))))))
 
-(defmethod form OWLAnnotationProperty [p]
-  (entity-or-iri p))
+(defmethod form OWLAnnotationProperty [p options]
+  (entity-or-iri p options))
 
 ;; this can be improved somewhat -- not converting classes into something
 ;; readable.
 (defmethod form OWLAnnotationValue
-  [^Object v]
+  [^Object v options]
   (list
    (str v)))
 
@@ -471,70 +775,82 @@ depending on the value of *terminal-strategy*"
           [(.getDatatype v (owl/owl-data-factory)) k])))
 
 (defmethod form OWLLiteral
-  [^OWLLiteral l]
+  [^OWLLiteral l options]
   (list*
-   'literal
+   (unnamed-entity :literal options)
    (.getLiteral l)
    (if (.hasLang l)
      [:lang (.getLang l)]
      [:type
-      (form (.getDatatype l))])))
+      (form (.getDatatype l) options)])))
 
 ;; so, in many cases, fillers can be an Datatype, which is probably going
 ;; to render as a keyword. Alternatively, it might be a DataRange which is
 ;; going to render as one or more span elements. The former needs to be
 ;; include directly, the latter needs not
-(defn- list**
-  "Operates like list if the list or list* depending on whether the last
-element is a list."
-  [& args]
-  (if (seq? (last args))
-    (apply list* args)
-    (apply list args)))
 
 (defmethod form OWLDataSomeValuesFrom
-  [^OWLDataSomeValuesFrom d]
+  [^OWLDataSomeValuesFrom d options]
   (list**
-   (exp owl-some data-some)
-   (form (.getProperty d))
-   (form (.getFiller d))))
+   (unnamed-entity :data-some options)
+   (form (.getProperty d) options)
+   (form (.getFiller d) options)))
 
 (defmethod form OWLDataAllValuesFrom
-  [^OWLDataAllValuesFrom a]
-  (list
-   (exp only data-only)
-        (form (.getProperty a))
-        (form (.getFiller a))))
+  [^OWLDataAllValuesFrom a options]
+  (list**
+   (unnamed-entity :data-only options)
+        (form (.getProperty a) options)
+        (form (.getFiller a) options)))
 
 (defmethod form OWLDataComplementOf
-  [^OWLDataComplementOf c]
+  [^OWLDataComplementOf c options]
   (list
-   (exp owl-not data-not)
-        (form (.getDataRange c))))
+   (unnamed-entity :data-not options)
+   (form (.getDataRange c) options)))
+
+(defmethod form OWLDataUnionOf
+  [^OWLDataUnionOf c options]
+  (list*
+   (unnamed-entity :data-or options)
+   (form (.getOperands c) options)))
+
+(defmethod form OWLDataIntersectionOf
+  [^OWLDataIntersectionOf c options]
+  (list*
+   (unnamed-entity :data-and options)
+   (form (.getOperands c) options)))
+
 
 (defmethod form OWLDataExactCardinality
-  [^OWLDataExactCardinality c]
+  [^OWLDataExactCardinality c options]
   (list
-   (exp exactly data-exactly)
+   (unnamed-entity :data-exactly options)
    (.getCardinality c)
-        (form (.getProperty c))
-        (form (.getFiller c))))
+   (form (.getProperty c) options)
+   (form (.getFiller c) options)))
 
 (defmethod form OWLDataMaxCardinality
-  [^OWLDataMaxCardinality c]
+  [^OWLDataMaxCardinality c options]
   (list
-   (exp at-most data-at-most)
+   (unnamed-entity :data-at-most options)
    (.getCardinality c)
-        (form (.getProperty c))
-        (form (.getFiller c))))
+        (form (.getProperty c) options)
+        (form (.getFiller c) options)))
 
 (defmethod form OWLDataMinCardinality
-  [^OWLDataMinCardinality c]
+  [^OWLDataMinCardinality c options]
   (list
-   (exp at-least data-at-least)
+   (unnamed-entity :data-at-least options)
    (.getCardinality c)
-        (form (.getProperty c))
-        (form (.getFiller c))))
+        (form (.getProperty c) options)
+        (form (.getFiller c) options)))
+
+(defmethod form OWLDataOneOf
+  [^OWLDataOneOf c options]
+  (list*
+   (unnamed-entity :data-oneof options)
+   (form (.getValues c) options)))
 
 (defn- numeric-literal
   "Returns a number from one of the numerous typed wrappers."
@@ -549,17 +865,21 @@ element is a list."
    :default
    (throw (IllegalArgumentException. "Non numeric literal passed to numeric-literal"))))
 
-(defn- numeric-facet [d]
+(defn- numeric-facet [d options]
   (get
-       {OWLFacet/MAX_EXCLUSIVE '<
-        OWLFacet/MAX_INCLUSIVE '<=
-        OWLFacet/MIN_EXCLUSIVE '>
-        OWLFacet/MIN_INCLUSIVE '>=
+       {OWLFacet/MAX_EXCLUSIVE
+        (unnamed-entity :< options)
+        OWLFacet/MAX_INCLUSIVE
+        (unnamed-entity :<= options)
+        OWLFacet/MIN_EXCLUSIVE
+        (unnamed-entity :> options)
+        OWLFacet/MIN_INCLUSIVE
+        (unnamed-entity :>= options)
         }
        d))
 
 (defmethod form OWLDatatypeRestriction
-  [^OWLDatatypeRestriction d]
+  [^OWLDatatypeRestriction d options]
   (let [dt (.getDatatype d)]
     (cond
      (or
@@ -567,49 +887,55 @@ element is a list."
       (.isFloat dt)
       (.isInteger dt))
      (for [^OWLFacetRestriction fr (.getFacetRestrictions d)]
-       (list 'span
-             (numeric-facet (.getFacet fr))
+       (list (unnamed-entity :span options)
+             (numeric-facet (.getFacet fr) options)
              (numeric-literal (.getFacetValue fr))))
      :default
      (throw (Exception. "Can't render non-numeric datatype")))))
 
 (defmethod form OWLFacetRestriction
-  [^OWLFacetRestriction d]
-  (list (form (.getFacet d)) (form (.getFacetValue d))))
+  [^OWLFacetRestriction d options]
+  (list (form (.getFacet d) options) (form (.getFacetValue d) options)))
 
-(defmethod form org.semanticweb.owlapi.model.OWLDatatype [d]
+(defmethod form org.semanticweb.owlapi.model.OWLDatatype [d options]
   (if-let [x (get owldatatypes-inverted d)]
     ;; it's a builtin, so reverse lookup keyword
     x
-    (entity-or-iri d)))
+    (entity-or-iri d options)))
 
 (defmethod form org.semanticweb.owlapi.model.OWLObjectHasValue
-  [^OWLObjectHasValue p]
-  (list (exp has-value object-has-value)
-        (form (.getProperty p))
-        (form (.getValue p))))
+  [^OWLObjectHasValue p options]
+  (list (unnamed-entity :object-has-value options)
+        (form (.getProperty p) options)
+        (form (.getValue p) options)))
 
 (defmethod form org.semanticweb.owlapi.model.OWLObjectHasSelf
-  [^OWLObjectHasSelf s]
-  (list 'has-self (form (.getProperty s))))
+  [^OWLObjectHasSelf s options]
+  (list
+   (unnamed-entity :object-has-self options)
+   (form (.getProperty s) options)))
 
 (defmethod form org.semanticweb.owlapi.model.OWLDataHasValue
-  [^OWLDataHasValue p]
-  (list (exp has-value data-has-value)
-        (form (.getProperty p))
-        (form (.getValue p))))
+  [^OWLDataHasValue p options]
+  (list (unnamed-entity :data-has-value options)
+        (form (.getProperty p) options)
+        (form (.getValue p) options)))
 
 (defmethod form OWLObjectInverseOf
-  [^OWLObjectInverseOf p]
-  (list 'inverse (form (.getInverse p))))
+  [^OWLObjectInverseOf p options]
+  (list
+   (unnamed-entity :inverse options)
+   (form (.getInverse p) options)))
 
+(defmethod form org.semanticweb.owlapi.model.IRI [e options]
+  (list (unnamed-entity :iri options)
+        (str e)))
 
-(defmethod form String [e]
+(defmethod form String [e options]
   e)
 
 ;; obviously this is error trap!
-(defmethod form :default [e]
-  (do
-    (println "Unknown form" (class e))
-    (Thread/dumpStack)
-    `(unknown form)))
+(defmethod form :default [e options]
+  (throw
+   (IllegalArgumentException.
+    (str "Don't know how to render this form:" e))))

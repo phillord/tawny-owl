@@ -20,17 +20,17 @@
   ;; target/classes is in the classpath which makes life easier.
   (spit "dev-resources/sio_rendered.clj" "(in-ns 'sio-header)\n")
   (doseq [n (.getSignature sio)]
-    (binding [tawny.render/*explicit* true]
-      (spit "dev-resources/sio_rendered.clj"
-            (str
-             (tawny.render/as-form n) "\n")
-            :append true)))
+    (spit "dev-resources/sio_rendered.clj"
+          (str
+           (pr-str
+            (tawny.render/as-form n :explicit true))
+           "\n")
+          :append true))
   (require 'sio-header)
   (def sio-rendered (eval 'sio-header/sio-rendered))
   (tests))
 
 (use-fixtures :once render-sio)
-
 
 (deftest ontologies
   (is
@@ -42,7 +42,6 @@
   (is
    (= (count (.getSignature sio))
       (count (.getSignature sio-rendered)))))
-
 
 (deftest classes
   (is

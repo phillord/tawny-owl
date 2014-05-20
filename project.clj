@@ -24,6 +24,7 @@
 
                  ;; clojure
                  [org.clojure/clojure "1.6.0"]
+                 [org.clojure/core.logic "0.8.7"]
 
                  ;; reasoners
                  [org.semanticweb.elk/elk-owlapi "0.4.1"]
@@ -31,4 +32,7 @@
                  [net.sourceforge.owlapi/jfact "1.2.0"]
 
                  ;; need to access log4j to control elk.
-                 [log4j/log4j "1.2.17"]])
+                 [log4j/log4j "1.2.17"]
+
+                 [criterium "0.4.3"]
+                 ])

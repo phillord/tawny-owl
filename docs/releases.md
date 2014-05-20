@@ -1,6 +1,48 @@
 Release Notes
 =============
 
+# 1.2
+
+The main feature for the 1.2 release has been the incorporation of core.logic,
+through (ab)use of the Tawny's querying facilities. A tighter integration
+should be possible, having core.logic work directly over the OWL API, but this
+was relatively simple to implement. It is performant enough for most uses (the
+Gene Ontology renders to Clojure data structures in 1-2 seconds on my
+desktop).
+
+Currently, this integration is used only by `tawny.query`, providing a query
+language for searching over the OWL data model. It should also pave the way
+for repurposing of other tools, though, including a linter like `kibit`.
+
+## New Features
+- `tawny.query` now includes a number of `core.logic` predicates. 
+- `tawny.render/as-form` can now cope with any OWL object.
+- `tawny.render/as-form` now takes options, producing output in several
+  formats: two for evaluation or documentation, and two for querying. It is
+  also possible to select the set of ontologies or ontology manager with which
+  to render.
+
+
+## Breaking Changes
+- `tawny.query` has been extensively reworked, including changes to the
+  underlying representation.
+- `tawny.render/form` has gone (private). Extensions to `tawny.render/as-form`
+  should work as a replacement.
+- `tawny.render/as-form` is no longer a multimethod, just a function. In
+  practice, this should have been an implementation detail anyway.
+- Various dynamic vars in `tawny.render` have gone, replaced by options in the
+  `as-form` call.
+- `tawny.render/as-form` now returns a lazy list. In practice, this is should
+  be breaking change only if you use `str` (in which case change to `pr-str`
+  instead). The laziness may also cause some unpredictable issues if you store
+  the form, and change the ontology, then realise the form.
+
+## Dependencies
+
+- OWL API to 3.4.10
+- Hermit to 1.3.8.4
+- New dependency: core.logic 0.8.7
+
 # 1.1
 
 The 1.1 release has largely been about regularisation of the syntax, enhanced
