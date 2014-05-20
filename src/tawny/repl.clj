@@ -261,3 +261,23 @@ to file names. Save ontologies in 'root' or the resources directory."
     (.removeOntologyChangeListener
      (o/owl-ontology-manager)
      auto-save-listener)))
+
+(defn render-ontology
+  [^OWLOntology o file]
+  (println "Rendering:" o)
+  (spit file "")
+  (doseq [n (.getSignature o)]
+    (spit
+     file
+     (str
+      (pr-str (tawny.render/as-form
+               n
+               :explicit true
+               :ontologies #{o})) "\n")
+     :append true)))
+
+(defn render-iri
+  [iri file]
+  (println "Loading:" iri)
+  (let [o (load-ontology iri)]
+    (render-ontology o file)))
