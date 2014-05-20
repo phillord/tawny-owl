@@ -172,14 +172,14 @@ rather than just using BODY directly."
 The logic used is the same as default-ontology except that no error is
 signalled if there is no current-ontology."
   [f & args]
-  (let [pre-ontology
-        (drop-while #(not= :ontology %) args)
-        ontology (second pre-ontology)]
-    (if (or
-         (instance?
-          org.semanticweb.owlapi.model.OWLOntology (first args))
-         (nil? (first args)))
-      (apply f args)
+  (if (or
+       (instance?
+        org.semanticweb.owlapi.model.OWLOntology (first args))
+       (nil? (first args)))
+    (apply f args)
+    (let [pre-ontology
+           (drop-while #(not= :ontology %) args)
+          ontology (second pre-ontology)]
       (if ontology
         (apply f ontology args)
         (do
@@ -194,13 +194,13 @@ ontology. If not, and args contains a :ontology o subsequence, invoke (f o
 args). If neither mechanism specifies an ontology, call get-current-ontology.
 If there is no current ontology, then an error will be thrown."
   [f & args]
-  (let [pre-ontology
-        (drop-while #(not= :ontology %) args)
-        ontology (second pre-ontology)]
-    (if
-        (instance?
-         org.semanticweb.owlapi.model.OWLOntology (first args))
-      (apply f args)
+  (if
+      (instance?
+       org.semanticweb.owlapi.model.OWLOntology (first args))
+    (apply f args)
+    (let [pre-ontology
+           (drop-while #(not= :ontology %) args)
+          ontology (second pre-ontology)]
       (if ontology
         (apply f ontology args)
         (do
