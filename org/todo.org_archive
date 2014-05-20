@@ -3,6 +3,101 @@
 
 Archived entries from file /home/phillord/src/knowledge/tawny-owl/src/tawny/todo.org
 
+* DONE Fix one-of to make it simpler
+  CLOSED: [2014-05-20 Tue 10:25]
+
+(defdatatype toddlerAge
+  ;; oh dear, this is unutterably horrible!
+  :equivalent (apply oneof (map literal (min-max-inc 1 2))))
+
+We want
+
+(defdatatype toddlerAge
+  :equivalent (oneof 1 2))
+
+OR
+
+(defdatatype FlowerPotMenName
+  :equivalent (oneof "Bill" "Ben"))
+
+Oneof is a multimethod, overloaded for objects and data, so this is not
+trivial.
+
+ - [X] check guess-individual-literal to see whether this can do something sensible
+ - [X] probably, this doesn't work because a string (which is not a real one) 
+       will Except -- is it sensible to interpret a string as a individual if
+       it's in the ontology, or a literal if not? This might lead to some odd
+       bugs, but is I think the only plausible things
+   - [X] string? clause needs to do two things
+   - [X] IF entity-for-string returns something, try again
+   - [X] If not, it's a string, so coerce to literal
+
+ - [X] an number should definately be interpreted as a literal (or the
+       appopriate type)
+ - [ ] Test everything to here!
+ - [ ] number-to-literal interpretation function -- matching clojure/xml
+       datatypes
+ - [ ] Test this function
+
+
+* DONE Strange crash
+   CLOSED: [2014-05-20 Tue 10:22]
+
+In a new namespace this...
+
+(use 'tawny.owl)
+(defontology bob)
+(defclass A)
+(defclass B)
+(add-subclass A B)
+(add-superclass A B)
+(superclasses A)
+
+Causes this.
+
+The add-subclass,add-superclass thing makes no sense (A and B are
+equivalent), but it still shouldn't cause a crash. Presumably, it's recursing
+infinitely or something wierd.
+
+StackOverflowError 
+	java.util.HashMap$KeySet.iterator (HashMap.java:1006)
+	java.util.HashSet.iterator (HashSet.java:170)
+	java.util.AbstractCollection.toArray (AbstractCollection.java:137)
+	java.util.ArrayList.<init> (ArrayList.java:164)
+	org.semanticweb.owlapi.util.CollectionFactory$ConditionalCopySet.<init> (CollectionFactory.java:371)
+	org.semanticweb.owlapi.util.CollectionFactory.getCopyOnRequestSetFromMutableCollection (CollectionFactory.java:313)
+	uk.ac.manchester.cs.owl.owlapi.MapPointer.getValues (MapPointer.java:95)
+	uk.ac.manchester.cs.owl.owlapi.InternalsImpl.getValues (InternalsImpl.java:172)
+	uk.ac.manchester.cs.owl.owlapi.OWLOntologyImpl.getSubClassAxiomsForSubClass (OWLOntologyImpl.java:1059)
+	uk.ac.manchester.cs.owl.owlapi.OWLClassImpl.getSubClassAxioms (OWLClassImpl.java:213)
+	uk.ac.manchester.cs.owl.owlapi.OWLClassImpl.getSuperClasses (OWLClassImpl.java:247)
+	tawny.owl/eval3425/direct-superclasses--3426 (owl.clj:1999)
+
+
+
+
+(defn- superclasses-1
+  "Returns all subclasses of all classes in classlist."
+  [o classlist seen]
+  ;; if there are no subclasses return empty list
+  (if (= 0 (count classlist))
+    (list)
+    (let [firstclasslist (first classlist)
+          seen (conj seen firstclasslist)]
+      (concat (list firstclasslist)
+              (superclasses-1
+               o
+               (rest classlist)
+               seen)
+              ;; don't recurse if we have been here before.
+              ;; blocks "A sub B", "B sub A" errors.
+              (when-not
+                  (contains? seen
+                             firstclasslist)
+                (superclasses-1
+                 o
+                 (direct-superclasses o firstclasslist)
+                 seen))))))
 
 
 * Name change
@@ -963,5 +1058,67 @@ file. This imposes file size limits due to the java class format. Probably
 not good.
 
 Can use clojure.edn which just returns data instead.
+
+
+
+* let-ontology
+  :PROPERTIES:
+  :status:   closed
+  :ARCHIVE_TIME: 2014-05-20 Tue 10:29
+  :ARCHIVE_FILE: ~/src/knowledge/tawny-owl/org/todo.org
+  :ARCHIVE_OLPATH: Issues
+  :ARCHIVE_CATEGORY: todo
+  :END:
+
+
+** Closed
+
+Decided to close this one, because it's not really worth the effort.
+
+** Description
+
+A macro for easing
+
+(let [ont (ontology)
+      cl (owl-class ont)
+      cl2 (owl-class ont)]
+   (coherent? ont))
+
+style code -- want instead
+
+(let-ont [ont (ontology)
+          cl (owl-class)
+          cl2 (owl-class)])
+
+
+
+Possible expansions:
+
+(let [ont (ontology)]
+  (with-current-ontology
+     (let [cl (owl-class)
+           cl2 (owl-class)])))
+
+This is nice and simple, but uses dynamic scoping of the current ontology
+which is a bit unpredicatable if we call anything else. 
+
+Another possibility is to expand to the form above, but simply adding "ont"
+as the first value. But this fails for 
+
+(let-ont [ont (ontology)
+          cl (if condition
+                 (owl-class "a")
+                 (owl-class "b"))]
+     (consistent?))
+
+cause the if form would end up as 
+
+(if ont condition
+   (owl-class "a")
+   (owl-class "b"))
+
+which is not ideal. Another possibility would be to check for tawny functions
+using clojure.walk. Okay, but fails if we define things like (sio-class).
+      
 
 

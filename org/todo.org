@@ -3,59 +3,59 @@
 * Issues
   
   :PROPERTIES:
-  :status_ALL: open closed assigned inprogress
+  :status_ALL: open closed assigned inprogress stalled
   :type_ALL: bug feature performance refactor
   :severity_ALL: mild medium high critical
   :scheduled_release_ALL: 0.12 1.0 1.1
   :END:
 
+** snorocket
+   :PROPERTIES:
+   :type:     feature
+   :status:   stalled
+   :END:
+
+*** Stalled
+
+This is trivial to add, but snorocket isn't in central at the moment. I have
+added https://github.com/aehrc/snorocket/issues/1
+
+*** Description
+It would be good to add support for snorocket
+https://github.com/aehrc/snorocket
+
+
+
+
 ** Default ontology support in tawny.memorise, tawny.obo
 
-** let-ontology
 
-A macro for easing
+** as-named-object
 
-(let [ont (ontology)
-      cl (owl-class ont)
-      cl2 (owl-class ont)]
-   (coherent? ont))
+tawny.owl/as-named-object isn't really so necessary now, because it's type
+hinted. The original reason for using it was to get a better message when 
+(.getIRI obj) was called on something not a named object. Currently this is...
 
-style code -- want instead
+(.getIRI (as-named-object 1)) throws...
+(IllegalArgumentException. "Expecting a named entity")
 
-(let-ont [ont (ontology)
-          cl (owl-class)
-          cl2 (owl-class)])
+while
+(.getIRI 1)
+IllegalArgumentException No matching field found: getIRI for class java.lang.Long  clojure.lang.Reflector.getInstanceField (Reflector.java:271)
 
+However, now that as-named-object is type hinted we could remove the
+isntance? check whcih is going to happen anyway.
 
+(defn ^OWLNamedObject test-named[entity]
+                entity)
 
-Possible expansions:
+(.getIRI (test-named 1))
+ClassCastException java.lang.Long cannot be cast to org.semanticweb.owlapi.model.OWLNamedObject  tawny.render/eval7556 (form-init2934790513889728050.clj:1)
 
-(let [ont (ontology)]
-  (with-current-ontology
-     (let [cl (owl-class)
-           cl2 (owl-class)])))
+Now, the crash is slightly later -- when we call .getIRI, so the semantics
+are different. But if we don't call .getIRI then we don't need the
+as-named-object cal.
 
-This is nice and simple, but uses dynamic scoping of the current ontology
-which is a bit unpredicatable if we call anything else. 
-
-Another possibility is to expand to the form above, but simply adding "ont"
-as the first value. But this fails for 
-
-(let-ont [ont (ontology)
-          cl (if condition
-                 (owl-class "a")
-                 (owl-class "b"))]
-     (consistent?))
-
-cause the if form would end up as 
-
-(if ont condition
-   (owl-class "a")
-   (owl-class "b"))
-
-which is not ideal. Another possibility would be to check for tawny functions
-using clojure.walk. Okay, but fails if we define things like (sio-class).
-      
 
 
 ** Relative paths
@@ -98,28 +98,9 @@ even be disasterous and do
 and have path-dir define it's own symbol, but that's too evil.
 
 
-** Comment spaces
-
-comment functions should remove new lines and indents so that Clojure new
-lines don't appear in OWL
-
-
 ** Write OBO generator docs
 
 Ah, yes, stuff about how to do OBO style IDs
-
-
-** Memorise lookup unnecessary
-
-During load, we change IRIs to vars, but only use the var in one place, and
-only where we have obsolete mappings. Not sure this makes sense.
-
-
-** Ontology options
-
-This exposes too much implementation detail, I think. Should probably use a
-atom rather than a ref (since changes are never synchronised with anything
-else). 
 
 
 ** Interpolation for comments
@@ -144,25 +125,5 @@ problem is that we might not have set the label yet on the object, because we
 go through a map stage (guess it's an array map).
 
 Could hook into the owlclass-explicit function and add stuff at the end. 
-
-
-** Version ID
-   :PROPERTIES:
-   :type:     feature
-   :severity: medium
-   :END:
-
-Support Version ID for everything.
-
-
-
-** Ontology reload
-   :PROPERTIES:
-   :type:     feature
-   :END:
-
-Now we have tawny.lookup, it *should* be possible to unmap all vars in a
-namespace when an ontology is re-evaled. Just do "tawny.lookup", then ns-umap
-the entire lot. 
 
 
