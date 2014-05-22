@@ -56,9 +56,7 @@ turns the progress monitor off."
 and defines the reasoner factory to use."
   [o reasoner]
   (fn [tests]
-    (with-ontology
-      o
-      ((tawny.fixture/reasoner reasoner) tests))))
+    ((tawny.fixture/reasoner o reasoner) tests)))
 
 
 (defn namespace-and-reasoner

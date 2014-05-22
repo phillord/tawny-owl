@@ -143,15 +143,15 @@ This is to deprecated the :superproperty frame"}
 (defdontfn datatype-property-explicit
   "Define a new datatype property with an explicit map"
   [o name frames]
-  (let [o (or (first (get frames :ontology)) o)
-        property (ensure-data-property o name)]
+  (let [property (ensure-data-property o name)]
     (.addAxiom (owl-ontology-manager)
                o
                (.getOWLDeclarationAxiom
                 (owl-data-factory)
                 property))
     (add-a-name-annotation o property name)
-    (doseq [[k f] datatype-property-handlers]
+    (doseq [[k f] datatype-property-handlers
+            :when (get frames k)]
       (f o property (get frames k)))
     property))
 
@@ -159,21 +159,27 @@ This is to deprecated the :superproperty frame"}
   "Define a new datatype property"
   [o name & frames]
   (let [keys
-        (list* :ontology (keys datatype-property-handlers))]
+        (keys datatype-property-handlers)
+        frames
+        (util/check-keys
+         (util/hashify-at
+          keys frames)
+         keys)]
     (datatype-property-explicit
-     o name
-     (util/check-keys
-      (util/hashify-at
-       keys frames)
-      keys))))
+     o name frames)))
 
-(defmacro defdproperty
-  "Defines a new datatype property and interns as a var."
-  [dataname & frames]
-  `(let [namestring# (name '~dataname)
-         datatype# (tawny.owl/datatype-property namestring#
-                                                ~@frames)]
-     (intern-owl ~dataname datatype#)))
+(defentity defdproperty
+  "Defines a new datatype property"
+  'tawny.owl/datatype-property)
+
+(comment
+ (defmacro defdproperty
+   "Defines a new datatype property and interns as a var."
+   [dataname & frames]
+   `(let [namestring# (name '~dataname)
+          datatype# (tawny.owl/datatype-property namestring#
+                                                 ~@frames)]
+      (intern-owl ~dataname datatype#))))
 
 
 (defmontfn literal
@@ -228,7 +234,8 @@ which is an OWLDatatype object.
     (add-axiom o
      (.getOWLDeclarationAxiom (owl-data-factory) datatype))
     (add-a-name-annotation o datatype name)
-    (doseq [[k f] datatype-handlers]
+    (doseq [[k f] datatype-handlers
+            :when (get frames k)]
       (f o datatype (get frames k)))
     datatype))
 
@@ -237,20 +244,28 @@ which is an OWLDatatype object.
   [o name & frames]
   (let [keys
         (list* :ontology
-               (keys datatype-handlers))]
+               (keys datatype-handlers))
+        frames
+        (util/check-keys
+         (util/hashify-at keys frames)
+         keys)
+        o (or (first (get frames :ontology))
+              o)]
     (datatype-explicit
-     o name
-     (util/check-keys
-      (util/hashify-at keys frames)
-      keys))))
+     o name frames)))
 
-(defmacro defdatatype
-  "Defines a new datatype and interns it as a var."
-  [dataname & frames]
-  `(let [namestring# (name '~dataname)
-         datatype# (tawny.owl/datatype namestring#
-                                       ~@frames)]
-     (intern-owl ~dataname datatype#)))
+(defentity defdatatype
+  "Defines a new datatype"
+  'tawny.owl/datatype)
+
+(comment
+  (defmacro defdatatype
+    "Defines a new datatype and interns it as a var."
+    [dataname & frames]
+    `(let [namestring# (name '~dataname)
+           datatype# (tawny.owl/datatype namestring#
+                                         ~@frames)]
+       (intern-owl ~dataname datatype#))))
 
 (defmontfn data-and
   "Returns the intersection of two data ranges."

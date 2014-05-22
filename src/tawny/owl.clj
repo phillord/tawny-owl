@@ -14,7 +14,6 @@
 
 ;; You should have received a copy of the GNU Lesser General Public License
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
-
 (ns ^{:doc "Build ontologies in OWL."
       :author "Phillip Lord"}
   tawny.owl
@@ -114,32 +113,15 @@ an exception."
 ;; not sure this is necessary now as (almost) all functions now take an
 ;; ontology parameter, which is generally going to be the nicer way to achieve
 ;; things.
-(def
-  ^{:dynamic true
-    :doc "The currently bound ontology. If this is not set, then the current
-ontology is expected to be bound to the current namespace with 'defontology'
-or similar macros. Normally, when set, this is set with the 'with-ontology'
-macro." }
-  *current-bound-ontology* nil)
-
-(defmacro with-ontology
-  "Sets the default ontology for all operations inside its dynamic scope.
-
-This may be deprecated in future. Where relevant, functions now accept an
-ontology as a first argument."
-  [o & body]
-  `(binding [tawny.owl/*current-bound-ontology* ~o]
-     ~@body))
 
 (defn get-current-ontology-maybe
   "Gets the current ontology, or nil if there is not one."
   ([]
      (get-current-ontology-maybe *ns*))
   ([ns]
-     ;; if current ontology is inside a binding
-     (or *current-bound-ontology*
-         ;; so use the namespace bound one
-         (get @ontology-for-namespace ns))))
+     ;; have taken out the current bound ontology as we don't need it now and
+     ;; it comes at a cost
+     (get @ontology-for-namespace ns)))
 
 (defn get-current-ontology
   "Gets the current ontology. Throws an exception if there is not current
@@ -167,46 +149,255 @@ rather than just using BODY directly."
   ^{:doc "Hook called when the default ontology is used"}
   default-ontology-hook (util/make-hook))
 
+;;
+;; The following section is aggressively optimized, because these functions
+;; are called for almost every other method invocation. Where ever possible,
+;; we avoid variadic methods; things that could be done as loops are unwound,
+;; and some logic is done in macro. There is some code duplication as a
+;; result.
+;;
+(defn- default-ontology-base-dispatcher [ffco f & args]
+  "Invoke f ensuring that the first argument is an ontology or nil.
+This works wqhere we already know that the first value of args is not an
+ontology. So, we search for :ontology frame or call ffco to fetch this ontology."
+  (util/run-hook default-ontology-hook)
+  (apply f (ffco) args))
+
+(defmacro ^{:private true} dispatch-maybe
+  "Dispatch with the default ontology if necessary and if it is present."
+  [f & args]
+  ;; the majority of this macro is duplicated in variadic
+  ;; version of dispatch-ontology-maybe
+  `(if
+       (or (instance?
+            org.semanticweb.owlapi.model.OWLOntology ~(first args))
+           (nil? ~(first args)))
+     (~f ~@args)
+     (do
+       (tawny.util/run-hook tawny.owl/default-ontology-hook)
+       (~f (tawny.owl/get-current-ontology-maybe) ~@args))))
+
 (defn default-ontology-maybe
   "Invoke f ensuring the first argument is an ontology or nil.
 The logic used is the same as default-ontology except that no error is
-signalled if there is no current-ontology."
+signalled if there is no current-ontology. The multi-arity function avoids
+variadic calls most of the time."
+  ([f a]
+     (dispatch-maybe f a))
+  ([f a b]
+     (dispatch-maybe f a b))
+  ([f a b c]
+     (dispatch-maybe f a b c))
+  ([f a b c d]
+     (dispatch-maybe f a b c d))
+  ([f a b c d e]
+     (dispatch-maybe f a b c d e))
+  ([f a b c d e fa]
+     (dispatch-maybe f a b c d e fa))
+  ([f a b c d e fa & args]
+     (if (or
+          (instance? org.semanticweb.owlapi.model.OWLOntology a)
+          (nil? a))
+       (apply f a b c d e fa args)
+       (apply default-ontology-base-dispatcher
+              get-current-ontology-maybe
+              f a b c d e fa args))))
+
+(defmacro ^{:private true} dispatch
+  "Dispatch with the default ontology if necessary."
   [f & args]
-  (if (or
+  ;; the majority of this macro is duplicated in variadic
+  ;; version of dispatch-ontology
+  `(if
        (instance?
-        org.semanticweb.owlapi.model.OWLOntology (first args))
-       (nil? (first args)))
-    (apply f args)
-    (let [pre-ontology
-           (drop-while #(not= :ontology %) args)
-          ontology (second pre-ontology)]
-      (if ontology
-        (apply f ontology args)
-        (do
-          ;; a call back so we can block this if we choose
-          (util/run-hook default-ontology-hook)
-          (apply f (get-current-ontology-maybe) args))))))
+        org.semanticweb.owlapi.model.OWLOntology ~(first args))
+     (~f ~@args)
+     (do
+       (util/run-hook default-ontology-hook)
+       (~f (get-current-ontology) ~@args))))
 
 (defn default-ontology
-  "Invoke f ensuring that the first argument is an OWLOntology.
-If the first element of args is an OWLOntology, this just means apply the
-ontology. If not, and args contains a :ontology o subsequence, invoke (f o
-args). If neither mechanism specifies an ontology, call get-current-ontology.
-If there is no current ontology, then an error will be thrown."
+  "Invoke f ensuring the first argument is an ontology or nil.
+If the first argument is already an ontology use that, if not use the default
+ontology, or throw an IllegalStateException. To set the default ontology use
+either the defontology macro, or ontology-to-namespace. This function is
+multi-arity as a micro optimization, to avoid a variadic invocation."
+  ([f]
+     (dispatch f))
+  ([f a]
+     (dispatch f a))
+  ([f a b]
+     (dispatch f a b))
+  ([f a b c]
+     (dispatch f a b c))
+  ([f a b c d]
+     (dispatch f a b c d))
+  ([f a b c d e]
+     (dispatch f a b c d e))
+  ([f a b c d e fa]
+     (dispatch f a b c d e fa))
+  ([f a b c d e fa & args]
+     (if (or
+          (instance? org.semanticweb.owlapi.model.OWLOntology a)
+          (nil? a))
+       (apply f a b c d e fa args)
+       (apply default-ontology-base-dispatcher
+              get-current-ontology
+              f a b c d e fa args))))
+
+;; broadcast-ontology is also highly optimized
+(defn- broadcast-ontology-int
+  "Implements the broadcast function for up to six arguments. First argument
+is an ontology, the last is th function that we are broadcasting to, and all
+the other arguments are arguments to be passed. At this point o may be either
+an ontology or nil, depending on what calls this, and a-f are definately not
+lists. There was a good reason for putting fnc at the end of the argument
+list, but I cannot remember what it was."
+  ;; at this point o is definately an ontology and a-f are definately not lists
+  ([o a fnc]
+     (fnc o a))
+  ([o a b fnc]
+     ;; dispense with the list for this case when we don't need it
+     (fnc o a b))
+  ([o a b c fnc]
+     (list
+      (fnc o a b)
+      (fnc o a c)))
+  ([o a b c d fnc]
+     (list
+      (fnc o a b)
+      (fnc o a c)
+      (fnc o a d)))
+  ([o a b c d e fnc]
+     (list
+      (fnc o a b)
+      (fnc o a c)
+      (fnc o a d)
+      (fnc o a e)))
+  ([o a b c d e f fnc]
+     (list
+      (fnc o a b)
+      (fnc o a c)
+      (fnc o a d)
+      (fnc o a e)
+      (fnc o a f))))
+
+(defn broadcast-ontology-full
+  "Given a function which expects an ontology and two other arguments, ensure
+that the first argument is an ontology (see default-ontology for details),
+then f repeatedly against the second args and all subsequent arguments
+flattened. Where possible, we avoid using this function for the micro-optimisd
+broadcast-ontology."
   [f & args]
-  (if
-      (instance?
-       org.semanticweb.owlapi.model.OWLOntology (first args))
-    (apply f args)
-    (let [pre-ontology
-           (drop-while #(not= :ontology %) args)
-          ontology (second pre-ontology)]
-      (if ontology
-        (apply f ontology args)
-        (do
-          ;; a call back so we can block this if we choose
-          (util/run-hook default-ontology-hook)
-          (apply f (get-current-ontology) args))))))
+  (apply default-ontology
+         (fn [o & narg]
+           (doall
+            (map (partial f o (first narg))
+                 (flatten
+                  (rest narg)))))
+         args))
+
+(defmacro ^{:private true}
+  if-not-sequential
+  "If all seqs are not sequential. This is a micro-optimisation, as use of
+every? requires a list at run time when we have an list of arguments." 
+  [seqs & rest]
+  `(if (and
+        ~@(map
+           (fn [seq]
+             `(not (sequential? ~seq)))
+           ;; reverse the seqs because the last argument is often a list, for
+           ;; calls from the named entity functions, such as owl-class. So, we
+           ;; can break early and fail fast in these cases.
+           (reverse seqs)))
+     ~@rest))
+
+(defn broadcast-ontology
+  "Given a function, fnc, and args ensure that the first arg is an ontology
+using default-ontology, and then broadcast the rest, so that the fnc is called
+with the first and second args, first and third args and so on. This function
+is micro-optimised to avoid use of variadic method calls or list operations."
+  ([fnc a b]
+     (if-not-sequential
+      [a b]
+      (default-ontology
+        broadcast-ontology-int
+        a b fnc)
+      (broadcast-ontology-full fnc a b)))
+  ([fnc a b c]
+     (if-not-sequential
+      [a b c]
+      (default-ontology
+        broadcast-ontology-int a b c fnc)
+      (broadcast-ontology-full fnc a b c)))
+  ([fnc a b c d]
+     (if-not-sequential
+      [a b c d]
+      (default-ontology
+        broadcast-ontology-int a b c d fnc)
+      (broadcast-ontology-full fnc a b c)))
+  ([fnc a b c d e]
+     (if-not-sequential
+      [a b c d e]
+      (default-ontology
+        broadcast-ontology-int a b c d e fnc)
+      (broadcast-ontology-full fnc a b c)))
+  ([fnc a b c d e f]
+     (if-not-sequential
+      [a b c d e f]
+      (default-ontology
+        broadcast-ontology-int a b c d e f fnc)))
+  ([fnc a b c d e f & args]
+     (apply broadcast-ontology-full
+            fnc a b c d e f args)))
+
+(defn- broadcast-ontology-maybe-full
+  "Like broadcast-ontology-maybe-full but does not signal an error if there is no current
+ontology."
+  [f & args]
+  (apply default-ontology-maybe
+         (fn broadcast-ontology-maybe [o & narg]
+           (doall
+            (map (partial f o (first narg))
+                 (flatten
+                  (rest narg)))))
+         args))
+
+(defn broadcast-ontology-maybe
+  "Like broadcast-ontology but does not signal an error where there is no
+default ontology."
+  ([fnc a b]
+     (if-not-sequential
+      [a b]
+      (default-ontology-maybe
+        broadcast-ontology-int
+        a b fnc)
+      (broadcast-ontology-maybe-full fnc a b)))
+  ([fnc a b c]
+     (if-not-sequential
+      [a b c]
+      (default-ontology-maybe
+        broadcast-ontology-int a b c fnc)
+      (broadcast-ontology-maybe-full fnc a b c)))
+  ([fnc a b c d]
+     (if-not-sequential
+      [a b c d]
+      (default-ontology-maybe
+        broadcast-ontology-int a b c d fnc)
+      (broadcast-ontology-maybe-full fnc a b c d)))
+  ([fnc a b c d e]
+     (if-not-sequential
+      [a b c d e]
+      (default-ontology-maybe
+        broadcast-ontology-int a b c d e fnc)
+      (broadcast-ontology-maybe-full fnc a b c d e)))
+  ([fnc a b c d e & args]
+     (apply broadcast-ontology-maybe-full
+            fnc a b c d e args)))
+
+;;
+;; End micro-optimized section!
+;;
 
 (defmacro defdontfn
   "Like defn, but automatically adds the current-ontology to the args
@@ -227,33 +418,6 @@ The 'm' stands for maybe."
   `(defnwithfn ~name #'default-ontology-maybe
      ~@body))
 
-(defn broadcast-ontology-maybe
-  "Like broadcast-ontology but does not signal an error if there is no current
-ontology."
-  [f & args]
-  (apply default-ontology-maybe
-         (fn broadcast-ontology-maybe [o & narg]
-           (doall
-            (map (partial f o (first narg))
-                 (filter identity
-                         (flatten
-                          (rest narg))))))
-         args))
-
-(defn broadcast-ontology
-  "Given a function which expects an ontology and two other arguments, ensure
-that the first argument is an ontology (see default-ontology for details),
-then f repeatedly against the second args and all flatten subsequent
-arguments."
-  [f & args]
-  (apply default-ontology
-         (fn [o & narg]
-           (doall
-            (map (partial f o (first narg))
-                 (filter identity
-                         (flatten
-                          (rest narg))))))
-         args))
 
 (defmacro defbdontfn
   "Like the defn and defdontfn, but broadcasts. That is it expects a three arg
@@ -507,7 +671,6 @@ with the literal function."
 add-sub-annotation functionality."
   add-super-annotation)
 
-
 ;; various annotation types
 (def label-property
   (.getRDFSLabel (owl-data-factory)))
@@ -588,13 +751,13 @@ add-sub-annotation functionality."
   (add-annotation
    o
    named-entity
-   [(tawny.owl/label label)]))
+   [(tawny.owl/label o label)]))
 
 (defbmontfn add-comment
   "Add comments to the named entities."
   [o named-entity comment]
   (add-annotation o named-entity
-                  [(owl-comment comment)]))
+                  [(owl-comment o comment)]))
 
 
 (def ^{:private true} annotation-property-handlers
@@ -609,11 +772,7 @@ add-sub-annotation functionality."
 (defdontfn annotation-property-explicit
   "Add this annotation property to the ontology"
   [o name frames]
-  (let [o
-        (or (first (get frames :ontology)) o)
-        property
-        (ensure-annotation-property o name)
-        ]
+  (let [property (ensure-annotation-property o name)]
     ;; add the property
     (.addAxiom (owl-ontology-manager)
                o
@@ -623,7 +782,8 @@ add-sub-annotation functionality."
     ;; add a name annotation
     (add-a-name-annotation o property name)
     ;; apply the handlers
-    (doseq [[k f] annotation-property-handlers]
+    (doseq [[k f] annotation-property-handlers
+            :when (get frames k)]
       (f o property (get frames k)))
     ;; return the property
     property))
@@ -632,12 +792,12 @@ add-sub-annotation functionality."
   {:doc "Creates a new annotation property."
    :arglists '([ontology name & frames] [name & frames])}
   [o name & frames]
-  (annotation-property-explicit o
-                                name
-                                (util/check-keys
-                                 (util/hashify frames)
-                                 (list* :ontology
-                                        (keys annotation-property-handlers)))))
+  (annotation-property-explicit
+   o
+   name
+   (util/check-keys
+    (util/hashify frames)
+    (keys annotation-property-handlers))))
 
 (defn- get-annotation-property
   "Gets an annotation property with the given name."
@@ -646,14 +806,64 @@ add-sub-annotation functionality."
    (owl-data-factory)
    (iri-for-name o property)))
 
-(defmacro defaproperty
+(defn- extract-ontology-frame
+  "Extracts the ontology frames from a list of frames.
+Currently, we define this to be the second value iff the first is an :ontology
+keyword. Returns a map of :ontology and the ontology or nil, and :args with
+the args minus the ontology frame if it exists."
+  [frames]
+  (if (= :ontology (first frames))
+    {:ontology (second frames)
+     :frames (nthrest frames 2)}
+    {:ontology nil
+     :frames frames}))
+
+(defn- entity-generator [entity frames entity-function]
+  (let [ontsplit (extract-ontology-frame frames)
+        ont (:ontology ontsplit)
+        frames (:frames ontsplit)
+        entity-name (name entity)
+        ]
+    `(let [entity#
+           ~(if ont
+              `(~entity-function
+                ~ont
+                ~entity-name
+                ~@frames)
+              `(~entity-function
+               ~entity-name
+               ~@frames))]
+       (tawny.owl/intern-owl ~entity entity#))))
+
+(defmacro ^{:private true} defentity
+  "Defines a new entity macro."
+  [name docstring entity-function]
+  `(defmacro
+     ~name
+     ~docstring
+     [entity# & frames#]
+     (entity-generator entity# frames# ~entity-function)))
+
+(defentity defaproperty
   "Defines a new annotation property in the current ontology.
+See 'defclass' for more details on the syntax"
+  'tawny.owl/annotation-property)
+
+(comment
+  (defmacro defaproperty
+    "Defines a new annotation property in the current ontology.
 See 'defclass' for more details on the syntax."
-  [property & frames]
-  `(let [property-name# (name '~property)
-         property#
-         (tawny.owl/annotation-property property-name# ~@frames)]
-     (intern-owl ~property property#)))
+    [property & frames]
+    (let [ontsplit (extract-ontology-frame frames)
+          ont (:ontology ontsplit)
+          frames (:frames ontsplit)]
+      `(let [property-name# (name '~property)
+             property#
+             (tawny.owl/annotation-property
+              ~ont
+              property-name#
+              ~@frames)]
+         (intern-owl ~property property#)))))
 
 ;;; Ontology manipulation
 
@@ -732,6 +942,14 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
        (owl-ontology-manager) o))
      p (str (get-iri o)))))
 
+
+(defn- add-ontology-comment
+  "Adds a comment annotation to the ontology"
+  [o s]
+  (if s
+    (add-annotation o (owl-comment o s))))
+
+
 (defn- add-see-also
   "Adds a see also annotation to the ontology"
   [o s]
@@ -767,7 +985,7 @@ ontology or an IRI"
    :prefix set-prefix,
    :name add-an-ontology-name
    :seealso add-see-also
-   :comment add-comment
+   :comment add-ontology-comment
    :versioninfo add-version-info
    })
 
@@ -799,7 +1017,8 @@ ontology or an IRI"
           merge {:noname true}))
         (owl-import ontology
                     (tawny-ontology)))
-      (doseq [[k f] ontology-handlers]
+      (doseq [[k f] ontology-handlers
+              :when (get options k)]
         (f ontology (get options k)))
       ontology)))
 
@@ -1033,26 +1252,27 @@ or throw an exception if it cannot be converted."
    (throw (IllegalArgumentException.
            (str "Expecting an object property. Got: " prop)))))
 
+(defn- ensure-class-except [clz]
+  (throw (IllegalArgumentException.
+          (str "Expecting a class. Got: " clz))))
+
 (defn- ^OWLClass ensure-class
   "If clz is a String return a class of with that name,
 else if clz is a OWLClassExpression add that."
   [o clz]
-  (let [except
-        #(throw (IllegalArgumentException.
-                 (str "Expecting a class. Got: " clz)))]
-    (cond
-     (fn? clz)
-     (try
-       (ensure-class o (clz))
-       (catch clojure.lang.ArityException e
-         (except)))
-     (instance? org.semanticweb.owlapi.model.OWLClassExpression clz)
-     clz
-     (instance? IRI clz)
-     (.getOWLClass (owl-data-factory) clz)
-     (string? clz)
-     (ensure-class o (iri-for-name o clz))
-     true (except))))
+  (cond
+   (fn? clz)
+   (try
+     (ensure-class o (clz))
+     (catch clojure.lang.ArityException e
+       (ensure-class-except clz)))
+   (instance? org.semanticweb.owlapi.model.OWLClassExpression clz)
+   clz
+   (instance? IRI clz)
+   (.getOWLClass (owl-data-factory) clz)
+   (string? clz)
+   (ensure-class o (iri-for-name o clz))
+   true (ensure-class-except clz)))
 
 (defn-
   ^OWLDataProperty ensure-data-property
@@ -1439,7 +1659,8 @@ value for each frame."
       ;; add a name annotation
       (add-a-name-annotation o property name)
       ;; apply the handlers
-      (doseq [[k f] object-property-handlers]
+      (doseq [[k f] object-property-handlers
+              :when (get frames k)]
         (f o property (get frames k))))
     property))
 
@@ -1453,12 +1674,17 @@ value for each frame."
       (util/hashify-at keys frames)
       keys))))
 
-(defmacro defoproperty
+(defentity defoproperty
   "Defines a new object property in the current ontology."
-  [property & frames]
-  `(let [property-name# (name '~property)
-         property# (tawny.owl/object-property property-name# ~@frames)]
-     (intern-owl ~property property#)))
+  'tawny.owl/object-property)
+
+(comment
+  (defmacro defoproperty
+    "Defines a new object property in the current ontology."
+    [property & frames]
+    `(let [property-name# (name '~property)
+           property# (tawny.owl/object-property property-name# ~@frames)]
+       (intern-owl ~property property#))))
 
 (defmontfn
   guess-type-args
@@ -1775,15 +2001,14 @@ flexible 'owl-class' is normally preferred. However, this function should be
 slightly faster.
 "
   [o name frames]
-  (let [o (or (first (get frames :ontology))
-              o)
-        class (ensure-class o name)]
+  (let [class (ensure-class o name)]
     ;; add the class
     (add-class o class)
     ;; add an name annotation
     (add-a-name-annotation o class name)
     ;; apply the handlers to the frames
-    (doseq [[k f] owl-class-handlers]
+    (doseq [[k f] owl-class-handlers
+            :when (get frames k)]
       (f o class (get frames k)))
     ;; return the class object
     class))
@@ -1800,15 +2025,23 @@ full details."
      :ontology :name
      (keys owl-class-handlers)))))
 
-(defmacro defclass
+(defentity defclass
   "Define a new class. Accepts a set number of frames, each marked
 by a keyword :subclass, :equivalent, :annotation, :name, :comment,
 :label or :disjoint. Each frame can contain an item, a list of items or any
 combination of the two. The class object is stored in a var called classname."
-  [classname & frames]
-  `(let [string-name# (name '~classname)
-         class# (tawny.owl/owl-class string-name# ~@frames)]
-     (intern-owl ~classname class#)))
+  'tawny.owl/owl-class)
+
+(comment
+  (defmacro defclass
+    "Define a new class. Accepts a set number of frames, each marked
+by a keyword :subclass, :equivalent, :annotation, :name, :comment,
+:label or :disjoint. Each frame can contain an item, a list of items or any
+combination of the two. The class object is stored in a var called classname."
+    [classname & frames]
+    `(let [string-name# (name '~classname)
+           class# (tawny.owl/owl-class string-name# ~@frames)]
+       (intern-owl ~classname class#))))
 
 (defdontfn disjoint-classes
   "Makes all elements in list disjoint.
@@ -1960,7 +2193,8 @@ or to ONTOLOGY if present."
     (add-axiom o
                (.getOWLDeclarationAxiom (owl-data-factory) individual))
     (add-a-name-annotation o individual name)
-    (doseq [[k f] individual-handlers]
+    (doseq [[k f] individual-handlers
+            :when (get frames k)]
       (f o individual (get frames k)))
     individual))
 
@@ -1973,12 +2207,17 @@ or to ONTOLOGY if present."
     (list* :ontology
            (keys individual-handlers)))))
 
-(defmacro defindividual
-  "Declare a new individual."
-  [individualname & frames]
-  `(let [string-name# (name '~individualname)
-         individual# (tawny.owl/individual string-name# ~@frames)]
-     (intern-owl ~individualname individual#)))
+(defentity defindividual
+  "Declare a new individual"
+  'tawny.owl/individual)
+
+(comment
+  (defmacro defindividual
+    "Declare a new individual."
+    [individualname & frames]
+    `(let [string-name# (name '~individualname)
+           individual# (tawny.owl/individual string-name# ~@frames)]
+       (intern-owl ~individualname individual#))))
 
 (load "owl_data")
 
@@ -2285,15 +2524,14 @@ direct or indirect superclass of itself."
      `(do
         ~@body)
      (symbol? (bindings 0))
-     `(with-ontology ~o
-        (let ~(subvec bindings 0 2)
-          (with-probe-entities ~o
-            ~(subvec bindings 2)
-            ;; try block just so we can use finally
-            (try
-              ~@body
-              (finally
-                (tawny.owl/remove-entity ~o ~(bindings 0)))))))
+     `(let ~(subvec bindings 0 2)
+       (with-probe-entities ~o
+         ~(subvec bindings 2)
+         ;; try block just so we can use finally
+         (try
+           ~@body
+           (finally
+             (tawny.owl/remove-entity ~o ~(bindings 0))))))
      :else
      (throw (IllegalArgumentException.
              "with-probe-entities only allows Symbols in bindings")))))
@@ -2322,15 +2560,14 @@ effectively unchanged."
      (zero? (count bindings))
      `(do ~@body)
      (symbol? (bindings 0))
-     `(with-ontology ~o
-        (let ~(subvec bindings 0 2)
-          (with-probe-axioms ~o
-            ~(subvec bindings 2)
-            ;; try block just so we can use finally
-            (try
-              ~@body
-              (finally
-                (tawny.owl/remove-axiom ~o ~(bindings 0)))))))
+     `(let ~(subvec bindings 0 2)
+       (with-probe-axioms ~o
+         ~(subvec bindings 2)
+         ;; try block just so we can use finally
+         (try
+           ~@body
+           (finally
+             (tawny.owl/remove-axiom ~o ~(bindings 0))))))
      :else
      (throw (IllegalArgumentException.
              "with-probe-axioms only allows Symbols in bindings")))))

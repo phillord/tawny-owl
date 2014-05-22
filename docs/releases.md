@@ -14,6 +14,17 @@ Currently, this integration is used only by `tawny.query`, providing a query
 language for searching over the OWL data model. It should also pave the way
 for repurposing of other tools, though, including a linter like `kibit`.
 
+One other substantial change is an aggressive micro-optimisation of
+default-ontology and broadcast-ontology functionality. These functions are
+called for almost every user function in `tawny.owl` but had a base call time
+in the microsecond range (rather than 10s of nanoseconds for a normal call).
+These micro-optimisations cost a slightly longer code-base; however they give
+a 3-5x speed increase. Loading a tawny rendered version of GO is now about
+only about 3x slower than reading the OWL file. These optimisations have
+resulted in two breaking changes to the broadcasting and default ontology
+behaviour, both of which now have alternatives.
+
+
 ## New Features
 - `tawny.query` now includes a number of `core.logic` predicates. 
 - `tawny.render/as-form` can now cope with any OWL object.
@@ -24,6 +35,18 @@ for repurposing of other tools, though, including a linter like `kibit`.
 
 
 ## Breaking Changes
+
+- broadcasting functions no longer nil patch; previously nils were silent
+  ignored. In practice, this was added for internal reasons (which are no
+  longer necessary), and was probably a bug rather than a feature. Nils are
+  now passed to OWL API, and generally cause fail early NullPointerExceptions.
+- The default-ontology and broadcast-ontology mechanisms have been extensively
+  micro-optimised; to enable this optimisation, I have deprecated one
+  "feature" which was largely undocumented. Many functions which previously
+  accepted an :ontology frame, no longer do, but still accept an ontology as
+  the first argument. The `defentity` forms still accept this (as they must
+  have a symbol as the first argument) but the :ontology frame *must* come
+  first and have a single ontology.
 - `tawny.query` has been extensively reworked, including changes to the
   underlying representation.
 - `tawny.render/form` has gone (private). Extensions to `tawny.render/as-form`
@@ -36,6 +59,7 @@ for repurposing of other tools, though, including a linter like `kibit`.
   be breaking change only if you use `str` (in which case change to `pr-str`
   instead). The laziness may also cause some unpredictable issues if you store
   the form, and change the ontology, then realise the form.
+
 
 ## Dependencies
 

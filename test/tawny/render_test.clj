@@ -179,16 +179,16 @@
      [a (o/owl-class to "a")]
      (=
       (r/as-form
-       (o/owl-and to a) :object true)
+       (o/owl-and to a) :terminal :object)
       ['owl-and a]))))
 
 
 (defn multi-as-form [entity]
   (vector
-   (r/as-form entity :object true)
-   (r/as-form entity :object true :explicit true)
-   (r/as-form entity :object true :keyword true)
-   (r/as-form entity :object true :explicit true :keyword true)
+   (r/as-form entity :terminal :object)
+   (r/as-form entity :terminal :object :explicit true)
+   (r/as-form entity :terminal :object :keyword true)
+   (r/as-form entity :terminal :object :explicit true :keyword true)
    ))
 
 ;; :some
@@ -343,7 +343,7 @@
 (deftest object-oneof
   (is
    (tawny.owl/with-probe-entities to
-     [i (o/individual "i")]
+     [i (o/individual to  "i")]
      (=
       [
        ['oneof i]
@@ -351,7 +351,7 @@
        [:oneof i]
        [:object-oneof i]]
       (multi-as-form
-       (o/oneof i))))))
+       (o/oneof to i))))))
 
 (deftest data-oneof
   (is
@@ -362,7 +362,7 @@
      [:oneof [:literal "10" :type :XSD_INTEGER]]
      [:data-oneof [:literal "10" :type :XSD_INTEGER]]]
     (multi-as-form
-     (o/oneof (o/literal 10))))))
+     (o/oneof to (o/literal to 10))))))
 
 ;; :at-least
 (deftest object-at-least
@@ -377,7 +377,7 @@
        [:at-least 1 p c]
        [:object-at-least 1 p c]]
       (multi-as-form
-       (o/at-least 1 p c))))))
+       (o/at-least to 1 p c))))))
 
 (deftest data-at-least
   (is
@@ -424,27 +424,27 @@
 (deftest object-has-value
   (is
    (tawny.owl/with-probe-entities to
-     [r (o/object-property "r")
-      i (o/individual "i")]
+     [r (o/object-property to "r")
+      i (o/individual to "i")]
      (=
       [['has-value r i]
        ['object-has-value r i]
        [:has-value r i]
        [:object-has-value r i]]
       (multi-as-form
-       (o/has-value r i))))))
+       (o/has-value to r i))))))
 
 (deftest data-has-value
   (is
    (tawny.owl/with-probe-entities to
-     [d (o/datatype-property "d")]
+     [d (o/datatype-property to "d")]
      (=
       [['has-value d ['literal "10" :type :XSD_INTEGER]]
        ['data-has-value d ['literal "10" :type :XSD_INTEGER]]
        [:has-value d [:literal "10" :type :XSD_INTEGER]]
        [:data-has-value d [:literal "10" :type :XSD_INTEGER]]]
       (multi-as-form
-       (o/has-value d 10))))))
+       (o/has-value to d 10))))))
 
 ;; :owl-not
 (deftest object-owl-not
@@ -467,7 +467,7 @@
      [:not :XSD_INTEGER]
      [:data-not :XSD_INTEGER]]
     (multi-as-form
-     (o/owl-not :XSD_INTEGER)))))
+     (o/owl-not to :XSD_INTEGER)))))
 
 
 ;; :iri
@@ -563,31 +563,33 @@
 (deftest hasself
   (is
    (tawny.owl/with-probe-entities to
-     [r (o/object-property "r")]
+     [r (o/object-property to "r")]
      (=
       [['has-self r]
        ['has-self r]
        [:has-self r]
        [:has-self r]]
       (multi-as-form
-       (o/has-self r))))))
+       (o/has-self to r))))))
 
 ;; :inverse
 (deftest inverse
   (is
    (tawny.owl/with-probe-entities to
-     [r (o/object-property "r")]
+     [r (o/object-property to "r")]
      (=
       [['inverse r]
        ['object-inverse r]
        [:inverse r]
-       [:object-inverse r]]))))
+       [:object-inverse r]])
+     (multi-as-form
+      (o/inverse to r)))))
 
 
 (defn double-as-form [entity]
   (vector
-   (r/as-form entity :object true)
-   (r/as-form entity :object true :keyword true)))
+   (r/as-form entity :terminal :object)
+   (r/as-form entity :terminal :object :keyword true)))
 
 (deftest owl-class
   (is
@@ -606,12 +608,10 @@
 (deftest oproperty
   (is
    (tawny.owl/with-probe-entities to
-     [r (o/object-property "r")]
+     [r (o/object-property to "r")]
      (=
       [['object-property r]
        [:oproperty r]])
      (double-as-form r))))
 
 ;; :annotation
-
-

@@ -32,7 +32,4 @@
                  [net.sourceforge.owlapi/jfact "1.2.0"]
 
                  ;; need to access log4j to control elk.
-                 [log4j/log4j "1.2.17"]
-
-                 [criterium "0.4.3"]
-                 ])
+                 [log4j/log4j "1.2.17"]])

@@ -35,13 +35,11 @@
             ]
            ))
 
-(defn fetch-doc
+(o/defmontfn fetch-doc
   "Given an owlobject and potentially ontology, return documentation.
 The documentation is generated over the live object (owlobjects are mutable).
 It includes all labels, comments and a rendered version of the owlobject."
-  ([owlobject]
-     (fetch-doc owlobject (o/get-current-ontology)))
-  ([^OWLEntity owlobject ^OWLOntology ontology]
+  ([^OWLOntology ontology ^OWLEntity owlobject]
      (let [annotation
            (.getAnnotations owlobject ontology)
            label
@@ -90,12 +88,11 @@ It includes all labels, comments and a rendered version of the owlobject."
          (line "\t" (.getValue c)))
        (line "Full Definition:")
        (line
-        (o/with-ontology ontology
-          ;; hmm pprint here takes 95% of the time. Problematic
-          ;; str is much much quicker, but produces a rubbishy output!
-          (clojure.pprint/pprint
-           (tawny.render/as-form owlobject)
-           writer)))
+        ;; hmm pprint here takes 95% of the time. Problematic
+        ;; str is much much quicker, but produces a rubbishy output!
+        (clojure.pprint/pprint
+         (tawny.render/as-form owlobject)
+         writer))
        (.close writer)
        (str writer))))
 
@@ -263,18 +260,26 @@ to file names. Save ontologies in 'root' or the resources directory."
      auto-save-listener)))
 
 (defn render-ontology
-  [^OWLOntology o file]
-  (println "Rendering:" o)
-  (spit file "")
-  (doseq [n (.getSignature o)]
-    (spit
-     file
-     (str
-      (pr-str (tawny.render/as-form
-               n
-               :explicit true
-               :ontologies #{o})) "\n")
-     :append true)))
+  ([^OWLOntology o file]
+     (render-ontology o file {}))
+  ([^OWLOntology o file options]
+     (println "Rendering:" o)
+     (spit file "")
+     (doseq [n (.getSignature o)]
+       (spit
+        file
+        (str
+         (pr-str
+          (apply 
+           tawny.render/as-form
+           n
+           (flatten
+            (seq
+             (merge
+              {:explicit true
+               :ontologies #{o}}
+              options))))) "\n")
+        :append true))))
 
 (defn render-iri
   [iri file]

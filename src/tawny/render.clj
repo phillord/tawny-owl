@@ -292,7 +292,10 @@
   (cond
    (get options :keyword)
    (first (get named-entity-map type))
-   (tawny.lookup/resolve-entity entity)
+   (and
+    (= :resolve
+       (get options :terminal))
+    (tawny.lookup/resolve-entity entity))
    (second (get named-entity-map type))
    :else
    (nth (get named-entity-map type) 2)))
@@ -593,10 +596,7 @@ in tawny." (fn [c options]
            (and (get options :keyword)
                 :keyword)]))
         terminal
-        (or
-         (and (get options :resolve) :resolve)
-         (and (get options :object) :object)
-         :resolve)
+        (get options :terminal :resolve)
         options
         (merge
          {::unnamed unnamed
@@ -629,17 +629,19 @@ forms."
   "Return either the interned var holding an entity, or an IRI,
 depending on the value of *terminal-strategy*"
   [c options]
-  (if-not
-      (= (get options ::terminal)
-         :object)
-    (let [res (tawny.lookup/resolve-entity c)]
-      (if res
-        (symbol
-         (tawny.lookup/resolve-entity c))
-        (list
-         (unnamed-entity :iri options)
-         (tawny.lookup/named-entity-as-string c))))
-    c))
+  (case (get options ::terminal)
+    :object c
+    :iri
+    (list
+     (unnamed-entity :iri options)
+     (tawny.lookup/named-entity-as-string c))
+    :resolve
+    (if-let [res (tawny.lookup/resolve-entity c)]
+      (symbol
+       (tawny.lookup/resolve-entity c))
+      (entity-or-iri
+       c
+       (merge options {::terminal :iri})))))
 
 
 (defmethod form FactList [s options]
@@ -924,7 +926,7 @@ element is a list."
 (defmethod form OWLObjectInverseOf
   [^OWLObjectInverseOf p options]
   (list
-   (unnamed-entity :inverse options)
+   (unnamed-entity :object-inverse options)
    (form (.getInverse p) options)))
 
 (defmethod form org.semanticweb.owlapi.model.IRI [e options]

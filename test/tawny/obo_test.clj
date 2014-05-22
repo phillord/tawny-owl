@@ -32,16 +32,16 @@
 
 (deftest obo-iri-generate
   (is (empty?
-       (o/with-ontology (gen-test-ontology)
-         (:name-to-iri-current
-          (deref (tawny.owl/ontology-options))))))
+       (:name-to-iri-current
+        (deref (tawny.owl/ontology-options
+                (gen-test-ontology))))))
   (is (= 1
-         (o/with-ontology
-
-           (gen-test-ontology)
-           (obo/obo-iri-generate "bob")
+         (let [o (gen-test-ontology)]
+           (obo/obo-iri-generate
+            o
+            "bob")
            (count (:name-to-iri-current
-                   (deref (tawny.owl/ontology-options))))))))
+                   (deref (tawny.owl/ontology-options o))))))))
 
 (deftest obo-read-write
   (is

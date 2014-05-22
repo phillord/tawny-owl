@@ -39,7 +39,7 @@ or the current, or generate a new temporary name"
       (str obo-pre-iri "#"
            (java.util.UUID/randomUUID))))
 
-(defn obo-iri-generate
+(defdontfn obo-iri-generate
   "Generator function for numeric style IRIs. New OWLEntities will be given
 an temporary ID, while existing OWLEntities will reuse a numeric, incrementing
 ID. For full usage details see numeric.md documentation.
@@ -47,15 +47,15 @@ ID. For full usage details see numeric.md documentation.
 Implemented using ontology-options functionality. Newly created IDs are stored
 in :name-to-iri-current, while IDs loaded from file are stored in
 :name-to-iri-remembered."
-  [name]
-  (let [options (deref (tawny.owl/ontology-options))
+  [o name]
+  (let [options (deref (tawny.owl/ontology-options o))
         current
         (get options :name-to-iri-current {})
         iri (obo-iri-generate-or-retrieve
              name (get options :name-to-iri-remembered {})
              current)]
     (dosync
-     (alter (tawny.owl/ontology-options)
+     (alter (tawny.owl/ontology-options o)
             assoc
             :name-to-iri-current
             (assoc current name iri)))

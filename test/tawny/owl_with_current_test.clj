@@ -19,28 +19,27 @@
   (:use [clojure.test])
   (:require [tawny.owl :as o]))
 
-(def to nil)
-
-(defn createtestontology[]
-  (alter-var-root
-   #'to
-   (fn [x]
-     (o/ontology :iri "http://iri/" :prefix "iri"))))
-
-(defn createandsavefixture[test]
-  (o/with-ontology (createtestontology)
-    (test)
-    ;;(o/save-ontology "test.omn")
-    )
-  )
-
-(use-fixtures :each createandsavefixture)
-
-
-(deftest defontology
-  (is (not (nil? (o/get-current-ontology))))
-  (is (= 0 (.getAxiomCount (o/get-current-ontology)))))
-
 (deftest get-current-ontology
-  (is (not (nil? (o/get-current-ontology)))))
+  (is
+   (not
+    (nil?
+     (let [o (o/ontology)]
+       (o/ontology-to-namespace o)
+       (let [c (o/get-current-ontology)]
+         (#'tawny.owl/remove-ontology-from-namespace-map o)
+         c)))))
 
+  (is
+   (nil?
+    (o/get-current-ontology-maybe)))
+
+  (is
+   (thrown? IllegalStateException
+            (o/get-current-ontology)))
+
+  (is
+   (nil?
+     (let [o (o/ontology)]
+       (o/ontology-to-namespace o)
+       (#'tawny.owl/remove-ontology-from-namespace-map o)
+       (o/get-current-ontology-maybe)))))

@@ -54,9 +54,9 @@ NAMESPACE"
   (let [ns (check-namespace namespace)]
     (if (instance? String ns)
       ns
-      (if (tawny.owl/with-ontology
-            (tawny.owl/get-current-ontology ns)
-            (tawny.reasoner/coherent?))
+      (if 
+        (tawny.reasoner/coherent?
+         (tawny.owl/get-current-ontology ns))
         "Ontology is coherent."
         "Ontology is not coherent."))))
 
@@ -67,9 +67,8 @@ NAMESPACE"
   (let [ns (check-namespace namespace)]
     (if (instance? String ns)
       ns
-      (if (tawny.owl/with-ontology
-            (tawny.owl/get-current-ontology ns)
-            (tawny.reasoner/consistent?))
+      (if
+          (tawny.reasoner/consistent? (tawny.owl/get-current-ontology ns))
         "Ontology is consistent."
         "Ontology is not consistent."))))
 
@@ -91,8 +90,7 @@ NAMESPACE"
       ns
       (if-let
           [unsatis
-           (seq (tawny.owl/with-ontology
-                  (tawny.owl/get-current-ontology ns)
-                  (tawny.reasoner/unsatisfiable)))]
+           (seq (tawny.reasoner/unsatisfiable
+                 (tawny.owl/get-current-ontology ns)))]
         (list-classes unsatis)
         "Ontology has no unsatisfiable classes."))))

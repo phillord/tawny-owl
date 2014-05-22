@@ -33,14 +33,13 @@
 (o/declare-classes testsuperclass)
 
 (o/defclass testclass
-  :super testsuperclass
-  :label "This is label in English"
-  :annotation (o/label "Questi e una targhetta in Italiano" "it")
-  :comment "This is a comment")
-
+    :super testsuperclass
+    :label "This is label in English"
+    :annotation (o/label "Questi e una targhetta in Italiano" "it")
+    :comment "This is a comment")
 
 (deftest fetch-doc
-  (is (re/fetch-doc testclass testontology)))
+  (is (re/fetch-doc testontology testclass)))
 
 (defn get-go-ontology []
   (tawny.owl/remove-ontology-maybe 
@@ -48,6 +47,3 @@
   (.loadOntologyFromOntologyDocument
    (tawny.owl/owl-ontology-manager) 
    (IRI/create (clojure.java.io/resource "go-snippet.owl"))))
-
-
-

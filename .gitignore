@@ -8,3 +8,4 @@ docs/*html
 /.sync.clj
 /.lein-repl-history
 /dev-resources/sio_rendered.clj
+/java/*
