@@ -18,8 +18,6 @@
 
   :dependencies [
                  ;; owl API
-                 ;;[net.sourceforge.owlapi/owlapi-api "3.4.10"]
-                 ;;[net.sourceforge.owlapi/owlapi-apibinding "3.4.10"]
                  [net.sourceforge.owlapi/owlapi-distribution "3.4.10"]
 
                  ;; clojure
@@ -32,4 +30,31 @@
                  [net.sourceforge.owlapi/jfact "1.2.0"]
 
                  ;; need to access log4j to control elk.
-                 [log4j/log4j "1.2.17"]])
+                 [log4j/log4j "1.2.17"]]
+
+  ;; multiple profiles for testing against different OWL versions. The :base
+  ;; dependency adds dev-resources to the path which I need for testing.
+  :profiles
+  {
+   :3.5.0
+   [:base
+    {:dependencies [[net.sourceforge.owlapi/owlapi-distribution "3.5.0"]]}]
+
+   :3.4.10
+   [:base
+    {:dependencies [[net.sourceforge.owlapi/owlapi-distribution "3.4.10"]]}]
+
+   :3.4.9
+   [:base
+    {:dependencies [[net.sourceforge.owlapi/owlapi-distribution "3.4.9"]
+                    [com.hermit-reasoner/org.semanticweb.hermit "1.3.8.3"]]}]
+
+   :3.4.8
+   [:base
+    {:dependencies [[net.sourceforge.owlapi/owlapi-distribution "3.4.8"]
+                    [com.hermit-reasoner/org.semanticweb.hermit "1.3.8.2"]
+                    ]}]
+
+   ;; compatability with 3.4.5 and earlier are broken for datatype properties.
+   }
+)

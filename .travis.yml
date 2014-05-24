@@ -1,5 +1,6 @@
 language: clojure
 lein: lein2
+script: lein2 with-profiles default:3.5.0:3.4.10:3.4.9:3.4.8 test
 jdk:
   - openjdk7
 
