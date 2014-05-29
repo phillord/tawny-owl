@@ -18,7 +18,7 @@
 
   :dependencies [
                  ;; owl API
-                 [net.sourceforge.owlapi/owlapi-distribution "3.4.10"]
+                 [net.sourceforge.owlapi/owlapi-distribution "3.5.0"]
 
                  ;; clojure
                  [org.clojure/clojure "1.6.0"]
