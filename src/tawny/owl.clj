@@ -1103,7 +1103,7 @@ is given."
     (.getPrefixName2PrefixMap
      (.asPrefixOWLOntologyFormat
       (.getOntologyFormat (owl-ontology-manager)
-                          o))))))
+                                o))))))
 
 (defdontfn save-ontology
   "Save the current 'ontology' in the file or `filename' if given.
@@ -1126,11 +1126,11 @@ If no ontology is given, use the current-ontology"
             (= format :owl) (OWLXMLOntologyFormat.)
             :else format)]
        (when (.isPrefixOWLOntologyFormat this-format)
-         (dorun
-          (map #(.setPrefix
-                 (.asPrefixOWLOntologyFormat this-format) (get-prefix %)
-                 (str (get-iri %) "#"))
-               (vals @ontology-for-namespace)))
+         (doseq [ont (vals @ontology-for-namespace)
+                 :when (get-prefix ont)]
+           (.setPrefix
+            (.asPrefixOWLOntologyFormat this-format) (get-prefix ont)
+            (str (get-iri ont) "#")))
          (.setPrefix (.asPrefixOWLOntologyFormat this-format) (get-prefix o)
                      (str (get-iri o) "#")))
        (.print file-writer prepend)

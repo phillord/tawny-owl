@@ -28,7 +28,9 @@
           :append true))
   (require 'sio-header)
   (def sio-rendered (eval 'sio-header/sio-rendered))
-  (tests))
+  (tests)
+  (tawny.owl/remove-ontology-maybe (.getOntologyID sio-rendered))
+  (tawny.owl/remove-ontology-maybe (.getOntologyID sio)))
 
 (use-fixtures :once render-sio)
 
