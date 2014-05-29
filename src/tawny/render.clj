@@ -508,7 +508,8 @@
      (when (seq facts)
        (lst
         :fact
-        (form facts options))))))
+        ;; always a list!
+        (apply concat (form facts options)))))))
 
 (defmethod as-form-int OWLDataProperty
   [^OWLDataProperty p options]
@@ -695,7 +696,7 @@ of isa?"
     (mapcat
      (fn create-fact-forms
        [property]
-       (interleave
+       (map list
          (repeat type-sym)
          (repeat (form property options))
          (map #(form % options)

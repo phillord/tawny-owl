@@ -493,7 +493,7 @@
     (o/label "l"))))
 
 ;; :comment
-(deftest label
+(deftest owlcomment
   (is
    (=
     [['owl-comment ['literal "l" :lang "en"]]
@@ -613,5 +613,25 @@
       [['object-property r]
        [:oproperty r]])
      (double-as-form r))))
+
+(deftest individ-many-facts
+  (is
+   (tawny.owl/with-probe-entities to
+     [r (o/object-property to "r")
+      s (o/object-property to "s")
+      i (o/individual to "i")
+      j (o/individual
+         to "j"
+         :fact (o/fact r i) (o/fact s i))]
+     (=
+      [['individual j
+        :fact
+        ['fact s i]
+        ['fact r i]]
+       [:individual j
+        :fact
+        [[:fact s i]
+         [:fact r i]]]]
+      (double-as-form j)))))
 
 ;; :annotation
