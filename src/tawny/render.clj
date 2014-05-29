@@ -39,6 +39,7 @@
             OWLDataOneOf
             OWLDataProperty
             OWLDataSomeValuesFrom
+            OWLDatatype
             OWLDatatypeRestriction
             OWLDataUnionOf
             OWLFacetRestriction
@@ -276,7 +277,9 @@
     :> '>
     :>= '>=}})
 
-(def named-entity-map
+(def
+  ^{:private true}
+  named-entity-map
   {OWLClass [:class 'defclass 'owl-class]
    OWLObjectProperty [:oproperty 'defoproperty 'object-property]
    OWLNamedIndividual [:individual 'defindividual 'individual]
@@ -288,7 +291,7 @@
    (get options ::unnamed)
    entity-keyword))
 
-(defn named-entity [type entity options]
+(defn- named-entity [type entity options]
   (cond
    (get options :keyword)
    (first (get named-entity-map type))
@@ -300,7 +303,7 @@
    :else
    (nth (get named-entity-map type) 2)))
 
-(defn named-entity-as-string
+(defn- named-entity-as-string
   "Return a string identifier for an entity"
   [^OWLNamedObject entity]
   (-> entity
@@ -308,27 +311,51 @@
       (.toURI)
       (.toString)))
 
-(defn ^java.util.Set ontologies
+(defn- ^java.util.Set ontologies
   "Fetch all known ontologies."
   [options]
   (or (get options :ontologies)
       (and (get options :manager)
            (.getOntologies
-            ^org.semanticweb.owlapi.model.OWLOntologyManager (get options :manager)))
+            ^org.semanticweb.owlapi.model.OWLOntologyManager
+            (get options :manager)))
       (.getOntologies
        (owl/owl-ontology-manager))))
 
-(defn setmap
+(defn- setmap
   "Apply f to list c, union the results."
   [f c]
   (apply clojure.set/union (map f c)))
 
 (declare form)
 
+(defn- class-compare
+  "Compares two classes placing subclasses first."
+  [this that]
+  (cond
+   (isa? this that)
+   -1
+   (isa? that this)
+   1
+   :default 0))
+
+(defn- as-form-lookup
+  "Returns the class of the OWLEntity of which this is a subclass."
+  [c]
+  (first
+   (filter
+    (fn as-form-lookup [parent]
+      (isa? c parent))
+    (list OWLClass OWLObjectProperty OWLNamedIndividual
+          OWLDataProperty OWLAnnotationProperty OWLDatatype))))
+
 (defmulti ^{:private true} as-form-int
-  "Render one of the main OWLEntities as one of the main functions
-in tawny." (fn [c options]
-             (class c)))
+  (let
+      ;; memoize because this is limited by the number of classes
+      ;; and it limits isa? lookup
+      [l (memoize as-form-lookup)]
+    (fn [c options]
+      (l (class c)))))
 
 (defmethod as-form-int OWLClass
   [^OWLClass c options]
@@ -428,9 +455,6 @@ in tawny." (fn [c options]
        (lst :characteristic
             characteristic)))))
 
-(defrecord ^{:private true} FactList
-    [type facts])
-
 (defmethod as-form-int OWLNamedIndividual
   [^OWLNamedIndividual p options]
   (let [ont (ontologies options)
@@ -447,19 +471,19 @@ in tawny." (fn [c options]
           (let [fs
                 (into {} (setmap #(.getObjectPropertyValues p %) ont))]
             (when (seq fs)
-              (FactList. :object-fact fs)))
+              {::type :object-fact :facts fs}))
           (let [fs
                 (into {} (setmap #(.getDataPropertyValues p %) ont))]
             (when (seq fs)
-              (FactList. :data-fact fs)))
+              {::type :data-fact :facts fs}))
           (let [fs
                 (into {} (setmap #(.getNegativeObjectPropertyValues p %) ont))]
             (when (seq fs)
-              (FactList. :object-fact-not fs)))
+              {::type :object-fact-not :facts fs}))
           (let [fs
                 (into {} (setmap #(.getNegativeDataPropertyValues p %) ont))]
             (when (seq fs)
-              (FactList. :data-fact-not fs)))))
+              {::type :data-fact-not :facts fs}))))
         ind (form p options)
         lst (if (get options :keyword)
               list
@@ -484,8 +508,6 @@ in tawny." (fn [c options]
      (when (seq facts)
        (lst
         :fact
-        ;; so, we use a PersistentVector to distinguish here between postive
-        ;; and negative
         (form facts options))))))
 
 (defmethod as-form-int OWLDataProperty
@@ -582,10 +604,20 @@ in tawny." (fn [c options]
       (first k))))
 
 (defn as-form
+  "Given a OWLObject render it to a Tawny form, or clojure data structure.
+Entity can be any OWLObject or a number of Clojure collection types. The
+rendered form is controlled with options, which are interpreted as a map; by
+default an evalable Tawny-OWL form is returned.
+:keyword true renders entities as keywords rather than symbols. This also affects
+the nesting structure -- frames are returned as an explicit rather than
+implicit list.
+:explicit true returns data- or object- symbols or keywords; for
+example, :object-and or :data-and will be returned rather than :and.
+:terminal :resolve returns terminal objects as their interned symbol (if one exists) or
+their IRI.
+:terminal :object returns terminal objects as their OWL API object."
   [entity & options]
-  (let [;;a (println "options" options)
-        options (apply hash-map options)
-        ;;a (println "options now " options)
+  (let [options (apply hash-map options)
         unnamed
         (get
          unnamed-entity-map
@@ -604,15 +636,50 @@ in tawny." (fn [c options]
          options)]
     (as-form-int entity options)))
 
-(defmulti ^{:private true} form
-  "Render any OWLEntity or collections containing these entities as Clojure
-forms."
-  (fn [c options]
-    (class c)))
+(def
+  ^{:priate true
+    :doc "All the classes that form can render, sorted to include most
+specific first."}
+  form-lookup-list
+  (sort class-compare
+        (list clojure.lang.ISeq Set java.util.Map
+              org.semanticweb.owlapi.model.IRI OWLClass OWLProperty
+              OWLIndividual OWLObjectOneOf OWLObjectSomeValuesFrom OWLObjectUnionOf
+              OWLObjectIntersectionOf OWLObjectAllValuesFrom OWLObjectComplementOf
+              OWLObjectExactCardinality OWLObjectMaxCardinality OWLObjectMinCardinality
+              OWLAnnotation OWLAnnotationProperty
+              OWLAnnotationValue OWLLiteral
+              OWLDataSomeValuesFrom OWLDataAllValuesFrom OWLDataComplementOf
+              OWLDataUnionOf OWLDataIntersectionOf OWLDataExactCardinality
+              OWLDataMaxCardinality OWLDataMinCardinality OWLDataOneOf
+              OWLDatatypeRestriction OWLFacetRestriction
+              org.semanticweb.owlapi.model.OWLDatatype
+              org.semanticweb.owlapi.model.OWLObjectHasValue
+              org.semanticweb.owlapi.model.OWLObjectHasSelf
+              org.semanticweb.owlapi.model.OWLDataHasValue
+              OWLObjectInverseOf String)))
 
-;; how to get from {:a {1 2}} {:b {3 4}}
-;; to [:a 1][:a 2]
-;; or support (fact I1 I2)?
+
+(defn- form-lookup
+  "Returns first class from form-lookup-list that returns true
+of isa?"
+  [c]
+  (first
+   (filter
+    (fn form-lookup [parent]
+      (isa? c parent))
+    form-lookup-list)))
+
+(defmulti
+  ^{:private true
+    :doc "Renders an OWL Entity (or some collections) to tawny forms."}
+  form
+  (let
+      ;; memoize because this is limited by the number of classes
+      ;; and it limits isa? lookup
+      [l (memoize form-lookup)]
+    (fn [c options]
+      (l (class c)))))
 
 (defmethod form clojure.lang.ISeq [s options]
   (doall (map #(form % options) s)))
@@ -620,10 +687,31 @@ forms."
 (defmethod form Set [s options]
   (map #(form % options) s))
 
+(defn form-fact
+  "Renders facts which as-form-int passes as a map with a
+::type key for positive or negative fact."
+  [s options]
+  (let [type-sym (unnamed-entity (::type s) options)]
+    (mapcat
+     (fn create-fact-forms
+       [property]
+       (interleave
+         (repeat type-sym)
+         (repeat (form property options))
+         (map #(form % options)
+              ;; the OWLAPI returns the facts as a map from a property to a
+              ;; set of individuals or literals, so here we unwind the set
+              (seq (get (:facts s) property)))))
+     ;; each of the properties
+     (keys (:facts s)))))
+
 (defmethod form java.util.Map [m options]
-  (for
-   [[k v] m]
-   `(~(form k options) ~(form v options))))
+  (if (get m ::type)
+    ;; maps are mostly collections, but we also use them to transfer facts
+    (form-fact m options)
+    (for
+        [[k v] m]
+      `(~(form k options) ~(form v options)))))
 
 (defn- entity-or-iri
   "Return either the interned var holding an entity, or an IRI,
@@ -642,21 +730,6 @@ depending on the value of *terminal-strategy*"
       (entity-or-iri
        c
        (merge options {::terminal :iri})))))
-
-
-(defmethod form FactList [s options]
-  (let [type-sym (unnamed-entity (:type s) options)]
-    (mapcat
-     (fn create-fact-forms
-       [property]
-       (interleave
-         (repeat type-sym)
-         (repeat (form property options))
-         (map #(form % options)
-              (seq (get (:facts s) property)))))
-     ;; each of the properties
-     (keys (:facts s)))))
-
 
 (defmethod form OWLClass [c options]
   (entity-or-iri c options))
