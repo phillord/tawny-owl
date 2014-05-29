@@ -1261,17 +1261,17 @@ or throw an exception if it cannot be converted."
 else if clz is a OWLClassExpression add that."
   [o clz]
   (cond
-   (fn? clz)
-   (try
-     (ensure-class o (clz))
-     (catch clojure.lang.ArityException e
-       (ensure-class-except clz)))
    (instance? org.semanticweb.owlapi.model.OWLClassExpression clz)
    clz
    (instance? IRI clz)
    (.getOWLClass (owl-data-factory) clz)
    (string? clz)
    (ensure-class o (iri-for-name o clz))
+   (fn? clz)
+   (try
+     (ensure-class o (clz))
+     (catch clojure.lang.ArityException e
+       (ensure-class-except clz)))
    true (ensure-class-except clz)))
 
 (defn-
