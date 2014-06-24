@@ -58,7 +58,6 @@ and defines the reasoner factory to use."
   (fn [tests]
     ((tawny.fixture/reasoner o reasoner) tests)))
 
-
 (defn namespace-and-reasoner
   "Returns a fixture which sets the ontology from the namespace ns and defines
 the reasoner factory to use. ns should be a symbol"

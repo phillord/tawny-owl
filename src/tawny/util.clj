@@ -175,7 +175,7 @@ rest can be any tree structure, then, f with x and all values in rest. "
 ;; on
 (defn on
   "Call f on val if val is not null."
-  [val f] 
+  [val f]
  (when val
     (f val)))
 
