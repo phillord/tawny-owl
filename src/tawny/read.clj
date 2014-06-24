@@ -81,12 +81,25 @@ starts-with. Use this partially applied with a filter for 'read'."
     trans
     ))
 
+(tawny.owl/defmontfn really-noisy-nil-label-transform
+ "Check for empty labels noisily"
+ [o e]
+ (println e)
+ (let [trans (label-transform o e)]
+    (when (nil? trans)
+      (println "Unable to generate transform for:" e))
+    (println trans)
+    trans
+    ))
+
+
 (tawny.owl/defmontfn exception-nil-label-transform
  "Check for empty labels noisily"
  [o e]
   (let [trans (label-transform o e)]
     (when (nil? trans)
-      (throw (IllegalArgumentException. (str "Unable to generate transform for:" e))))
+      (throw (IllegalArgumentException. 
+              (str "Unable to generate transform for:" e))))
     trans
     ))
 
