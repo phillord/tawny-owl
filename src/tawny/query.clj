@@ -23,23 +23,6 @@
   (:require [tawny.util])
   (:require [clojure.core.logic :as l]))
 
-(def
-  ^{:doc "Map between a form entity and a keyword"
-    :private true}
-  typemap
-  {'defclass :class
-   'owl-class :class
-   'defoproperty :oproperty
-   'object-property :oproperty
-   'defindividual :individual
-   'individual :individual
-   'defdproperty :dproperty
-   'data-property :dproperty
-   'defannotationproperty :aproperty
-   'annotation-property :aproperty
-   }
-  )
-
 (defn into-map
   "Translates an owl object into a clojure map.
 The map is similar to the form used to define an entity. Keys are the keywords
@@ -71,21 +54,44 @@ present in the final map, however."
 
 
 
-(defn frameo [entity query
-              frame]
+(defn frameo
+  "Searches a specific frame in a rendered OWL entity to see if query matches
+partially. So, for example, we might search the :type frames to see if it
+contains at least the list [type] where type is specific or a logic var.
+Normally, matcher would be used in preference."
+  [entity query frame]
   (l/fresh [a]
          (l/featurec
           entity
           {frame a})
          (l/everyg
           #(l/membero %1 a)
-          ;; this get isn't going to work
-          ;; because we could have a logic var
+          ;; this get isn't going to work in general because we could have a
+          ;; logic var
           (get query frame))))
 
 (defn matcher
-  [entity query]
+  "Returns a goal which matches a rendered OWL entity against the query.
+Matchs happen if the entity contains AT LEAST one entity in frame
+values (which are themselves lists) to match ALL frames in the query.
+The keys of the query cannot be logic vars but everything else can."
+[entity query]
   (l/everyg
    #(frameo entity query %1)
    ;; this keys isn't going to work because we could have a logic var
    (keys query)))
+
+
+(defn typeo
+  "Returns a goal which matches entity on type."
+  [entity type]
+  (matcher
+   entity
+   {:type [type]}))
+
+(defn supero
+  "Returns a goal which matches entity superclasses."
+  [entity super]
+  (matcher
+   entity
+   {:super [super]}))
