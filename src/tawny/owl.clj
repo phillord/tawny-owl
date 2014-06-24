@@ -2016,9 +2016,9 @@ slightly faster.
 (defdontfn owl-class
   "Creates a new class in the current ontology. See 'defclass' for
 full details."
-  [ontology name & frames]
+  [o name & frames]
   (owl-class-explicit
-   ontology name
+   o name
    (util/check-keys
     (util/hashify frames)
     (list*
