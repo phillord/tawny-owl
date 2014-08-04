@@ -22,12 +22,12 @@
 
                  ;; clojure
                  [org.clojure/clojure "1.6.0"]
-                 [org.clojure/core.logic "0.8.7"]
+                 [org.clojure/core.logic "0.8.8"]
 
                  ;; reasoners
                  [org.semanticweb.elk/elk-owlapi "0.4.1"]
                  [com.hermit-reasoner/org.semanticweb.hermit "1.3.8.4"]
-                 [net.sourceforge.owlapi/jfact "1.2.0"]
+                 [net.sourceforge.owlapi/jfact "1.2.2"]
 
                  ;; need to access log4j to control elk.
                  [log4j/log4j "1.2.17"]]

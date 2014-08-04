@@ -1,6 +1,9 @@
 Release Notes
 =============
 
+For future functionality please see [roadmap](roadmap.md)
+
+
 # 1.2
 
 The main feature for the 1.2 release has been the incorporation of core.logic,
