@@ -1069,3 +1069,8 @@ Assumes that fixture has been run"
          j (o/datatype-property to "j"
                               :sub h)]
      (o/superproperty? to h j))))
+
+(deftest refine []
+  (is
+   (let [cls (o/owl-class to "a")]
+     (o/refine to cls :label "a"))))

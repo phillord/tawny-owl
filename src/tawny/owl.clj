@@ -1708,7 +1708,7 @@ value for each frame."
   #'guess-type-args)
 (defmulti only
   "Returns a universal rescriction with another class or data range."
-#'guess-type-args)
+  #'guess-type-args)
 
 (defmulti some-only
   "Returns a list containing existential restrictions to each of the arguments,
@@ -2634,6 +2634,12 @@ This is a convenience macro and is lexically scoped."
          body)]
     `(list ~@newbody)))
 
+
+(defmontfn
+  ^:private
+  entity-class [o entity & _]
+  (class entity))
+
 (defmulti refine
   "Takes an existing definition, adds it to the current ontology, and then
 adds more frames. owlentity is the OWLEntity to be refined, and frames are the
@@ -2646,7 +2652,7 @@ places and add frames in both of these places. For simple forward declaration
 appear in two ontologies, but with more axioms in the second. This can enable,
 for example, building two interlocking ontologies with different OWL profiles.
 "
-  (fn [owlentity & _] (class owlentity)))
+  #'entity-class)
 
 (defmethod refine OWLClass [& args]
   (apply owl-class args))
@@ -2666,18 +2672,6 @@ for example, building two interlocking ontologies with different OWL profiles.
 (defmethod refine OWLIndividual [& args]
   (apply individual args))
 
-(defmacro defrefineto
-  "Takes an existing definition, add more frames.
-The first argument should be a symbol that will hold the
-
-See also 'refine'.
-"
-  [symbol & args]
-  `(def
-     ~(with-meta symbol
-        (assoc (meta symbol)
-          :owl true))
-     (tawny.owl/refine ~@args)))
 
 (defmacro defrefine
   "Takes an existing definition, add more frames.
@@ -2689,12 +2683,21 @@ See also 'refine'
 "
   [symb & args]
   (let [newsymbol#
-        (symbol (name symb))]
+        (symbol (name symb))
+        ontsplit (extract-ontology-frame args)
+        ont (:ontology ontsplit)
+        frames (:frames ontsplit)
+        ]
     `(def
        ~(with-meta newsymbol#
           (assoc (meta newsymbol#)
             :owl true))
-       (tawny.owl/refine ~symb ~@args))))
+       ~(if ont
+          `(tawny.owl/refine
+           ~ont
+           ~symb ~@frames)
+          `(tawny.owl/refine
+           ~symb ~@frames)))))
 
 (defmacro defcopy
   "Takes an existing definition from another namespace and copies it into the
