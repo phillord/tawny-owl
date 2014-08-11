@@ -67,7 +67,7 @@
       :iri "http://iri/"
       :prefix "iri:"
       :comment "This is a comment"
-      :versioinfo "This is some versioninfo")))))
+      :versioninfo "This is some versioninfo")))))
 
 (deftest get-iri
   (is (= "http://iri/"
@@ -580,7 +580,7 @@ Assumes that fixture has been run"
 (deftest add-version-info
   (is
    (#'o/add-version-info
-    to (o/label to "bob"))))
+    to "bob")))
 
 (deftest add-annotation
   (is

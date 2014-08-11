@@ -47,7 +47,7 @@
 (defn- tawny-name [literal]
   (tawny-annotation tawny-name-property literal))
 
-(def ^{:private true}
+(defonce ^{:private true}
   vtawny-ontology (ref nil))
 
 (defn- tawny-ontology

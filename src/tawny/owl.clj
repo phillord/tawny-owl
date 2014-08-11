@@ -962,7 +962,7 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
   (if v
     ;; ontology annotation is a default ontology function, so need to pass
     ;; ontology twice even if this makes little sense!
-    (add-an-ontology-annotation o o v)))
+    (add-annotation o (version-info o v))))
 
 ;; owl imports
 (defn owl-import
@@ -992,7 +992,11 @@ ontology or an IRI"
 (defn ontology
   "Returns a new ontology. See 'defontology' for full description."
   [& args]
-  (let [options (apply hash-map args)
+  (let [options
+        (util/check-keys
+         (apply hash-map args)
+         (list* :iri :noname
+                (keys ontology-handlers)))
         ;; the prefix is specified by the prefix or the name.
         ;; this allows me to do "(defontology tmp)"
         options (merge options
