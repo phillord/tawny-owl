@@ -69,6 +69,38 @@
       :comment "This is a comment"
       :versioninfo "This is some versioninfo")))))
 
+(deftest ontology-two-iri
+  (is
+   (thrown? IllegalArgumentException
+            (o/ontology :iri "iri1" :iri "iri2"))))
+
+(deftest ontology-annotation
+  (is
+   (= 2
+      (let [
+            o (o/ontology
+               :iri "http://iri")
+            ;; we don't need an ontology to create an owl-comment
+            ;; but unfortunately it does trigger the default ontology hook.
+            ;; so we a dubious side-step instead
+            c1 (o/owl-comment o "1")
+            c2 (o/owl-comment o "2")
+            o2 (o/ontology :iri "http://iri"
+                           :prefix "pre"
+                           :annotation c1 c2)]
+        (.size
+         (.getAnnotations o2))))))
+
+(deftest ontology-import
+  (is
+   (= 2
+      (let [o1 (o/ontology)
+            o2 (o/ontology)
+            o (o/ontology :noname true :import o1 o2)]
+        (.size
+         (.getDirectImports o))))))
+
+
 (deftest get-iri
   (is (= "http://iri/"
          (.toString (o/get-iri (o/ontology :iri "http://iri/")))))

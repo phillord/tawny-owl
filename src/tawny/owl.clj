@@ -924,6 +924,9 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
     (add-an-ontology-annotation
      o o (tawny-name n))))
 
+(defn- add-ontology-annotation-handler [o annotations]
+  (add-an-ontology-annotation o o annotations))
+
 (defn- set-iri-gen
   "Add an IRI gen function to the ontology options."
   [o f]
@@ -964,6 +967,7 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
     ;; ontology twice even if this makes little sense!
     (add-annotation o (version-info o v))))
 
+
 ;; owl imports
 (defn owl-import
   "Adds a new import to the current ontology. o may be an
@@ -979,24 +983,46 @@ ontology or an IRI"
                                  (.getOWLImportsDeclaration
                                   (owl-data-factory)
                                   iri))))))
+
+(defn- add-import [o olist]
+  (doseq [n olist]
+    (owl-import o n)))
+
 ;; ontology
 (def ^{:private true} ontology-handlers
-  {:iri-gen set-iri-gen,
+  {
+   ;; these are not broadcast
+   :iri-gen set-iri-gen,
    :prefix set-prefix,
    :name add-an-ontology-name
    :seealso add-see-also
    :comment add-ontology-comment
    :versioninfo add-version-info
+   ;; these two are specially dealt with and are broadcast
+   :annotation add-ontology-annotation-handler
+   :import add-import
    })
 
-(defn ontology
+
+(defn- flatten-first-list-values
+  "Flattens the values for keys, except those in noflatten"
+  [mp noflattenkeys]
+  (into {}
+        (for [[k v] mp]
+          (if-not (noflattenkeys k)
+            (if (= 1 (count v))
+              [k (first v)]
+              (throw (IllegalArgumentException.
+                      (str "Frame " k " accepts only a single argument"))))
+            [k v]))))
+
+(defn ontology-explicit
   "Returns a new ontology. See 'defontology' for full description."
-  [& args]
-  (let [options
-        (util/check-keys
-         (apply hash-map args)
-         (list* :iri :noname
-                (keys ontology-handlers)))
+  [options]
+  (let [
+        ;; having got all values as lists, pull them all apart again
+        options (flatten-first-list-values
+                 options #{:annotation :import})
         ;; the prefix is specified by the prefix or the name.
         ;; this allows me to do "(defontology tmp)"
         options (merge options
@@ -1008,8 +1034,7 @@ ontology or an IRI"
                               (if-let [name
                                        (get options :name)]
                                 (str "#" name)))))
-        noname (get options :noname false)
-        ]
+        noname (get options :noname false)]
     (remove-ontology-maybe
      (OWLOntologyID. iri))
     (let [ontology
@@ -1022,9 +1047,20 @@ ontology or an IRI"
         (owl-import ontology
                     (tawny-ontology)))
       (doseq [[k f] ontology-handlers
-              :when (get options k)]
-        (f ontology (get options k)))
+              :let [opt
+                    (get options k)]
+              :when opt]
+        (do
+
+          (f ontology opt)))
       ontology)))
+
+(defn ontology [& args]
+  (ontology-explicit
+   (util/check-keys
+    (util/hashify args)
+    (list* :iri :noname
+           (keys ontology-handlers)))))
 
 (defmacro defontology
   "Define a new ontology with `name'.
@@ -1037,14 +1073,9 @@ The following keys must be supplied.
   `(do
      (let [ontology# (ontology :name ~(clojure.core/name name) ~@body)
            var#
-           (def
-             ~(with-meta name
-                (assoc (meta name)
-                  :owl true))
-             ontology#)]
+           (tawny.owl/intern-owl ~name ontology#)]
        (tawny.owl/ontology-to-namespace ontology#)
-       var#
-       )))
+       var#)))
 
 ;;; Begin ontology look up functions
 (defn- check-entity-set
@@ -1710,6 +1741,7 @@ value for each frame."
 (defmulti owl-some
   "Returns an existential restriction with another class or a data range."
   #'guess-type-args)
+
 (defmulti only
   "Returns a universal rescriction with another class or data range."
   #'guess-type-args)
