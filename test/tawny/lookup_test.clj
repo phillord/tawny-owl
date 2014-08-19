@@ -21,15 +21,16 @@
    [tawny.owl :as o]
    [tawny.lookup :as l]))
 
+(def lookup-test-namespace (find-ns 'tawny.lookup-test))
+
 (defn test-ontology
   ([]
-     (test-ontology *ns*))
+     (test-ontology lookup-test-namespace))
   ([ns]
      (let [o (o/ontology :iri "http://iri/" :prefix "test:")]
        (o/ontology-to-namespace o)
        (intern ns 'a-test-ontology o))))
 
-(def lookup-test-namespace (find-ns 'tawny.lookup-test))
 
 ;; test it don't crash -- all I can do
 (deftest all-iri-to-var
@@ -40,6 +41,16 @@
 (deftest iri-to-var
   (is
    (= 3
+      (try
+        (test-ontology)
+        (o/declare-classes a b c)
+        (count (l/iri-to-var-no-ontology lookup-test-namespace))
+        (finally
+          (ns-unmap lookup-test-namespace 'a)
+          (ns-unmap lookup-test-namespace 'b)
+          (ns-unmap lookup-test-namespace 'c)))))
+  (is
+   (= 4
       (try
         (test-ontology)
         (o/declare-classes a b c)

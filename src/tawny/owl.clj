@@ -94,19 +94,38 @@ string; use 'iri-for-name' to perform ontology specific expansion"
 
 (load "owl_self")
 
-(defn named-object?
-  "Returns true iff entity is an OWLNamedObject."
-  [entity]
-  (instance? OWLNamedObject entity))
+;; for reasons that I do not understand IRI has to be fully-qualified or
+;; lookup.clj gives errors. I can't reproduce this with a simple test case.
+(defprotocol IRIable
+  (^org.semanticweb.owlapi.model.IRI as-iri [entity]))
 
-(defn ^OWLNamedObject as-named-object
-  "If entity is a named object do nothing, else throw
+(extend-type
+    OWLNamedObject
+  IRIable
+  (as-iri [entity] (.getIRI entity)))
+
+(extend-type
+    OWLOntology
+  IRIable
+  (as-iri [entity]
+    (.getOntologyIRI (.getOntologyID entity))))
+
+(defn iriable?
+  "Returns true iff entity is an IRIable."
+  [entity]
+  (satisfies? IRIable entity))
+
+(defn ^IRIable as-iriable
+  "If entity is a iriable do nothing, else throw
 an exception."
   [entity]
-  (or
-   (and (instance? OWLNamedObject entity)
-        entity)
-   (throw (IllegalArgumentException. "Expecting a named entity"))))
+  (if (iriable? entity)
+    entity
+    (throw (IllegalArgumentException. "Expecting a IRIable entity"))))
+
+(defn named-object? [entity]
+  "Returns true iff entity is an OWLNamedObject."
+  (instance? OWLNamedObject entity))
 
 ;;; Begin current ontology support
 
@@ -496,11 +515,6 @@ or the current-ontology"
      o)))
 
 ;;; Begin iri support
-(defdontfn ^IRI get-iri
-  "Gets the IRI for the given ontology, or the current ontology if none is given"
-  [^OWLOntology o]
-  (.getOntologyIRI
-   (.getOntologyID o)))
 
 (defdontfn iri-for-name
   "Returns an IRI object for the given name.
@@ -510,7 +524,7 @@ the moment it is very simple."
   [o name]
   (if-let [iri-gen (:iri-gen (deref (ontology-options o)))]
     (iri-gen name)
-    (iri (str (get-iri o) "#" name))))
+    (iri (str (as-iri o) "#" name))))
 
 ;;; Begin interned-entity-support
 (defonce
@@ -943,7 +957,7 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
      (.asPrefixOWLOntologyFormat
       (.getOntologyFormat
        (owl-ontology-manager) o))
-     p (str (get-iri o)))))
+     p (str (as-iri o)))))
 
 
 (defn- add-ontology-comment
@@ -976,7 +990,7 @@ ontology or an IRI"
      (owl-import (get-current-ontology) o))
   ([ontology-into o]
      (let [iri (if (instance? OWLOntology o)
-                 (get-iri o)
+                 (as-iri o)
                  o)]
        (.applyChange (owl-ontology-manager)
                      (AddImport. ontology-into
@@ -1165,9 +1179,9 @@ If no ontology is given, use the current-ontology"
                  :when (get-prefix ont)]
            (.setPrefix
             (.asPrefixOWLOntologyFormat this-format) (get-prefix ont)
-            (str (get-iri ont) "#")))
+            (str (as-iri ont) "#")))
          (.setPrefix (.asPrefixOWLOntologyFormat this-format) (get-prefix o)
-                     (str (get-iri o) "#")))
+                     (str (as-iri o) "#")))
        (.print file-writer prepend)
        (.flush file-writer)
        (.saveOntology (owl-ontology-manager) o

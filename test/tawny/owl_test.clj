@@ -101,11 +101,11 @@
          (.getDirectImports o))))))
 
 
-(deftest get-iri
+(deftest as-iri
   (is (= "http://iri/"
-         (.toString (o/get-iri (o/ontology :iri "http://iri/")))))
+         (.toString (o/as-iri (o/ontology :iri "http://iri/")))))
   (is (= "http://iri/"
-         (.toString (o/get-iri to)))))
+         (.toString (o/as-iri to)))))
 
 
 ;; just test to see if default ontology is working

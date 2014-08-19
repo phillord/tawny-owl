@@ -48,7 +48,7 @@ present in the final map, however."
   [f entity]
   (apply merge-with clojure.set/union
          (map #(dissoc (into-map %) :type)
-              (filter named-object?
+              (filter iriable?
                       (conj (f entity)
                             entity)))))
 

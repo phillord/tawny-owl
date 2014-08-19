@@ -34,11 +34,10 @@
 (tawny.owl/defmontfn default-filter
   "Filter for only named objects with an IRI the same as the ontology IRI."
   [o e]
-  (and (tawny.owl/named-object? e)
-       (= (tawny.owl/get-iri o)
+  (and (tawny.owl/iriable? e)
+       (= (tawny.owl/as-iri o)
           (.getNamespace
-           (.getIRI
-            (tawny.owl/as-named-object e))))))
+           (tawny.owl/as-iri e)))))
 
 (defn default-transform
   "Extract the fragment from each IRI."

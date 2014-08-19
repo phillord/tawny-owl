@@ -21,21 +21,29 @@
     tawny.lookup
   (:require [tawny owl util]))
 
-(defn- iri-for-var
-  "Return the IRI for var if it is a named object
-or nil otherwise."
+(defn- iri-for-var-named-entity
+  "Return the IRI for var if it is a OWLNamedObject or nil otherwise.
+
+The difference between this and iri-for-var is that this will return nil for a
+var with OWLOntology object."
   [var]
-  (when (tawny.owl/named-object? (var-get var))
-    (str (.getIRI (tawny.owl/as-named-object (var-get var))))))
+  (when (instance?
+         org.semanticweb.owlapi.model.OWLNamedObject (var-get var))
+    (str (tawny.owl/as-iri (var-get var)))))
+
+(defn- iri-for-var
+  "Return the IRI for var if it is IRIable or nil otherwise."
+  [var]
+  (when (tawny.owl/iriable? (var-get var))
+    (str (tawny.owl/as-iri (var-get var)))))
 
 (defn- vars-in-namespace
   "Return all the vars in the given namespace."
   [namespace]
   (vals (ns-publics namespace)))
 
-(defn iri-to-var
-  "Return a map of IRI to var for namespaces"
-  [& namespaces]
+(defn- iri-to-var-map
+  [iri-for-var-function & namespaces]
   (into {}
         (for [var
               ;; flatten down to single list
@@ -44,9 +52,15 @@ or nil otherwise."
                (filter (comp not nil?)
                        ;; list per namespace
                        (map vars-in-namespace namespaces)))
-              :let [iri (iri-for-var var)]
+              :let [iri (iri-for-var-function var)]
               :when (not (nil? iri))]
           [iri var])))
+
+(def iri-to-var-no-ontology
+  (partial iri-to-var-map iri-for-var-named-entity))
+
+(def iri-to-var
+  (partial iri-to-var-map iri-for-var))
 
 (defn var-str
   "Given a var, return a string representation of its name"
@@ -73,8 +87,8 @@ space, if it the var is not in the current namespace."
   "Given an OWLNamedObject, return the IRI."
   [entity]
   (-> entity
-      tawny.owl/as-named-object
-      (.getIRI)
+      tawny.owl/as-iriable
+      tawny.owl/as-iri
       (.toString)))
 
 (declare all-iri-to-var)
