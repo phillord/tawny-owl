@@ -1048,11 +1048,18 @@ ontology or an IRI"
                               (if-let [name
                                        (get options :name)]
                                 (str "#" name)))))
+        viri-str (get options :viri)
+        viri (when viri-str (tawny.owl/iri viri-str))
         noname (get options :noname false)]
     (remove-ontology-maybe
-     (OWLOntologyID. iri))
+     (if viri
+       (OWLOntologyID. iri viri)
+       (OWLOntologyID. iri)))
     (let [ontology
-          (.createOntology (owl-ontology-manager) iri)]
+          (if viri
+            (.createOntology (owl-ontology-manager)
+                             (OWLOntologyID. iri viri))
+            (.createOntology (owl-ontology-manager) iri))]
       (if noname
         (dosync
          (alter
@@ -1073,7 +1080,7 @@ ontology or an IRI"
   (ontology-explicit
    (util/check-keys
     (util/hashify args)
-    (list* :iri :noname
+    (list* :iri :noname :viri
            (keys ontology-handlers)))))
 
 (defmacro defontology

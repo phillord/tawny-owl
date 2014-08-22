@@ -74,6 +74,13 @@
    (thrown? IllegalArgumentException
             (o/ontology :iri "iri1" :iri "iri2"))))
 
+(deftest ontology-viri
+  (is
+   (= "viri"
+      (..
+       (o/ontology :iri "iri" :viri "viri")
+       getOntologyID getVersionIRI toString))))
+
 (deftest ontology-annotation
   (is
    (= 2
