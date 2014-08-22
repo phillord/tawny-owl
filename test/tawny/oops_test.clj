@@ -16,10 +16,11 @@
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
 
 (ns tawny.oops-test
- (:require [tawny.owl :as o]
-           [tawny.oops :as oo]
-           [clojure.data.xml :as xml])
-  [:use clojure.test])
+  (:require [tawny.owl :as o]
+            [tawny.oops :as oo]
+            [clojure.data.xml :as xml])
+  (:use clojure.test)
+  (:import [java.io ByteArrayInputStream]))
 
 ;; See http://nakkaya.com/2009/11/18/unit-testing-in-clojure/
 (defmacro with-private-fns [[ns fns] & tests]
@@ -123,13 +124,27 @@
                         (xml/element :OutputFormat {} format)))))))
 
   (deftest get-rdf-ontology
-    (let [to (o/ontology :name "to"
-                         :iri "http://test"
-                         :prefix "test:")
-          rdf (get-rdf-ontology to)
-          file (slurp (clojure.java.io/resource "to.owl"))]
+    (let [iri "http://test"
+          prefix "test:"
+          before (o/ontology :name "to"
+                         :iri iri
+                         :prefix prefix)
+          rdf (get-rdf-ontology before)
+          after (tawny.read/read
+                        :location
+                        (new ByteArrayInputStream (.toByteArray rdf))
+                        :iri iri
+                        :prefix prefix)]
       (is
-       (= (.toString rdf) file))))
+       (= before after))
+      (is
+       (= (count (.getSignature before))
+          (count(.getSignature after))
+          1))
+      (is
+       (= (count (.getAxioms before))
+          (count (.getAxioms after))
+          0))))
 
   (deftest deploy
     (is
