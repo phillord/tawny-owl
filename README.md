@@ -1,7 +1,11 @@
 Tawny-OWL
 ===========
 
+PHIL'S MASTER BRANCH
 [![Build Status](https://travis-ci.org/phillord/tawny-owl.png?branch=master)](https://travis-ci.org/phillord/tawny-owl)
+
+OOPS-SERVICE BRANCH
+[![Build Status](https://travis-ci.org/jaydchan/tawny-owl.png?branch=oops-service)](https://travis-ci.org/jaydchan/tawny-owl)
 
 ## Introduction
 
