@@ -103,6 +103,26 @@
    (= 2
       (let [o1 (o/ontology)
             o2 (o/ontology)
+            o (o/ontology :noname true :import
+                          (o/as-iri "http://iri1")
+                          (o/as-iri "http://iri2"))]
+        (.size
+         ;; have to use getImportsDeclarations because these imports are not
+         ;; loaded, so are not returned by getDirectImports
+         (.getImportsDeclarations o)))))
+
+  (is
+   (= 2
+      (let [o1 (o/ontology)
+            o2 (o/ontology)
+            o (o/ontology :noname true :import "http://iri1" "http://iri2")]
+        (.size
+         (.getImportsDeclarations o)))))
+
+  (is
+   (= 2
+      (let [o1 (o/ontology)
+            o2 (o/ontology)
             o (o/ontology :noname true :import o1 o2)]
         (.size
          (.getDirectImports o))))))

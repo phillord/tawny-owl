@@ -100,6 +100,16 @@ string; use 'iri-for-name' to perform ontology specific expansion"
   (^org.semanticweb.owlapi.model.IRI as-iri [entity]))
 
 (extend-type
+    String
+  IRIable
+  (as-iri [entity] (iri entity)))
+
+(extend-type
+    IRI
+  IRIable
+  (as-iri [entity] entity))
+
+(extend-type
     OWLNamedObject
   IRIable
   (as-iri [entity] (.getIRI entity)))
@@ -981,7 +991,6 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
     ;; ontology twice even if this makes little sense!
     (add-annotation o (version-info o v))))
 
-
 ;; owl imports
 (defn owl-import
   "Adds a new import to the current ontology. o may be an
@@ -989,15 +998,11 @@ ontology or an IRI"
   ([o]
      (owl-import (get-current-ontology) o))
   ([ontology-into o]
-     (let [iri (if (instance? OWLOntology o)
-                 (as-iri o)
-                 o)]
-       (.applyChange (owl-ontology-manager)
-                     (AddImport. ontology-into
-                                 (.getOWLImportsDeclaration
-                                  (owl-data-factory)
-                                  iri))))))
-
+     (.applyChange (owl-ontology-manager)
+                   (AddImport. ontology-into
+                               (.getOWLImportsDeclaration
+                                (owl-data-factory)
+                                (as-iri o))))))
 (defn- add-import [o olist]
   (doseq [n olist]
     (owl-import o n)))
@@ -1072,7 +1077,6 @@ ontology or an IRI"
                     (get options k)]
               :when opt]
         (do
-
           (f ontology opt)))
       ontology)))
 
@@ -1148,7 +1152,7 @@ conversion, and direct use of string as an IRI."
       ;; string name somewhere?
       (entity-for-iri o (iri string))))
 
-(defdontfn get-prefix
+(defdontfn ^String get-prefix
   "Returns the prefix for the given ontology, or the current ontology if none
 is given."
   [^OWLOntology o]

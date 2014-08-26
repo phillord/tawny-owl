@@ -27,6 +27,8 @@ only about 3x slower than reading the OWL file. These optimisations have
 resulted in two breaking changes to the broadcasting and default ontology
 behaviour, both of which now have alternatives.
 
+Finally, rendering has now been cleaned up, so that the ontology form can also
+be rendered, and this form re-read. This has required a few additional changes.
 
 ## New Features
 - `tawny.query` now includes a number of `core.logic` predicates. 
@@ -35,7 +37,11 @@ behaviour, both of which now have alternatives.
   formats: two for evaluation or documentation, and two for querying. It is
   also possible to select the set of ontologies or ontology manager with which
   to render.
+- `tawny.render` can now render OWLOntology objects.
+- The `ontology` function now supports :import and :annotation frames which
+  broadcast.
 
+## Bug Fixes
 
 ## Breaking Changes
 
@@ -62,7 +68,9 @@ behaviour, both of which now have alternatives.
   be breaking change only if you use `str` (in which case change to `pr-str`
   instead). The laziness may also cause some unpredictable issues if you store
   the form, and change the ontology, then realise the form.
-
+- A number of functions which used to work on `OWLNamedObject` now support
+  `OWLOntology` also. These include `tawny.lookup/iri-to-var` and associated
+  functions.
 
 ## Dependencies
 

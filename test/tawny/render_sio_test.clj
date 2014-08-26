@@ -17,9 +17,24 @@
 
 (defn render-sio [tests]
   (def sio (read-sio))
-  ;; target/classes is in the classpath which makes life easier.
+  ;; sio-header just does namespaces and clojure stuff
   (spit "dev-resources/sio_rendered.clj" "(in-ns 'sio-header)\n")
-  (doseq [n (.getSignature sio)]
+  ;; render the ontology form and put it into a var
+  (spit "dev-resources/sio_rendered.clj"
+          (str
+           "(def sio-rendered "
+           (pr-str
+            (tawny.render/as-form sio :explicit true))
+           ")\n")
+          :append true)
+  ;; make it the default
+  (spit "dev-resources/sio_rendered.clj"
+          (str
+           "(ontology-to-namespace (find-ns 'sio-header) sio-rendered)\n")
+          :append true)
+  ;; render the entire ontology
+  (doseq [n
+          (.getSignature sio)]
     (spit "dev-resources/sio_rendered.clj"
           (str
            (pr-str
@@ -56,23 +71,3 @@
     (= (count (.getObjectPropertiesInSignature sio))
        ;; tawny adds an annotation property
        (count (.getObjectPropertiesInSignature sio-rendered)))))
-
-
-;; this method looks like it should work, but it craps out, and strangely
-;; makes render_test.clj crash as well!
-
-;; (deftest sio-read
-;;   (is
-;;    (let [o (ontology :iri "bob")]
-;;      (doseq [n (.getSignature (read-sio))]
-;;         (with-ontology o
-;;           (prn
-;;            (tawny.render/as-form n))
-;;           (eval
-;;            (list
-;;             'do
-;;             '(in-ns 'tawny.render_sio_test)
-;;             '(clojure.core/use 'tawny.owl)
-;;             (tawny.render/as-form n)
-;;             ))))
-;;      (println o))))

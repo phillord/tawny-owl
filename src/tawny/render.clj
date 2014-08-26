@@ -284,7 +284,8 @@
    OWLObjectProperty [:oproperty 'defoproperty 'object-property]
    OWLNamedIndividual [:individual 'defindividual 'individual]
    OWLDataProperty [:dproperty 'defdproperty 'datatype-property]
-   OWLAnnotationProperty [:aproperty 'defaproperty 'annotation-property]})
+   OWLAnnotationProperty [:aproperty 'defaproperty 'annotation-property]
+   OWLOntology [:ontology 'defontology 'ontology]})
 
 (defn- unnamed-entity [entity-keyword options]
   (get
@@ -347,7 +348,8 @@
     (fn as-form-lookup [parent]
       (isa? c parent))
     (list OWLClass OWLObjectProperty OWLNamedIndividual
-          OWLDataProperty OWLAnnotationProperty OWLDatatype))))
+          OWLDataProperty OWLAnnotationProperty OWLDatatype
+          OWLOntology))))
 
 (defmulti ^{:private true} as-form-int
   (let
@@ -356,6 +358,53 @@
       [l (memoize as-form-lookup)]
     (fn [c options]
       (l (class c)))))
+
+;; so, we can parse both OWLOntology okay
+;; can do this generically, because we can now put an arbitaray ontology annotation
+;; because annotations are maybe ontology functions.
+;;
+;; This leaves imports as the only unrendered things. Currently, the read
+;; forms are separate from the ontology themselves, and there is no OWLImport
+;; mechanism. So, we might want to fix this, by allowing imports to be
+;; declared on the ontology form.
+(defmethod as-form-int OWLOntology
+  [^OWLOntology o options]
+  (let [lst (if (get options :keyword)
+              list list*)]
+    (concat
+     (list
+      (named-entity OWLOntology o options))
+     (when (:keyword options)
+       (list (form o options)))
+
+     (list :iri
+           (.. o getOntologyID getOntologyIRI toString))
+
+     (let [viri (.. o getOntologyID getVersionIRI)]
+       (when viri
+         (list :viri (str viri))))
+     ;; what to do about noname? guess we pass it in as an option
+     ;; or we could check existing options
+     (when-let [f (.getOntologyFormat (tawny.owl/owl-ontology-manager) o)]
+       (when (.isPrefixOWLOntologyFormat f)
+         (when-let [pre (tawny.owl/get-prefix o)]
+           (list :prefix
+                 ;; chop off the colon
+                 (.substring pre 0
+                             (- (.length pre) 1))))))
+     ;; imports
+     (when-let [imp-decl
+                (seq (.getImportsDeclarations o))]
+       (lst
+        :import
+        (form (map #(.getIRI
+                     ^org.semanticweb.owlapi.model.OWLImportsDeclaration
+                     %) imp-decl) options)))
+     (when-let [ann
+                (seq (.getAnnotations o))]
+       (lst
+        :annotation
+        (form ann options))))))
 
 (defmethod as-form-int OWLClass
   [^OWLClass c options]
@@ -649,7 +698,7 @@ specific first."}
               OWLObjectIntersectionOf OWLObjectAllValuesFrom OWLObjectComplementOf
               OWLObjectExactCardinality OWLObjectMaxCardinality OWLObjectMinCardinality
               OWLAnnotation OWLAnnotationProperty
-              OWLAnnotationValue OWLLiteral
+              OWLAnnotationValue OWLLiteral OWLOntology
               OWLDataSomeValuesFrom OWLDataAllValuesFrom OWLDataComplementOf
               OWLDataUnionOf OWLDataIntersectionOf OWLDataExactCardinality
               OWLDataMaxCardinality OWLDataMinCardinality OWLDataOneOf
@@ -740,6 +789,9 @@ depending on the value of *terminal-strategy*"
 
 (defmethod form OWLIndividual [i options]
   (entity-or-iri i options))
+
+(defmethod form OWLOntology [o options]
+  (entity-or-iri o options))
 
 (defmethod form OWLObjectOneOf
   [^OWLObjectOneOf o options]

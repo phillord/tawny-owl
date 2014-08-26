@@ -173,6 +173,20 @@
                           (o/iri-for-name to "h"))))))
 
 
+(deftest entity-or-iri-as-iri
+  (is
+   (= ['owl-class ['iri "http://iri/#a"]]
+      (r/as-form
+       (o/owl-class to "a")
+       :terminal :iri)))
+  (is
+   (= ['ontology
+       :iri "http://iri/"
+       :prefix "iri"]
+      (r/as-form
+       to
+       :terminal :iri))))
+
 (deftest entity-or-iri-object
   (is
    (tawny.owl/with-probe-entities to
@@ -335,9 +349,6 @@
        [:data-exactly 1 d :RDFS_LITERAL]]
       (multi-as-form
        (o/exactly 1 d))))))
-
-
-
 
 ;; :oneof
 (deftest object-oneof
@@ -591,6 +602,24 @@
    (r/as-form entity :terminal :object)
    (r/as-form entity :terminal :object :keyword true)))
 
+(deftest ontology
+  ;; simplest possible -- ontology with a specific IRI
+  (is
+   (let [o (o/ontology :noname true :iri "iri")]
+     (= [
+         ['ontology :iri "iri"]
+         [:ontology o :iri "iri"]
+         ]
+        (double-as-form o))))
+  (is
+   (let [o (o/ontology :noname true :iri "iri" :viri "viri")]
+     (= [
+         ['ontology :iri "iri" :viri "viri"]
+         [:ontology o :iri "iri" :viri "viri"]
+         ]
+        (double-as-form o))))  )
+
+
 (deftest owl-class
   (is
    (tawny.owl/with-probe-entities to
@@ -633,5 +662,3 @@
         [[:fact s i]
          [:fact r i]]]]
       (double-as-form j)))))
-
-;; :annotation

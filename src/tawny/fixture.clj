@@ -40,6 +40,20 @@
        (str "Using with-probe-entities:" msg)
        (nth form 3))))
 
+(defmethod clojure.test/assert-expr 'let [msg form]
+  `(let
+     ~(nth form 1)
+     ~(clojure.test/assert-expr
+       (str "Using let:" msg)
+       (cons 'do
+             (drop 2 form)))))
+
+(defmethod clojure.test/assert-expr 'do [msg form]
+  `(do
+     ~(butlast form)
+     ~(clojure.test/assert-expr
+       (str "Using do:" msg)
+       (last form))))
 
 (defn reasoner
   "Fixture which sets up the reasoner factory to be used, and makes
