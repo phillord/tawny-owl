@@ -43,6 +43,13 @@ be rendered, and this form re-read. This has required a few additional changes.
 - `direct-instances` function added.
 
 ## Bug Fixes
+- Tawny's own annotation ontology now uses `defonce` semantics which makes
+  reloading easier.
+- :versioninfo handling was broken on ontology.
+- `refine` now uses default ontology
+- `ontology` now adds a prefix even if one is not specified. This avoids a NPE
+  when saving in a prefix format.
+- `as-form` now renders multiple facts correctly
 
 ## Breaking Changes
 
