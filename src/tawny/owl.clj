@@ -2450,9 +2450,7 @@ direct or indirect superclass of itself."
   [^OWLOntology o name]
   (let [clz (ensure-class o name)]
     (if (instance? OWLClass clz)
-      (.getSubClasses (ensure-class o name)
-                      o)
-      ())))
+      (.getSubClasses clz o) ())))
 
 (defdontfn subclasses
   "Return all subclasses of class."
@@ -2551,6 +2549,13 @@ direct or indirect superclass of itself."
   (some #(.equals
           (ensure-property o subproperty) %)
         (subproperties o property)))
+
+(defdontfn direct-instances
+  "Return all direct instances of NAME class."
+  [^OWLOntology o name]
+  (let [clz (ensure-class o name)]
+    (if (instance? OWLClass clz)
+      (.getIndividuals clz o) ())))
 
 ;; some test useful macros
 
