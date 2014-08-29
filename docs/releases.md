@@ -40,6 +40,7 @@ be rendered, and this form re-read. This has required a few additional changes.
 - `tawny.render` can now render OWLOntology objects.
 - The `ontology` function now supports :import and :annotation frames which
   broadcast.
+- `direct-instances` function added.
 
 ## Bug Fixes
 

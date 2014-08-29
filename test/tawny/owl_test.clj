@@ -476,6 +476,16 @@ Assumes that fixture has been run"
          (test-class-with-hierarchy)
          (o/superclass? to "c" "e")))))
 
+(deftest direct-instances []
+  (is
+   (o/with-probe-entities to
+     [c (o/owl-class to "c")
+      i (o/individual to "i" :type c)]
+     (contains?
+      (o/direct-instances to c)
+      i))))
+
+
 (deftest superclasses []
   (is
    (let [a (o/owl-class to "a")
