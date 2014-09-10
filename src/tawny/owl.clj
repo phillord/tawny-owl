@@ -2239,21 +2239,21 @@ or to ONTOLOGY if present."
   {:type add-type
    :fact add-fact
    :same add-same
-   :different add-different})
+   :different add-different
+   :annotation add-annotation
+   :comment add-comment
+   :label add-label})
 
 (defdontfn individual-explicit
   "Returns a new individual."
   [o name frames]
-  (let [hframes
-        (util/check-keys
-         (util/hashify frames)
-         [:type :fact :same :different :ontology])
-        o (or (first (:ontology hframes))
-              o)
-        individual (ensure-individual o name)]
-    (add-axiom o
-               (.getOWLDeclarationAxiom (owl-data-factory) individual))
+  (let [individual (ensure-individual o name)]
+    ;; add the individual
+    (add-axiom o (.getOWLDeclarationAxiom
+                  (owl-data-factory) individual))
+    ;; add a name annotation
     (add-a-name-annotation o individual name)
+    ;; apply the handlers
     (doseq [[k f] individual-handlers
             :when (get frames k)]
       (f o individual (get frames k)))
