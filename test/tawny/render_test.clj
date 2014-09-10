@@ -662,3 +662,75 @@
         [[:fact s i]
          [:fact r i]]]]
       (double-as-form j)))))
+
+
+;; render-annotation-frame
+
+(deftest ontology-annotation
+  (is
+   (= '(ontology
+        :iri "http://iri/#x"
+        :prefix "x"
+        :annotation
+        (label (literal "test label" :lang "en")))
+      (r/as-form
+       (o/ontology :iri "http://iri/#x"
+                   :name "x"
+                   :noname true
+                   :annotation
+                   (o/label "test label"))))))
+
+(deftest class-annotation
+  (is
+   (= '(owl-class
+        (iri "http://iri/#x")
+        :annotation
+        (label (literal "test label" :lang "en")))
+      (r/as-form
+       (o/owl-class to "x"
+                    :label
+                    "test label")))))
+
+(deftest individual-annotation
+  (is
+   (= '(individual
+        (iri "http://iri/#x")
+        :annotation
+        (label (literal "test label" :lang "en")))
+      (r/as-form
+       (o/individual to "x"
+                     :label
+                     "test label")))))
+
+(deftest oproperty-annotation
+  (is
+   (= '(object-property
+        (iri "http://iri/#x")
+        :annotation
+        (label (literal "test label" :lang "en")))
+      (r/as-form
+       (o/object-property to "x"
+                          :label
+                          "test label")))))
+
+(deftest dproperty-annotation
+  (is
+   (= '(datatype-property
+        (iri "http://iri/#x")
+        :annotation
+        (label (literal "test label" :lang "en")))
+      (r/as-form
+       (o/datatype-property to "x"
+                            :label
+                            "test label")))))
+
+(deftest aproperty-annotation
+  (is
+   (= '(annotation-property
+        (iri "http://iri/#x")
+        :annotation
+        (label (literal "test label" :lang "en")))
+      (r/as-form
+       (o/annotation-property to "x"
+                            :label
+                            "test label")))))
