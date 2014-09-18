@@ -70,7 +70,9 @@ turns the progress monitor off."
 and defines the reasoner factory to use."
   [o reasoner]
   (fn [tests]
-    ((tawny.fixture/reasoner o reasoner) tests)))
+    ;; this is manipulating global state
+    (ontology-to-namespace o)
+    ((tawny.fixture/reasoner reasoner) tests)))
 
 (defn namespace-and-reasoner
   "Returns a fixture which sets the ontology from the namespace ns and defines
