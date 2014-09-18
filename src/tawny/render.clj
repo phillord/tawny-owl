@@ -453,6 +453,9 @@
         range (.getRanges p ont)
         inverseof (.getInverses p ont)
         superprop (.getSuperProperties p ont)
+        annotation
+        (setmap
+         #(.getAnnotations p %) ont)
         characteristic
         (filter identity
                 (list
@@ -502,7 +505,10 @@
             (form inverseof options)))
      (when (pos? (count characteristic))
        (lst :characteristic
-            characteristic)))))
+            characteristic))
+     (when (pos? (count annotation))
+       (lst :annotation
+            (form annotation options))))))
 
 (defmethod as-form-int OWLNamedIndividual
   [^OWLNamedIndividual p options]
@@ -566,6 +572,9 @@
         domain (.getDomains p ont)
         range (.getRanges p ont)
         superprop (.getSuperProperties p ont)
+        annotation
+        (setmap
+         #(.getAnnotations p %) ont)
         characteristic
         (filter identity
                 (list
@@ -592,7 +601,10 @@
             (form range options)))
      (when (pos? (count characteristic))
        (lst :characteristic
-            characteristic)))))
+            characteristic))
+     (when (pos? (count annotation))
+       (lst :annotation
+            (form annotation options))))))
 
 (defmethod as-form-int OWLAnnotationProperty
   [^OWLAnnotationProperty p options]

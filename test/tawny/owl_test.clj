@@ -515,6 +515,14 @@ Assumes that fixture has been run"
   (is (thrown? IllegalArgumentException
                (o/individual to "indA" :nottypes "a"))))
 
+(deftest individual-annotation []
+  (is (o/individual to "ind"
+                    :annotation (o/label to "annotation")))
+  (is (o/individual to "ind"
+                    :label "label"))
+  (is (o/individual to "ind"
+                    :comment "comment")))
+
 (deftest individual-type []
   (is
    (let [cls (o/owl-class to "cls")
