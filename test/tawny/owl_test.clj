@@ -931,7 +931,7 @@ Assumes that fixture has been run"
        true)))
   (is
    (instance?
-    org.semanticweb.owlapi.model.OWLSubDataPropertyOfAxiom 
+    org.semanticweb.owlapi.model.OWLSubDataPropertyOfAxiom
     (o/with-probe-entities to
       [dp (o/datatype-property to "a")
        sdp (o/datatype-property to "b")]
@@ -944,30 +944,79 @@ Assumes that fixture has been run"
    (instance? org.semanticweb.owlapi.model.OWLObjectHasSelf
               (o/has-self to (o/object-property to "r")))))
 
+;; from bug report
+(deftest span-double
+  (is
+   (not (.isInteger
+         (.getDatatype (o/span > 0.1)))))
+  (is
+   (.isDouble (.getDatatype (o/span > 0.1)))))
+
 (deftest owlmin
   (is
    (instance? org.semanticweb.owlapi.model.OWLDatatypeRestriction
-              (o/owl-min 10))))
+              (o/owl-min 10)))
+  (is
+   (.isInteger
+    (.getDatatype
+     (o/owl-min 1))))
+  (is
+   (.isDouble
+    (.getDatatype
+     (o/owl-min 0.1)))))
+
 
 (deftest owlmax
   (is
    (instance? org.semanticweb.owlapi.model.OWLDatatypeRestriction
-              (o/owl-max 10))))
+              (o/owl-max 10)))
+  (is
+   (.isInteger
+    (.getDatatype
+     (o/owl-max 1))))
+  (is
+   (.isDouble
+    (.getDatatype
+     (o/owl-max 0.1)))))
 
 (deftest minmax
   (is
    (instance? org.semanticweb.owlapi.model.OWLDatatypeRestriction
-              (o/min-max 10 10))))
+              (o/min-max 10 10)))
+  (is
+   (.isInteger
+    (.getDatatype
+     (o/min-max 1 1))))
+  (is
+   (.isDouble
+    (.getDatatype
+     (o/min-max 0.1 0.1)))))
 
 (deftest mininc
   (is
    (instance? org.semanticweb.owlapi.model.OWLDatatypeRestriction
-              (o/min-inc 10))))
+              (o/min-inc 10)))
+  (is
+   (.isInteger
+    (.getDatatype
+     (o/min-inc 1))))
+  (is
+   (.isDouble
+    (.getDatatype
+     (o/min-inc 0.1)))))
 
 (deftest maxinc
   (is
    (instance? org.semanticweb.owlapi.model.OWLDatatypeRestriction
-              (o/max-inc 10))))
+              (o/max-inc 10)))
+  (is
+   (.isInteger
+    (.getDatatype
+     (o/max-inc 1))))
+  (is
+   (.isDouble
+    (.getDatatype
+     (o/max-inc 0.1)))))
 
 (deftest minmaxinc
   (is

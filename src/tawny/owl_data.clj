@@ -378,39 +378,53 @@ which is an OWLDatatype object.
 
 (defn owl-min
   "Returns a data min exclusion restriction."
-  [^long from]
-  (.getOWLDatatypeMinExclusiveRestriction
-   (owl-data-factory) from))
+  [from]
+  (util/with-types [from [Long Double]]
+    (.getOWLDatatypeMinExclusiveRestriction
+     (owl-data-factory) from)))
 
 (defn owl-max
   "Returns a data max exclusion restriction."
-  [^long to]
-  (.getOWLDatatypeMaxExclusiveRestriction
-   (owl-data-factory) to))
+  [to]
+  (util/with-types [to [Long Double]]
+    (.getOWLDatatypeMaxExclusiveRestriction
+     (owl-data-factory) to)))
 
 (defn min-max
   "Returns a min-max exclusive restriction."
-  [^long from ^long to]
-  (.getOWLDatatypeMinMaxExclusiveRestriction
-   (owl-data-factory) from to))
+  [from to]
+  (cond
+   (instance? Long from)
+   (.getOWLDatatypeMinMaxExclusiveRestriction
+    (owl-data-factory) ^Long from ^Long to)
+   (instance? Double from)
+   (.getOWLDatatypeMinMaxExclusiveRestriction
+    (owl-data-factory) ^Double from ^Double to)))
 
 (defn min-inc
   "Returns a min inclusive restriction."
-  [^long from]
-  (.getOWLDatatypeMinInclusiveRestriction
-   (owl-data-factory) from))
+  [from]
+  (util/with-types [from [Long Double]]
+    (.getOWLDatatypeMinInclusiveRestriction
+     (owl-data-factory) from)))
 
 (defn max-inc
   "Returns a max inclusive restriction."
-  [^long to]
-  (.getOWLDatatypeMaxInclusiveRestriction
-   (owl-data-factory) to))
+  [to]
+  (util/with-types [to [Long Double]]
+    (.getOWLDatatypeMaxInclusiveRestriction
+     (owl-data-factory) to)))
 
 (defn min-max-inc
   "Returns a min max inclusive restriction."
-  [^long from ^long to]
-  (.getOWLDatatypeMinMaxInclusiveRestriction
-   (owl-data-factory) from to))
+  [from to]
+  (cond
+   (instance? Long from)
+   (.getOWLDatatypeMinMaxInclusiveRestriction
+    (owl-data-factory) ^Long from ^Long to)
+   (instance? Double from)
+   (.getOWLDatatypeMinMaxInclusiveRestriction
+    (owl-data-factory) ^Double from ^Double to)))
 
 (defmacro span
   "Returns a numeric datatype restriction, identified by symbol.
