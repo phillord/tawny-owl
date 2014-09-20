@@ -62,6 +62,7 @@
             OWLObjectProperty
             OWLOntology
             OWLProperty
+            OWLSubPropertyChainOfAxiom
             )
            (org.semanticweb.owlapi.vocab
             OWLFacet
@@ -461,6 +462,19 @@
         range (.getRanges p ont)
         inverseof (.getInverses p ont)
         superprop (.getSuperProperties p ont)
+        subchainaxioms
+        ;; only the ones associated with this property
+        (filter
+         #(= p (.getSuperProperty ^OWLSubPropertyChainOfAxiom %))
+         ;; to one set
+         (apply clojure.set/union
+                ;; get all SUB_PROPERTY_CHAIN_OF axioms in all ontologies
+                ;; each as set
+                (map
+                 #(.getAxioms
+                   ^OWLOntology %
+                   org.semanticweb.owlapi.model.AxiomType/SUB_PROPERTY_CHAIN_OF)
+                 ont)))
         annotation
         (setmap
          #(.getAnnotations p %) ont)
@@ -498,16 +512,22 @@
            (form p options))
 
      (when (pos? (count superprop))
-          (lst :super
-               (form superprop options)))
+       (lst :super
+            (form superprop options)))
 
+     (when (pos? (count subchainaxioms))
+       (lst :subchain
+            (form
+             ;; get the all the chains
+             (map #(vec (.getPropertyChain
+                         ^OWLSubPropertyChainOfAxiom %)) subchainaxioms)
+             options)))
      (when (pos? (count domain))
        (lst :domain
             (form domain options)))
-
      (when (pos? (count range))
        (lst :range
-             (form range options)))
+            (form range options)))
      (when (pos? (count inverseof))
        (lst :inverse
             (form inverseof options)))
@@ -712,7 +732,7 @@ their IRI.
 specific first."}
   form-lookup-list
   (sort class-compare
-        (list clojure.lang.ISeq Set java.util.Map
+        (list clojure.lang.ISeq Set java.util.Map clojure.lang.IPersistentVector
               org.semanticweb.owlapi.model.IRI OWLClass OWLProperty
               OWLIndividual OWLObjectOneOf OWLObjectSomeValuesFrom OWLObjectUnionOf
               OWLObjectIntersectionOf OWLObjectAllValuesFrom OWLObjectComplementOf
@@ -756,6 +776,11 @@ of isa?"
 
 (defmethod form Set [s options]
   (map #(form % options) s))
+
+(defmethod form clojure.lang.IPersistentVector
+  [v options]
+  ;; return preversing vector
+  (vec (map #(form % options) v)))
 
 (defn form-fact
   "Renders facts which as-form-int passes as a map with a
@@ -1129,4 +1154,4 @@ element is a list."
 (defmethod form :default [e options]
   (throw
    (IllegalArgumentException.
-    (str "Don't know how to render this form:" e))))
+    (str "Don't know how to render this form: " (class e)))))

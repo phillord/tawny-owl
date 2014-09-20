@@ -205,6 +205,17 @@
                           :super
                           (o/iri-for-name to "s"))))))
 
+(deftest oproperty-subchain-test
+  (is
+   (let [r (o/object-property to "r")
+         s (o/object-property to "s")
+         t (o/object-property to "t" :subchain r s)]
+     (=
+      [['object-property t :subchain [r s]]
+       [:oproperty t :subchain [[r s]]]]
+      (double-as-form t)))))
+
+
 (deftest dproperty-super-test
   (is
    (= '(datatype-property
