@@ -1600,9 +1600,10 @@ and used as the handler for :subproperty."
                    (map (partial ensure-object-property o) properties)
                    property))
        ;; add sequential entities as a chain in their own right
-       (map (partial add-subchain
-                     o property)
-            lists)))))
+       (doall
+        (map (partial add-subchain
+                      o property)
+             lists))))))
 
 (def
   ^{:doc "This is the same as add-subchain, but marked as deprecated

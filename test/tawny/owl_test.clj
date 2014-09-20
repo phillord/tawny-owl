@@ -26,6 +26,7 @@
                                  OWLDataProperty
                                  ))
   (:require [tawny.owl :as o]
+            [tawny.render :as r]
             [tawny.util])
   (:require [tawny.debug])
   [:use clojure.test])
@@ -37,7 +38,7 @@
   (alter-var-root
    #'to
    (fn [x]
-     (o/ontology :iri "http://iri/" :prefix "iri"))))
+     (o/ontology :iri "http://iri/" :prefix "iri" :noname true))))
 
 (defn createandsavefixture[test]
   (let [exp
@@ -68,6 +69,9 @@
       :prefix "iri:"
       :comment "This is a comment"
       :versioninfo "This is some versioninfo")))))
+
+(defn to-form [entity]
+  (r/as-form entity :terminal :object :keyword true))
 
 (deftest ontology-two-iri
   (is
@@ -173,7 +177,7 @@
               (o/ontology-options to)))
 
   (is
-   (let [options {:a 1 :b 2}]
+   (let [options {:a 1 :b 2 :noname true}]
      (dosync
       (alter (o/ontology-options to)
              merge options))
@@ -319,9 +323,21 @@
                p5 (o/object-property to "p5")
              ]
          (o/add-subchain to
-          p1 (list p2 p3 [p4 p5])))))))
-  )
+          p1 (list p2 p3 [p4 p5]))))))))
 
+(deftest oproperty-subchain-test
+  (is
+   (let [
+         p (o/object-property to "p")
+         q (o/object-property to "q")
+         r (o/object-property to "r")
+         s (o/object-property to "s")
+         t (o/object-property to "t" :subchain r s [p q])]
+     (=
+      ;; the ordering here just seems to be what the OWL API returns and is
+      ;; not functional
+      [:oproperty t :subchain [[p q][r s]]]
+      (to-form t)))))
 
 (deftest object-property []
   (is (instance?
