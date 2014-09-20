@@ -138,6 +138,8 @@
     :<= :<=
     :> :>
     :>= :>=
+    :>< :><
+    :>=< :>=<
     }
 
    [:keyword]
@@ -183,6 +185,8 @@
     :<= :<=
     :> :>
     :>= :>=
+    :>< :><
+    :>=< :>=<
     }
 
    [:explicit]
@@ -231,6 +235,8 @@
     :<= '<=
     :> '>
     :>= '>=
+    :>< '><
+    :>=< '>=<
     }
 
    []
@@ -275,7 +281,9 @@
     :< '<
     :<= '<=
     :> '>
-    :>= '>=}})
+    :>= '>=
+    :>< '><
+    :>=< '>=<}})
 
 (def
   ^{:private true}
@@ -931,14 +939,14 @@ element is a list."
 
 (defmethod form OWLDataSomeValuesFrom
   [^OWLDataSomeValuesFrom d options]
-  (list**
+  (list
    (unnamed-entity :data-some options)
    (form (.getProperty d) options)
    (form (.getFiller d) options)))
 
 (defmethod form OWLDataAllValuesFrom
   [^OWLDataAllValuesFrom a options]
-  (list**
+  (list
    (unnamed-entity :data-only options)
         (form (.getProperty a) options)
         (form (.getFiller a) options)))
@@ -1026,10 +1034,53 @@ element is a list."
       (.isDouble dt)
       (.isFloat dt)
       (.isInteger dt))
-     (for [^OWLFacetRestriction fr (.getFacetRestrictions d)]
-       (list (unnamed-entity :span options)
-             (numeric-facet (.getFacet fr) options)
-             (numeric-literal (.getFacetValue fr))))
+     (case (count (.getFacetRestrictions d))
+       ;; we have a greater than or less than option
+       1
+       (let [^OWLFacetRestriction fr (first (.getFacetRestrictions d))]
+         (list (unnamed-entity :span options)
+               (numeric-facet (.getFacet fr) options)
+               (numeric-literal (.getFacetValue fr))))
+       ;; we have a greater than and less than option
+       2
+       (let
+           ;; get the restrictions and ensure that are in the right order.
+           [frs (sort (.getFacetRestrictions d))
+            ^OWLFacetRestriction fr1 (nth frs 0)
+            ^OWLFacetRestriction fr2 (nth frs 1)]
+         (cond
+          (and
+           (=
+            OWLFacet/MIN_INCLUSIVE
+            (.getFacet fr1))
+           (=
+            OWLFacet/MAX_INCLUSIVE
+            (.getFacet fr2)))
+          (list (unnamed-entity :span options)
+                (unnamed-entity :>=< options)
+                (numeric-literal
+                 (.getFacetValue fr1))
+                (numeric-literal
+                 (.getFacetValue fr2)))
+          (and
+           (=
+            OWLFacet/MIN_EXCLUSIVE
+            (.getFacet fr1))
+           (=
+            OWLFacet/MAX_EXCLUSIVE
+            (.getFacet fr2)))
+          (list (unnamed-entity :span options)
+                (unnamed-entity :>< options)
+                (numeric-literal
+                 (.getFacetValue fr1))
+                (numeric-literal
+                 (.getFacetValue fr2)))
+          :default
+          (throw
+           (Exception. "Have datatype with strange arrangement of facets."))))
+       (throw
+        (Exception.
+         "Trying to render data type restriction with strange number of facets.")))
      :default
      (throw (Exception. "Can't render non-numeric datatype")))))
 

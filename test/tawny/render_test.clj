@@ -34,6 +34,20 @@
 
 (use-fixtures :each createtestontology)
 
+(defn double-as-form [entity]
+  (vector
+   (r/as-form entity :terminal :object)
+   (r/as-form entity :terminal :object :keyword true)))
+
+(defn multi-as-form [entity]
+  (vector
+   (r/as-form entity :terminal :object)
+   (r/as-form entity :terminal :object :explicit true)
+   (r/as-form entity :terminal :object :keyword true)
+   (r/as-form entity :terminal :object :explicit true :keyword true)
+   ))
+
+
 (deftest datatype
   (is (= :XSD_INTEGER
          (r/as-form (#'o/ensure-datatype to :XSD_INTEGER)))))
@@ -74,9 +88,39 @@
 
 (deftest datasome-range
   (is
-   (= '(owl-some (iri "http://iri/#rD") (span < 1))
-      (r/as-form
-       (o/owl-some to "rD" (o/span < 1))))))
+   (tawny.owl/with-probe-entities to
+     [d (o/datatype-property to "d")]
+     (=
+      [['owl-some d '[span < 1]]
+       [:some d [:span :< 1]]]
+      (double-as-form
+       (o/owl-some to d (o/span < 1))))))
+  (is
+   (tawny.owl/with-probe-entities to
+     [d (o/datatype-property to "d")]
+     (=
+      [['owl-some d ['span '>< 1 1]]
+       [:some d [:span :>< 1 1]]]
+      (double-as-form
+       (o/owl-some to d (o/span >< 1 1))))))
+
+(deftest dataonly-range
+  (is
+   (tawny.owl/with-probe-entities to
+     [d (o/datatype-property to "d")]
+     (=
+      [['only d '[span < 1]]
+       [:only d [:span :< 1]]]
+      (double-as-form
+       (o/owl-only to d (o/span < 1))))))
+  (is
+   (tawny.owl/with-probe-entities to
+     [d (o/datatype-property to "d")]
+     (=
+      [['only d ['span '>< 1 1]]
+       [:only d [:span :>< 1 1]]]
+      (double-as-form
+       (o/owl-only to d (o/span >< 1 1))))))))
 
 
 (deftest individual-fact-1
@@ -196,14 +240,6 @@
        (o/owl-and to a) :terminal :object)
       ['owl-and a]))))
 
-
-(defn multi-as-form [entity]
-  (vector
-   (r/as-form entity :terminal :object)
-   (r/as-form entity :terminal :object :explicit true)
-   (r/as-form entity :terminal :object :keyword true)
-   (r/as-form entity :terminal :object :explicit true :keyword true)
-   ))
 
 ;; :some
 (deftest object-some
@@ -596,11 +632,6 @@
      (multi-as-form
       (o/inverse to r)))))
 
-
-(defn double-as-form [entity]
-  (vector
-   (r/as-form entity :terminal :object)
-   (r/as-form entity :terminal :object :keyword true)))
 
 (deftest ontology
   ;; simplest possible -- ontology with a specific IRI
