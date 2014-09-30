@@ -31,9 +31,7 @@ from the Clojure language, or from general-purpose programming tools (IDEs,
 versioning, continuous integration). The core ontology features are
 implemented directly using the [OWL API](http://owlapi.sourceforge.net/).
 These features are, therefore, industry strength, standards-compliant and
-well-supported independently of the Tawny-OWL developers. A longer
-[getting started](docs/getting-started.md) document is available which
-describes these features further.
+well-supported independently of the Tawny-OWL developers.
 
 OWL is a W3C standard ontology representation language; an ontology is a fully
 computable set of statements, describing the things and their relationships.
@@ -43,10 +41,9 @@ knowledge such as [genetics](http://www.geneontology.org/) or
 describe anything, including [e-commerce](http://purl.org/goodrelations/). For
 more tutorial information, please see http://ontogenesis.knowledgeblog.org.
 
-A longer [getting started](docs/getting-started.md) document is available. The
-core library, `owl.clj` provides an API which looks similar to Manchester OWL
-syntax, but is nonetheless fully programmatically extensible; all namespaces
-are [described](docs/namespaces.md) elsewhere.
+A longer [getting started](docs/getting-started.md) document is available. A
+[full-length manual](http://homepages.cs.ncl.ac.uk/phillip.lord/take-wing/) is
+also in [development](http://github.com/phillord/take-wing).
 
 ## For the Clojure developer
 
