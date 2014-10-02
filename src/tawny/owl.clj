@@ -786,11 +786,11 @@ add-sub-annotation functionality."
 
 (def ^{:private true} annotation-property-handlers
   {
-   :super add-super-annotation
-   :subproperty deprecated-add-sub-annotation
-   :annotation add-annotation
-   :comment add-comment
-   :label add-label
+   :super #'add-super-annotation
+   :subproperty #'deprecated-add-sub-annotation
+   :annotation #'add-annotation
+   :comment #'add-comment
+   :label #'add-label
    })
 
 (defdontfn annotation-property-explicit
@@ -1011,15 +1011,15 @@ ontology or an IRI"
 (def ^{:private true} ontology-handlers
   {
    ;; these are not broadcast
-   :iri-gen set-iri-gen,
-   :prefix set-prefix,
-   :name add-an-ontology-name
-   :seealso add-see-also
-   :comment add-ontology-comment
-   :versioninfo add-version-info
+   :iri-gen #'set-iri-gen,
+   :prefix #'set-prefix,
+   :name #'add-an-ontology-name
+   :seealso #'add-see-also
+   :comment #'add-ontology-comment
+   :versioninfo #'add-version-info
    ;; these two are specially dealt with and are broadcast
-   :annotation add-ontology-annotation-handler
-   :import add-import
+   :annotation #'add-ontology-annotation-handler
+   :import #'add-import
    })
 
 
@@ -1689,20 +1689,21 @@ and used as the handler for :subpropertychain."
 
 (def ^{:private true} object-property-handlers
   {
-   :domain add-domain
-   :range add-range
-   :inverse add-inverse
-   :sub add-subproperty
-   :super add-superproperty
-   :subproperty deprecated-add-superproperty
-   :characteristic add-characteristics
-   :subchain add-subchain
-   :subpropertychain deprecated-add-subpropertychain
-   :disjoint add-disjoint-property
-   :equivalent add-equivalent-property
-   :annotation add-annotation
-   :label add-label
-   :comment add-comment})
+   :domain #'add-domain
+   :range #'add-range
+   :inverse #'add-inverse
+   :sub #'add-subproperty
+   :super #'add-superproperty
+   :subproperty #'deprecated-add-superproperty
+   :characteristic #'add-characteristics
+   :subchain #'add-subchain
+   :subpropertychain #'deprecated-add-subpropertychain
+   :disjoint #'add-disjoint-property
+   :equivalent #'add-equivalent-property
+   :annotation #'add-annotation
+   :label #'add-label
+   :comment #'add-comment
+   })
 
 ;; object properties
 (defdontfn object-property-explicit
@@ -2043,17 +2044,18 @@ n is evaluated only once, so can have side effects."
   (.getOWLObjectHasSelf (owl-data-factory)
                         (ensure-object-property o property)))
 
-(def
-  ^{:private true} owl-class-handlers
-  {:subclass deprecated-add-subclass
-   :sub add-subclass
-   :super add-superclass
-   :equivalent add-equivalent
-   :disjoint add-disjoint
-   :annotation add-annotation
-   :haskey add-has-key
-   :comment add-comment
-   :label add-label})
+(def ^{:private true} owl-class-handlers
+  {
+   :subclass #'deprecated-add-subclass
+   :sub #'add-subclass
+   :super #'add-superclass
+   :equivalent #'add-equivalent
+   :disjoint #'add-disjoint
+   :annotation #'add-annotation
+   :haskey #'add-has-key
+   :comment #'add-comment
+   :label #'add-label
+   })
 
 (defdontfn owl-class-explicit
   "Creates a class in the current ontology.
@@ -2234,16 +2236,16 @@ or to ONTOLOGY if present."
 
 ;; need to support all the different frames here...
 ;; need to use hashify -- need to convert to handlers
-(def
-  ^{:private true}
-  individual-handlers
-  {:type add-type
-   :fact add-fact
-   :same add-same
-   :different add-different
-   :annotation add-annotation
-   :comment add-comment
-   :label add-label})
+(def ^{:private true} individual-handlers
+  {
+   :type #'add-type
+   :fact #'add-fact
+   :same #'add-same
+   :different #'add-different
+   :annotation #'add-annotation
+   :comment #'add-comment
+   :label #'add-label
+   })
 
 (defdontfn individual-explicit
   "Returns a new individual."
