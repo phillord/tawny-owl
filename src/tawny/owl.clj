@@ -1594,11 +1594,12 @@ and used as the handler for :subproperty."
           ]
       (list
        ;; add individual entities are a single chain
-       (add-axiom o
-                  (.getOWLSubPropertyChainOfAxiom
-                   (owl-data-factory)
-                   (map (partial ensure-object-property o) properties)
-                   property))
+       (when (seq properties)
+         (add-axiom o
+                    (.getOWLSubPropertyChainOfAxiom
+                     (owl-data-factory)
+                     (map (partial ensure-object-property o) properties)
+                     property)))
        ;; add sequential entities as a chain in their own right
        (doall
         (map (partial add-subchain

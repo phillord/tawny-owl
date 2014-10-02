@@ -1216,3 +1216,23 @@ Assumes that fixture has been run"
   (is
    (let [cls (o/owl-class to "a")]
      (o/refine to cls :label "a"))))
+
+;; testing :subchain frame
+(deftest add-one-subchain-axiom1
+  (let [to (o/ontology :noname true)
+        A (o/object-property to "A")
+        B (o/object-property to "B")]
+
+    (let [before (count (.getAxioms to))]
+      (o/object-property to A :subchain [A B])
+      (is (= (+ before 1) (count (.getAxioms to)))))))
+
+;; testing add-subchain function
+(deftest add-one-subchain-axiom2
+  (let [to (o/ontology :noname true)
+        A (o/object-property to "A")
+        B (o/object-property to "B")]
+
+    (let [before (count (.getAxioms to))]
+      (o/add-subchain to A [A B])
+      (is (= (+ before 1) (count (.getAxioms to)))))))
