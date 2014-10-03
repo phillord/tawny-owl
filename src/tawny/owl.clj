@@ -1862,12 +1862,12 @@ data ranges."
   (apply guess-type-error rest))
 
 ;; short cuts for the terminally lazy. Still prefix!
-(def && owl-and)
-(def || owl-or)
-(def ! owl-not)
+(def && #'owl-and)
+(def || #'owl-or)
+(def ! #'owl-not)
 
 ;; "long cuts" for consistency with some
-(def owl-only only)
+(def owl-only #'only)
 
 (defbmontfn object-some
   {:doc "Returns an OWL some values from restriction."
