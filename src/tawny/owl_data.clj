@@ -126,19 +126,20 @@ This is to deprecated the :superproperty frame"}
         (into-array OWLDataPropertyExpression
                     properties)))))
 
-(def ^{:private true}
-  datatype-property-handlers
-  {:annotation add-annotation,
-   :domain add-data-domain,
-   :range add-data-range,
-   :subproperty deprecated-add-data-superproperty
-   :sub add-data-subproperty
-   :super add-data-superproperty
-   :characteristic add-data-characteristics
-   :disjoint add-data-disjoint
-   :equivalent add-data-equivalent
-   :comment add-comment
-   :label add-label})
+(def ^{:private true} datatype-property-handlers
+  {
+   :annotation #'add-annotation,
+   :domain #'add-data-domain,
+   :range #'add-data-range,
+   :subproperty #'deprecated-add-data-superproperty
+   :sub #'add-data-subproperty
+   :super #'add-data-superproperty
+   :characteristic #'add-data-characteristics
+   :disjoint #'add-data-disjoint
+   :equivalent #'add-data-equivalent
+   :comment #'add-comment
+   :label #'add-label
+   })
 
 (defdontfn datatype-property-explicit
   "Define a new datatype property with an explicit map"
@@ -214,12 +215,13 @@ which is an OWLDatatype object.
       (owl-data-factory) datatype
       (ensure-data-range o equivalent))))
 
-(def ^{:private true}
-  datatype-handlers
-  {:annotation add-annotation
-   :comment add-comment
-   :label add-label
-   :equivalent add-datatype-equivalent})
+(def ^{:private true} datatype-handlers
+  {
+   :annotation #'add-annotation
+   :comment #'add-comment
+   :label #'add-label
+   :equivalent #'add-datatype-equivalent
+   })
 
 (defdontfn datatype-explicit
   "Defines a new datatype."
