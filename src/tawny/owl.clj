@@ -860,7 +860,17 @@ the args minus the ontology frame if it exists."
        (tawny.owl/intern-owl ~entity entity#))))
 
 (defmacro defentity
-  "Defines a new entity macro."
+  "Defines a new macro for defining OWL entities.
+
+This macro allows easy definition of new macros similar to the defclass or
+defoproperty macro. It expects an entity-function which can accept an
+ontology or nil as a first argument, and then a set of frames. See
+`defdontfn' or `defmontfn' which support the declaration of these functions.
+The ontology argument is taken from a first :ontology frame which is handled by
+this macro. This macro also marks the resultant var with :owl metadata.
+
+The resultant macro takes arguments of the form [name :ontology o :frame1 f].
+The ontology frame is optional."
   [name docstring entity-function]
   `(defmacro
      ~name
