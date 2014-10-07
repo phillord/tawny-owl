@@ -859,14 +859,14 @@ the args minus the ontology frame if it exists."
                ~@frames))]
        (tawny.owl/intern-owl ~entity entity#))))
 
-(defmacro ^{:private true} defentity
+(defmacro defentity
   "Defines a new entity macro."
   [name docstring entity-function]
   `(defmacro
      ~name
      ~docstring
      [entity# & frames#]
-     (entity-generator entity# frames# ~entity-function)))
+     (#'tawny.owl/entity-generator entity# frames# ~entity-function)))
 
 (defentity defaproperty
   "Defines a new annotation property in the current ontology.
