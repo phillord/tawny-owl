@@ -1,8 +1,8 @@
-(ns tawny.render-sio-test
+(ns ^:slow
+  tawny.render-sio-test
   (:require [tawny.owl])
   (:use [clojure.test])
-  (:require [tawny.render])
-  )
+  (:require [tawny.render]))
 
 (defn read-sio []
   (tawny.owl/remove-ontology-maybe

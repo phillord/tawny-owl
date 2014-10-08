@@ -1,4 +1,4 @@
-(ns tawny.reflect-test
+(ns ^:slow tawny.reflect-test
   (:use [clojure.test]))
 
 (defmacro eval-in-temp-ns [& forms]

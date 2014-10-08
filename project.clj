@@ -16,6 +16,9 @@
                  ;;:init (require 'tawny.repl)
                  }
 
+  :test-selectors {:slow :slow
+                   :commit (complement :slow)}
+
   :dependencies [
                  ;; owl API
                  [net.sourceforge.owlapi/owlapi-distribution "3.5.0"]
