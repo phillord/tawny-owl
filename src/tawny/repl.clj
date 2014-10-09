@@ -286,3 +286,12 @@ to file names. Save ontologies in 'root' or the resources directory."
   (println "Loading:" iri)
   (let [o (load-ontology iri)]
     (render-ontology o file)))
+
+(defn use-tawny
+  "Use key tawny namespaces.
+This is designed for repl uses with lein-shorthand."
+  []
+  (use 'tawny.owl)
+  (use 'tawny.repl)
+  (use 'tawny.reasoner)
+  (use 'tawny.render))
