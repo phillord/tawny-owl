@@ -41,6 +41,9 @@ be rendered, and this form re-read. This has required a few additional changes.
 - The `ontology` function now supports :import and :annotation frames which
   broadcast.
 - `direct-instances` function added.
+- `defentity` form added and made public.
+- We now test against several versions of the OWL API.
+
 
 ## Bug Fixes
 - Tawny's own annotation ontology now uses `defonce` semantics which makes
@@ -50,6 +53,9 @@ be rendered, and this form re-read. This has required a few additional changes.
 - `ontology` now adds a prefix even if one is not specified. This avoids a NPE
   when saving in a prefix format.
 - `as-form` now renders multiple facts correctly
+- Several bugs fixed with property chain support, as well as their rendering.
+- Numeric restrictions now accept doubles
+- `tawny.fixture/ontology-and-reasoner` didn't actualy work
 
 ## Breaking Changes
 
