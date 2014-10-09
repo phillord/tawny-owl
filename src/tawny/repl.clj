@@ -226,7 +226,7 @@ to file names. Save ontologies in 'root' or the resources directory."
 
 (def *c
   "The last change that an on-change listener saw."
-  nil)
+  (atom nil))
 
 (defn on-change
   "Evaluate FN everytime an ontology change happens"
@@ -236,7 +236,7 @@ to file names. Save ontologies in 'root' or the resources directory."
              []
              (ontologiesChanged
               [l]
-               (set! *c l)
+               (reset! *c l)
                (fn)))]
      (.addOntologyChangeListener
       (o/owl-ontology-manager)
@@ -244,12 +244,12 @@ to file names. Save ontologies in 'root' or the resources directory."
      listener))
 
 (def auto-save-listener
-  "The current listener for handling auto-saves or nil." nil)
+  "The current listener for handling auto-saves or nil." (atom nil))
 
 (defn auto-save [filename format]
   "Autosave the current ontology everytime any change happens."
-  (when-not auto-save-listener
-    (set! auto-save-listener
+  (when-not @auto-save-listener
+    (reset! auto-save-listener
      (on-change #(o/save-ontology filename format)))))
 
 (defn auto-save-off []
