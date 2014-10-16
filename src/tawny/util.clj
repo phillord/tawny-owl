@@ -16,7 +16,8 @@
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
 
 (ns tawny.util
-  (:import [java.io Writer]))
+  (:import [java.io Writer])
+  (:require [clojure.walk]))
 
 
 ;;
@@ -98,6 +99,8 @@ values are lists and concats duplicates."
       (format "Expected only keys %s; Got %s" thekeys (keys hash)))))
   hash)
 
+;; this is badly named -- it's a lift from perl, but it doesn't quote
+;; at all, it names
 (defmacro quote-word
   "Given a list of symbols, return a list of names."
   [& symbols]
@@ -107,6 +110,15 @@ values are lists and concats duplicates."
          (fn [symbol]
            (name symbol))
          symbols))))
+
+(defmacro name-tree
+  "Given a tree of symbols, return a tree of names."
+  [tree]
+  `(clojure.walk/postwalk
+    #(if (symbol? %)
+       (name %)
+       %)
+    (quote ~tree)))
 
 ;; hook system
 (defn make-hook
