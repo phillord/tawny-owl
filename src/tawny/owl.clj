@@ -661,19 +661,14 @@ with the literal function."
      (cond
       (instance? String literal)
       (annotation o annotation-property literal "en")
-      (instance? IRI literal)
-      (.getOWLAnnotation
-       (owl-data-factory)
-       (ensure-annotation-property o annotation-property)
-       literal)
-      (instance? OWLLiteral literal)
+      (instance? org.semanticweb.owlapi.model.OWLAnnotationValue literal)
       (.getOWLAnnotation
        (owl-data-factory)
        (ensure-annotation-property o annotation-property)
        literal)
       :default
       (throw (IllegalArgumentException.
-              "annotation takes a String or OWLLiteral"))))
+              "annotation takes a String or OWLAnnotationValue"))))
   ([o annotation-property ^String literal ^String language]
      (annotation o annotation-property
                  (.getOWLLiteral (owl-data-factory) literal language))))
