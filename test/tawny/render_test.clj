@@ -149,19 +149,19 @@
 (deftest individual-3
   (is
    (=
-    `(individual (iri "http://iri/#I")
+    '(individual (iri "http://iri/#I")
                 :fact
                 (fact (iri "http://iri/#r")
                          (iri "http://iri/#I2"))
                 (fact-not (iri "http://iri/#r")
-                          (iri "http://iri/#I2"))))
-   (r/as-form
-    (o/individual to "I"
-                  :fact
-                     (o/fact to (o/object-property to "r")
-                             (o/individual to "I2"))
-                     (o/fact-not to (o/object-property to "r")
-                                 (o/individual to "I2"))))))
+                          (iri "http://iri/#I2")))
+    (r/as-form
+     (o/individual to "I"
+                   :fact
+                   (o/fact to (o/object-property to "r")
+                           (o/individual to "I2"))
+                   (o/fact-not to (o/object-property to "r")
+                               (o/individual to "I2")))))))
 
 
 (deftest individual-data
@@ -546,9 +546,9 @@
     [['label ['literal "l" :lang "en"]]
      ['label ['literal "l" :lang "en"]]
      [:label [:literal "l" :lang "en"]]
-     [:label [:literal "l" :lang "en"]]])
-   (multi-as-form
-    (o/label "l"))))
+     [:label [:literal "l" :lang "en"]]]
+    (multi-as-form
+     (o/label "l")))))
 
 ;; :comment
 (deftest owlcomment
@@ -557,9 +557,9 @@
     [['owl-comment ['literal "l" :lang "en"]]
      ['owl-comment ['literal "l" :lang "en"]]
      [:comment [:literal "l" :lang "en"]]
-     [:comment [:literal "l" :lang "en"]]])
-   (multi-as-form
-    (o/owl-comment "l"))))
+     [:comment [:literal "l" :lang "en"]]]
+    (multi-as-form
+     (o/owl-comment "l")))))
 
 ;; :literal
 (deftest literal
@@ -637,11 +637,11 @@
      [r (o/object-property to "r")]
      (=
       [['inverse r]
-       ['object-inverse r]
+       ['inverse r]
        [:inverse r]
-       [:object-inverse r]])
-     (multi-as-form
-      (o/inverse to r)))))
+       [:inverse r]]
+      (multi-as-form
+       (o/inverse to r))))))
 
 
 (deftest ontology
@@ -682,8 +682,8 @@
      [r (o/object-property to "r")]
      (=
       [['object-property r]
-       [:oproperty r]])
-     (double-as-form r))))
+       [:oproperty r]]
+      (double-as-form r)))))
 
 (deftest individ-many-facts
   (is
