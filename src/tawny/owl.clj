@@ -162,17 +162,36 @@ ontology"
          ;; so break
          (throw (IllegalStateException. "Current ontology has not been set")))))
 
+(defn- call-f-with-arity [f n]
+  (let [args
+        (take n
+              (repeatedly #(gensym "arg")))]
+    (list
+     (vec args)
+     (concat f args))))
+
 (defmacro defnwithfn
   "Define a new var like defn, but compose FUNCTION with BODY before
 rather than just using BODY directly."
   [name function & body]
-  `(let [vr# (defn ~name ~@body)]
-     (alter-var-root
-      vr#
-      (fn [f#]
-        (fn ~name [& args#]
-          (apply ~function f# args#))))
-     vr#))
+  (let [f (gensym)]
+    `(let [vr# (defn ~name ~@body)]
+       (alter-var-root
+        vr#
+        (fn [~f]
+          ;; 0 to 20 arity
+          (fn
+          ~@(map
+             #(call-f-with-arity
+               [function f] %)
+             (range 20))
+          ;; and fall back
+          ([a# b# c# d# e# f# g# h# i# j# k#
+            l# m# n# o# p# q# r# s# & t#]
+             (apply ~function ~f
+                    a# b# c# d# e# f# g# h# i# j# k#
+                    l# m# n# o# p# q# r# s# t#)))))
+       vr#)))
 
 (defonce
   ^{:doc "Hook called when the default ontology is used"}
