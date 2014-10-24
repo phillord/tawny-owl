@@ -691,78 +691,80 @@ add-sub-annotation functionality."
   add-super-annotation)
 
 ;; various annotation types
+(defn annotator
+  "Creates a new annotator function.
+  Annotation-property maybe an OWLAnnotationProperty object or a string in which
+  case it will be coerced into a OWLAnnotationProperty using iri or
+  iri-for-name. The function returned can take an optional ontology argument
+  which will be used in this case."
+  [annotation-property]
+  (fn annotator-pattern [& args]
+    (apply
+     default-ontology-maybe
+      (fn
+        ([o literal]
+           (annotation o annotation-property literal))
+        ([o literal language]
+           (annotation o annotation-property literal language)))
+      args)))
+
 (def label-property
   (.getRDFSLabel (owl-data-factory)))
 
-(defmontfn label
+(def
+  label
   "Return an OWL label annotation."
-  [o & args]
-  (apply annotation o label-property args))
+  (annotator label-property))
 
 (def owl-comment-property
   (.getRDFSComment (owl-data-factory)))
 
-(defmontfn owl-comment
-  "Return an OWL comment annotation."
-  [o & args]
-  (apply annotation o owl-comment-property args))
+(def
+  owl-comment
+  "Return an OWL comment annotation"
+  (annotator owl-comment-property))
 
 (def is-defined-by-property
   (.getRDFSIsDefinedBy (owl-data-factory)))
 
-(defmontfn is-defined-by
+(def is-defined-by
   "Return an is defined by annotation."
-  [o & args]
-  (apply annotation o is-defined-by-property args))
+  (annotator is-defined-by-property))
 
 (def see-also-property
   (.getRDFSSeeAlso (owl-data-factory)))
 
-(defmontfn see-also
+(def see-also
   "Returns a see-also annotation."
-  [o & args]
-  (apply annotation o
-         see-also-property args))
+  (annotator see-also-property))
 
 (def backward-compatible-with-property
   (.getOWLBackwardCompatibleWith (owl-data-factory)))
 
-(defmontfn backward-compatible-with
+(def backward-compatible-with
   "Returns a backward compatible with annotation."
-  [o & args]
-  (apply annotation o
-         backward-compatible-with-property
-         args))
+  (annotator backward-compatible-with-property))
 
 (def incompatible-with-property
   (.getOWLIncompatibleWith (owl-data-factory)))
 
-(defmontfn incompatible-with
+(def incompatible-with
   "Returns an incompatible with annotation."
-  [o & args]
-  (apply annotation o
-         incompatible-with-property
-         args))
+  (annotator incompatible-with-property))
 
 (def version-info-property
   (.getOWLVersionInfo (owl-data-factory)))
 
-(defmontfn version-info
+(def version-info
   "Returns a version info annotation."
-  [o & args]
-  (apply annotation o
-         version-info-property
-         args))
+  (annotator version-info-property))
 
 (def deprecated-property
   (.getOWLDeprecated (owl-data-factory)))
 
-(defmontfn deprecated
+(def deprecated
   "Returns a deprecated annotation."
-  [o & args]
-  (apply annotation o
-         deprecated-property
-         args))
+  (annotator deprecated-property))
 
 (defbmontfn add-label
   "Add labels to the named entities."
