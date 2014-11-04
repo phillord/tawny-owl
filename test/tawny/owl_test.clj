@@ -1236,3 +1236,60 @@ Assumes that fixture has been run"
     (let [before (count (.getAxioms to))]
       (o/add-subchain to A [A B])
       (is (= (+ before 1) (count (.getAxioms to)))))))
+
+
+;; annotations on axioms
+(deftest annotation-on-superclass
+  (is
+   (let [a (o/owl-class to "a")
+         b (o/owl-class to "b")
+         ax (o/add-superclass to a b)]
+     (= 0 (count (.getAnnotations ax))))))
+
+;; these need to be in their own deftest because we only create one ontology
+;; per deftest annotated axioms are not idepotment with unannotated.
+(deftest annotation-on-superclass-1
+  (let [a (o/owl-class to "a")
+        b (o/owl-class to "b")
+        ax (o/add-superclass
+            to a
+            (o/annotate
+             b
+             (o/label to "annotate")
+             ))]
+    (is
+     (= 1 (count (.getAnnotations ax))))))
+
+(deftest annotation-on-superclass-2
+  (let [a (o/owl-class to "a")
+        b (o/owl-class
+           to "b"
+           :super
+           (o/annotate a (o/label to "l")))
+        axs (filter
+             #(instance? org.semanticweb.owlapi.model.OWLSubClassOfAxiom %)
+             (seq (.getAxioms to)))]
+    (is
+     (= 1  (count axs)))
+    (is
+     (= 1 (count (.getAnnotations (first axs)))))))
+
+
+(deftest annotation-on-superproperty
+  (is
+   (let [r (o/object-property to "r")
+         s (o/object-property to "s")
+         ax (o/add-superproperty to r s)]
+     (= 0 (count (.getAnnotations ax))))))
+
+(deftest annotation-on-superproperty-1
+  (is
+   (= 1
+      (let [r (o/object-property to "r")
+            s (o/object-property to "s")
+            ax (o/add-superproperty
+                to r
+                (o/annotate
+                 s
+                 (o/label to "annotatin")))]
+        (count (.getAnnotations ax))))))
