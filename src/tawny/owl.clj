@@ -141,18 +141,15 @@ an exception."
 (defprotocol Entityable
   (^OWLObject as-entity [entity]))
 
-(defn entityable? [entity]
-  (satisfies? Entityable entity))
-
 ;; annotable entities are those which carry a set of annotations which should
 ;; be placed on their Axiom when they are asserted. Returns a set which may be
 ;; empty.
 (defprotocol Annotatable
   (^java.util.Set as-annotations [entity]))
 
-;; do nothing
+;; extend to object so that we can support numbers and strings, and so forth.
 (extend-type
-    OWLObject
+    Object
   Entityable
   (as-entity [entity] entity))
 
@@ -168,8 +165,12 @@ an exception."
   Annotatable
   (as-annotations [this] annotations))
 
-(defn annotate [entity & annotation]
-  (Annotated. entity (set annotation)))
+(defn annotate [entity-or-list & annotation]
+  (let [annotation-set (set annotation)]
+    (if (seq? entity-or-list)
+      (map #(Annotated. % annotation-set)
+           (flatten entity-or-list))
+      (Annotated. entity-or-list (set annotation)))))
 
 (defn re-annotate
   "Returns a Annotated which with the entity and the same
@@ -189,7 +190,7 @@ Type hinted to java.util.Set so that the result can be called against the OWL
 API."
   [annotatables]
   (apply clojure.set/union
-   (map as-annotations annotatables)))
+         (map as-annotations annotatables)))
 
 (defn ^java.util.Set hset
   "Same as clojure.core/set with a type hint."
@@ -1748,31 +1749,79 @@ and used as the handler for :subpropertychain."
 (def
   ^{:private true}
   charfuncs
-  {:transitive #(.getOWLTransitiveObjectPropertyAxiom
-                 ^OWLDataFactory %1 ^OWLObjectProperty %2)
-   :functional #(.getOWLFunctionalObjectPropertyAxiom
-                 ^OWLDataFactory %1 ^OWLObjectProperty %2)
-   :inversefunctional #(.getOWLInverseFunctionalObjectPropertyAxiom
-                        ^OWLDataFactory %1 ^OWLObjectProperty %2)
-   :symmetric #(.getOWLSymmetricObjectPropertyAxiom
-                ^OWLDataFactory %1 ^OWLObjectProperty %2)
-   :asymmetric #(.getOWLAsymmetricObjectPropertyAxiom
-                 ^OWLDataFactory %1 ^OWLObjectProperty %2)
-   :irreflexive #(.getOWLIrreflexiveObjectPropertyAxiom
-                  ^OWLDataFactory %1 ^OWLObjectProperty %2)
-   :reflexive #(.getOWLReflexiveObjectPropertyAxiom
-                ^OWLDataFactory %1 ^OWLObjectProperty %2)})
+  {:transitive
+   (fn [^OWLDataFactory df
+        ^OWLObjectProperty op
+        ^java.util.Set an]
+     (.getOWLTransitiveObjectPropertyAxiom
+      df
+      op
+      an))
+   :functional
+   (fn [^OWLDataFactory df
+        ^OWLObjectProperty op
+        ^java.util.Set an]
+     (.getOWLFunctionalObjectPropertyAxiom
+      df
+      op
+      an))
+   :inversefunctional
+   (fn [^OWLDataFactory df
+        ^OWLObjectProperty op
+        ^java.util.Set an]
+     (.getOWLInverseFunctionalObjectPropertyAxiom
+      df
+      op
+      an))
+   :symmetric
+   (fn [^OWLDataFactory df
+        ^OWLObjectProperty op
+        ^java.util.Set an]
+     (.getOWLSymmetricObjectPropertyAxiom
+      df
+      op
+      an))
+   :asymmetric
+   (fn [^OWLDataFactory df
+        ^OWLObjectProperty op
+        ^java.util.Set an]
+     (.getOWLAsymmetricObjectPropertyAxiom
+      df
+      op
+      an))
+   :irreflexive
+   (fn [^OWLDataFactory df
+        ^OWLObjectProperty op
+        ^java.util.Set an]
+     (.getOWLIrreflexiveObjectPropertyAxiom
+      df
+      op
+      an))
+   :reflexive
+   (fn [^OWLDataFactory df
+        ^OWLObjectProperty op
+        ^java.util.Set an]
+     (.getOWLReflexiveObjectPropertyAxiom
+      df
+      op
+      an))})
 
 (defbdontfn add-characteristics
   "Add a list of characteristics to the property."
   [o property characteristic]
-  (when-not (get charfuncs characteristic)
+  (if-let [char (get charfuncs
+                     (as-entity characteristic))]
+    ;;; this is all totally wrong headed here because we are passing in the
+;;; property which does not carry the annotations. So need to change all the
+;;; functions above to take the annotation as an extra argument
+    (add-axiom
+     o
+     (char
+      (owl-data-factory)
+      (ensure-object-property o property)
+      (as-annotations characteristic)))
     (throw (IllegalArgumentException.
-            "Characteristic is not recognised:" characteristic)))
-  (add-axiom
-   o
-   ((get charfuncs characteristic)
-    (owl-data-factory) (ensure-object-property o property))))
+            (str "Characteristic is not recognised:" characteristic)))))
 
 (def ^{:private true} object-property-handlers
   {
@@ -2110,7 +2159,7 @@ n is evaluated only once, so can have side effects."
    (owl-data-factory)
    (java.util.HashSet.
     (util/domap (partial ensure-individual o)
-         (flatten individuals)))))
+                (flatten individuals)))))
 
 (defmethod oneof ::individual [& rest]
   (apply object-oneof rest))
@@ -2119,8 +2168,8 @@ n is evaluated only once, so can have side effects."
   "Adds an OWL has-value restriction."
   [o property individual]
   (.getOWLObjectHasValue (owl-data-factory)
-                          (ensure-object-property o property)
-                          (ensure-individual o individual)))
+                         (ensure-object-property o property)
+                         (ensure-individual o individual)))
 
 (defmethod has-value ::object [& rest]
   (apply object-has-value rest))
@@ -2251,7 +2300,9 @@ or ONTOLOGY if present."
   [o individual fact]
   (add-axiom
    o
-   (fact individual)))
+   ((as-entity fact)
+    individual
+    (as-annotations fact))))
 
 (defmulti get-fact guess-type-args)
 (defmulti get-fact-not guess-type-args)
@@ -2261,8 +2312,8 @@ or ONTOLOGY if present."
 either an object or data property toward either an individual or literal
 TO. This is the same as the function `is'."
   [o property to]
-  (fn fact [from]
-    (get-fact o property from to)))
+  (fn fact [from annotations]
+    (get-fact o property from to annotations)))
 
 (def ^{:doc "Returns a fact assertion a relation by PROPERTY which can be
 either an object or data property toward either an individual or literal
@@ -2274,29 +2325,25 @@ TO"}
   "Returns a fact asserting the lack of a relationship along PROPERTY
 toward an either an individual or literal TO."
   [o property to]
-  (fn fact-not [from]
-    (get-fact-not o property from to)))
+  (fn fact-not [from annotations]
+    (get-fact-not o property from to annotations)))
 
 (defmontfn object-get-fact
   "Returns an OWL Object property assertion axiom."
-  [_ property from to]
+  [_ property from to annotations]
   (.getOWLObjectPropertyAssertionAxiom
    (owl-data-factory)
-   property from 
-   (as-entity to)
-   (as-annotations to)))
+   property from to annotations))
 
 (defmethod get-fact ::object [& rest]
   (apply object-get-fact rest))
 
 (defmontfn object-get-fact-not
   "Returns a negative OWL Object property assertion axiom."
-  [_ property from to]
+  [_ property from to annotations]
   (.getOWLNegativeObjectPropertyAssertionAxiom
    (owl-data-factory)
-   property from
-   (as-entity to)
-   (as-annotations to)))
+   property from to annotations))
 
 (defmethod get-fact-not ::object [& rest]
   (apply object-get-fact-not rest))

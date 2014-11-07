@@ -205,6 +205,12 @@ defining the return type of that form."
   (let [tagged-sym (vary-meta (gensym) assoc :tag tag)]
     `(let [~tagged-sym ~form] ~tagged-sym)))
 
+(defmacro on-type [type entity & rest]
+  `(let [~entity
+         (tawny.util/tag-symbol ~type ~entity)]
+     (if (instance? ~type ~entity)
+       ~@rest)))
+
 (defmacro with-types
   "Given a spec of the form [symbol [types]] evaluate body if
 and only the value of symbol is an instance? of one of types. The symbol is

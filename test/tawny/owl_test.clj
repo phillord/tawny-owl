@@ -334,9 +334,10 @@
          s (o/object-property to "s")
          t (o/object-property to "t" :subchain r s [p q])]
      (=
-      ;; the ordering here just seems to be what the OWL API returns and is
-      ;; not functional
-      [:oproperty t :subchain [[p q][r s]]]
+      ;; the ordering here comes from render and the semantics of set.
+      ;; hopefully it will be consistent, because it is not functionally
+      ;; important, but we do test it.1
+      [:oproperty t :subchain [[r s][p q]]]
       (to-form t)))))
 
 (deftest object-property []
@@ -408,9 +409,7 @@
        (let [i (o/individual to "i")
              j (o/individual to "j")
              r (o/object-property to "r")]
-         ((o/owl-not to r i) j))))
-
-  )
+         ((o/owl-not to r i) j #{})))))
 
 (deftest some-only []
   (is
@@ -565,8 +564,6 @@ Assumes that fixture has been run"
         (let [prop (o/object-property to "a")]
           (o/remove-entity to prop)
           (.size (.getClassesInSignature to)))))))
-
-
 
 (deftest with-probe-entities
   ;; are the classes created correctly
@@ -1293,3 +1290,51 @@ Assumes that fixture has been run"
                  s
                  (o/label to "annotatin")))]
         (count (.getAnnotations ax))))))
+
+(deftest annotation-on-add-characteristics
+  (is
+   (let [r (o/object-property to "r")
+         ax (o/add-characteristics
+             to r
+             (o/annotate :functional
+                         (o/owl-comment to "f")))]
+     (= 1
+        (count (.getAnnotations ax))))))
+
+(deftest annotation-on-add-characteristics
+  (is
+   (let [r (o/object-property to "r")
+         ax (o/add-characteristics
+             to r
+             (o/annotate :functional
+                         (o/owl-comment to "f")))]
+     (= 1
+        (count (.getAnnotations ax))))))
+
+(deftest annotation-on-fact
+  (is
+   (let [d (o/datatype-property to "d")
+         i (o/individual to "i")
+         ax (o/add-fact
+             to i
+             (o/annotate (o/is to d (o/literal to 10))
+                         (o/owl-comment to "f")))]
+     (= 1
+        (count (.getAnnotations ax))))))
+
+;; copy from tawny.render which is crashing
+(deftest individual
+  (is
+   (o/fact to (o/datatype-property to "d") 10))
+  (is
+   (o/individual to "I"
+                 :fact
+                 (o/fact to (o/datatype-property to "d")
+                         10)
+                 (o/fact to (o/object-property to "r")
+                         (o/individual to "I2")))))
+
+(deftest broadcasting-annotate
+  (is (seq? (o/annotate
+            (o/object-some to "r" "A" "B")
+            (o/owl-comment to "c")))))
