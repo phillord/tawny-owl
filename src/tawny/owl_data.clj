@@ -24,7 +24,8 @@
    (.getOWLDataPropertyDomainAxiom
     (owl-data-factory)
     (ensure-data-property o property)
-    (ensure-class o domain))))
+    (ensure-class o domain)
+    (as-annotations domain))))
 
 (defbdontfn add-data-range
   {:doc "Adds a range to a data property."
@@ -34,7 +35,8 @@
    (.getOWLDataPropertyRangeAxiom
     (owl-data-factory)
     (ensure-data-property o property)
-    (ensure-data-range o range))))
+    (ensure-data-range o range)
+    (as-annotations range))))
 
 (defbdontfn add-data-subproperty
   "Adds a sub property to a data property."
@@ -44,7 +46,8 @@
    (.getOWLSubDataPropertyOfAxiom
     (owl-data-factory)
     (ensure-data-property o sub)
-    (ensure-data-property o property))))
+    (ensure-data-property o property)
+    (as-annotations sub))))
 
 (defbdontfn add-data-superproperty
   "Adds a super property to a data property."
@@ -53,7 +56,8 @@
              (.getOWLSubDataPropertyOfAxiom
               (owl-data-factory)
               (ensure-data-property o property)
-              (ensure-data-property o super))))
+              (ensure-data-property o super)
+              (as-annotations super))))
 
 (def
   ^{:deprecated "1.1"
@@ -67,9 +71,13 @@ This is to deprecated the :superproperty frame"}
   ^{:private true}
   datacharfuncs
   {
-   :functional #(.getOWLFunctionalDataPropertyAxiom
-                 ^OWLDataFactory %1
-                 ^OWLDataProperty %2)})
+   :functional
+   (fn [^OWLDataFactory df
+        ^OWLDataProperty dp]
+     (.getOWLFunctionalDataPropertyAxiom
+      df
+      (as-entity dp)
+      (as-annotations dp)))})
 
 (defbdontfn add-data-characteristics
   "Add a list of characteristics to the property."
@@ -88,7 +96,8 @@ This is to deprecated the :superproperty frame"}
    o (.getOWLEquivalentDataPropertiesAxiom
       (owl-data-factory)
       (ensure-data-property o property)
-      (ensure-data-property o equivalent))))
+      (ensure-data-property o equivalent)
+      (as-annotations equivalent))))
 
 (defdontfn equivalent-data-properties
   [o properties]
@@ -98,9 +107,8 @@ This is to deprecated the :superproperty frame"}
     (add-axiom
      o (.getOWLEquivalentDataPropertiesAxiom
         (owl-data-factory)
-        ^"[Lorg.semanticweb.owlapi.model.OWLDataPropertyExpression;"
-        (into-array OWLDataPropertyExpression
-                    properties)))))
+        (hset properties)
+        (union-annotations properties)))))
 
 (defbdontfn add-data-disjoint
   {:doc "Adds a disjoint data property axiom to the ontology"}
@@ -109,10 +117,10 @@ This is to deprecated the :superproperty frame"}
    o
    (.getOWLDisjointDataPropertiesAxiom
     (owl-data-factory)
-    ^"[Lorg.semanticweb.owlapi.model.OWLDataPropertyExpression;"
-    (into-array OWLDataPropertyExpression
-                [(ensure-data-property o name)
-                 (ensure-data-property o disjoint)]))))
+    (hash-set
+     (ensure-data-property o name)
+     (ensure-data-property o disjoint))
+    (as-annotations disjoint))))
 
 (defdontfn disjoint-data-properties
   [o properties]
@@ -122,9 +130,8 @@ This is to deprecated the :superproperty frame"}
     (add-axiom
      o (.getOWLDisjointDataPropertiesAxiom
         (owl-data-factory)
-        ^"[Lorg.semanticweb.owlapi.model.OWLDataPropertyExpression;"
-        (into-array OWLDataPropertyExpression
-                    properties)))))
+        (hset properties)
+        (as-annotations properties)))))
 
 (def ^{:private true} datatype-property-handlers
   {
@@ -213,7 +220,8 @@ which is an OWLDatatype object.
   (add-axiom
    o (.getOWLDatatypeDefinitionAxiom
       (owl-data-factory) datatype
-      (ensure-data-range o equivalent))))
+      (ensure-data-range o equivalent)
+      (as-annotations equivalent))))
 
 (def ^{:private true} datatype-handlers
   {
@@ -450,21 +458,21 @@ For example, (span < 10) returns a max exclusive restriction."
 
 (defmontfn data-get-fact
   "Returns a data fact."
-  [^OWLOntology o property ^OWLIndividual from to]
-  (util/with-types [to [OWLLiteral String Double Boolean Long]]
-    (.getOWLDataPropertyAssertionAxiom
-     (owl-data-factory)
-     (ensure-data-property o property) from to)))
+  [^OWLOntology o property ^OWLIndividual from to annotations]
+  (.getOWLDataPropertyAssertionAxiom
+   (owl-data-factory)
+   (ensure-data-property o property) from
+   (literal o to) annotations))
 
 (defmethod get-fact ::data [& rest]
   (apply data-get-fact rest))
 
 (defmontfn data-get-fact-not
   "Returns a data negative fact."
-  [o property from to]
+  [o property from to annotations]
   (.getOWLNegativeDataPropertyAssertionAxiom
    (owl-data-factory)
-   (ensure-data-property o property) from to))
+   (ensure-data-property o property) from to annotations))
 
 (defmethod get-fact-not ::data [& rest]
   (apply data-get-fact-not rest))

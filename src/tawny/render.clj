@@ -471,9 +471,10 @@
                 ;; get all SUB_PROPERTY_CHAIN_OF axioms in all ontologies
                 ;; each as set
                 (map
-                 #(.getAxioms
-                   ^OWLOntology %
-                   org.semanticweb.owlapi.model.AxiomType/SUB_PROPERTY_CHAIN_OF)
+                 #(set
+                   (.getAxioms
+                    ^OWLOntology %
+                    org.semanticweb.owlapi.model.AxiomType/SUB_PROPERTY_CHAIN_OF))
                  ont)))
         annotation
         (setmap
