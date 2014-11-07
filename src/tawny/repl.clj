@@ -266,6 +266,34 @@ to file names. Save ontologies in 'root' or the resources directory."
      (o/owl-ontology-manager)
      auto-save-listener)))
 
+(defn name-annotations
+  ([]
+     (name-annotations (o/get-current-ontology)))
+  ([^org.semanticweb.owlapi.model.OWLOntology o]
+     (filter
+      (fn [axiom]
+        (tawny.util/on-type
+         org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom axiom
+         (= (var-get #'tawny.owl/tawny-name-property)
+            (.getProperty axiom))))
+      (.getAxioms o))))
+
+(defn make-no-name
+  "Remove name annotations from current and future entities in the current
+  ontology. This is not quite the same as setting :noname at the beginning,
+  but it useful at the REPL where these annotations can just hinder the
+  reading of the ontology. There is no way to reverse this function, so use
+  with care."
+  ([]
+     (make-no-name (o/get-current-ontology)))
+  ([o]
+     (dosync
+      (alter
+       (tawny.owl/ontology-options o)
+       merge {:noname true}))
+     (apply tawny.owl/remove-axiom
+            o (name-annotations))))
+
 (defn render-ontology
   ([^OWLOntology o file]
      (render-ontology o file {}))
@@ -277,7 +305,7 @@ to file names. Save ontologies in 'root' or the resources directory."
         file
         (str
          (pr-str
-          (apply 
+          (apply
            tawny.render/as-form
            n
            (flatten
