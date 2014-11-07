@@ -246,11 +246,18 @@ to file names. Save ontologies in 'root' or the resources directory."
 (def auto-save-listener
   "The current listener for handling auto-saves or nil." (atom nil))
 
-(defn auto-save [filename format]
+(defn auto-save
   "Autosave the current ontology everytime any change happens."
-  (when-not @auto-save-listener
-    (reset! auto-save-listener
-     (on-change #(o/save-ontology filename format)))))
+  ([filename format]
+     (auto-save filename format false))
+  ([filename format nosave]
+     (let [f #(o/save-ontology filename format)]
+       ;; save immediately
+       (when-not nosave
+         (f))
+       (when-not @auto-save-listener
+         (reset! auto-save-listener
+                 (on-change f))))))
 
 (defn auto-save-off []
   "Stop autosaving ontologies."
