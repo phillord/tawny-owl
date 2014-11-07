@@ -221,17 +221,36 @@ ontology"
          ;; so break
          (throw (IllegalStateException. "Current ontology has not been set")))))
 
+(defn- call-f-with-arity [f n]
+  (let [args
+        (take n
+              (repeatedly #(gensym "arg")))]
+    (list
+     (vec args)
+     (concat f args))))
+
 (defmacro defnwithfn
   "Define a new var like defn, but compose FUNCTION with BODY before
 rather than just using BODY directly."
   [name function & body]
-  `(let [vr# (defn ~name ~@body)]
-     (alter-var-root
-      vr#
-      (fn [f#]
-        (fn ~name [& args#]
-          (apply ~function f# args#))))
-     vr#))
+  (let [f (gensym)]
+    `(let [vr# (defn ~name ~@body)]
+       (alter-var-root
+        vr#
+        (fn [~f]
+          ;; 0 to 20 arity
+          (fn
+          ~@(map
+             #(call-f-with-arity
+               [function f] %)
+             (range 20))
+          ;; and fall back
+          ([a# b# c# d# e# f# g# h# i# j# k#
+            l# m# n# o# p# q# r# s# & t#]
+             (apply ~function ~f
+                    a# b# c# d# e# f# g# h# i# j# k#
+                    l# m# n# o# p# q# r# s# t#)))))
+       vr#)))
 
 (defonce
   ^{:doc "Hook called when the default ontology is used"}
@@ -282,14 +301,22 @@ variadic calls most of the time."
      (dispatch-maybe f a b c d e))
   ([f a b c d e fa]
      (dispatch-maybe f a b c d e fa))
-  ([f a b c d e fa & args]
+  ([f a b c d e fa g]
+     (dispatch-maybe f a b c d e fa g))
+  ([f a b c d e fa g h]
+     (dispatch-maybe f a b c d e fa g h))
+  ([f a b c d e fa g h i]
+     (dispatch-maybe f a b c d e fa g h i))
+  ([f a b c d e fa g h i j]
+     (dispatch-maybe f a b c d e fa g h i j))
+  ([f a b c d e fa g h i j & args]
      (if (or
           (instance? org.semanticweb.owlapi.model.OWLOntology a)
           (nil? a))
-       (apply f a b c d e fa args)
+       (apply f a b c d e fa g h i j args)
        (apply default-ontology-base-dispatcher
               get-current-ontology-maybe
-              f a b c d e fa args))))
+              f a b c d e fa g h i j args))))
 
 (defmacro ^{:private true} dispatch
   "Dispatch with the default ontology if necessary."
@@ -324,14 +351,22 @@ multi-arity as a micro optimization, to avoid a variadic invocation."
      (dispatch f a b c d e))
   ([f a b c d e fa]
      (dispatch f a b c d e fa))
-  ([f a b c d e fa & args]
+  ([f a b c d e fa g]
+     (dispatch f a b c d e fa g))
+  ([f a b c d e fa g h]
+     (dispatch f a b c d e fa g h))
+  ([f a b c d e fa g h i]
+     (dispatch f a b c d e fa g h i))
+  ([f a b c d e fa g h i j]
+     (dispatch f a b c d e fa g h i j))
+  ([f a b c d e fa g h i j & args]
      (if (or
           (instance? org.semanticweb.owlapi.model.OWLOntology a)
           (nil? a))
-       (apply f a b c d e fa args)
+       (apply f a b c d e fa g h i j args)
        (apply default-ontology-base-dispatcher
               get-current-ontology
-              f a b c d e fa args))))
+              f a b c d e fa g h i j args))))
 
 ;; broadcast-ontology is also highly optimized
 (defn- broadcast-ontology-int
@@ -368,7 +403,15 @@ list, but I cannot remember what it was."
       (fnc o a c)
       (fnc o a d)
       (fnc o a e)
-      (fnc o a f))))
+      (fnc o a f)))
+  ([o a b c d e f g fnc]
+     (list
+      (fnc o a b)
+      (fnc o a c)
+      (fnc o a d)
+      (fnc o a e)
+      (fnc o a f)
+      (fnc o a g))))
 
 (defn broadcast-ontology-full
   "Given a function which expects an ontology and two other arguments, ensure
@@ -423,21 +466,28 @@ is micro-optimised to avoid use of variadic method calls or list operations."
       [a b c d]
       (default-ontology
         broadcast-ontology-int a b c d fnc)
-      (broadcast-ontology-full fnc a b c)))
+      (broadcast-ontology-full fnc a b c d)))
   ([fnc a b c d e]
      (if-not-sequential
       [a b c d e]
       (default-ontology
         broadcast-ontology-int a b c d e fnc)
-      (broadcast-ontology-full fnc a b c)))
+      (broadcast-ontology-full fnc a b c d e)))
   ([fnc a b c d e f]
      (if-not-sequential
       [a b c d e f]
       (default-ontology
-        broadcast-ontology-int a b c d e f fnc)))
-  ([fnc a b c d e f & args]
+        broadcast-ontology-int a b c d e f fnc)
+      (broadcast-ontology-full fnc a b c e f)))
+  ([fnc a b c d e f g]
+     (if-not-sequential
+      [a b c d e f g]
+      (default-ontology
+        broadcast-ontology-int a b c d e f g fnc)
+      (broadcast-ontology-full fnc a b c d e f g)))
+  ([fnc a b c d e f g & args]
      (apply broadcast-ontology-full
-            fnc a b c d e f args)))
+            fnc a b c d e f g args)))
 
 (defn- broadcast-ontology-maybe-full
   "Like broadcast-ontology-maybe-full but does not signal an error if there is no current
@@ -479,9 +529,21 @@ default ontology."
       (default-ontology-maybe
         broadcast-ontology-int a b c d e fnc)
       (broadcast-ontology-maybe-full fnc a b c d e)))
-  ([fnc a b c d e & args]
+  ([fnc a b c d e f]
+     (if-not-sequential
+      [a b c d e f]
+      (default-ontology-maybe
+        broadcast-ontology-int a b c d e f fnc)
+      (broadcast-ontology-maybe-full fnc a b c d e f)))
+  ([fnc a b c d e f g]
+     (if-not-sequential
+      [a b c d e f g]
+      (default-ontology-maybe
+        broadcast-ontology-int a b c d e f g fnc)
+      (broadcast-ontology-maybe-full fnc a b c d e f g)))
+  ([fnc a b c d e f g & args]
      (apply broadcast-ontology-maybe-full
-            fnc a b c d e args)))
+            fnc a b c d e f g args)))
 
 ;;
 ;; End micro-optimized section!

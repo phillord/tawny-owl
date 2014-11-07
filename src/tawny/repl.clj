@@ -300,21 +300,22 @@ to file names. Save ontologies in 'root' or the resources directory."
   ([^OWLOntology o file options]
      (println "Rendering:" o)
      (spit file "")
-     (doseq [n (.getSignature o)]
-       (spit
-        file
-        (str
-         (pr-str
-          (apply
-           tawny.render/as-form
-           n
+     (let [render-options
            (flatten
             (seq
              (merge
               {:explicit true
                :ontologies #{o}}
-              options))))) "\n")
-        :append true))))
+              options)))]
+       (doseq [n (.getSignature o)]
+         (spit
+          file
+          (str
+           (pr-str
+            (apply
+             tawny.render/as-form
+             n render-options)) "\n")
+          :append true)))))
 
 (defn render-iri
   [iri file]
