@@ -4,6 +4,29 @@ Release Notes
 For future functionality please see [roadmap](roadmap.md)
 
 
+# 1.3
+
+The 1.3 release adds three new features. First, we add support for axiom
+annotations. While this has always been possible through the direct use of the
+OWL API, this also circumvented many of the features of Tawny-OWL. This is now
+possible, through use of the `tawny.owl/annotate` function.
+
+Second, support for building patterns has been reworked in the `tawny.pattern`
+namespace. The functions `p` and `e` allow easy expression of patterns in a
+way which can cope easily with optional frames, and also integrates well with
+`pattern-generator` which allows easy construction of macro'd versions of
+function based patterns; this allows easy interning of pattern entities and
+the use of symbols.
+
+Finally, a new `annotator` function has been added to `tawny.owl`. This allows
+easy construction of short-cut functions like `label` and `owl-comment` which
+construct annotations of a specific type, while still supporting Tawny-OWLs
+default ontology functionality. The motivation for this functionality comes
+from Jennifer Warrender, who has shown that it is a common pattern in several
+ontologies.
+
+
+
 # 1.2
 
 The main feature for the 1.2 release has been the incorporation of core.logic,
