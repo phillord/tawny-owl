@@ -1,6 +1,6 @@
 ;; The contents of this file are subject to the LGPL License, Version 3.0.
 
-;; Copyright (C) 2011, Newcastle University
+;; Copyright (C) 2011, 2014, Newcastle University
 
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU Lesser General Public License as published by
@@ -19,13 +19,6 @@
   (:require [tawny.owl :as o]
             [tawny.util :as u]))
 
-
-;; what if we introduce two functions
-;; p for pattern and e for extract.
-;; p does all the nh, merge stuff, and returns a name entity vector
-;; name is always the third argument.
-;; e which extracts owl entities from a p return, or a list
-;; introduce that here
 (defn- nil-strip
   "Given a frame map with keyword keys and list values, remove any element in
   the list value which is nil, and both the key and value where all the
@@ -54,11 +47,6 @@
     (keys (var-get #'tawny.owl/object-property-handlers))
     args)))
 
-
-;; some nice tests
-;; p calls the entity-f and returns this and the return value
-;; it means we do hashify twice, but we retain the check-key functionslaity
-;; without too much other stuff.
 (defn p
   "Call the frame function entity-f but remove any nil arguments and the
   entire frames which only have nil arguments. Returns a vector of the name
@@ -91,7 +79,7 @@
       (o/intern-owl-string name entity))
     entities)))
 
-(defn- extract-ontology-arg
+(defn extract-ontology-arg
   "Give a set of frame arguments, return a map with the ontology frame and all
   the other arguments without the ontology frame."
   [args]
@@ -102,8 +90,7 @@
      :args
      (concat b (drop 2 a))}))
 
-
-(defn- pattern-generator
+(defn pattern-generator
   "Macro generator function. Returns a form where args has the ontology frame
 removed and placed as the first arg, which is passed to the pattern-function,
 whose return values are interned."

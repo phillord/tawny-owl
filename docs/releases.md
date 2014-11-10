@@ -27,6 +27,19 @@ ontologies.
 
 
 
+## New Features
+
+- It is now possible to add annotations to axioms as well as entities. The
+  primary entry point is `annotate`.
+- A number of new functions have been added to `tawny.pattern`.
+
+
+## Breaking Changes
+
+- `tawny.pattern` has been re-written, meaning that `value-partition` is now a
+  function, with `defpartition` offering the same thing in macro form.
+
+
 # 1.2
 
 The main feature for the 1.2 release has been the incorporation of core.logic,

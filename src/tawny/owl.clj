@@ -1,6 +1,6 @@
 ;; The contents of this file are subject to the LGPL License, Version 3.0.
 
-;; Copyright (C) 2012, 2013, Newcastle University
+;; Copyright (C) 2012, 2013, 2014, Newcastle University
 
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU Lesser General Public License as published by
@@ -198,7 +198,7 @@ an exception."
     annotated
     (assoc annotated :entity entity)))
 
-(defn ^java.util.Set union-annotations
+(defn- ^java.util.Set union-annotations
   "Returns the union of annotations from annotables.
   Type hinted to java.util.Set so that the result can be called against the
   OWL API."
@@ -206,7 +206,7 @@ an exception."
   (apply clojure.set/union
          (map as-annotations annotatables)))
 
-(defn ^java.util.Set hset
+(defn- ^java.util.Set hset
   "Same as clojure.core/set with a type hint."
   [coll]
   (set coll))
