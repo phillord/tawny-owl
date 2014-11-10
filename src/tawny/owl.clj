@@ -97,7 +97,8 @@ string; use 'iri-for-name' to perform ontology specific expansion"
 ;; for reasons that I do not understand IRI has to be fully-qualified or
 ;; lookup.clj gives errors. I can't reproduce this with a simple test case.
 (defprotocol IRIable
-  (^org.semanticweb.owlapi.model.IRI as-iri [entity]))
+  (^org.semanticweb.owlapi.model.IRI as-iri [entity]
+    "Returns an IRI identifying the entity if this is possible"))
 
 (extend-type
     String
@@ -133,19 +134,24 @@ an exception."
     entity
     (throw (IllegalArgumentException. "Expecting a IRIable entity"))))
 
-(defn named-object? [entity]
+(defn named-object?
   "Returns true iff entity is an OWLNamedObject."
+  [entity]
   (instance? OWLNamedObject entity))
 
 ;; things that can be turned into OWLObjects
 (defprotocol Entityable
-  (^OWLObject as-entity [entity]))
+  "Entityable objects are objects which wrap an OWLObject for some purpose."
+  (^OWLObject as-entity [entity]
+    "Returns the bare OWLObject from an Entityable entity."))
 
 ;; annotable entities are those which carry a set of annotations which should
 ;; be placed on their Axiom when they are asserted. Returns a set which may be
 ;; empty.
 (defprotocol Annotatable
-  (^java.util.Set as-annotations [entity]))
+  "Annotatable objects are objects which can contain a number of OWLAnnotations."
+  (^java.util.Set as-annotations [entity]
+    "Returns an OWLAnnotation set from an Annotatable entity."))
 
 ;; extend to object so that we can support numbers and strings, and so forth.
 (extend-type
@@ -153,6 +159,7 @@ an exception."
   Entityable
   (as-entity [entity] entity))
 
+;; likewise Annotatable
 (extend-type
     Object
   Annotatable
@@ -165,7 +172,15 @@ an exception."
   Annotatable
   (as-annotations [this] annotations))
 
-(defn annotate [entity-or-list & annotation]
+(defn annotate
+  "Given an entity or a list of entities, add annotations and return as an
+  Entityable and Annotatable entity.
+
+  These entities are used to annotate the axiom describing the relationship
+  between the entity and the places where this entity is used. So, for
+  example, if an annotated class is added as a subclass of another, the
+  SubClassOf axiom will be annotated."
+  [entity-or-list & annotation]
   (let [annotation-set (set annotation)]
     (if (seq? entity-or-list)
       (map #(Annotated. % annotation-set)
@@ -173,12 +188,11 @@ an exception."
       (Annotated. entity-or-list (set annotation)))))
 
 (defn re-annotate
-  "Returns a Annotated which with the entity and the same
-annotations as annotated.
+  "Returns a Annotated with the entity and the same annotations as annotated.
 
-This is generally intended to transfer annotations after, for example,
-the entity has been derived from the existing entity. So, we might want to replace
-an IRI with an OWLObject, but the same annotations."
+  This is generally intended to transfer annotations after, for example, the
+  entity has been derived from the existing entity. So, we might want to
+  replace an IRI with an OWLObject, but the same annotations."
   [entity ^Annotated annotated]
   (if (= entity (as-entity annotated))
     annotated
@@ -186,8 +200,8 @@ an IRI with an OWLObject, but the same annotations."
 
 (defn ^java.util.Set union-annotations
   "Returns the union of annotations from annotables.
-Type hinted to java.util.Set so that the result can be called against the OWL
-API."
+  Type hinted to java.util.Set so that the result can be called against the
+  OWL API."
   [annotatables]
   (apply clojure.set/union
          (map as-annotations annotatables)))
