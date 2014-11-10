@@ -229,15 +229,15 @@ to file names. Save ontologies in 'root' or the resources directory."
   (atom nil))
 
 (defn on-change
-  "Evaluate FN everytime an ontology change happens"
-  [fn]
+  "Evaluate F everytime an ontology change happens"
+  [f]
   (let [listener
          (proxy [org.semanticweb.owlapi.model.OWLOntologyChangeListener]
              []
              (ontologiesChanged
               [l]
                (reset! *c l)
-               (fn)))]
+               (f)))]
      (.addOntologyChangeListener
       (o/owl-ontology-manager)
       listener)
@@ -259,8 +259,9 @@ to file names. Save ontologies in 'root' or the resources directory."
          (reset! auto-save-listener
                  (on-change f))))))
 
-(defn auto-save-off []
+(defn auto-save-off
   "Stop autosaving ontologies."
+  []
   (when auto-save-listener
     (.removeOntologyChangeListener
      (o/owl-ontology-manager)

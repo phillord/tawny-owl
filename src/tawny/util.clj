@@ -106,10 +106,7 @@ values are lists and concats duplicates."
   [& symbols]
   `(do
      (list
-      ~@(map
-         (fn [symbol]
-           (name symbol))
-         symbols))))
+      ~@(map name symbols))))
 
 (defmacro name-tree
   "Given a tree of symbols, return a tree of names."

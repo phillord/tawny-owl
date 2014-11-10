@@ -118,8 +118,7 @@ whose return values are interned."
     `(#'tawny.pattern/intern-owl-entities
       (~pattern-function ~@args-with-ont))))
 
-(o/defmontfn value-partition [o partition-name partition-values
-                       & {:keys [comment super domain]}]
+(o/defmontfn value-partition
     "Return the entities for a new value partition.
 partition-name is the overall name for the partition.
 partition-values is a sequence of the values.
@@ -129,6 +128,8 @@ all entities.
 :domain is the domain for the object property.
 
 This returns a list of entity vectors created by the p function."
+    [o partition-name partition-values
+     & {:keys [comment super domain]}]
   (let
       [
        partition

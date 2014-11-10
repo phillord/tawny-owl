@@ -400,7 +400,7 @@
            (list :prefix
                  ;; chop off the colon
                  (.substring pre 0
-                             (- (.length pre) 1))))))
+                             (dec (.length pre)))))))
      ;; imports
      (when-let [imp-decl
                 (seq (.getImportsDeclarations o))]
@@ -549,8 +549,8 @@
         (setmap
          (fn [^OWLOntology o] (.getAnnotations p o)) ont)
         facts
-        (filter
-         (complement nil?)
+        (remove
+         nil?
          (list
           (let [fs
                 (into {} (setmap #(.getObjectPropertyValues p %) ont))]
@@ -923,12 +923,10 @@ element is a list."
      (list (unnamed-entity :comment options)
            (form v options))
      :default
-     (do
-       ;;(println "v is" v)
-       (list
-        (unnamed-entity :annotation options)
-        (form (.getProperty a) options)
-        (form v options))))))
+     (list
+      (unnamed-entity :annotation options)
+      (form (.getProperty a) options)
+      (form v options)))))
 
 (defmethod form OWLAnnotationProperty [p options]
   (entity-or-iri p options))

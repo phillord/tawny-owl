@@ -66,7 +66,7 @@
      (when (nil? @vreasoner-factory)
        (throw (IllegalStateException. "No reasoner has been chosen")))
      @vreasoner-factory)
-  ([reasoner]
+  ([reasoner-keyword]
      (dosync
       ;; blitz the reasoners
       (doseq [^OWLReasoner r @reasoner-list]
@@ -75,7 +75,7 @@
       (ref-set reasoner-list ())
       ;; create a new reasoner
       (ref-set vreasoner-factory
-               (reasoner
+               (reasoner-keyword
                 {:elk
                  (do
                    ;; ELK is noisy, so shut it up

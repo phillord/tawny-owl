@@ -235,10 +235,11 @@ ontology"
          ;; so break
          (throw (IllegalStateException. "Current ontology has not been set")))))
 
-(defn- call-f-with-arity [f n]
+(defn- call-f-with-arity
+  "Return a form which calls the function f, n times."
+  [f n]
   (let [args
-        (take n
-              (repeatedly #(gensym "arg")))]
+        (repeatedly n #(gensym "arg"))]
     (list
      (vec args)
      (concat f args))))
@@ -277,10 +278,11 @@ rather than just using BODY directly."
 ;; and some logic is done in macro. There is some code duplication as a
 ;; result.
 ;;
-(defn- default-ontology-base-dispatcher [ffco f & args]
+(defn- default-ontology-base-dispatcher
   "Invoke f ensuring that the first argument is an ontology or nil.
 This works wqhere we already know that the first value of args is not an
 ontology. So, we search for :ontology frame or call ffco to fetch this ontology."
+  [ffco f & args]
   (util/run-hook default-ontology-hook)
   (apply f (ffco) args))
 
@@ -811,6 +813,7 @@ with the literal function."
   "Adds a set of superproperties to the given subproperty."
   [o subproperty superproperty]
   (add-axiom
+   o
    (.getOWLSubAnnotationPropertyOfAxiom
     (owl-data-factory)
     subproperty
@@ -1215,8 +1218,7 @@ ontology or an IRI"
               :let [opt
                     (get options k)]
               :when opt]
-        (do
-          (f ontology opt)))
+        (f ontology opt))
       ontology)))
 
 (defn ontology [& args]
@@ -1887,14 +1889,14 @@ and used as the handler for :subpropertychain."
 (defbdontfn add-characteristics
   "Add a list of characteristics to the property."
   [o property characteristic]
-  (if-let [char (get charfuncs
+  (if-let [fchar (get charfuncs
                      (as-entity characteristic))]
     ;;; this is all totally wrong headed here because we are passing in the
 ;;; property which does not carry the annotations. So need to change all the
 ;;; functions above to take the annotation as an extra argument
     (add-axiom
      o
-     (char
+     (fchar
       (owl-data-factory)
       (ensure-object-property o property)
       (as-annotations characteristic)))
