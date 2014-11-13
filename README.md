@@ -95,6 +95,12 @@ http://www.russet.org.uk/blog
 
 There is a [mailing list](mailto:tawny-owl@googlegroups.com)
 
+## Version
+
+[![Clojars Project](http://clojars.org/uk.org.russet/tawny-owl/latest-version.svg)](http://clojars.org/uk.org.russet/tawny-owl)
+
+
+
 ## License
 
 The contents of this file are subject to the LGPL License, Version 3.0.
