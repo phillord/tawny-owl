@@ -64,28 +64,46 @@
   (is
    (=
     (#'tawny.pattern/p variadic-identity "o" "name")
-    ["name" ["o" "name"]]))
+    (p/map->Named {:name "name" :entity ["o" "name"]})))
 
   (is
    (=
     (#'tawny.pattern/p variadic-identity "o" "name" :a 1)
-    ["name" ["o" "name" :a 1]]))
+    (p/map->Named
+     {:name "name" :entity ["o" "name" :a 1]})))
 
   (is
    (=
     (#'tawny.pattern/p variadic-identity "o" "name" :a 1 :b nil :c 2)
-    ["name" ["o" "name" :a 1 :c 2]]
+    (p/map->Named
+     {:name "name" :entity ["o" "name" :a 1 :c 2]})
     ))
 
   (is
    (=
     (#'tawny.pattern/p variadic-identity "o" "name" :a 1 :b nil :c 2 nil)
-    ["name" ["o" "name" :a 1 :c 2]])))
+    (p/map->Named
+     {:name "name"
+      :entity ["o" "name" :a 1 :c 2]}))))
 
 
 (deftest extract-ontology-arg
-  (=
-   (#'tawny.pattern/extract-ontology-arg
-    [:a 1 :b 2 :ontology "o" :c 3])
-   {:ontology "o"
-    :args [:a 1 :b 2 :c 3]}))
+  (is
+   (=
+    (#'tawny.pattern/extract-ontology-arg
+     [:a 1 :b 2 :ontology "o" :c 3])
+    {:ontology "o"
+     :args [:a 1 :b 2 :c 3]})))
+
+(deftest value-partition
+  (is
+   (p/value-partition to
+    (o/owl-class to "A")
+    [(o/owl-class to "B")
+     (o/owl-class to "C")
+     (o/owl-class to  "D")])))
+
+
+(deftest value-partition-strings
+  (is
+   (p/value-partition to "A" ["B" "C" "D"])))

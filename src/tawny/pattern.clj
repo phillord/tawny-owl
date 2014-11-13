@@ -47,6 +47,12 @@
     (keys (var-get #'tawny.owl/object-property-handlers))
     args)))
 
+(defrecord Named [name entity]
+  tawny.owl.Entityable
+  (as-entity [this] entity))
+
+(map->Named {:name "a" :entity "b"})
+
 (defn p
   "Call the frame function entity-f but remove any nil arguments and the
   entire frames which only have nil arguments. Returns a vector of the name
@@ -60,13 +66,7 @@
         (nil-strip-hashify-op options)
         :default
         (nil-strip-hashify options))]
-    [name (apply entity-f o name options)]))
-
-(defn e
-  "Return the OWL entity from a vector of form [name entity] as returned by
-  the p function."
-  [entity-vector]
-  (second entity-vector))
+    (Named. name (apply entity-f o name options))))
 
 (defn intern-owl-entities
   "Given a list of vectors of form [name entity], as returned by the p
@@ -75,7 +75,7 @@
   ;; Interning works by side effect!
   (doall
    (map
-    (fn [[name entity]]
+    (fn [{:keys [name entity]}]
       (o/intern-owl-string name entity))
     entities)))
 
@@ -106,7 +106,7 @@ whose return values are interned."
       (~pattern-function ~@args-with-ont))))
 
 (o/defmontfn value-partition
-    "Return the entities for a new value partition.
+  "Return the entities for a new value partition.
 partition-name is the overall name for the partition.
 partition-values is a sequence of the values.
 Keyword arguments are :comment for a comment to attach to
@@ -115,8 +115,8 @@ all entities.
 :domain is the domain for the object property.
 
 This returns a list of entity vectors created by the p function."
-    [o partition-name partition-values
-     & {:keys [comment super domain]}]
+  [o partition-name partition-values
+   & {:keys [comment super domain]}]
   (let
       [
        partition
@@ -127,9 +127,9 @@ This returns a list of entity vectors created by the p function."
        values
        (map
         #(p o/owl-class o
-          %
-          :comment comment
-          :super (e partition))
+            %
+            :comment comment
+            :super partition)
         partition-values)
        prop
        (p o/object-property
@@ -138,11 +138,11 @@ This returns a list of entity vectors created by the p function."
           :comment comment
           :range partition
           :domain domain)]
-       ;; we don't care about the return of this.
+    ;; we don't care about the return of this.
     (o/as-subclasses
-     o (e partition)
+     o partition
      :disjoint :cover
-     (map e values))
+     values)
     ;; not to painful a return type -- would be nice to do this automatically,
     ;; perhaps from a modified let form, although this requires knowledge that
     ;; props is a list
