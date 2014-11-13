@@ -159,6 +159,11 @@ an exception."
   Entityable
   (as-entity [entity] entity))
 
+(extend-type
+    nil
+  Entityable
+  (as-entity [entity] nil))
+
 ;; likewise Annotatable
 (extend-type
     Object
@@ -1360,9 +1365,11 @@ using the current ontology rules, and check again. Finally, check convert to
 an IRI with no transformation. nil is returned when the result is not clear.
 "
   [o entity]
-  (let [oneof? (fn[& rest]
+  (let [entity (as-entity entity)
+        oneof? (fn[& rest]
                  (some
-                  #(instance? % entity) rest))]
+                  #(instance? % entity) rest))
+        ]
     (cond
      ;; it's a collection -- find the first entity
      (coll? entity)
@@ -1410,29 +1417,30 @@ an IRI with no transformation. nil is returned when the result is not clear.
 
 (defmontfn guess-individual-literal
   [o entity]
-  (cond
-   (coll? entity)
-   (some (partial guess-individual-literal o) entity)
-   (instance? OWLIndividual entity)
-   ::individual
-   (instance? OWLLiteral entity)
-   ::literal
-   (instance? IRI entity)
-   (guess-individual-literal o
-                             (entity-for-iri o entity))
-   (string? entity)
-   (if-let [owlentity (entity-for-string o entity)]
-     (guess-individual-literal
-      o owlentity)
-     ::literal)
-   (number? entity)
-   ::literal
-   (or (= true entity)
-       (= false entity))
-   ::literal
-   :default
-   (throw (IllegalArgumentException.
-           (str "Cannot tell if this is individual or literal:" entity)))))
+  (let [entity (as-entity entity)]
+    (cond
+     (coll? entity)
+     (some (partial guess-individual-literal o) entity)
+     (instance? OWLIndividual entity)
+     ::individual
+     (instance? OWLLiteral entity)
+     ::literal
+     (instance? IRI entity)
+     (guess-individual-literal o
+                               (entity-for-iri o entity))
+     (string? entity)
+     (if-let [owlentity (entity-for-string o entity)]
+       (guess-individual-literal
+        o owlentity)
+       ::literal)
+     (number? entity)
+     ::literal
+     (or (= true entity)
+         (= false entity))
+     ::literal
+     :default
+     (throw (IllegalArgumentException.
+             (str "Cannot tell if this is individual or literal:" entity))))))
 
 (defn-
   ^{:private true}
@@ -1440,20 +1448,19 @@ an IRI with no transformation. nil is returned when the result is not clear.
   "Ensures that the entity in question is an OWLObjectProperty
 or throw an exception if it cannot be converted."
   [o prop]
-  (cond
-   (fn? prop)
-   (ensure-object-property o (prop))
-   (instance? tawny.owl.Annotated prop)
-   (ensure-object-property o (as-entity prop))
-   (instance? OWLObjectPropertyExpression prop)
-   prop
-   (instance? IRI prop)
-   (.getOWLObjectProperty (owl-data-factory) prop)
-   (string? prop)
-   (ensure-object-property o (iri-for-name o prop))
-   :default
-   (throw (IllegalArgumentException.
-           (str "Expecting an object property. Got: " prop)))))
+  (let [prop (as-entity prop)]
+    (cond
+     (fn? prop)
+     (ensure-object-property o (prop))
+     (instance? OWLObjectPropertyExpression prop)
+     prop
+     (instance? IRI prop)
+     (.getOWLObjectProperty (owl-data-factory) prop)
+     (string? prop)
+     (ensure-object-property o (iri-for-name o prop))
+     :default
+     (throw (IllegalArgumentException.
+             (str "Expecting an object property. Got: " prop))))))
 
 (defn- ensure-class-except [clz]
   (throw (IllegalArgumentException.
@@ -1463,41 +1470,40 @@ or throw an exception if it cannot be converted."
   "If clz is a String return a class of with that name,
 else if clz is a OWLClassExpression add that."
   [o clz]
-  (cond
-   (instance? tawny.owl.Annotated clz)
-   (ensure-class o (as-entity clz))
-   (instance? org.semanticweb.owlapi.model.OWLClassExpression clz)
-   clz
-   (instance? IRI clz)
-   (.getOWLClass (owl-data-factory) clz)
-   (string? clz)
-   (ensure-class o (iri-for-name o clz))
-   (fn? clz)
-   (try
-     (ensure-class o (clz))
-     (catch clojure.lang.ArityException e
-       (ensure-class-except clz)))
-   true (ensure-class-except clz)))
+  ;; convert to entity if necessary
+  (let [clz (as-entity clz)]
+    (cond
+     (instance? org.semanticweb.owlapi.model.OWLClassExpression clz)
+     clz
+     (instance? IRI clz)
+     (.getOWLClass (owl-data-factory) clz)
+     (string? clz)
+     (ensure-class o (iri-for-name o clz))
+     (fn? clz)
+     (try
+       (ensure-class o (clz))
+       (catch clojure.lang.ArityException e
+         (ensure-class-except clz)))
+     true (ensure-class-except clz))))
 
 (defn-
   ^OWLDataProperty ensure-data-property
   "Ensures that 'property' is an data property,
 converting it from a string or IRI if necessary."
   [o property]
-  (cond
-   (instance? tawny.owl.Annotated property)
-   (ensure-data-property o (as-entity property))
-   (instance? OWLDataProperty property)
-   property
-   (instance? IRI property)
-   (.getOWLDataProperty
-    (owl-data-factory) property)
-   (instance? String property)
-   (ensure-data-property o
-                         (iri-for-name o property))
-   :default
-   (throw (IllegalArgumentException.
-           (format "Expecting an OWL data property: %s" property)))))
+  (let [property (as-entity property)]
+    (cond
+     (instance? OWLDataProperty property)
+     property
+     (instance? IRI property)
+     (.getOWLDataProperty
+      (owl-data-factory) property)
+     (instance? String property)
+     (ensure-data-property o
+                           (iri-for-name o property))
+     :default
+     (throw (IllegalArgumentException.
+             (format "Expecting an OWL data property: %s" property))))))
 
 (defn-
   ^OWLPropertyExpression
@@ -1507,7 +1513,8 @@ If prop is ambiguous (for example, a string or IRI that whose type has not
 been previously defined) this will create an OWLObjectProperty rather than
 an OWLDataProperty"
   [o prop]
-  (let [type
+  (let [prop (as-entity prop)
+        type
         (or
           ;; guess the type -- if we can't then object-property it's because
           ;; we don't know and not because it's illegal
@@ -1523,31 +1530,28 @@ an OWLDataProperty"
   "Ensure that 'datatype' is an OWLDatatype. Will convert from an keyword for
   builtin datatypes."
   [o datatype]
-  (cond
-   (instance? tawny.owl.Annotated datatype)
-   (ensure-datatype o (as-entity datatype))
-   (instance? OWLDatatype datatype)
-   datatype
-   (instance? org.semanticweb.owlapi.vocab.OWL2Datatype datatype)
-   (.getDatatype ^org.semanticweb.owlapi.vocab.OWL2Datatype datatype (owl-data-factory))
-   (keyword? datatype)
-   (if-let [d (get owl2datatypes datatype)]
-     (ensure-datatype o d)
+  (let [datatype (as-entity datatype)]
+    (cond
+     (instance? OWLDatatype datatype)
+     datatype
+     (instance? org.semanticweb.owlapi.vocab.OWL2Datatype datatype)
+     (.getDatatype ^org.semanticweb.owlapi.vocab.OWL2Datatype datatype (owl-data-factory))
+     (keyword? datatype)
+     (if-let [d (get owl2datatypes datatype)]
+       (ensure-datatype o d)
+       (throw (IllegalArgumentException.
+               (str "Was expecting a datatype. Got " datatype "."))))
+     (instance? IRI datatype)
+     (.getOWLDatatype (owl-data-factory) ^IRI datatype)
+     :default
      (throw (IllegalArgumentException.
-             (str "Was expecting a datatype. Got " datatype "."))))
-   (instance? IRI datatype)
-   (.getOWLDatatype (owl-data-factory) ^IRI datatype)
-   :default
-   (throw (IllegalArgumentException.
-           (str "Was expecting a datatype. Got " datatype ".")))))
+             (str "Was expecting a datatype. Got " datatype "."))))))
 
 (defn- ^org.semanticweb.owlapi.model.OWLDataRange ensure-data-range
   "Ensure that 'data-range' is a OWLDataRange either directly or
 as a datatype."
   [o data-range]
   (cond
-   (instance? tawny.owl.Annotated data-range)
-   (ensure-data-range o (as-entity data-range))
    (instance? org.semanticweb.owlapi.model.OWLDataRange data-range)
    data-range
    :default
@@ -1559,8 +1563,6 @@ If INDIVIDUAL is an OWLIndividual return individual, else
 interpret this as a string and create a new OWLIndividual."
   [o individual]
   (cond
-   (instance? tawny.owl.Annotated individual)
-   (ensure-individual o (as-entity individual))
    (instance? org.semanticweb.owlapi.model.OWLIndividual individual)
    individual
    (instance? IRI individual)
