@@ -1,10 +1,16 @@
 language: clojure
 lein: lein2
-script: lein2 with-profiles default:3.5.0:3.4.10:3.4.9:3.4.8 test
+env:
+ - PROFILE=default
+ - PROFILE=3.5.0
+ - PROFILE=3.4.10
+ - PROFILE=3.4.9
+ - PROFILE=3.4.8
+ - PROFILE=1.7
+script: lein2 with-profiles $PROFILE test
 jdk:
-  - openjdk7
-
-
+ - openjdk7
+ - oraclejdk8
 notifications:
    email:
      - travis@russet.org.uk
