@@ -39,6 +39,10 @@
   ;; dependency adds dev-resources to the path which I need for testing.
   :profiles
   {
+   :1.7
+   [:base
+    {:dependencies [[org.clojure/clojure "1.7.0-alpha6"]]}]
+
    :3.5.0
    [:base
     {:dependencies [[net.sourceforge.owlapi/owlapi-distribution "3.5.0"]]}]
