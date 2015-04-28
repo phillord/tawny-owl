@@ -1393,14 +1393,16 @@ an IRI with no transformation. nil is returned when the result is not clear.
      ;; the ontology we are searching in.
      ;; if an IRI, see if it is the current ontology
      (instance? IRI entity)
-     (guess-type o (entity-for-iri o entity))
+     (when o
+       (guess-type o (entity-for-iri o entity)))
      ;; keyword -- these are builtin OWL2Datatypes
      (and (keyword? entity)
           (get owl2datatypes entity))
      ::data
      ;; string name in current ontology?
      (string? entity)
-     (guess-type o (entity-for-string o entity))
+     (when o
+       (guess-type o (entity-for-string o entity)))
      ;; owl individuals tell us nothing, cause we still don't know!
      (instance? OWLIndividual entity)
      nil
