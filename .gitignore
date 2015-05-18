@@ -11,3 +11,4 @@ docs/*html
 /java/*
 /org/
 o.*
+/.lein-deps-sum
