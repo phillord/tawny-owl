@@ -9,3 +9,5 @@ docs/*html
 /.lein-repl-history
 /dev-resources/sio_rendered.clj
 /java/*
+/org/
+o.*
