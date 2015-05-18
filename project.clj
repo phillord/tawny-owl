@@ -41,7 +41,7 @@
   {
    :1.7
    [:base
-    {:dependencies [[org.clojure/clojure "1.7.0-alpha6"]]}]
+    {:dependencies [[org.clojure/clojure "1.7.0-beta3"]]}]
 
    :3.5.0
    [:base
