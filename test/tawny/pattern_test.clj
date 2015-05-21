@@ -107,3 +107,12 @@
 (deftest value-partition-strings
   (is
    (p/value-partition to "A" ["B" "C" "D"])))
+
+(deftest as-facet
+  (is
+   (let [o (o/object-property to "o")
+         c (o/owl-class to "c")]
+     (p/as-facet to o c)
+     (=
+      (list (o/owl-some to o c))
+      (p/facet to c)))))

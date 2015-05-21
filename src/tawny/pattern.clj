@@ -19,6 +19,18 @@
   (:require [tawny.owl :as o]
             [tawny.util :as u]))
 
+
+(o/defontology pattern
+  :iri "http://example.com")
+
+(o/defaproperty facetvalue
+  :label "facet value"
+  :comment "facet value indicates a relationship between an object property
+  and a class, indicating that the class is a value in a particular facet
+  where entities may be described by (one or more) existential relationship
+  involving a specific object property. The object property may also have a
+  range which is a superclass of the facet values but is not required to.")
+
 (defn- nil-strip
   "Given a frame map with keyword keys and list values, remove any element in
   the list value which is nil, and both the key and value where all the
@@ -51,8 +63,6 @@
   tawny.owl.Entityable
   (as-entity [this] entity))
 
-(map->Named {:name "a" :entity "b"})
-
 (defn p
   "Call the frame function entity-f but remove any nil arguments and the
   entire frames which only have nil arguments. Returns a vector of the name
@@ -78,6 +88,42 @@
     (fn [{:keys [name entity]}]
       (o/intern-owl-string name entity))
     entities)))
+
+(o/defdontfn as-facet [o oprop & entities]
+  "Mark entities as facet values for the facet oprop.
+This allows the specification of a set of properties as classes without having
+to explicitly name the object property."
+  (doall
+   (map
+    (fn [e]
+      (o/add-annotation
+       o
+       (o/as-entity (#'o/var-get-maybe e))
+       (o/annotation o facetvalue
+                     (o/as-iri
+                      (o/as-entity oprop)))))
+    (flatten entities))))
+
+(defn- facet-property [o cls]
+  ;; check for number!
+  (first
+   (map
+    #(.getValue %)
+    (filter
+     #(= (.getProperty %)
+         facetvalue)
+     (.getAnnotations cls o)))))
+
+(defn- facet-1 [o clazz]
+  (o/owl-some
+   o
+   (facet-property o clazz)
+   clazz))
+
+(o/defdontfn facet
+  "Return an existential restriction for each of the facetted classes."
+  [o & clazz]
+  (doall (map (partial facet-1 o) (flatten clazz))))
 
 (defn extract-ontology-arg
   "Give a set of frame arguments, return a map with the ontology frame and all
@@ -139,6 +185,7 @@ This returns a list of entity vectors created by the p function."
           :range partition
           :domain domain)]
     ;; we don't care about the return of this.
+    (as-facet o prop values)
     (o/as-subclasses
      o partition
      :disjoint :cover
