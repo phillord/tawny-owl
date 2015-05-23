@@ -16,12 +16,19 @@
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
 
 (ns tawny.pattern
-  (:require [tawny.owl :as o]
-            [tawny.util :as u]))
+  (:require
+   [clojure.set]
+   [tawny.owl :as o]
+   [tawny.util :as u])
+  (:import [org.semanticweb.owlapi.model
+            OWLAnnotation OWLAnnotationAxiom
+            OWLAnnotationAssertionAxiom OWLEntity
+            OWLOntology OWLClass])
+  )
 
 
 (o/defontology pattern
-  :iri "http://example.com")
+  :iri "http://www.w3id.org/ontolink/pattern.owl")
 
 (o/defaproperty facetvalue
   :label "facet value"
@@ -104,15 +111,23 @@ to explicitly name the object property."
                       (o/as-entity oprop)))))
     (flatten entities))))
 
-(defn- facet-property [o cls]
-  ;; check for number!
-  (first
-   (map
-    #(.getValue %)
-    (filter
-     #(= (.getProperty %)
-         facetvalue)
-     (.getAnnotations cls o)))))
+(defn- facet-property [^OWLOntology o
+                       ^OWLClass cls]
+  (let
+      [prop
+       (map
+        (fn [^OWLAnnotation anon] (.getValue anon))
+        (filter
+         (fn [^OWLAnnotation anon]
+           (= (.getProperty anon)
+              facetvalue))
+         (.getAnnotations cls o)))]
+    (if (= 1 (count prop))
+      ;; there should be only one, and we have no good basis to pick if there
+      ;; are more than one.
+      (first prop)
+      (throw (Exception.
+              (str "There are facet properties for class:" cls))))))
 
 (defn- facet-1 [o clazz]
   (o/owl-some
@@ -123,7 +138,89 @@ to explicitly name the object property."
 (o/defdontfn facet
   "Return an existential restriction for each of the facetted classes."
   [o & clazz]
-  (doall (map (partial facet-1 o) (flatten clazz))))
+  (doall (map (fn [c] (facet-1 o c)) (flatten clazz))))
+
+(o/defaproperty inpattern
+  :label "In Pattern"
+  :comment "Indicates that the entity was created as part of a pattern
+with other entities that are annotated to the same anonymous individual.")
+
+(defonce
+  ^{:private true
+    :doc "Cache for the anonymous individuals used to annotate patterns."}
+  pattern-annotator-cache
+  (atom {}))
+
+(o/defmontfn pattern-annotator
+  "Annotates all ENTITIES as part of a pattern.
+
+  This associated each entity with an anonymous individual. The individual is
+  cached based on NAME or the .toString of the first entity. This is an
+  attempt to make the function relatively idempotent, rather than just adding
+  a new annotation each time."
+  ([o entities]
+   (pattern-annotator o entities (str (first entities))))
+  ([o entities name]
+   (let [cache (get @pattern-annotator-cache
+                    name)
+         anon (if cache
+                cache
+                (let [anon
+                      (.getOWLAnonymousIndividual (o/owl-data-factory))]
+                  (swap! pattern-annotator-cache assoc name anon)
+                  anon))]
+     (doall
+      (map
+       #(o/refine
+         o
+         (o/as-entity %)
+         :annotation
+         (o/annotation o inpattern anon))
+       entities)))
+   entities))
+
+(o/defdontfn pattern-annotations
+  "Returns pattern annotations of ENTITY or the empty list."
+  [^OWLOntology o ^OWLEntity entity]
+  (filter
+   (fn [^OWLAnnotation anon]
+     (= (.getProperty anon)
+        inpattern))
+   (.getAnnotations
+    entity o)))
+
+(o/defdontfn which-pattern
+  "Returns the OWLAnonymousIndividual(s) describing the pattern(s)
+  which ENTITY is part of."
+  [o entity]
+  (map
+   (fn [^OWLAnnotation anon] (.getValue anon))
+   (pattern-annotations o entity)))
+
+(o/defdontfn shared-pattern
+  "Return the OWLAnonymousIndividual(s) describing the pattern(s)
+to which all ENTITIES belong."
+  [o & entities]
+  (apply clojure.set/intersection
+         (map
+          #(set
+            (which-pattern o %))
+          entities)))
+
+(o/defdontfn pattern-entities
+  "Return all entities that are in pattern annotated with PATTERN,
+an anonymous invididual."
+  [^OWLOntology o pattern]
+  (map
+   (fn [^OWLAnnotationAssertionAxiom anon] (.getSubject anon))
+   (filter
+    (fn [^OWLAnnotationAssertionAxiom anon]
+      (=
+       (.getValue anon)
+       pattern))
+    (.getAxioms
+     o
+     org.semanticweb.owlapi.model.AxiomType/ANNOTATION_ASSERTION))))
 
 (defn extract-ontology-arg
   "Give a set of frame arguments, return a map with the ontology frame and all
@@ -193,7 +290,8 @@ This returns a list of entity vectors created by the p function."
     ;; not to painful a return type -- would be nice to do this automatically,
     ;; perhaps from a modified let form, although this requires knowledge that
     ;; props is a list
-    (list* partition prop values)))
+    (pattern-annotator
+     o (list* partition prop values))))
 
 (defmacro defpartition
   "As value-partition but accepts symbols instead of string and

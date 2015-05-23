@@ -116,3 +116,39 @@
      (=
       (list (o/owl-some to o c))
       (p/facet to c)))))
+
+(deftest pattern-annotator
+  (is
+   (=
+    (p/pattern-annotator to (list (o/owl-class to "c")))
+    (list (o/owl-class to "c")))))
+
+(deftest pattern-funcs
+  (is
+   (seq
+    (p/which-pattern
+     to
+     (first
+      (p/pattern-annotator
+       to
+       (list (o/owl-class to "c")))))))
+  (is
+   (seq
+    (apply
+     p/shared-pattern to
+     (p/pattern-annotator
+      to (list (o/owl-class to "c")
+               (o/owl-class to "d"))))))
+  (is
+   (let [c1 (o/owl-class to "c1")
+         c2 (o/owl-class to "c2")
+         c3 (o/owl-class to "c3")]
+     (= (set
+         (map
+          o/as-iri
+          (p/pattern-annotator
+           to
+           (list c1 c2 c3))))
+        (set (p/pattern-entities
+              to
+              (first (p/which-pattern to c1))))))))

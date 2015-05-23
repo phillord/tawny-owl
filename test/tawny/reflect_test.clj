@@ -56,6 +56,10 @@ as identified by messages to *err*."
   (should-not-reflect
     (require 'tawny.owl :reload)))
 
+(deftest pattern []
+  (should-not-reflect
+   (require 'tawny.pattern :reload)))
+
 (deftest poly []
   (should-not-reflect
    (require 'tawny.polyglot :reload)))
