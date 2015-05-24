@@ -4,6 +4,27 @@ Release Notes
 For future functionality please see [roadmap](roadmap.md)
 
 
+# 1.4
+
+The 1.4 release extends Tawny's existing pattern functionality. Patterns
+created by tawny can now be annotated as belonging to a particular instance of
+pattern, which in turn makes it easy to find all the entities created by a
+pattern. As this capability uses OWLs annotation capabilities, this means that
+the pattern instances are also apparent in the saved OWL ontology so other
+tools can use this information also.
+
+## New Features
+
+- Support for "facets" -- an easy mechanism for making existential
+  relationships with a set of classes.
+- The addition of `tawny.pattern/pattern-annotator` and associated functions,
+  which links together all the entities in a pattern.
+
+## Bug Fixes
+
+- Tawny now guesses the type of a statement better by looking at all
+  arguments.
+
 # 1.3
 
 The 1.3 release adds three new features. First, we add support for axiom
