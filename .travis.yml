@@ -13,4 +13,4 @@ jdk:
  - oraclejdk8
 notifications:
    email:
-     - travis@russet.org.uk
+     - jennifer.warrender@newcastle.ac.uk

@@ -33,7 +33,13 @@
                  [net.sourceforge.owlapi/jfact "1.2.2"]
 
                  ;; need to access log4j to control elk.
-                 [log4j/log4j "1.2.17"]]
+                 [log4j/log4j "1.2.17"]
+
+                 ;; for oops delpoyment
+                 [org.clojure/data.xml "0.0.8"]
+                 [clj-http "1.0.0"]
+
+                 ]
 
   ;; multiple profiles for testing against different OWL versions. The :base
   ;; dependency adds dev-resources to the path which I need for testing.

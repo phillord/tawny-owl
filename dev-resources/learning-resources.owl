@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF 
+    xmlns="http://www.cc.uah.es/ie/ont/learning-resources#"
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+    xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+    xmlns:owl="http://www.w3.org/2002/07/owl#"
+    xml:base="http://www.cc.uah.es/ie/ont/learning-resources">
+  <owl:Ontology rdf:about="">
+    <rdfs:comment xml:lang="en">An upper ontology for models of</rdfs:comment>
+  </owl:Ontology>
+  <owl:Class rdf:ID="LearningObject">
+    <rdfs:comment xml:lang="en">"A digital learning resource"</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:ID="ExerciseLO">
+    <rdfs:comment xml:lang="en">"A task, problem, or other effort performed to develop or maintain fitness or increase skill:"</rdfs:comment>
+    <rdfs:subClassOf rdf:resource="#LearningObject"/>
+  </owl:Class>
+  <owl:ObjectProperty rdf:ID="partOf">
+    <owl:inverseOf>
+      <owl:TransitiveProperty rdf:ID="hasPart"/>
+    </owl:inverseOf>
+    <rdfs:range rdf:resource="#LearningObject"/>
+    <rdfs:domain rdf:resource="#LearningObject"/>
+  </owl:ObjectProperty>
+  <owl:TransitiveProperty rdf:about="#hasPart">
+    <rdfs:range rdf:resource="#LearningObject"/>
+    <rdfs:domain rdf:resource="#LearningObject"/>
+    <rdfs:comment xml:lang="en">Specifies that a LO has as one of its constituent another LO.</rdfs:comment>
+    <owl:inverseOf rdf:resource="#partOf"/>
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+  </owl:TransitiveProperty>
+  <LearningObject rdf:ID="aLearningObject">
+    <hasPart>
+      <ExerciseLO rdf:ID="anExerciseLearningObject">
+        <partOf rdf:resource="#aLearningObject"/>
+      </ExerciseLO>
+    </hasPart>
+    <partOf>
+      <LearningObject rdf:ID="yetAnotherLearningObject">
+        <hasPart rdf:resource="#aLearningObject"/>
+      </LearningObject>
+    </partOf>
+  </LearningObject>
+  <LearningObject rdf:ID="anotherLearningObject"/>
+</rdf:RDF>
+<!-- Created with Protege (with OWL Plugin 3.2.1, Build 365)  http://protege.stanford.edu -->
