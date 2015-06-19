@@ -892,7 +892,7 @@ This is likely to become a property of the ontology at a later date, but at
 the moment it is very simple."
   [o name]
   (if-let [iri-gen (:iri-gen (deref (ontology-options o)))]
-    (iri-gen name)
+    (iri-gen o name)
     (iri (str (as-iri o) "#" name))))
 ;; #+end_src
 
