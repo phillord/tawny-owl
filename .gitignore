@@ -12,3 +12,7 @@ docs/*html
 /org/
 o.*
 /.lein-deps-sum
+/.cask/
+/tawny.html
+/src/tawny/owl.org
+/src/tawny/pattern.org

@@ -1,3 +1,9 @@
+;; #+TITLE: tawny.owl: Building Ontologies Programmatically.
+;; #+AUTHOR: Phillip Lord
+
+;; * Header :no-export
+
+
 ;; The contents of this file are subject to the LGPL License, Version 3.0.
 
 ;; Copyright (C) 2012, 2013, 2014, Newcastle University
@@ -9,11 +15,16 @@
 
 ;; This program is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See they
 ;; GNU Lesser General Public License for more details.
 
 ;; You should have received a copy of the GNU Lesser General Public License
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
+
+
+;; * Namespace
+
+;; #+begin_src clojure
 (ns ^{:doc "Build ontologies in OWL."
       :author "Phillip Lord"}
   tawny.owl
@@ -47,13 +58,20 @@
    (org.semanticweb.owlapi.model AddAxiom RemoveAxiom AddImport
                                  AddOntologyAnnotation)))
 
-;;; Begin resource section
+;; #+end_src
+
+;; * Begin resource section
 
 ;; The next set of forms all contain values that percolate across all the
-;; namespaces that contain ontologies. Resetting all of these when owl.clj is
-;; eval'd is a pain, hence they are all defonce. Access is via a fn, because
-;; this is more adapatable and also because I monkey patch them inside
-;; protege. They used to be closures but this was a pain to type hint
+;; namespaces that contain ontologies. Resetting all of these when ~owl.clj~ is
+;; eval'd is a pain, hence they are all ~defonce~. Access is via a fn, because
+;; this is more adapatable and also because I monkey patch them inside protege
+;; for tawny-nrepl, since this requires a different factory/manager for each GUI
+;; frame. If I find myself doing this often, I may need to think again about the
+;; implementation. They used to be closures but this was a pain to type hint
+
+;; #+begin_src clojure
+
 (defonce
   ^{:doc "The OWLDataFactory used for Tawny."
     :private true}
@@ -84,6 +102,18 @@
   ^{:doc "Map between namespaces and ontologies"}
   ontology-for-namespace (ref {}))
 
+;; #+end_src
+
+;; * Protocols and Predicates
+
+;; ** IRIable
+
+;; Within Tawny, we need to convert a number of things to IRI objects. We offer
+;; basic support for this conversion, and a protocol. The OWL API also offers an
+;; ~HasIRI~ interface (added during the tawny implementation), but I also want to
+;; extend this to Clojure types, hence the protocol.
+
+;; #+begin_src clojure
 (defn ^IRI iri
   "Returns an IRI object given a string or URI. Does no transformation on the
 string; use 'iri-for-name' to perform ontology specific expansion"
@@ -91,8 +121,6 @@ string; use 'iri-for-name' to perform ontology specific expansion"
   (util/with-types
     [name [String java.net.URL java.io.File]]
     (IRI/create name)))
-
-(load "owl_self")
 
 ;; for reasons that I do not understand IRI has to be fully-qualified or
 ;; lookup.clj gives errors. I can't reproduce this with a simple test case.
@@ -115,6 +143,13 @@ string; use 'iri-for-name' to perform ontology specific expansion"
   IRIable
   (as-iri [entity] (.getIRI entity)))
 
+;; #+end_src
+
+;; Extension of ~as-iri~ to ~OWLOntology~ is slightly questionable, since an
+;; Ontology is identified *not* by an IRI but the combination of an IRI and
+;; version IRI.
+
+;; #+begin_src clojure
 (extend-type
     OWLOntology
   IRIable
@@ -134,24 +169,38 @@ an exception."
     entity
     (throw (IllegalArgumentException. "Expecting a IRIable entity"))))
 
+;; #+end_src
+
+;; ~OWLNamedObject~ is close to the same thing as an IRIable -- ~String~,
+;; ~OWLOntology~ and ~IRI~, I think, are counter examples. I may not need this
+;; distinction; I expect I have used the two inconsistently.
+
+;; #+begin_src clojure
 (defn named-object?
   "Returns true iff entity is an OWLNamedObject."
   [entity]
   (instance? OWLNamedObject entity))
 
-;; things that can be turned into OWLObjects
+;; #+end_src
+
+;; ** Entityable
+
+;; Where ever possible, I try to pass around OWL API objects and reuse their
+;; functionality directly. The original motivation for this was just pragmatic;
+;; Tawny was incomplete and I needed to fallback to OWL API calls often.
+;; Unfortunately, the OWL API does not support all of the functionality I need
+;; within Tawny, so I have worked around this with wrapping objects, usually
+;; Records. This seemed simpler than alternative methods, such as a ~WeakHashMap~
+;; store, or something similar to the ~ontology-options~ support added later.
+
+;; We extend to ~Object~ and ~nil~ primarily for datatypes, but also for ~String~
+;; based usage of Tawny.
+
+;; #+begin_src clojure
 (defprotocol Entityable
   "Entityable objects are objects which wrap an OWLObject for some purpose."
   (^OWLObject as-entity [entity]
     "Returns the bare OWLObject from an Entityable entity."))
-
-;; annotable entities are those which carry a set of annotations which should
-;; be placed on their Axiom when they are asserted. Returns a set which may be
-;; empty.
-(defprotocol Annotatable
-  "Annotatable objects are objects which can contain a number of OWLAnnotations."
-  (^java.util.Set as-annotations [entity]
-    "Returns an OWLAnnotation set from an Annotatable entity."))
 
 ;; extend to object so that we can support numbers and strings, and so forth.
 (extend-type
@@ -163,8 +212,27 @@ an exception."
     nil
   Entityable
   (as-entity [entity] nil))
+;; #+end_src
 
-;; likewise Annotatable
+;; ** Annotatable
+
+;; ~Annotatable~ supports annotations of entities that need to be placed on the
+;; ~OWLAxiom~ that is used to assert its relationship with other things.
+;; The frame based syntax of tawny means that these annotations are implicit in
+;; the syntax (although not in the underlying code base) which makes them a bit
+;; of a pain to implement. We use a wrapping object as the most practical
+;; alternative here.
+
+;; The annotations are applied at the point that the relationship is asserted,
+;; not the point that the ~annotate~ function is called, so the same annotation
+;; could be applied to many axioms.
+
+;; #+begin_src clojure
+(defprotocol Annotatable
+  "Annotatable objects are objects which can contain a number of OWLAnnotations."
+  (^java.util.Set as-annotations [entity]
+    "Returns an OWLAnnotation set from an Annotatable entity."))
+
 (extend-type
     Object
   Annotatable
@@ -215,12 +283,54 @@ an exception."
   "Same as clojure.core/set with a type hint."
   [coll]
   (set coll))
-;;; Begin current ontology support
+;; #+end_src
 
-;; not sure this is necessary now as (almost) all functions now take an
-;; ontology parameter, which is generally going to be the nicer way to achieve
-;; things.
 
+;; * Current Ontology Support
+
+;; In this section, we add support for an implicit ontology argument which is
+;; used by the majority of user-facing Tawny functions. The implicit argument is
+;; defined on a per namespace basis, which fits with the general paradigm of
+;; defining at most one ontology per namespace.
+
+;; There is a lot of argument about this form of implicit argument passing in the
+;; Clojure community; obviously it means that the vast majority of functions are
+;; not pure, although the use of the OWL API means that this is true anyway. From
+;; a practical PoV, requiring users of tawny to pass a ontology to every function
+;; call seemed pointless. We would swap this:
+
+;; #+BEGIN_EXAMPLE
+;; (defclass A
+;;   :super (owl-some r B))
+;; #+END_EXAMPLE
+
+;; for something more like this.
+
+;; #+BEGIN_EXAMPLE
+;; (defclass A
+;;   :super (owl-some r B)
+;;   :ontology o)
+;; #+END_EXAMPLE
+
+;; More over, co-ercion of strings would knowledge of the ontology also, and
+;; would no longer be implicit. So, we would have:
+
+;; #+BEGIN_EXAMPLE
+;; (defclass A
+;;   :super (owl-some (iri o "r") (iri o "B")
+;;   :ontology o)))
+;; #+END_EXAMPLE
+
+;; It seems too much, an uncertain gain.
+
+;; The flip-side is that supporting this functionality requires some fairly nasty
+;; code. It is, at least, all in one place.
+
+;; We used to support dynamic rebinding of the current ontology, but that
+;; really was a step too far, and caused considerable grief with laziness as
+;; might be expected.
+
+;; #+begin_src clojure
 (defn get-current-ontology-maybe
   "Gets the current ontology, or nil if there is not one."
   ([]
@@ -276,13 +386,20 @@ rather than just using BODY directly."
   ^{:doc "Hook called when the default ontology is used"}
   default-ontology-hook (util/make-hook))
 
-;;
+;; #+end_src
+
 ;; The following section is aggressively optimized, because these functions
 ;; are called for almost every other method invocation. Where ever possible,
-;; we avoid variadic methods; things that could be done as loops are unwound,
-;; and some logic is done in macro. There is some code duplication as a
-;; result.
-;;
+;; we avoid variadic methods; this has a substantial impact on performance as it
+;; avoids boxing and unboxing of arguments into and out of lists.
+
+;; There is some code duplication as a result, so this section needs changing
+;; with great care.
+
+;; Some parts of this code could do with macroing out, just to ensure that I
+;; maintain consistency.
+
+;; #+begin_src clojure
 (defn- default-ontology-base-dispatcher
   "Invoke f ensuring that the first argument is an ontology or nil.
 This works wqhere we already know that the first value of args is not an
@@ -388,8 +505,44 @@ multi-arity as a micro optimization, to avoid a variadic invocation."
        (apply default-ontology-base-dispatcher
               get-current-ontology
               f a b c d e fa g h i j args))))
+;; #+end_src
 
-;; broadcast-ontology is also highly optimized
+;; * Broadcasting
+
+
+;; I've borrowed the term broadcasting from R and it allows a lot of syntactical
+;; concision. So, for instance, this:
+
+;; #+BEGIN_EXAMPLE
+;; (owl-some r A)
+;; #+END_EXAMPLE
+
+;; returns an existential restriction while
+
+;; #+BEGIN_EXAMPLE
+;; (owl-some r A B)
+;; #+END_EXAMPLE
+
+;; returns a list of two restrictions. This is a small advantage, but the general
+;; idea that functions can return lists make it possible to do, for example,
+;; covering axioms
+
+;; #+BEGIN_EXAMPLE
+;; (some-only r A B C)
+;; #+END_EXAMPLE
+
+;; which returns two existential, and one universal restriction. It makes, for
+;; example, ~some~ and ~only~ consistent in their usage with ~or~ and ~and~ which
+;; are naturally variadic. As with the default ontology, this syntactic
+;; conscision comes with a cost in terms of code complexity.
+
+;; We support broadcasting up to seven arguments without the use of variadic
+;; function calls again for performance optimisation.
+
+;; This probably also needs macro'ing out, again, both for consistency, but also
+;; to cope with higher arities. Ontologies such as GO easily exceed this.
+
+;; #+begin_src clojure
 (defn- broadcast-ontology-int
   "Implements the broadcast function for up to six arguments. First argument
 is an ontology, the last is th function that we are broadcasting to, and all
@@ -399,10 +552,12 @@ lists. There was a good reason for putting fnc at the end of the argument
 list, but I cannot remember what it was."
   ;; at this point o is definately an ontology and a-f are definately not lists
   ([o a fnc]
-     (fnc o a))
+   (fnc o a))
   ([o a b fnc]
-     ;; dispense with the list for this case when we don't need it
-     (fnc o a b))
+   ;; dispense with the list for this case when we don't need it and also
+   ;; because it will allow functions operating on the return value of this to
+   ;; also avoid the full flattening broadcast support.
+   (fnc o a b))
   ([o a b c fnc]
      (list
       (fnc o a b)
@@ -566,9 +721,54 @@ default ontology."
      (apply broadcast-ontology-maybe-full
             fnc a b c d e f g args)))
 
-;;
-;; End micro-optimized section!
-;;
+
+;; #+end_src
+
+;; * Function def forms
+
+;; These ~def~ macros enable definition of functions with support for
+;; broadcasting and default ontology functionality. The difference is the 4 and
+;; 5th letter:
+
+;;  - "d" definately requires the default ontology
+;;  - "m" maybe requires the default ontology
+;;  - "b" broadcasting
+
+;; The reason for the "maybe" is that for some functions, it depends on the
+;; arguments whether an ontology is required or not. So:
+
+;; #+BEGIN_EXAMPLE
+;; (owl-class "a")
+;; #+END_EXAMPLE
+
+;; definately requires an ontology since we need to add ~a~ to the it.
+
+;; #+BEGIN_EXAMPLE
+;; (owl-some r A)
+;; #+END_EXAMPLE
+
+;; Does not if ~r~ and ~A~ are object property and class objects respectively.
+;; However,
+
+;; #+BEGIN_EXAMPLE
+;; (owl-some r "a")
+;; #+END_EXAMPLE
+
+;; will do since it is equivalent to 
+
+;; #+BEGIN_EXAMPLE
+;; (owl-some r (owl-class "a"))
+;; #+END_EXAMPLE
+
+;; In this case, ~owl-some~ calls a "definately" ontology function anyway, and it
+;; is this that crashes. Tawny uses a "crash late" strategy -- we should only
+;; require an ontology argument when it is definately needed.
+
+;; One disadvantage of these ~def~ forms is that they make the stack traces a lot
+;; harder to read, since their bodies are actually transformed into numbered
+;; functions. I am not sure how to fix this.
+
+;; #+begin_src clojure
 
 (defmacro defdontfn
   "Like defn, but automatically adds the current-ontology to the args
@@ -607,7 +807,14 @@ Uses the default ontology if not supplied and throws an IllegalStateException
   `(defnwithfn ~name #'broadcast-ontology-maybe
      ~@body))
 
-;;; Axiom mainpulation
+
+;; #+end_src
+
+;; * Axiom mainpulation
+
+;; Just some utility functions for adding or removing axioms.
+
+;; #+begin_src clojure
 (defdontfn add-axiom
   "Adds an axiom from the given ontology, or the current one."
   [^OWLOntology o  ^OWLAxiom axiom]
@@ -645,10 +852,23 @@ of c."
     (.applyChanges (owl-ontology-manager)
                    (.getChanges remover))))
 
-;;; Begin Ontology options
 
-;; ontology options -- additional knowledge that I want to attach to each
-;; ontology,  but which gets junked when the ontology does.
+;; #+end_src
+
+;; * Ontology options
+
+;; I cannot represent all of the data that I need in an OWLOntology, so I have
+;; added this generic "ontology options" support. Essentially, we keep a map for
+;; every ontology into which we can dump stuff. This is cleaned when an ontology
+;; is removed (an implicit operation happening on the re-eval of a ~defontology~
+;; form.
+
+;; I could have implemented this as a wrapper object, as I have done in general
+;; for OWL API objects, but chose not to because it makes direct access to the
+;; OWL API object harder; the difference between this and most OWL API objects is
+;; that I do this is likely to be necessary for lots of OWLOntology objects.
+
+;; #+begin_src clojure
 (def ^{:doc "Ontology options. A map on a atom for each ontology"}
   ontology-options-atom (atom {}))
 
@@ -665,8 +885,6 @@ or the current-ontology"
       ontology-options-atom assoc o (ref {}))
      o)))
 
-;;; Begin iri support
-
 (defdontfn iri-for-name
   "Returns an IRI object for the given name.
 
@@ -676,8 +894,14 @@ the moment it is very simple."
   (if-let [iri-gen (:iri-gen (deref (ontology-options o)))]
     (iri-gen name)
     (iri (str (as-iri o) "#" name))))
+;; #+end_src
 
-;;; Begin interned-entity-support
+;; * Interning OWL Entities
+
+;; Support for interning of OWL Entities. This differs from a normal intern by
+;; adding some metadata to the var, and calling a hook.
+
+;; #+begin_src clojure
 (defonce
   ^{:doc "Hook called when an new var is created with an OWLObject, with the var"}
   intern-owl-entity-hook
@@ -690,11 +914,15 @@ the moment it is very simple."
   (util/run-hook intern-owl-entity-hook var)
   var)
 
+;; #+end_src
+
 ;; In the idea world, these would be one function. However, they can't be. The
 ;; intern version works where we do not know the symbol at compile time. This
 ;; is generally useful for read'ing and the like. The symbol created cannot be
 ;; used in the same form because the compiler doesn't know that it has been
 ;; defined.
+
+;; #+begin_src clojure
 (defn intern-owl-string
   "Interns an OWL Entity. Compared to the clojure.core/intern function this
 signals a hook, and adds :owl true to the metadata. NAME must be a strings"
@@ -705,24 +933,32 @@ signals a hook, and adds :owl true to the metadata. NAME must be a strings"
                 (symbol name)
                 {:owl true})
               entity))))
+;; #+end_src
 
-;; While this version uses def semantics -- the point here is that the def
+;; While this version uses ~def~ semantics -- the point here is that the ~def~
 ;; form is expanded at compile time, the compiler recognises that the form has
 ;; been defined, and so allows subsequent referencing of the symbol within the
 ;; same form.
+
+;; #+begin_src clojure
 (defmacro intern-owl
   "Intern an OWL Entity. Compared to the clojure.core/intern function this
 signals a hook, and adds :owl true to the metadata. NAME must be a symbol"
   ([name entity]
-     ;; we use def semantics here, rather than intern-owl-string, because
-     ;; intern is not picked up by the compiler as defining a symbol
      `(tawny.owl/run-intern-hook
        (def ~(vary-meta name
                         merge
                         {:owl true})
          ~entity))))
+;; #+end_src
 
-;;; Begin OWL2 datatypes
+;; * OWL2 datatypes
+
+;; Here we are just shifting from a Java idiom (that is an enum with static
+;; values) to a Clojure one (that is keywords). Syntactically, this works quite
+;; well.
+
+;; #+begin_src clojure
 (def
   ^{:doc "A map of keywords to the OWL2Datatypes values"}
   owl2datatypes
@@ -730,8 +966,13 @@ signals a hook, and adds :owl true to the metadata. NAME must be a symbol"
         (for [^org.semanticweb.owlapi.vocab.OWL2Datatype
               k (org.semanticweb.owlapi.vocab.OWL2Datatype/values)]
           [(keyword (.name k)) k])))
+;; #+end_src
 
-;;; Begin Annotation Support
+;; * Annotation
+
+;; #+begin_src clojure
+(load "owl_self")
+
 (defbdontfn add-a-simple-annotation
   "Adds an annotation to a named object."
   [o ^OWLNamedObject named-entity annotation]
@@ -967,6 +1208,13 @@ add-sub-annotation functionality."
    (owl-data-factory)
    (iri-for-name o property)))
 
+;; #+end_src
+
+;; * Ontology defentity
+
+;; We should move this before annotation...
+
+;; #+begin_src clojure
 (defn- extract-ontology-frame
   "Extracts the ontology frames from a list of frames.
 Currently, we define this to be the second value iff the first is an :ontology
@@ -1015,6 +1263,12 @@ The ontology frame is optional."
      [entity# & frames#]
      (#'tawny.owl/entity-generator entity# frames# ~entity-function)))
 
+;; #+end_src
+
+;; * Last bit of annotation
+
+;; #+begin_src clojure
+
 (defentity defaproperty
   "Defines a new annotation property in the current ontology.
 See 'defclass' for more details on the syntax"
@@ -1036,8 +1290,11 @@ See 'defclass' for more details on the syntax."
               ~@frames)]
          (intern-owl ~property property#)))))
 
-;;; Ontology manipulation
+;; #+end_src
 
+;; * Ontology Manipulation
+
+;; #+begin_src clojure
 (defn ontology-to-namespace
   "Sets the current ontology as defined by `defontology'"
   ([o]
@@ -1344,7 +1601,12 @@ If no ontology is given, use the current-ontology"
        (.saveOntology (owl-ontology-manager) o
                       this-format output-stream))))
 
-;;; Begin OWL entity guess/ensure
+
+;; #+end_src
+
+;; * OWL Entity guess/ensure
+
+;; #+begin_src clojure
 (derive ::class ::object)
 (derive ::object-property ::object)
 (derive ::object-property ::property)
@@ -1577,7 +1839,11 @@ interpret this as a string and create a new OWLIndividual."
            (str "Expecting an Individual. Got: " individual)))))
 
 
-;; Begin add-owl objects
+;; #+end_src
+
+;; * OWL Object
+
+;; #+begin_src clojure
 (defbdontfn
   add-superclass
   {:doc "Adds one or more superclasses to name in ontology."
@@ -1684,6 +1950,18 @@ opposite of this."
                   (ensure-class o class)
                   (set propertylist)
                   (as-annotations propertylist))))))
+
+
+;; #+end_src
+
+;; We end rather early here, and should probably bring the rest of the OWLClass
+;; code in.
+
+
+;; * Object Properties
+
+
+;; #+begin_src clojure
 
 (defbdontfn add-domain
   "Adds all the entities in domainlist as domains to a property."
@@ -1968,6 +2246,15 @@ value for each frame."
            property# (tawny.owl/object-property property-name# ~@frames)]
        (intern-owl ~property property#))))
 
+
+;; #+end_src
+
+;; * Random guess-type stuff
+
+;; Why is this not earlier?
+
+;; #+begin_src clojure
+
 (defmontfn
   guess-type-args
   {:doc  "Broadcasting version of guess-type"
@@ -1980,6 +2267,12 @@ value for each frame."
    :private true}
   [o & args]
   (guess-individual-literal o args))
+
+;; #+end_src
+
+;; * Restriction Overloading
+
+;; #+begin_src clojure
 
 ;; multi methods for overloaded entities. We guess the type of the arguments,
 ;; which can be (unambiguous) OWLObjects, potentially ambiguous IRIs or
@@ -2050,6 +2343,12 @@ data ranges."
   (throw (IllegalArgumentException.
           (str "Unable to determine the type of: " args))))
 
+;; #+end_src
+
+;; ** Nil error methods
+
+;; #+begin_src clojure
+
 (defmethod owl-some nil [& rest]
   (apply guess-type-error rest))
 
@@ -2079,6 +2378,12 @@ data ranges."
 
 (defmethod has-value nil [& rest]
   (apply guess-type-error rest))
+
+;; #+end_src
+
+;; * Object Restrictions
+
+;; #+begin_src clojure
 
 ;; short cuts for the terminally lazy. Still prefix!
 (def && #'owl-and)
@@ -2264,6 +2569,13 @@ n is evaluated only once, so can have side effects."
   (.getOWLObjectHasSelf (owl-data-factory)
                         (ensure-object-property o property)))
 
+
+;; #+end_src
+
+;; * OWL Class Complete
+
+;; #+begin_src clojure
+
 (def ^{:private true} owl-class-handlers
   {
    :subclass #'deprecated-add-subclass
@@ -2363,6 +2675,12 @@ All arguments must of an instance of OWLClassExpression"
       (owl-data-factory)
       (hset classlist)
       (union-annotations classlist)))))
+
+;; #+end_src
+
+;; * Individuals
+
+;; #+begin_src clojure
 
 (defbdontfn add-type
   {:doc "Adds CLAZZES as a type to individual to current ontology
@@ -2510,7 +2828,20 @@ or to ONTOLOGY if present."
            individual# (tawny.owl/individual string-name# ~@frames)]
        (intern-owl ~individualname individual#))))
 
+;; #+end_src
+
+;; * OWL Data
+
+;; #+begin_src clojure
+
 (load "owl_data")
+
+
+;; #+end_src
+
+;; * Grouping
+
+;; #+begin_src clojure
 
 (defn- var-get-maybe
   "Given a var return it's value, given a value return the value."
@@ -2631,7 +2962,12 @@ See `declare-classes' where frames (or just default frames) are not needed.
             (fn [x#]
               `(defclass ~@x#)) classes)))
 
-;; tree recursing
+;; #+end_src
+
+;; * Predicate Functions
+
+;; #+begin_src clojure
+
 (defn- recurse-ontology-tree
   "Recurse the ontology tree starting from class and calling
 f to get the neighbours."
@@ -2787,6 +3123,12 @@ direct or indirect superclass of itself."
     (if (instance? OWLClass clz)
       (.getIndividuals clz o) ())))
 
+
+;; #+end_src
+
+;; * Test Support
+
+;; #+begin_src clojure
 ;; some test useful macros
 
 ;; currently doesn't support an ontology argument
@@ -2868,6 +3210,12 @@ effectively unchanged."
      (throw (IllegalArgumentException.
              "with-probe-axioms only allows Symbols in bindings")))))
 
+;; #+end_src
+
+;; * OWL (No)thing
+
+;; #+begin_src clojure
+
 (defn owl-thing
   "Returns OWL thing."
   []
@@ -2877,6 +3225,12 @@ effectively unchanged."
   "Returns OWL nothing."
   []
   (.getOWLNothing (owl-data-factory)))
+
+;; #+end_src
+
+;; * More Grouping
+
+;; #+begin_src clojure
 
 ;; add a prefix or suffix to contained defclass
 (defn- alter-symbol-after-def-form
@@ -2930,6 +3284,11 @@ This is a convenience macro and is lexically scoped."
          body)]
     `(list ~@newbody)))
 
+;; #+end_src
+
+;; * Refine
+
+;; #+begin_src clojure
 
 (defmontfn
   ^:private
@@ -3011,3 +3370,4 @@ cases this will have been imported."
           (assoc (meta newsymbol#)
             :owl true))
        (var-get (var ~symb)))))
+;; #+end_src

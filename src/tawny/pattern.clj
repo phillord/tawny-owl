@@ -1,6 +1,11 @@
+;; #+TITLE: Pattern
+;; #+AUTHOR: Phillip Lord
+
+;; * Header
+
 ;; The contents of this file are subject to the LGPL License, Version 3.0.
 
-;; Copyright (C) 2011, 2014, Newcastle University
+;; Copyright (C) 2011, 2014, 2015 Newcastle University
 
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU Lesser General Public License as published by
@@ -15,6 +20,13 @@
 ;; You should have received a copy of the GNU Lesser General Public License
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
 
+
+;; * Namespace
+
+;; We start with a namespace declaration. As we will using a number of annotation
+;; properties in this namespace, we define that here to.
+
+;; #+begin_src clojure
 (ns tawny.pattern
   (:require
    [clojure.set]
@@ -26,18 +38,114 @@
             OWLOntology OWLClass])
   )
 
-
 (o/defontology pattern
   :iri "http://www.w3id.org/ontolink/pattern.owl")
+;; #+end_src
 
-(o/defaproperty facetvalue
-  :label "facet value"
-  :comment "facet value indicates a relationship between an object property
-  and a class, indicating that the class is a value in a particular facet
-  where entities may be described by (one or more) existential relationship
-  involving a specific object property. The object property may also have a
-  range which is a superclass of the facet values but is not required to.")
 
+;; * Intering Macro Support
+
+;; Writing functions is relatively straight-forward, but writing macros is a bit
+;; more of a pain. So, here we add generic support for turning a function
+;; defining a pattern into a macro. To do this, we essentially need three things.
+
+;;  - the pattern needs to return OWL entities and a string to intern.
+;;  - for macros the "ontology as the first argument" paradigm doesn't work, so
+;;    we need support for adding an ontology frame and extracting it again.
+;;  - something to actually do the interning.
+
+;; To support the first, we introduce the ~Named~ record to package an entity
+;; with the name to refer to it; the ~p~ function introduced later actually uses
+;; these. The ~pattern-generator~ and ~extract-ontology-arg~ functions support
+;; the latter. And ~intern-owl-entities~ supports the last.
+
+;; Examples of these in use will be seen later.
+
+;; #+begin_src clojure
+(defrecord Named [name entity]
+  tawny.owl.Entityable
+  (as-entity [this] entity))
+
+(defn intern-owl-entities
+  "Given a list of vectors of form [name entity], as returned by the p
+  function, intern all the entities in the current namespace."
+  [entities]
+  ;; Interning works by side effect!
+  (doall
+   (map
+    (fn [{:keys [name entity]}]
+      (o/intern-owl-string name entity))
+    entities)))
+
+(defn extract-ontology-arg
+  "Give a set of frame arguments, return a map with the ontology frame and all
+  the other arguments without the ontology frame."
+  [args]
+  (let [[b a]
+        (split-with (complement (fn [x] (= :ontology x))) args)
+        ontology (second a)]
+    {:ontology ontology
+     :args
+     (concat b (drop 2 a))}))
+
+(defn pattern-generator
+  "Macro generator function. Returns a form where args has the ontology frame
+removed and placed as the first arg, which is passed to the pattern-function,
+whose return values are interned."
+  [pattern-function args]
+  (let [ontsplit (extract-ontology-arg args)
+        ont (:ontology ontsplit)
+        rest (:args ontsplit)
+        args-with-ont
+        (if ont
+          (cons ont rest)
+          rest)]
+    `(#'tawny.pattern/intern-owl-entities
+      (~pattern-function ~@args-with-ont))))
+;; #+end_src
+
+
+;; * Easy Pattern Creation with "P"
+
+;; The frame syntax of tawny makes it easy to type but harder to parse.
+;; Generally, ~tawny.owl~ can take care of this, but there is a problem where
+;; parts of the pattern are optional. For example, consider:
+
+;; #+begin_example
+;; (owl-class "newclass" :super s)
+;; #+end_example
+
+;; This is a pattern because we use the free variable ~s~. The problem comes if
+;; ~s~ is ~nil~, which tawny treats as an error (for good reasons!).
+;; Unfortunately, we cannot just strip nil values because we might have this:
+
+;; #+begin_example
+;; (owl-class "newclass" :super s :equivalent e)
+;; #+end_example
+
+;; If ~s~ is nil and we nil-strip arguments, then we end up with
+;; ~:super :equivalent~ as a sequence, which tawny also treats as an error (for
+;; good reasons!). So, provide ~p~ which nil-strip and removes frames with
+;; nothing but nils. So:
+
+;; #+BEGIN_EXAMPLE
+;; (p owl-class "newclass" :super nil :equivalent e)
+;; #+END_EXAMPLE
+
+;; now works because both ~:super~ and ~nil~ are removed. Other uses such as:
+
+;; #+BEGIN_EXAMPLE
+;; (p owl-class "newclass" :super nil c :equivalent e)
+;; #+END_EXAMPLE
+
+;; are also fine. Of course, this puts the onus on the calling function to ensure
+;; that only values which are meant to be optional are passed and are not nil.
+
+;; ~p~ also modifies the return type. It extracts the first argument
+;; (~"newclass"~ in the examples) and returns a ~Named~ entity for use with the
+;; interning support.
+
+;; #+begin_src clojure
 (defn- nil-strip
   "Given a frame map with keyword keys and list values, remove any element in
   the list value which is nil, and both the key and value where all the
@@ -66,10 +174,6 @@
     (keys (var-get #'tawny.owl/object-property-handlers))
     args)))
 
-(defrecord Named [name entity]
-  tawny.owl.Entityable
-  (as-entity [this] entity))
-
 (defn p
   "Call the frame function entity-f but remove any nil arguments and the
   entire frames which only have nil arguments. Returns a vector of the name
@@ -84,62 +188,25 @@
         :default
         (nil-strip-hashify options))]
     (Named. name (apply entity-f o name options))))
+;; #+end_src
 
-(defn intern-owl-entities
-  "Given a list of vectors of form [name entity], as returned by the p
-  function, intern all the entities in the current namespace."
-  [entities]
-  ;; Interning works by side effect!
-  (doall
-   (map
-    (fn [{:keys [name entity]}]
-      (o/intern-owl-string name entity))
-    entities)))
+;; * Pattern Annotation
 
-(o/defdontfn as-facet [o oprop & entities]
-  "Mark entities as facet values for the facet oprop.
-This allows the specification of a set of properties as classes without having
-to explicitly name the object property."
-  (doall
-   (map
-    (fn [e]
-      (o/add-annotation
-       o
-       (o/as-entity (#'o/var-get-maybe e))
-       (o/annotation o facetvalue
-                     (o/as-iri
-                      (o/as-entity oprop)))))
-    (flatten entities))))
+;; It is often useful to be able to group all of the entities created as a the
+;; result of an instantiation of a pattern, so that it is possible to retrieve
+;; all these entities. This section provides this capability.
 
-(defn- facet-property [^OWLOntology o
-                       ^OWLClass cls]
-  (let
-      [prop
-       (map
-        (fn [^OWLAnnotation anon] (.getValue anon))
-        (filter
-         (fn [^OWLAnnotation anon]
-           (= (.getProperty anon)
-              facetvalue))
-         (.getAnnotations cls o)))]
-    (if (= 1 (count prop))
-      ;; there should be only one, and we have no good basis to pick if there
-      ;; are more than one.
-      (first prop)
-      (throw (Exception.
-              (str "There are facet properties for class:" cls))))))
+;; The implementation has one important consequence; I have chosen to use
+;; annotation properties, rather than representing this knowledge Clojure side
+;; which would have been perfectly possible. This means that the use of patterns
+;; are represented explicitly in the final ontology, as an annotation between the
+;; class and the object property. This obviously has consequences for the final
+;; serialized form of the ontology which may or may not be a good thing. On
+;; balance, I think, representing the knowledge externally is positive, and not
+;; having to store extra global state is definately good.
 
-(defn- facet-1 [o clazz]
-  (o/owl-some
-   o
-   (facet-property o clazz)
-   clazz))
 
-(o/defdontfn facet
-  "Return an existential restriction for each of the facetted classes."
-  [o & clazz]
-  (doall (map (fn [c] (facet-1 o c)) (flatten clazz))))
-
+;; #+begin_src clojure
 (o/defaproperty inpattern
   :label "In Pattern"
   :comment "Indicates that the entity was created as part of a pattern
@@ -221,33 +288,86 @@ an anonymous invididual."
     (.getAxioms
      o
      org.semanticweb.owlapi.model.AxiomType/ANNOTATION_ASSERTION))))
+;; #+end_src
 
-(defn extract-ontology-arg
-  "Give a set of frame arguments, return a map with the ontology frame and all
-  the other arguments without the ontology frame."
-  [args]
-  (let [[b a]
-        (split-with (complement (fn [x] (= :ontology x))) args)
-        ontology (second a)]
-    {:ontology ontology
-     :args
-     (concat b (drop 2 a))}))
 
-(defn pattern-generator
-  "Macro generator function. Returns a form where args has the ontology frame
-removed and placed as the first arg, which is passed to the pattern-function,
-whose return values are interned."
-  [pattern-function args]
-  (let [ontsplit (extract-ontology-arg args)
-        ont (:ontology ontsplit)
-        rest (:args ontsplit)
-        args-with-ont
-        (if ont
-          (cons ont rest)
-          rest)]
-    `(#'tawny.pattern/intern-owl-entities
-      (~pattern-function ~@args-with-ont))))
+;; * Facets
 
+;; This is our first example of a pattern. Many ontologies define entities by a
+;; set of properties with particular values, rather like a childhood card game;
+;; cars have speed, engine size, number of people and so on; planes have wing
+;; span, passangers and altitude.
+
+;; Here, we add support for these that we call *facets*; where a set of classes
+;; are used as values for a specific property. The relationship between the class
+;; and the propety is stored as a annotation, using the ~as-facet~ function,
+;; while the ~facet~ function returns one or more existential restrictions using
+;; the appropriate property (of which there may be several). This means that
+;; multiple facets can be expressed rapidly just by using their values.
+
+
+;; #+begin_src clojure
+(o/defaproperty facetvalue
+  :label "facet value"
+  :comment "facet value indicates a relationship between an object property
+  and a class, indicating that the class is a value in a particular facet
+  where entities may be described by (one or more) existential relationship
+  involving a specific object property. The object property may also have a
+  range which is a superclass of the facet values but is not required to.")
+
+(o/defdontfn as-facet [o oprop & entities]
+  "Mark entities as facet values for the facet oprop.
+This allows the specification of a set of properties as classes without having
+to explicitly name the object property."
+  (doall
+   (map
+    (fn [e]
+      (o/add-annotation
+       o
+       (o/as-entity (#'o/var-get-maybe e))
+       (o/annotation o facetvalue
+                     (o/as-iri
+                      (o/as-entity oprop)))))
+    (flatten entities))))
+
+(defn- facet-property [^OWLOntology o
+                       ^OWLClass cls]
+  (let
+      [prop
+       (map
+        (fn [^OWLAnnotation anon] (.getValue anon))
+        (filter
+         (fn [^OWLAnnotation anon]
+           (= (.getProperty anon)
+              facetvalue))
+         (.getAnnotations cls o)))]
+    (if (= 1 (count prop))
+      ;; there should be only one, and we have no good basis to pick if there
+      ;; are more than one.
+      (first prop)
+      (throw (Exception.
+              (str "There are facet properties for class:" cls))))))
+
+(defn- facet-1 [o clazz]
+  (o/owl-some
+   o
+   (facet-property o clazz)
+   clazz))
+
+(o/defdontfn facet
+  "Return an existential restriction for each of the facetted classes."
+  [o & clazz]
+  (doall (map (fn [c] (facet-1 o c)) (flatten clazz))))
+;; #+end_src
+
+
+;; * Value Partition
+
+;; This is the value partition property that is used to split something
+;; continuous into a set of discrete entities; rather like the colours of the
+;; rainbow.
+
+;; #+begin_src clojure
 (o/defmontfn value-partition
   "Return the entities for a new value partition.
 partition-name is the overall name for the partition.
@@ -302,3 +422,9 @@ takes the ontology as a frame rather than first argument."
    (list* (name partition-name)
           `(tawny.util/quote-word ~@partition-values)
           options)))
+;; #+end_src
+
+
+;; * Footer
+
+;; Pattern.clj Ends Here

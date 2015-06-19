@@ -1,4 +1,10 @@
 language: clojure
+before_install:
+  - curl -fsSkL https://gist.github.com/rejeep/7736123/raw | sh
+  - export PATH="/home/travis/.cask/bin:$PATH"
+  - export PATH="/home/travis/.evm/bin:$PATH"
+  - evm install emacs-24.5-bin --skip --use
+  - cask
 lein: lein2
 env:
  - PROFILE=default
@@ -7,7 +13,9 @@ env:
  - PROFILE=3.4.9
  - PROFILE=3.4.8
  - PROFILE=1.7
-script: lein2 with-profiles $PROFILE test
+script:
+ - lein2 with-profiles $PROFILE test
+ - make html
 jdk:
  - openjdk7
  - oraclejdk8

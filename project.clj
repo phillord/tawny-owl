@@ -25,7 +25,7 @@
 
                  ;; clojure
                  [org.clojure/clojure "1.6.0"]
-                 [org.clojure/core.logic "0.8.8"]
+                 [org.clojure/core.logic "0.8.10"]
 
                  ;; reasoners
                  [org.semanticweb.elk/elk-owlapi "0.4.1"]
