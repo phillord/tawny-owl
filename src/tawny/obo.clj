@@ -33,7 +33,7 @@
 (defn obo-iri-generate-or-retrieve
   "Given an OWLEntity name return either the remembered name if there is one,
 or the current, or generate a new temporary name"
-[name remembered current]
+  [name remembered current]
   (or (get remembered name)
       (get current name)
       (str obo-pre-iri "#"
@@ -71,13 +71,13 @@ in :name-to-iri-current, while IDs loaded from file are stored in
            (clojure.edn/read r))))
 
 ;; pull everything from file
-(defn obo-restore-iri
+(defdontfn obo-restore-iri
   "Read an existing properties file containing identifier to IRI data."
-  [file]
+  [o file]
   (let [name-to-iri-map
         (obo-read-map file)]
     (dosync
-     (alter (tawny.owl/ontology-options)
+     (alter (tawny.owl/ontology-options o)
             merge {:name-to-iri-remembered name-to-iri-map}))))
 
 (defn preiri?
@@ -113,10 +113,10 @@ IRIs are placed before pre-IRIs, and both are organised alphabetically."
     (clojure.pprint/pprint (flatten (obo-sort map)) w)))
 
 ;; store everything to a file
-(defn obo-store-iri
+(defdontfn obo-store-iri
   "Save both existing and new identifier to IRI mappings into the given file."
-  [file]
-  (let [options (deref (tawny.owl/ontology-options))
+  [o file]
+  (let [options (deref (tawny.owl/ontology-options o))
         remembered (:name-to-iri-remembered options)
         ;; Remove from the remembered keys any that begin
         ;; with the obo-pre-iri. The point with this is that we should have
@@ -147,10 +147,10 @@ longer exist in the ontology. There are, effectively, obsolete terms."
                        name))]
     (apply dissoc remembered-filtered (keys current))))
 
-(defn obo-report-obsolete
+(defdontfn obo-report-obsolete
   "Print a list of obsolete terms"
-  []
-  (let [options (deref (tawny.owl/ontology-options))]
+  [o]
+  (let [options (deref (tawny.owl/ontology-options o))]
     (doseq [[name iri]
             (extract-obsolete
              (:name-to-iri-remembered options)
