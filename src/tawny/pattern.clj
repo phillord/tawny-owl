@@ -346,12 +346,14 @@ to explicitly name the object property."
       ;; are more than one.
       (first prop)
       (throw (Exception.
-              (str "There are facet properties for class:" cls))))))
+              (str "There are multiple facet properties for class:" cls))))))
 
 (defn- facet-1 [o clazz]
   (o/owl-some
    o
-   (facet-property o clazz)
+   (facet-property
+    o
+    (#'tawny.owl/ensure-class o clazz))
    clazz))
 
 (o/defdontfn facet
