@@ -31,19 +31,6 @@
     IRI OWLNamedObject OWLOntologyID
     OWLOntology OWLEntity)))
 
-(tawny.owl/defmontfn default-filter
-  "Filter for only named objects with an IRI the same as the ontology IRI."
-  [o e]
-  (and (tawny.owl/iriable? e)
-       (= (tawny.owl/as-iri o)
-          (.getNamespace
-           (tawny.owl/as-iri e)))))
-
-(defn default-transform
-  "Extract the fragment from each IRI."
-  [^OWLNamedObject e]
-  (.. e (getIRI) (getFragment)))
-
 (defn iri-starts-with-filter
   "Checks e to see if it is an OWLNamedObject and has an IRI starting with
 starts-with. Use this partially applied with a filter for 'read'."
@@ -53,6 +40,17 @@ starts-with. Use this partially applied with a filter for 'read'."
         (str
          (.getIRI ^OWLNamedObject e))
         starts-with)))
+
+(tawny.owl/defmontfn default-filter
+  "Filter for only named objects with an IRI the same as the ontology IRI."
+  [o e]
+  (iri-starts-with-filter
+   (str (tawny.owl/as-iri o)) e))
+
+(defn default-transform
+  "Extract the fragment from each IRI."
+  [^OWLNamedObject e]
+  (.. e (getIRI) (getFragment)))
 
 (tawny.owl/defmontfn filter-for-labels
   "Filter annotations on an entity for labels"
