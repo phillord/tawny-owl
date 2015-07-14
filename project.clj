@@ -19,6 +19,13 @@
   :test-selectors {:slow :slow
                    :commit (complement :slow)}
 
+  :jar-exclusions [#".*\.org"
+                   #".*\.html"
+                   #"tawny/\.dir-locals.el"
+                   #"tawny/ChangeLog"
+                   #"tawny/temp.*\."
+                   ]
+
   :dependencies [
                  ;; owl API
                  [net.sourceforge.owlapi/owlapi-distribution "3.5.0"]
