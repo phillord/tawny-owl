@@ -13,6 +13,11 @@ pattern. As this capability uses OWLs annotation capabilities, this means that
 the pattern instances are also apparent in the saved OWL ontology so other
 tools can use this information also.
 
+Tawny-OWL is not also partially documented using
+http://github.com/phillord/lentic[lentic]. While this is not complete, it does
+not make sense to delay the release until this is ready as it is developer
+documentation.
+
 ## New Features
 
 - Support for "facets" -- an easy mechanism for making existential
