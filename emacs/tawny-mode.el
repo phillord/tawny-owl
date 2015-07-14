@@ -129,14 +129,14 @@
 (defun tawny-doc (query)
   "Opens a window with docstring for QUERY."
   (interactive "P")
-  (nrepl-read-symbol-name "Term: " 'tawny-doc-handler query))
+  (cider-read-symbol-name "Term: " 'tawny-doc-handler))
 
 (defun tawny-doc-handler (symbol)
   (let ((form (format "(do (require 'tawny.repl)(tawny.repl/print-doc %s))" symbol))
-        (doc-buffer (nrepl-popup-buffer nrepl-doc-buffer t)))
+        (doc-buffer (cider-popup-buffer cider-doc-buffer t)))
     (nrepl-send-string form
-                       (nrepl-popup-eval-out-handler doc-buffer)
-                       nrepl-buffer-ns
+                       (cider-popup-eval-out-handler doc-buffer)
+                       cider-buffer-ns
                        (nrepl-current-tooling-session))))
 
 (defun tawny-de-escape (string)
