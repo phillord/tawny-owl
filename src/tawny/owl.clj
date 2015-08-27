@@ -968,11 +968,31 @@ signals a hook, and adds :owl true to the metadata. NAME must be a symbol"
           [(keyword (.name k)) k])))
 ;; #+end_src
 
-;; * Annotation
+
+;; * Self-Annotation
+
+;; Tawny has a reflexive annotation system where an ontology created in Tawny is
+;; annotated with knowledge about the fact that it has been annotated in this
+;; way.
+
+;; We do this in a separate file (although the same name space). It contains some
+;; code duplication because of boot strap.
 
 ;; #+begin_src clojure
 (load "owl_self")
+;; #+end_src
 
+;; * Annotation
+
+;; ** Annotation Addition
+
+;; We now start with support for each of the various entities in OWL starting
+;; with Annotation.
+
+;; We start adding annotation to ~OWLNamedObject~ -- this does not include
+;; ~OWLOntology~ to which annotation must be added in a totally different way.
+
+;; #+begin_src clojure
 (defbdontfn add-a-simple-annotation
   "Adds an annotation to a named object."
   [o ^OWLNamedObject named-entity annotation]
@@ -994,14 +1014,26 @@ ontology option has been specified, in which case do nothing."
                  :noname false))
        (instance? String name))
     (add-a-simple-annotation o named-entity (tawny-name name))))
+;; #+end_src
 
+;; Now we add support for annotating ontologies.
+
+;; #+begin_src clojure
 (defbdontfn add-an-ontology-annotation
   "Adds an annotation to an ontology."
   [o o annotation]
   (.applyChange
    (owl-ontology-manager)
    (AddOntologyAnnotation. o annotation)))
+;; #+end_src
 
+;; And, finally, overarching support for adding annotation to both -- we add this
+;; support because I did not want to remember myself nor expect anyone else to
+;; have to remember to use two different methods for what feels like the same
+;; thing. Not having to remember this is almost certainly worth the slight
+;; performance hit that this method takes.
+
+;; #+begin_src clojure
 (defdontfn add-annotation
   {:doc "Add an annotation in the ontology to either the named-entity
 or the ontology. Broadcasts over annotations."
@@ -1070,8 +1102,17 @@ with the literal function."
   "The same as add-super-annotation used to implement the old
 add-sub-annotation functionality."
   add-super-annotation)
+;; #+end_src
 
-;; various annotation types
+;; ** Specific Annotations
+
+;; Now we want support for adding annotations of a specific type, against all the
+;; annotation types of the built-in OWL annotation types. We do this by first
+;; adding an ~annotator~ function; this is in the public interface to support the
+;; ease of addition of new functions for other users, then move onto to creating
+;; all the specific closures that we need to support OWL2.
+
+;; #+begin_src clojure
 (defn annotator
   "Creates a new annotator function.
   Annotation-property maybe an OWLAnnotationProperty object or a string in which
@@ -1160,8 +1201,13 @@ add-sub-annotation functionality."
   [o named-entity comment]
   (add-annotation o named-entity
                   [(owl-comment o comment)]))
+;; #+end_src
 
+;; ** Annotation Property Support
 
+;; We now begin support for the end-user creation of annotation properties.
+
+;; #+begin_src clojure
 (def ^{:private true} annotation-property-handlers
   {
    :super #'add-super-annotation
@@ -1207,12 +1253,28 @@ add-sub-annotation functionality."
   (.getOWLAnnotationProperty
    (owl-data-factory)
    (iri-for-name o property)))
-
 ;; #+end_src
 
 ;; * Ontology defentity
 
-;; We should move this before annotation...
+;; Provides macro support for turning functions into macros declaring new
+;; entities. We make the assumption that the functions return some (OWL API)
+;; entity and that the support the first argument as an ontology (i.e. the
+;; default ontology) semantics.
+
+;; Unfortunately, we cannot directly port the ontology as first argument
+;; semantics, because with the macro we need the first argument to be a) required
+;; and b) by the symbol. We can't distinguish this at macro-expansion time, since
+;; we cannot evaluate the first symbol to find out whether it evals to an
+;; ontology.
+
+;; So, instead, we have a "first frame can be an ontology" semantics instead. It
+;; has to be the first frame, because we need to know about the first frame
+;; *before* we do any thing else, because we need to pass it the function and we
+;; do not want to do a full parse to macro time. A bit messy but a reasonable
+;; compromise.
+
+;; We should move this before annotation!
 
 ;; #+begin_src clojure
 (defn- extract-ontology-frame
@@ -1262,10 +1324,11 @@ The ontology frame is optional."
      ~docstring
      [entity# & frames#]
      (#'tawny.owl/entity-generator entity# frames# ~entity-function)))
-
 ;; #+end_src
 
 ;; * Last bit of annotation
+
+;; And, finally, we complete the annotation frame.
 
 ;; #+begin_src clojure
 
@@ -1294,6 +1357,20 @@ See 'defclass' for more details on the syntax."
 
 ;; * Ontology Manipulation
 
+;; Tools for generating and manipulating ontology objects.
+
+;; ** Ontology to Namespace mapping
+
+;; Default ontology semantics requires us to have a place to store the default
+;; ontology and a semantics for determining the scope of the defaultness -- a
+;; single global default was never going to work.
+
+;; We use the namespace scope for the simple reason that all the Clojure tools in
+;; use already cope with this existance of this scope, as clojure requires it --
+;; if you eval a single function, you need to know which function the namespace
+;; should be declare and evaluated in. That this (generally) maps to a single
+;; source file gives it an intuitive semantics also.
+
 ;; #+begin_src clojure
 (defn ontology-to-namespace
   "Sets the current ontology as defined by `defontology'"
@@ -1318,6 +1395,15 @@ See 'defclass' for more details on the syntax."
      (alter ontology-for-namespace
             dissoc ns))))
 
+;; #+end_src
+
+;; We need to use a hook to signal that ontologies are removed, rather than just
+;; call a clean up method because we may need to clean up state from other
+;; namespaces. The driving use-case for this is the reasoner namespace, which
+;; needs to dump the reasoner at the same time or it will memory leak. But, we
+;; cannot call ~tawny.reasoner~ here or we will have a circular dependency.
+
+;; #+begin_src clojure
 (def
   ^{:doc "Hook called immediately after an ontology is removed from the
 owl-ontology-manager."}
@@ -1373,13 +1459,21 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
        (owl-ontology-manager) o))
      p (str (as-iri o)))))
 
+;; #+end_src
 
+;; It's an open question as to whether we really need all of these frames. They
+;; where added in the first place because the default ontology support made them
+;; complex otherwise -- it was impossible for the user to call (for example)
+;; ~owl-comment~ because the default ontology had not been set yet. Since then,
+;; we have added "maybe" default ontology functionality also, so the frames are
+;; partly historic.
+
+;; #+begin_src clojure
 (defn- add-ontology-comment
   "Adds a comment annotation to the ontology"
   [o s]
   (if s
     (add-annotation o (owl-comment o s))))
-
 
 (defn- add-see-also
   "Adds a see also annotation to the ontology"
@@ -1410,8 +1504,13 @@ ontology or an IRI"
 (defn- add-import [o olist]
   (doseq [n olist]
     (owl-import o n)))
+;; #+end_src
 
-;; ontology
+;; ** Ontology Frame
+
+;; And, finally, the implementation of the Ontology frame itself.
+
+;; #+begin_src clojure
 (def ^{:private true} ontology-handlers
   {
    ;; these are not broadcast
@@ -1425,7 +1524,6 @@ ontology or an IRI"
    :annotation #'add-ontology-annotation-handler
    :import #'add-import
    })
-
 
 (defn- flatten-first-list-values
   "Flattens the values for keys, except those in noflatten"
@@ -1490,6 +1588,12 @@ ontology or an IRI"
     (list* :iri :noname :viri
            (keys ontology-handlers)))))
 
+;; #+end_src
+
+;; Some code duplication here with ~defentity~ but we need to avoid default
+;; ontology support which does not make sense at all.
+
+;; #+begin_src clojure
 (defmacro defontology
   "Define a new ontology with `name'.
 
@@ -1600,11 +1704,20 @@ If no ontology is given, use the current-ontology"
        (.flush file-writer)
        (.saveOntology (owl-ontology-manager) o
                       this-format output-stream))))
-
-
 ;; #+end_src
 
 ;; * OWL Entity guess/ensure
+
+;; ** Guess
+
+;; The guess functionality is quite nasty, but it allows us to make an import
+;; syntactial simplification for the user -- we can use ~owl-some~, for instance,
+;; as the same syntax for both datatype and object properties.
+
+;; This would be reasonably straight-forward if we forced users to pass in OWL
+;; API Objects, but we don't. They can also pass in strings (tawny names), IRI
+;; objects or strings which should be treated as IRIs. So, we have to fix all of
+;; this and use this to guess our types.
 
 ;; #+begin_src clojure
 (derive ::class ::object)
@@ -1705,7 +1818,13 @@ an IRI with no transformation. nil is returned when the result is not clear.
      :default
      (throw (IllegalArgumentException.
              (str "Cannot tell if this is individual or literal:" entity))))))
+;; #+end_src
 
+;; ** Ensure
+
+;; Transform *anything* into *something* or crash!
+
+;; #+begin_src clojure
 (defn-
   ^{:private true}
   ^OWLObjectProperty ensure-object-property
@@ -1837,11 +1956,11 @@ interpret this as a string and create a new OWLIndividual."
    :default
    (throw (IllegalArgumentException.
            (str "Expecting an Individual. Got: " individual)))))
-
-
 ;; #+end_src
 
-;; * OWL Object
+;; * OWL Class
+
+;; We start ~OWLClass~ support rather randomly at this point.
 
 ;; #+begin_src clojure
 (defbdontfn
@@ -1867,7 +1986,13 @@ interpret this as a string and create a new OWLIndividual."
               (ensure-class o subclass)
               (ensure-class o name)
               (as-annotations subclass))))
+;; #+end_src
 
+;; We had to deprecated the old ~add-subclass~ because it has exactly backward
+;; semantics from now. This is because the Manchester syntax is backward, so I
+;; got it wrong.
+
+;; #+begin_src clojure
 (def deprecated-add-subclass
   ^{:doc "This maintains the functionality of the old add-subclass function
 which actually added superclasses. The new add-subclass does the
@@ -1950,19 +2075,16 @@ opposite of this."
                   (ensure-class o class)
                   (set propertylist)
                   (as-annotations propertylist))))))
-
-
 ;; #+end_src
 
 ;; We end rather early here, and should probably bring the rest of the OWLClass
 ;; code in.
 
-
 ;; * Object Properties
 
+;; And now we move onto ~OWLObjectProperty~ support.
 
 ;; #+begin_src clojure
-
 (defbdontfn add-domain
   "Adds all the entities in domainlist as domains to a property."
   [o property domain]
@@ -2022,13 +2144,11 @@ a superproperty."
               (ensure-object-property o property)
               (as-annotations subproperty))))
 
-
 (def ^{:deprecated "1.1"
        :doc "This is the same as add-superproperty but marked as deprecated
 and used as the handler for :subproperty."
        } deprecated-add-superproperty
   add-superproperty)
-
 
 ;; broadcasts specially
 (defdontfn add-subchain
@@ -2060,7 +2180,6 @@ and used as the handler for :subproperty."
 and used as the handler for :subpropertychain."
     :deprecated "1.1"} deprecated-add-subpropertychain
   add-subchain)
-
 
 (defbdontfn add-equivalent-property
   "Adds a equivalent data properties axiom."
@@ -2267,13 +2386,20 @@ value for each frame."
    :private true}
   [o & args]
   (guess-individual-literal o args))
-
 ;; #+end_src
 
 ;; * Restriction Overloading
 
-;; #+begin_src clojure
+;; We provide extensive guess functionality previously. We define the
+;; multi-methods that we use to apply this here.
 
+;; We do not really need multi-methods, as these functions are closed (that is
+;; ~owl-some~ should call either ~object-some~ or ~data-some~). At some point,
+;; the multi-method should be, perhaps, be removed and replaced with an if
+;; statement, although I need to check whether the site-specific caching makes
+;; this any faster.
+
+;; #+begin_src clojure
 ;; multi methods for overloaded entities. We guess the type of the arguments,
 ;; which can be (unambiguous) OWLObjects, potentially ambiguous IRIs or
 ;; strings. If we really can tell, we guess at objects because I like objects
@@ -2378,10 +2504,11 @@ data ranges."
 
 (defmethod has-value nil [& rest]
   (apply guess-type-error rest))
-
 ;; #+end_src
 
 ;; * Object Restrictions
+
+;; All methods producing OWL object restrictions.
 
 ;; #+begin_src clojure
 
@@ -2568,14 +2695,13 @@ n is evaluated only once, so can have side effects."
   [o property]
   (.getOWLObjectHasSelf (owl-data-factory)
                         (ensure-object-property o property)))
-
-
 ;; #+end_src
 
 ;; * OWL Class Complete
 
-;; #+begin_src clojure
 
+
+;; #+begin_src clojure
 (def ^{:private true} owl-class-handlers
   {
    :subclass #'deprecated-add-subclass
@@ -2675,13 +2801,11 @@ All arguments must of an instance of OWLClassExpression"
       (owl-data-factory)
       (hset classlist)
       (union-annotations classlist)))))
-
 ;; #+end_src
 
 ;; * Individuals
 
 ;; #+begin_src clojure
-
 (defbdontfn add-type
   {:doc "Adds CLAZZES as a type to individual to current ontology
 or ONTOLOGY if present."
@@ -2827,22 +2951,22 @@ or to ONTOLOGY if present."
     `(let [string-name# (name '~individualname)
            individual# (tawny.owl/individual string-name# ~@frames)]
        (intern-owl ~individualname individual#))))
-
 ;; #+end_src
 
 ;; * OWL Data
 
 ;; #+begin_src clojure
-
 (load "owl_data")
-
-
 ;; #+end_src
 
 ;; * Grouping
 
-;; #+begin_src clojure
+;; Grouping capabilities. Tawny's define before use semantics is a bit of a pain
+;; for mutually refering entities, so we provide some constructs for grouping
+;; these, as well ~as-subclass~ and ~as-equivalents~ calls, which help us to
+;; demonstrate syntactic intent.
 
+;; #+begin_src clojure
 (defn- var-get-maybe
   "Given a var return it's value, given a value return the value."
   [var-maybe]
@@ -2961,13 +3085,14 @@ See `declare-classes' where frames (or just default frames) are not needed.
   `(list ~@(map
             (fn [x#]
               `(defclass ~@x#)) classes)))
-
 ;; #+end_src
 
 ;; * Predicate Functions
 
-;; #+begin_src clojure
+;; I think I have duplicated some of the functionality from the OWL API here, but
+;; will check.
 
+;; #+begin_src clojure
 (defn- recurse-ontology-tree
   "Recurse the ontology tree starting from class and calling
 f to get the neighbours."
@@ -3074,7 +3199,6 @@ direct or indirect superclass of itself."
   (contains?
    (.getInverses p1 o) p2))
 
-
 (defdontfn direct-superproperties
   "Return all direct superproperties of property."
   [^OWLOntology o property]
@@ -3122,17 +3246,14 @@ direct or indirect superclass of itself."
   (let [clz (ensure-class o name)]
     (if (instance? OWLClass clz)
       (.getIndividuals clz o) ())))
-
-
 ;; #+end_src
 
 ;; * Test Support
 
-;; #+begin_src clojure
-;; some test useful macros
+;; A few macros which are mostly useful for testing. Possibly I should pull these
+;; out and put them somewhere else. The argument against is inertia.
 
-;; currently doesn't support an ontology argument
-;; modified from with-open
+;; #+begin_src clojure
 (defmacro with-probe-entities
   {:doc
    "Evaluate BODY with a number of entities defined. Then delete these entities
@@ -3215,7 +3336,6 @@ effectively unchanged."
 ;; * OWL (No)thing
 
 ;; #+begin_src clojure
-
 (defn owl-thing
   "Returns OWL thing."
   []
@@ -3225,13 +3345,15 @@ effectively unchanged."
   "Returns OWL nothing."
   []
   (.getOWLNothing (owl-data-factory)))
-
 ;; #+end_src
 
 ;; * More Grouping
 
-;; #+begin_src clojure
+;; Some limited usage macros for adding or removing prefixes from ~defclass~ forms.
+;; In general, I am not convinced by these macros. It probably makes more sense
+;; to make new macros with ~defentity~ which is fairly straight-forward now anyway.
 
+;; #+begin_src clojure
 ;; add a prefix or suffix to contained defclass
 (defn- alter-symbol-after-def-form
   "Searches for a defclass form, then changes the symbol by applying f."
@@ -3283,10 +3405,16 @@ This is a convenience macro and is lexically scoped."
          (partial suffix-symbol suffix)
          body)]
     `(list ~@newbody)))
-
 ;; #+end_src
 
 ;; * Refine
+
+;; The idea of refining is to add new frames onto existing definitions, combined
+;; with the various ~def~ forms which also create short-cut var references in
+;; different name spaces.
+
+;; Like the test forms above this is a candidate for moving out to a different
+;; namespace, because it is distinctly non-core functionality.
 
 ;; #+begin_src clojure
 
