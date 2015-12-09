@@ -49,6 +49,7 @@
     OWLDataPropertyExpression OWLLiteral)
    (org.semanticweb.owlapi.apibinding OWLManager)
    (org.coode.owlapi.manchesterowlsyntax ManchesterOWLSyntaxOntologyFormat)
+   (org.coode.owlapi.turtle TurtleOntologyFormat)
    (org.semanticweb.owlapi.io StreamDocumentTarget OWLXMLOntologyFormat
                               RDFXMLOntologyFormat)
    (org.semanticweb.owlapi.util DefaultPrefixManager OWLEntityRemover)
@@ -1691,6 +1692,7 @@ If no ontology is given, use the current-ontology"
             (= format :rdf) (RDFXMLOntologyFormat.)
             (= format :omn) (ManchesterOWLSyntaxOntologyFormat.)
             (= format :owl) (OWLXMLOntologyFormat.)
+            (= format :ttl) (TurtleOntologyFormat.)
             :else format)]
        (when (.isPrefixOWLOntologyFormat this-format)
          (doseq [ont (vals @ontology-for-namespace)
