@@ -10,3 +10,5 @@ clean-src:
 
 html: gen-src
 	cask exec emacs --script script/build.el -- gen-html
+	
+testing-editing:
