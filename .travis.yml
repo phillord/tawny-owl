@@ -1,9 +1,8 @@
 language: clojure
+sudo: no
 before_install:
-  - curl -fsSkL https://gist.github.com/rejeep/7736123/raw | sh
-  - export PATH="/home/travis/.cask/bin:$PATH"
-  - export PATH="/home/travis/.evm/bin:$PATH"
-  - evm install emacs-24.5-bin --skip --use
+  - curl -fsSkL https://gist.github.com/rejeep/ebcd57c3af83b049833b/raw > x.sh && source ./x.sh
+  - evm install emacs-24.5-travis --skip --use
   - cask
 lein: lein2
 env:
@@ -17,7 +16,7 @@ env:
  - PROFILE=1.8-direct
 script:
  - lein2 with-profiles $PROFILE test
- - make html
+ - make travis
 jdk:
  - openjdk7
  - oraclejdk8
