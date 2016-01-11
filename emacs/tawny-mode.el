@@ -20,12 +20,7 @@
 (require 'easymenu)
 
 (defun tawny-mode-check-for-nrepl-buffer ()
-  (if (find-if
-           (lambda (buffer)
-             (lexical-let ((buffer (get-buffer buffer)))
-               (equal (nrepl-project-directory-for (nrepl-current-dir))
-                      (buffer-local-value 'nrepl-project-dir buffer))))
-           nrepl-connection-list)
+  (if (nrepl-connection-buffer-name)
       t
     (message
      "No nREPL buffer exists. Please use `nrepl-jack-in'")
@@ -70,11 +65,13 @@
 (defun tawny-mode-unsatisfiable ()
   (interactive)
   (when (tawny-mode-check-for-nrepl-buffer)
-    (nrepl-send-string
+    (nrepl-request:eval
      (format
       "(do (require 'tawny.emacs)(tawny.emacs/get-unsatisfiable \"%s\"))"
       (clojure-find-ns))
-     (tawny-mode-unsatisfiable-response-handler (current-buffer)))))
+     (tawny-mode-unsatisfiable-response-handler (current-buffer))
+     (cider-current-connection)
+     (cider-current-tooling-session))))
 
 
 (defvar tawny-trace-buffer (get-buffer-create "*tawny-trace*"))
@@ -88,8 +85,11 @@
     (message msg)))
 
 (defun tawny-mode-nrepl-reasoner-eval-string (string)
-  (nrepl-send-string string
-                     (tawny-mode-make-reasoner-response-handler (current-buffer))))
+  (nrepl-request:eval
+   string
+   (tawny-mode-make-reasoner-response-handler (current-buffer))
+   (cider-current-connection)
+   (cider-current-tooling-session)))
 
 
 (defun tawny-mode-make-reasoner-response-handler (buffer)
@@ -101,8 +101,8 @@
      (tawny-message "Output: %s %s" buffer value))
    (lambda (buffer value)
      (tawny-message "Error: %s %s" buffer value))
-   (lambda (buffer value)
-     (tawny-message "Complete: %s %s" buffer value))))
+   (lambda (buffer)
+     (tawny-message "Complete: %s" buffer))))
 
 (defvar tawny-mode-unsatisfiable-buffer
   (get-buffer-create "*tawny-unsatisfiable*"))
@@ -134,10 +134,11 @@
 (defun tawny-doc-handler (symbol)
   (let ((form (format "(do (require 'tawny.repl)(tawny.repl/print-doc %s))" symbol))
         (doc-buffer (cider-popup-buffer cider-doc-buffer t)))
-    (nrepl-send-string form
+    (nrepl-request:eval form
                        (cider-popup-eval-out-handler doc-buffer)
-                       cider-buffer-ns
-                       (nrepl-current-tooling-session))))
+                       (cider-current-connection)
+                       (nrepl-current-tooling-session)
+                       (cider-current-ns))))
 
 (defun tawny-de-escape (string)
   (replace-regexp-in-string
@@ -171,11 +172,12 @@
              (clojure-find-ns) thing)))
       (unless (equal thing tawny-mode-protege-entity-last)
         (setq tawny-mode-protege-entity-last thing)
-        (nrepl-send-string
+        (nrepl-request:eval
          form
          (tawny-mode-nrepl-protege-display-handler (current-buffer))
-         nrepl-buffer-ns
-         (nrepl-current-tooling-session))))))
+         (cider-current-connection)
+         (cider-current-tooling-session)
+         cider-buffer-ns)))))
 
 (defun tawny-mode-nrepl-protege-display-handler (buffer)
   (nrepl-make-response-handler
