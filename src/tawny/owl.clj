@@ -35,6 +35,7 @@
    [tawny.util :as util])
   (:import
    (org.semanticweb.owlapi.model
+    HasIRI
     OWLAxiom
     OWLEntity
     OWLObject
@@ -140,7 +141,7 @@ string; use 'iri-for-name' to perform ontology specific expansion"
   (as-iri [entity] entity))
 
 (extend-type
-    OWLNamedObject
+    HasIRI
   IRIable
   (as-iri [entity] (.getIRI entity)))
 
@@ -1069,9 +1070,9 @@ converting it from a string or IRI if necessary."
            (format "Expecting an OWL annotation property: %s" property)))))
 
 (defmontfn annotation
-  "Creates a new annotation property. If literal is a string it is
-interpreted as a String in English. Alternatively, a literal creatd
-with the literal function."
+  "Creates a new annotation. If literal is a string it is interpreted as a
+String in English. Otherwise, it can be any annotation value or object which
+can be co-erced to an IRI"
   ([o annotation-property literal]
      (cond
       (instance? String literal)
@@ -1081,9 +1082,11 @@ with the literal function."
        (owl-data-factory)
        (ensure-annotation-property o annotation-property)
        literal)
+      (iriable? literal)
+      (annotation o annotation-property (as-iri literal))
       :default
       (throw (IllegalArgumentException.
-              "annotation takes a String or OWLAnnotationValue"))))
+              "annotation takes a String, OWLAnnotationValue or an object with an IRI."))))
   ([o annotation-property ^String literal ^String language]
      (annotation o annotation-property
                  (.getOWLLiteral (owl-data-factory) literal language))))
