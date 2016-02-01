@@ -35,8 +35,9 @@
   (:import [org.semanticweb.owlapi.model
             OWLAnnotation OWLAnnotationAxiom
             OWLAnnotationAssertionAxiom OWLEntity
-            OWLOntology OWLClass])
-  )
+            OWLOntology OWLClass]
+           [org.semanticweb.owlapi.search
+            EntitySearcher]))
 
 (o/defontology pattern
   :iri "http://www.w3id.org/ontolink/pattern.owl")
@@ -253,7 +254,7 @@ with other entities that are annotated to the same anonymous individual.")
    (fn [^OWLAnnotation anon]
      (= (.getProperty anon)
         inpattern))
-   (.getAnnotations
+   (EntitySearcher/getAnnotations
     entity o)))
 
 (o/defdontfn which-pattern
@@ -340,7 +341,7 @@ to explicitly name the object property."
          (fn [^OWLAnnotation anon]
            (= (.getProperty anon)
               facetvalue))
-         (.getAnnotations cls o)))]
+         (EntitySearcher/getAnnotations cls o)))]
     (if (= 1 (count prop))
       ;; there should be only one, and we have no good basis to pick if there
       ;; are more than one.

@@ -41,7 +41,8 @@
     Level
     Logger)
    (org.semanticweb.owlapi.reasoner SimpleConfiguration)
-   (org.semanticweb.HermiT Reasoner)))
+   (org.semanticweb.HermiT Reasoner)
+   ))
 
 ;; defonce semantics because a new reasoner factory should cause us
 ;; to drop all existing reasoners.
@@ -70,7 +71,8 @@
      (dosync
       ;; blitz the reasoners
       (doseq [^OWLReasoner r @reasoner-list]
-        (.dispose r))
+        (when-not (instance? uk.ac.manchester.cs.jfact.JFactReasoner r)
+          (.dispose r)))
       ;; blitz the reasoner list
       (ref-set reasoner-list ())
       ;; create a new reasoner
@@ -82,8 +84,10 @@
                    (-> (Logger/getLogger "org.semanticweb.elk")
                        (.setLevel Level/ERROR));
                    (ElkReasonerFactory.))
+                 ;; kill for the moment.
                  :hermit (org.semanticweb.HermiT.Reasoner$ReasonerFactory.)
-                 :jfact (uk.ac.manchester.cs.jfact.JFactFactory.)}
+                 :jfact (uk.ac.manchester.cs.jfact.JFactFactory.)
+                 }
                 )))))
 
 
@@ -214,7 +218,15 @@ happen automatically."
        (when-not (nil? reasoner)
          (ref-set reasoner-list
                   (remove #{reasoner} @reasoner-list))
-         (.dispose reasoner)))))
+         (when-not
+             (or
+              ;; JFact crashes at the moment because I've already removed the
+              ;; ontology from the manager
+              (instance? uk.ac.manchester.cs.jfact.JFactReasoner reasoner)
+              ;; some does HermiT -- which is the reason I put this code in
+              ;; place in the first instance.
+              (instance? org.semanticweb.HermiT.Reasoner reasoner))
+           (.dispose reasoner))))))
 
   ;; add in do, so that we can't do one without the other
   (util/add-hook owl/remove-ontology-hook
