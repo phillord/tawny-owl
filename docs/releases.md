@@ -4,6 +4,12 @@ Release Notes
 For future functionality please see [roadmap](roadmap.md)
 
 
+# master (unreleased)
+
+## Breaking Changes
+
+ - Update to OWL API 4
+
 # 1.4
 
 The 1.4 release extends Tawny's existing pattern functionality. Patterns
