@@ -4,11 +4,20 @@ Release Notes
 For future functionality please see [roadmap](roadmap.md)
 
 
-# master (unreleased)
+# 1.5
+
+The 1.5 release is mostly to move to the OWL API version 4.
+
+## New Features
+
+ - Save as turtle (thanks to Michael Gaare)
+ - Annotation now supports any object with an IRI
+
 
 ## Breaking Changes
 
- - Update to OWL API 4
+ - tawny-owl update to OWL API 4
+ - tawny-mode update to CIDER 0.11
 
 # 1.4
 
