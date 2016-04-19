@@ -1,4 +1,3 @@
-
 install:
 	cask install
 
@@ -15,6 +14,6 @@ test:
 	lein test
 
 travis:
-	$(MAKE) html | grep --invert-match "newer than byte-compiled file"
+	$(MAKE) html 2>&1 | grep --invert-match "newer than byte-compiled file"
 
 .PHONY: test
