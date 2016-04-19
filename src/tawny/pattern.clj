@@ -275,8 +275,8 @@ to which all ENTITIES belong."
             (which-pattern o %))
           entities)))
 
-(o/defdontfn pattern-entities
-  "Return all entities that are in pattern annotated with PATTERN,
+(o/defdontfn pattern-iris
+  "Return all IRIs that are in pattern annotated with PATTERN,
 an anonymous invididual."
   [^OWLOntology o pattern]
   (map
@@ -289,6 +289,13 @@ an anonymous invididual."
     (.getAxioms
      o
      org.semanticweb.owlapi.model.AxiomType/ANNOTATION_ASSERTION))))
+
+
+(o/defdontfn pattern-entities
+  "Return all entites that are in pattern annotated with PATTERN,
+an anonymous invididual."
+  [^OWLOntology o pattern]
+  (map pattern-iris o pattern))
 ;; #+end_src
 
 
