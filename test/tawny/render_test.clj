@@ -205,16 +205,39 @@
                           :super
                           (o/iri-for-name to "s"))))))
 
+(defn get-some-example-subproperty-chains []
+  (let [r (o/object-property to "r")
+        s (o/object-property to "s")
+        t (o/object-property to "t" :subchain r s)
+        chains
+        (filter
+         #(= t (.getSuperProperty
+                ^org.semanticweb.owlapi.model.OWLSubPropertyChainOfAxiom %))
+         (.getAxioms
+          ^org.semanticweb.owlapi.model.OWLOntology to
+          org.semanticweb.owlapi.model.AxiomType/SUB_PROPERTY_CHAIN_OF))]
+    chains))
+
+(deftest oproperty-form-subchain-render
+  (is
+   (get-some-example-subproperty-chains)))
+
 (deftest oproperty-subchain-test
   (is
    (let [r (o/object-property to "r")
          s (o/object-property to "s")
-         t (o/object-property to "t" :subchain r s)]
-     (=
-      [['object-property t :subchain [r s]]
-       [:oproperty t :subchain [[r s]]]]
-      (double-as-form t)))))
-
+         t (o/object-property to "t" :subchain r s)
+         f (double-as-form t)]
+     (and
+      (=
+       [['object-property t :subchain [r s]]
+        [:oproperty t :subchain [[r s]]]]
+       f)
+      ;; we need to test type explicitly because we must have [r s] and not (r
+      ;; s) for the clojure rendering
+      (vector?
+       (nth
+        (first f) 3))))))
 
 (deftest dproperty-super-test
   (is
@@ -264,7 +287,7 @@
          [:some p c]
          [:object-some p c]]
         (multi-as-form
-          (o/owl-some p c))))))
+         (o/owl-some p c))))))
 
 
 (deftest data-some
@@ -697,12 +720,12 @@
      (=
       [['individual j
         :fact
-        ['fact s i]
-        ['fact r i]]
+        ['fact r i]
+        ['fact s i]]
        [:individual j
         :fact
-        [[:fact s i]
-         [:fact r i]]]]
+        [[:fact r i]
+         [:fact s i]]]]
       (double-as-form j)))))
 
 

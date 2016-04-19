@@ -24,7 +24,7 @@
             [tawny.fixture]))
 
 
-(use-fixtures :once (tawny.fixture/reasoner :hermit))
+(use-fixtures :once (tawny.fixture/reasoner :jfact))
 
 (deftest only-equivalent
   (is

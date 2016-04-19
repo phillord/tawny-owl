@@ -23,7 +23,7 @@
             [tawny.util]
             [clojure.set])
   (:import
-           (java.util Set)
+           (java.util Collection Set)
            (org.semanticweb.owlapi.model
             OWLAnnotation
             OWLAnnotationProperty
@@ -67,7 +67,7 @@
            (org.semanticweb.owlapi.vocab
             OWLFacet
             OWL2Datatype)
-           ))
+           (org.semanticweb.owlapi.search EntitySearcher)))
 
 
 ;; :owl-some
@@ -387,9 +387,9 @@
        (list (form o options)))
 
      (list :iri
-           (.. o getOntologyID getOntologyIRI toString))
+           (.. o getOntologyID getOntologyIRI orNull toString))
 
-     (let [viri (.. o getOntologyID getVersionIRI)]
+     (let [viri (.. o getOntologyID getVersionIRI orNull)]
        (when viri
          (list :viri (str viri))))
      ;; what to do about noname? guess we pass it in as an option
@@ -397,9 +397,7 @@
      (when-let [f (.getOntologyFormat (tawny.owl/owl-ontology-manager) o)]
        (when (.isPrefixOWLOntologyFormat f)
          (when-let [pre (tawny.owl/get-prefix o)]
-           (list :prefix
-                 ;; chop off the colon
-                 pre))))
+           (list :prefix pre))))
      ;; imports
      (when-let [imp-decl
                 (seq (.getImportsDeclarations o))]
@@ -417,12 +415,13 @@
 (defmethod as-form-int OWLClass
   [^OWLClass c options]
   (let [ont (ontologies options)
-        super (.getSuperClasses c ont)
-        equiv (.getEquivalentClasses c ont)
-        disjoint (.getDisjointClasses c ont)
+        super (EntitySearcher/getSuperClasses c ont)
+        equiv (EntitySearcher/getEquivalentClasses c ont)
+        disjoint (EntitySearcher/getDisjointClasses c ont)
         annotation
         (setmap
-         #(.getAnnotations c %) ont)
+         (fn [^OWLOntology o]
+           (EntitySearcher/getAnnotations c o)) ont)
         cls (form c options)
         ;; If we have :keywords each frame has a list after is, so just use
         ;; list to make it. If we are returning symbols then we don't want a
@@ -457,10 +456,10 @@
 (defmethod as-form-int OWLObjectProperty
   [^OWLObjectProperty p options]
   (let [ont (ontologies options)
-        domain (.getDomains p ont)
-        range (.getRanges p ont)
-        inverseof (.getInverses p ont)
-        superprop (.getSuperProperties p ont)
+        domain (EntitySearcher/getDomains p ont)
+        range (EntitySearcher/getRanges p ont)
+        inverseof (EntitySearcher/getInverses p ont)
+        superprop (EntitySearcher/getSuperProperties p ont)
         subchainaxioms
         ;; only the ones associated with this property
         (filter
@@ -477,30 +476,31 @@
                  ont)))
         annotation
         (setmap
-         #(.getAnnotations p %) ont)
+         (fn [^OWLOntology o] (EntitySearcher/getAnnotations p o))
+         ont)
         characteristic
         (filter identity
                 (list
                  (and
-                  (.isTransitive p ont)
+                  (EntitySearcher/isTransitive p ont)
                   :transitive)
                  (and
-                  (.isFunctional p ont)
+                  (EntitySearcher/isFunctional p ont)
                   :functional)
                  (and
-                  (.isInverseFunctional p ont)
+                  (EntitySearcher/isInverseFunctional p ont)
                   :inversefunctional)
                  (and
-                  (.isSymmetric p ont)
+                  (EntitySearcher/isSymmetric p ont)
                   :symmetric)
                  (and
-                  (.isAsymmetric p ont)
+                  (EntitySearcher/isAsymmetric p ont)
                   :asymmetric)
                  (and
-                  (.isIrreflexive p ont)
+                  (EntitySearcher/isIrreflexive p ont)
                   :irreflexive)
                  (and
-                  (.isReflexive p ont)
+                  (EntitySearcher/isReflexive p ont)
                   :reflexive)
                  ))
         lst (if (get options :keyword)
@@ -518,9 +518,11 @@
      (when (pos? (count subchainaxioms))
        (lst :subchain
             (form
-             ;; get the all the chains
-             (map #(vec (.getPropertyChain
-                         ^OWLSubPropertyChainOfAxiom %)) subchainaxioms)
+             ;; get the all the chains, as vectors
+             (map
+              #(vec
+                (.getPropertyChain
+                 ^OWLSubPropertyChainOfAxiom %)) subchainaxioms)
              options)))
      (when (pos? (count domain))
        (lst :domain
@@ -541,30 +543,46 @@
 (defmethod as-form-int OWLNamedIndividual
   [^OWLNamedIndividual p options]
   (let [ont (ontologies options)
-        types (.getTypes p ont)
-        same (setmap #(.getSameIndividuals p %) ont)
-        diff (setmap #(.getDifferentIndividuals p %) ont)
+        types (EntitySearcher/getTypes p ont)
+        same (setmap
+              (fn [^OWLOntology o]
+                (EntitySearcher/getSameIndividuals p o)) ont)
+        diff (setmap
+              (fn [^OWLOntology o]
+                (EntitySearcher/getDifferentIndividuals p o)) ont)
         annotation
         (setmap
-         (fn [^OWLOntology o] (.getAnnotations p o)) ont)
+         (fn [^OWLOntology o] (EntitySearcher/getAnnotations p o)) ont)
         facts
         (remove
          nil?
          (list
           (let [fs
-                (into {} (setmap #(.getObjectPropertyValues p %) ont))]
+                (into
+                 (sorted-map)
+                 (.asMap
+                  (EntitySearcher/getObjectPropertyValues p ont)))]
             (when (seq fs)
               {::type :object-fact :facts fs}))
           (let [fs
-                (into {} (setmap #(.getDataPropertyValues p %) ont))]
+                (into
+                 (sorted-map)
+                 (.asMap
+                   (EntitySearcher/getDataPropertyValues p ont)))]
             (when (seq fs)
               {::type :data-fact :facts fs}))
           (let [fs
-                (into {} (setmap #(.getNegativeObjectPropertyValues p %) ont))]
+                (into
+                 (sorted-map)
+                 (.asMap
+                  (EntitySearcher/getNegativeObjectPropertyValues p ont)))]
             (when (seq fs)
               {::type :object-fact-not :facts fs}))
           (let [fs
-                (into {} (setmap #(.getNegativeDataPropertyValues p %) ont))]
+                (into
+                 (sorted-map)
+                 (.asMap
+                  (EntitySearcher/getNegativeDataPropertyValues p ont)))]
             (when (seq fs)
               {::type :data-fact-not :facts fs}))))
         ind (form p options)
@@ -597,17 +615,17 @@
 (defmethod as-form-int OWLDataProperty
   [^OWLDataProperty p options]
   (let [ont (ontologies options)
-        domain (.getDomains p ont)
-        range (.getRanges p ont)
-        superprop (.getSuperProperties p ont)
+        domain (EntitySearcher/getDomains p ont)
+        range (EntitySearcher/getRanges p ont)
+        superprop (EntitySearcher/getSuperProperties p ont)
         annotation
         (setmap
-         #(.getAnnotations p %) ont)
+         (fn [^OWLOntology o] (EntitySearcher/getAnnotations p o)) ont)
         characteristic
         (filter identity
                 (list
                  (and
-                  (.isFunctional p ont)
+                  (EntitySearcher/isFunctional p ont)
                   :functional)
                  ))
         prop (form p options)
@@ -638,9 +656,10 @@
   [^OWLAnnotationProperty p options]
   (let [ont (ontologies options)
         super
-        (setmap (fn [^OWLOntology o] (.getSuperProperties p o)) ont)
+        (setmap (fn [^OWLOntology o] (EntitySearcher/getSuperProperties p o)) ont)
         ann
-        (setmap #(.getAnnotations p %) ont)
+        (setmap
+         (fn [^OWLOntology o] (EntitySearcher/getAnnotations p o)) ont)
         prop (form p options)
         lst (if (get options :keyword)
               list
@@ -727,12 +746,12 @@ their IRI.
     (as-form-int entity options)))
 
 (def
-  ^{:priate true
+  ^{:private true
     :doc "All the classes that form can render, sorted to include most
 specific first."}
   form-lookup-list
   (sort class-compare
-        (list clojure.lang.ISeq Set java.util.Map clojure.lang.IPersistentVector
+        (list clojure.lang.IPersistentVector clojure.lang.ISeq Set Collection java.util.Map 
               org.semanticweb.owlapi.model.IRI OWLClass OWLProperty
               OWLIndividual OWLObjectOneOf OWLObjectSomeValuesFrom OWLObjectUnionOf
               OWLObjectIntersectionOf OWLObjectAllValuesFrom OWLObjectComplementOf
@@ -772,9 +791,12 @@ of isa?"
       (l (class c)))))
 
 (defmethod form clojure.lang.ISeq [s options]
-  (doall (map #(form % options) s)))
+  (map #(form % options) s))
 
 (defmethod form Set [s options]
+  (map #(form % options) s))
+
+(defmethod form Collection [s options]
   (map #(form % options) s))
 
 (defmethod form clojure.lang.IPersistentVector
@@ -943,7 +965,7 @@ element is a list."
   (into {}
         (for [[k
                ^OWL2Datatype v] owl/owl2datatypes]
-          [(.getDatatype v (owl/owl-data-factory)) k])))
+          [v k])))
 
 (defmethod form OWLLiteral
   [^OWLLiteral l options]

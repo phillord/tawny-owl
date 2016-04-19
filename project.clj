@@ -27,17 +27,22 @@
                    ]
 
   :dependencies [
+
+                 ;; http://search.maven.org/#artifactdetails%7Cnet.sourceforge.owlapi%7Corg.semanticweb.hermit%7C1.3.8.413%7Cbundle
+                 ;; http://search.maven.org/#artifactdetails%7Cnet.sourceforge.owlapi%7Cpellet-parent-ignazio1977%7C2.4.0-ignazio1977%7Cpom
+
                  ;; owl API
-                 [net.sourceforge.owlapi/owlapi-distribution "3.5.0"]
+                 [net.sourceforge.owlapi/owlapi-distribution "4.1.4"]
 
                  ;; clojure
-                 [org.clojure/clojure "1.6.0"]
+                 [org.clojure/clojure "1.7.0"]
                  [org.clojure/core.logic "0.8.10"]
 
                  ;; reasoners
-                 [org.semanticweb.elk/elk-owlapi "0.4.1"]
-                 [com.hermit-reasoner/org.semanticweb.hermit "1.3.8.4"]
-                 [net.sourceforge.owlapi/jfact "1.2.2"]
+                 [org.semanticweb.elk/elk-owlapi "0.4.3"]
+                 [net.sourceforge.owlapi/org.semanticweb.hermit "1.3.8.413"]
+                 [net.sourceforge.owlapi/jfact "4.0.2"
+                  :exclusions [net.sourceforge.owlapi/owlapi-apibinding]]
 
                  ;; need to access log4j to control elk.
                  [log4j/log4j "1.2.17"]]
@@ -49,18 +54,15 @@
    :1.8-direct
    [:base
     {:jvm-opts ["-Dclojure.compiler.direct-linking=true"]
-     :dependencies [[org.clojure/clojure "1.8.0-RC4"]]}]
+     :dependencies [[org.clojure/clojure "1.8.0"]]}]
 
    :1.8
    [:base
-    {:dependencies [[org.clojure/clojure "1.8.0-RC4"]]}]
+    {:dependencies [[org.clojure/clojure "1.8.0"]]}]
 
    :1.7
    [:base
     {:dependencies [[org.clojure/clojure "1.7.0"]]}]
 
-   :3.5.0
-   [:base
-    {:dependencies [[net.sourceforge.owlapi/owlapi-distribution "3.5.0"]]}]
    }
 )

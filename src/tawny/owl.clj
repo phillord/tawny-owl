@@ -45,15 +45,17 @@
     OWLObjectPropertyExpression
     OWLNamedObject OWLOntologyID
     OWLAnnotationProperty OWLObjectProperty
-    OWLDataFactory OWLOntologyFormat
+    OWLDataFactory OWLDocumentFormat
     OWLDataProperty OWLDataRange OWLProperty OWLPropertyExpression
     OWLDataPropertyExpression OWLLiteral)
    (org.semanticweb.owlapi.apibinding OWLManager)
-   (org.coode.owlapi.manchesterowlsyntax ManchesterOWLSyntaxOntologyFormat)
-   (org.coode.owlapi.turtle TurtleOntologyFormat)
-   (org.semanticweb.owlapi.io StreamDocumentTarget OWLXMLOntologyFormat
-                              RDFXMLOntologyFormat)
+   (org.semanticweb.owlapi.formats ManchesterSyntaxDocumentFormat
+                                   TurtleDocumentFormat
+                                   OWLXMLDocumentFormat
+                                   RDFXMLDocumentFormat)
    (org.semanticweb.owlapi.util DefaultPrefixManager OWLEntityRemover)
+   [org.semanticweb.owlapi.search
+    EntitySearcher]
    (java.io ByteArrayOutputStream FileOutputStream PrintWriter)
    (java.io File)
    (java.util Collections)
@@ -97,7 +99,7 @@
   []
   (when-not @vowl-ontology-manager
     (reset! vowl-ontology-manager
-            (OWLManager/createOWLOntologyManager (owl-data-factory))))
+            (OWLManager/createOWLOntologyManager)))
   @vowl-ontology-manager)
 
 (defonce
@@ -141,7 +143,7 @@ string; use 'iri-for-name' to perform ontology specific expansion"
   (as-iri [entity] entity))
 
 (extend-type
-    HasIRI
+    OWLNamedObject 
   IRIable
   (as-iri [entity] (.getIRI entity)))
 
@@ -156,7 +158,10 @@ string; use 'iri-for-name' to perform ontology specific expansion"
     OWLOntology
   IRIable
   (as-iri [entity]
-    (.getOntologyIRI (.getOntologyID entity))))
+    (-> entity
+        .getOntologyID
+        .getOntologyIRI
+        .get)))
 
 (defn iriable?
   "Returns true iff entity is an IRIable."
@@ -848,8 +853,7 @@ adds three axioms -- it declares a, makes it a subclass of b, and equivalent
 of c."
   [o ^OWLEntity entity]
   (let [remover
-        (OWLEntityRemover. (owl-ontology-manager)
-                           (hash-set o))]
+        (OWLEntityRemover. (hset (list o)))]
     (.accept entity remover)
     (.applyChanges (owl-ontology-manager)
                    (.getChanges remover))))
@@ -967,7 +971,7 @@ signals a hook, and adds :owl true to the metadata. NAME must be a symbol"
   (into {}
         (for [^org.semanticweb.owlapi.vocab.OWL2Datatype
               k (org.semanticweb.owlapi.vocab.OWL2Datatype/values)]
-          [(keyword (.name k)) k])))
+          [(keyword (.name k)) (.getDatatype k (owl-data-factory))])))
 ;; #+end_src
 
 
@@ -996,7 +1000,7 @@ signals a hook, and adds :owl true to the metadata. NAME must be a symbol"
 
 ;; #+begin_src clojure
 (defbdontfn add-a-simple-annotation
-  "Adds an annotation to a named object."
+  "Adds an annotation to a named objecqt."
   [o ^OWLNamedObject named-entity annotation]
   (add-axiom
    o
@@ -1496,14 +1500,14 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
 ;; owl imports
 (defn owl-import
   "Adds a new import to the current ontology. o may be an
-ontology or an IRI"
+  ontology or an IRI"
   ([o]
-     (owl-import (get-current-ontology) o))
+   (owl-import (get-current-ontology) o))
   ([ontology-into o]
-     (.applyChange (owl-ontology-manager)
-                   (AddImport. ontology-into
-                               (.getOWLImportsDeclaration
-                                (owl-data-factory)
+   (.applyChange (owl-ontology-manager)
+                 (AddImport. ontology-into
+                             (.getOWLImportsDeclaration
+                              (owl-data-factory)
                                 (as-iri o))))))
 (defn- add-import [o olist]
   (doseq [n olist]
@@ -1678,7 +1682,7 @@ is given."
   "Save the current 'ontology' in the file or `filename' if given.
 If no ontology is given, use the current-ontology"
   ([o filename]
-     (save-ontology o filename (ManchesterOWLSyntaxOntologyFormat.)
+     (save-ontology o filename (ManchesterSyntaxDocumentFormat.)
                     (str "## This file was created by Tawny-OWL\n"
                          "## It should not be edited by hand\n" )))
   ([o filename format]
@@ -1687,13 +1691,13 @@ If no ontology is given, use the current-ontology"
      (let [file (File. filename)
            output-stream (new FileOutputStream file)
            file-writer (new PrintWriter output-stream)
-           ^OWLOntologyFormat
+           ^OWLDocumentFormat
            this-format
            (cond
-            (= format :rdf) (RDFXMLOntologyFormat.)
-            (= format :omn) (ManchesterOWLSyntaxOntologyFormat.)
-            (= format :owl) (OWLXMLOntologyFormat.)
-            (= format :ttl) (TurtleOntologyFormat.)
+            (= format :rdf) (RDFXMLDocumentFormat.)
+            (= format :omn) (ManchesterSyntaxDocumentFormat.)
+            (= format :owl) (OWLXMLDocumentFormat.)
+            (= format :ttl) (TurtleDocumentFormat.)
             :else format)]
        (when (.isPrefixOWLOntologyFormat this-format)
          (doseq [ont (vals @ontology-for-namespace)
@@ -1921,7 +1925,7 @@ an OWLDataProperty"
      (instance? OWLDatatype datatype)
      datatype
      (instance? org.semanticweb.owlapi.vocab.OWL2Datatype datatype)
-     (.getDatatype ^org.semanticweb.owlapi.vocab.OWL2Datatype datatype (owl-data-factory))
+     datatype
      (keyword? datatype)
      (if-let [d (get owl2datatypes datatype)]
        (ensure-datatype o d)
@@ -2165,7 +2169,7 @@ and used as the handler for :subproperty."
       (list
        ;; add individual entities are a single chain
        (when (seq properties)
-         (add-axiom 
+         (add-axiom
           o
           (.getOWLSubPropertyChainOfAxiom
            (owl-data-factory)
@@ -3121,7 +3125,7 @@ expressions."
   (let [^OWLClass clz (ensure-class o name)]
     ;; general Class expressions return empty
     (if (instance? OWLClass clz)
-      (.getSuperClasses clz o)
+      (EntitySearcher/getSuperClasses clz o)
       ())))
 
 (defdontfn superclasses
@@ -3144,7 +3148,7 @@ direct or indirect superclass of itself."
   [^OWLOntology o name]
   (let [clz (ensure-class o name)]
     (if (instance? OWLClass clz)
-      (.getSubClasses clz o) ())))
+      (EntitySearcher/getSubClasses clz o) ())))
 
 (defdontfn subclasses
   "Return all subclasses of class."
@@ -3167,12 +3171,12 @@ direct or indirect superclass of itself."
     (cond
      (isa? type ::class)
      (contains?
-      (.getDisjointClasses ^OWLClass a o)
+      (EntitySearcher/getDisjointClasses ^OWLClass a o)
       b)
      ;; works for either data or object properties
      (isa? type ::property)
      (contains?
-      (.getDisjointProperties ^OWLProperty a o)
+      (EntitySearcher/getDisjointProperties ^OWLProperty a o)
       b)
      :default
      (throw
@@ -3186,10 +3190,10 @@ direct or indirect superclass of itself."
     (cond
      (isa? type ::class)
      (contains?
-      (.getEquivalentClasses ^OWLClass a o) b)
+      (EntitySearcher/getEquivalentClasses ^OWLClass a o) b)
      (isa? type ::property)
      (contains?
-      (.getEquivalentProperties ^OWLProperty a o)
+      (EntitySearcher/getEquivalentProperties ^OWLProperty a o)
       b)
      :default
      (throw
@@ -3200,12 +3204,12 @@ direct or indirect superclass of itself."
   "Returns t iff properties are asserted to be inverse"
   [^OWLOntology o ^OWLObjectProperty p1 ^OWLObjectProperty p2]
   (contains?
-   (.getInverses p1 o) p2))
+   (EntitySearcher/getInverses p1 o) p2))
 
 (defdontfn direct-superproperties
   "Return all direct superproperties of property."
   [^OWLOntology o property]
-  (.getSuperProperties
+  (EntitySearcher/getSuperProperties
    (ensure-property o property) o))
 
 (defdontfn superproperties
@@ -3226,7 +3230,7 @@ direct or indirect superclass of itself."
   "Returns all direct subproperties of property."
   [^OWLOntology o
    property]
-  (.getSubProperties
+  (EntitySearcher/getSubProperties
    (ensure-property o property) o))
 
 (defdontfn subproperties
@@ -3248,7 +3252,7 @@ direct or indirect superclass of itself."
   [^OWLOntology o name]
   (let [clz (ensure-class o name)]
     (if (instance? OWLClass clz)
-      (.getIndividuals clz o) ())))
+      (EntitySearcher/getIndividuals clz o) ())))
 ;; #+end_src
 
 ;; * Test Support

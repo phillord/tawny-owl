@@ -41,7 +41,8 @@ The documentation is generated over the live object (owlobjects are mutable).
 It includes all labels, comments and a rendered version of the owlobject."
   ([^OWLOntology ontology ^OWLEntity owlobject]
      (let [annotation
-           (.getAnnotations owlobject ontology)
+           (org.semanticweb.owlapi.search.EntitySearcher/getAnnotations
+            owlobject ontology)
            label
            (filter
             (fn [^OWLAnnotation a]
@@ -174,8 +175,7 @@ once."
 (defn ^OWLOntologyManager new-manager
   "Returns a new OWLOntologyManager."
   []
-  (org.semanticweb.owlapi.apibinding.OWLManager/createOWLOntologyManager
-   (tawny.owl/owl-data-factory)))
+  (org.semanticweb.owlapi.apibinding.OWLManager/createOWLOntologyManager))
 
 (defn load-ontology
   "Loads and returns an ontology directly through the OWL API.
@@ -213,6 +213,8 @@ to file names. Save ontologies in 'root' or the resources directory."
                       (-> k
                           (.getOntologyID)
                           (.getOntologyIRI)
+                          (.orNull)
+                          (o/as-iri)
                           (.getFragment))
                       stem
                       (if file-maybe

@@ -29,7 +29,8 @@
    (org.semanticweb.owlapi.model
     OWLAnnotation OWLLiteral
     IRI OWLNamedObject OWLOntologyID
-    OWLOntology OWLEntity)))
+    OWLOntology OWLEntity)
+   (org.semanticweb.owlapi.search EntitySearcher)))
 
 (defn iri-starts-with-filter
   "Checks e to see if it is an OWLNamedObject and has an IRI starting with
@@ -59,7 +60,7 @@ starts-with. Use this partially applied with a filter for 'read'."
    #(some-> ^OWLAnnotation %
         (.getProperty)
         (.isLabel))
-   (.getAnnotations e o)))
+   (EntitySearcher/getAnnotations e o)))
 
 (tawny.owl/defmontfn label-transform
   "Get text from label annotation"

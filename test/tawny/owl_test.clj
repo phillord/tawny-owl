@@ -23,8 +23,8 @@
                                  OWLIndividual OWLDatatype
                                  OWLNamedObject OWLOntologyID
                                  OWLAnnotationProperty OWLObjectProperty
-                                 OWLDataProperty
-                                 ))
+                                 OWLDataProperty)
+   [org.semanticweb.owlapi.search  EntitySearcher])
   (:require [tawny.owl :as o]
             [tawny.render :as r]
             [tawny.util])
@@ -83,7 +83,7 @@
    (= "viri"
       (..
        (o/ontology :iri "iri" :viri "viri")
-       getOntologyID getVersionIRI toString))))
+       getOntologyID getVersionIRI get toString))))
 
 (deftest ontology-annotation
   (is
@@ -548,7 +548,7 @@ Assumes that fixture has been run"
    (let [cls (o/owl-class to "cls")
          ind (o/individual to "ind" :type cls)]
      (tawny.util/in?
-      (.getTypes ind to)
+      (EntitySearcher/getTypes ind to)
       cls))))
 
 (deftest defindividual []
@@ -705,7 +705,7 @@ Assumes that fixture has been run"
             #(-> %
                  (.getProperty)
                  (.isLabel))
-            (.getAnnotations b to))))))))))
+            (EntitySearcher/getAnnotations b to))))))))))
 
 
 (deftest dataproperty
@@ -937,7 +937,7 @@ Assumes that fixture has been run"
         i2 (o/individual to "i2")]
      (o/add-different to i1 i2)
      (some #{i2}
-           (.getDifferentIndividuals i1 to)))))
+           (EntitySearcher/getDifferentIndividuals i1 to)))))
 
 
 (deftest add-data-super

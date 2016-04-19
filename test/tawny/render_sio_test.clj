@@ -58,16 +58,15 @@
 (deftest signature
   (is
    (= (count (.getSignature sio))
-      (count (.getSignature sio-rendered)))))
+      ;; to account for the annotation property
+      (dec (count (.getSignature sio-rendered))))))
 
 (deftest classes
   (is
    (= (count (.getClassesInSignature sio))
-      ;; tawny adds an annotation property
-      (count (.getClassesInSignature sio-rendered)))))
+      (dec (count (.getClassesInSignature sio-rendered))))))
 
 (deftest object
    (is
     (= (count (.getObjectPropertiesInSignature sio))
-       ;; tawny adds an annotation property
        (count (.getObjectPropertiesInSignature sio-rendered)))))
