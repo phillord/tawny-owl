@@ -717,7 +717,7 @@
         (label (literal "test label" :lang "en")))
       (r/as-form
        (o/ontology :iri "http://iri/#x"
-                   :name "x"
+                   :prefix "x"
                    :noname true
                    :annotation
                    (o/label "test label"))))))

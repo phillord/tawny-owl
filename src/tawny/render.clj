@@ -399,8 +399,7 @@
          (when-let [pre (tawny.owl/get-prefix o)]
            (list :prefix
                  ;; chop off the colon
-                 (.substring pre 0
-                             (dec (.length pre)))))))
+                 pre))))
      ;; imports
      (when-let [imp-decl
                 (seq (.getImportsDeclarations o))]

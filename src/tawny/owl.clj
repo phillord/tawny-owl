@@ -1457,11 +1457,11 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
   "Sets a prefix for the ontology."
   [^OWLOntology o ^String p]
   (if p
-    (.setPrefix
+    (.setDefaultPrefix
      (.asPrefixOWLOntologyFormat
       (.getOntologyFormat
        (owl-ontology-manager) o))
-     p (str (as-iri o)))))
+     p)))
 
 ;; #+end_src
 
@@ -1669,12 +1669,10 @@ is given."
   [^OWLOntology o]
   ;; my assumption here is that there will only ever be one prefix for a given
   ;; ontology. If not, it's all going to go wrong.
-  (first
-   (keys
-    (.getPrefixName2PrefixMap
-     (.asPrefixOWLOntologyFormat
-      (.getOntologyFormat (owl-ontology-manager)
-                                o))))))
+  (.getDefaultPrefix
+   (.asPrefixOWLOntologyFormat
+    (.getOntologyFormat (owl-ontology-manager)
+                        o))))
 
 (defdontfn save-ontology
   "Save the current 'ontology' in the file or `filename' if given.
