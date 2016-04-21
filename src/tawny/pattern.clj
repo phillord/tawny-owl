@@ -290,12 +290,13 @@ an anonymous invididual."
      o
      org.semanticweb.owlapi.model.AxiomType/ANNOTATION_ASSERTION))))
 
-
 (o/defdontfn pattern-entities
   "Return all entites that are in pattern annotated with PATTERN,
 an anonymous invididual."
   [^OWLOntology o pattern]
-  (map pattern-iris o pattern))
+  (map
+   o/entity-for-iri
+   (pattern-iris o pattern)))
 ;; #+end_src
 
 
@@ -442,6 +443,10 @@ This returns a list of entity vectors created by the p function."
    (list* (name partition-name)
           `(tawny.util/quote-word-or-head ~@partition-values)
           options)))
+
+(defn partition-values [p]
+  (pattern-entities
+   (which-pattern p)))
 ;; #+end_src
 
 
