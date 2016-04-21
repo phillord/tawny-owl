@@ -28,14 +28,11 @@
 
   :dependencies [
 
-                 ;; http://search.maven.org/#artifactdetails%7Cnet.sourceforge.owlapi%7Corg.semanticweb.hermit%7C1.3.8.413%7Cbundle
-                 ;; http://search.maven.org/#artifactdetails%7Cnet.sourceforge.owlapi%7Cpellet-parent-ignazio1977%7C2.4.0-ignazio1977%7Cpom
-
                  ;; owl API
                  [net.sourceforge.owlapi/owlapi-distribution "4.1.4"]
 
                  ;; clojure
-                 [org.clojure/clojure "1.7.0"]
+                 [org.clojure/clojure "1.6.0"]
                  [org.clojure/core.logic "0.8.10"]
 
                  ;; reasoners
