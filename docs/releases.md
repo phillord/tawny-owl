@@ -4,6 +4,12 @@ Release Notes
 For future functionality please see [roadmap](roadmap.md)
 
 
+# master (unreleased)
+
+## New Features
+
+ - Value Partition now allows additional frames to be added to values.
+
 # 1.5
 
 The 1.5 release is mostly to move to the OWL API version 4.

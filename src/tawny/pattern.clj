@@ -380,8 +380,14 @@ to explicitly name the object property."
 ;; #+begin_src clojure
 (o/defmontfn value-partition
   "Return the entities for a new value partition.
-partition-name is the overall name for the partition.
-partition-values is a sequence of the values.
+
+PARTITION-NAME is the overall name for the partition.
+
+PARTITION-VALUES is a sequence of the values. The values can either be strings
+representing the name of the value. Or a vector, the head of which is the
+name, and all the other values are additional frames to be passed to
+`tawny.owl/owl-class`.
+
 Keyword arguments are :comment for a comment to attach to
 all entities.
 :super the superclass of the partition.
@@ -399,10 +405,14 @@ This returns a list of entity vectors created by the p function."
           :super super)
        values
        (map
-        #(p o/owl-class o
-            %
-            :comment comment
-            :super partition)
+        #(apply
+          p (concat
+             [o/owl-class o]
+             (if (sequential? %)
+               %
+               (list %))
+             [:comment comment
+              :super partition]))
         partition-values)
        prop
        (p o/object-property
@@ -424,13 +434,13 @@ This returns a list of entity vectors created by the p function."
      o (list* partition prop values))))
 
 (defmacro defpartition
-  "As value-partition but accepts symbols instead of string and
-takes the ontology as a frame rather than first argument."
+  "As `value-partition` but accepts symbols instead of string and takes the
+  ontology as a frame rather than first argument."
   [partition-name partition-values & options]
   (tawny.pattern/pattern-generator
    'tawny.pattern/value-partition
    (list* (name partition-name)
-          `(tawny.util/quote-word ~@partition-values)
+          `(tawny.util/quote-word-or-head ~@partition-values)
           options)))
 ;; #+end_src
 

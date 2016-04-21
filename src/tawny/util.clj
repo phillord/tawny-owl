@@ -108,7 +108,23 @@ values are lists and concats duplicates."
      (list
       ~@(map name symbols))))
 
-(defmacro name-tree
+(defmacro quote-head
+  "Given a vector, return vector with head converted to a name from a symbol."
+  [l]
+  (let [[h# & t#] l]
+    `(vector ~(name h#) ~@t#)))
+
+(defmacro quote-word-or-head
+  "Given several items, return names for or heads converted to names for
+  sequential items."
+  [& v]
+  `(vector
+     ~@(map
+        #(if (sequential? %)
+           `(quote-head ~%)
+           (name %)) v)))
+
+(defmacro quote-tree
   "Given a tree of symbols, return a tree of names."
   [tree]
   `(clojure.walk/postwalk
