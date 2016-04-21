@@ -2,4 +2,5 @@
 ;;; For more information see (info "(emacs) Directory Variables")
 
 ((clojure-mode
-  (lentic-init . lentic-clojure-org-init)))
+  (lentic-init . lentic-clojure-org-init)
+  (cider-jack-in-auto-inject-clojure . :latest)))
