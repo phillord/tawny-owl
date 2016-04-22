@@ -254,8 +254,7 @@
 (define-minor-mode tawny-mode
   "Interact with an ontology in tawny-owl."
   nil " Tawny" tawny-mode-map
-
-  )
+  (goto-address-prog-mode tawny-mode))
 
 (defvar tawny-mode-block nil)
 
