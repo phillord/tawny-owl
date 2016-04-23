@@ -143,7 +143,7 @@ string; use 'iri-for-name' to perform ontology specific expansion"
   (as-iri [entity] entity))
 
 (extend-type
-    OWLNamedObject 
+    OWLNamedObject
   IRIable
   (as-iri [entity] (.getIRI entity)))
 
