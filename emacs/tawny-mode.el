@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t -*-
+
 ;; The contents of this file are subject to the GPL License, Version 3.0.
 ;;
 ;; Copyright (C) 2013, 2016, Phillip Lord, Newcastle University
@@ -70,7 +72,9 @@
      (format
       "(do (require 'tawny.emacs)(tawny.emacs/get-unsatisfiable \"%s\"))"
       (clojure-find-ns))
-     (tawny-mode-unsatisfiable-response-handler (current-buffer))
+     (tawny-mode-class-list-response-handler
+      (current-buffer)
+      "Unsatisfiable classes for")
      (cider-current-connection)
      (cider-current-tooling-session))))
 
@@ -115,19 +119,18 @@
   (save-excursion
     (set-buffer
      (get-buffer-create tawny-mode-class-list-buffer))
-    (message value)
     (insert (format "%s %s:\n%s"
                     message
                     buffer
-                    (tawny-de-escape value))))
+                    (tawny-de-escape classes))))
   (display-buffer tawny-mode-class-list-buffer))
 
-(defun tawny-mode-unsatisfiable-response-handler (buffer)
+(defun tawny-mode-class-list-response-handler (buffer message)
   (nrepl-make-response-handler
    buffer
    (lambda (buffer value)
      (tawny-mode-display-classes
-      "Unsatisfiable classes for" buffer value))
+      message buffer value))
    (lambda (buffer value)
      (tawny-message "Output: %s %s" buffer value))
    (lambda (buffer value)
@@ -165,23 +168,11 @@
       "(do (require 'tawny.emacs)(tawny.emacs/get-inferred-superclasses \"%s\" \"%s\"))"
       (clojure-find-ns)
       (thing-at-point 'symbol t))
-     (tawny-mode-inferred-superclass-response-handler (current-buffer))
+     (tawny-mode-class-list-response-handler
+      (current-buffer)
+      "Inferred suerclasses for" buffer value)
      (cider-current-connection)
      (cider-current-tooling-session))))
-
-(defun tawny-mode-inferred-superclass-response-handler (buffer)
-  (nrepl-make-response-handler
-   buffer
-   (lambda (buffer value)
-     (tawny-mode-display-classes
-      "Inferred superclasses for" buffer value))
-   (lambda (buffer value)
-     (tawny-message "Output: %s %s" buffer value))
-   (lambda (buffer value)
-     (tawny-message "Error: %s %s" buffer value))
-   (lambda (buffer)
-     (tawny-message "Complete: %s" buffer))))
-
 
 ;; Protege section
 (defvar tawny-mode-protege-entity-last nil)
