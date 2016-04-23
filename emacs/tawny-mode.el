@@ -73,13 +73,12 @@
      (cider-current-connection)
      (cider-current-tooling-session))))
 
-
-(defvar tawny-trace-buffer (get-buffer-create "*tawny-trace*"))
+(defvar tawny-interaction-buffer (get-buffer-create "*tawny-interaction*"))
 
 (defun tawny-message (string &rest values)
   (let ((msg (apply 'format string values)))
     (save-excursion
-      (set-buffer tawny-trace-buffer)
+      (set-buffer tawny-interaction-buffer)
       (goto-char (point-max))
       (insert (format "%s: %s\n" (current-time-string) msg)))
     (message msg)))
@@ -90,7 +89,6 @@
    (tawny-mode-make-reasoner-response-handler (current-buffer))
    (cider-current-connection)
    (cider-current-tooling-session)))
-
 
 (defun tawny-mode-make-reasoner-response-handler (buffer)
   (nrepl-make-response-handler
@@ -104,27 +102,32 @@
    (lambda (buffer)
      (tawny-message "Complete: %s" buffer))))
 
-(defvar tawny-mode-unsatisfiable-buffer
-  (get-buffer-create "*tawny-unsatisfiable*"))
+(defvar tawny-mode-class-list-buffer
+  (get-buffer-create "*tawny-classes*"))
+
+(defun tawny-mode-display-classes (message buffer classes)
+  (save-excursion
+    (set-buffer tawny-mode-class-list-buffer)
+    (erase-buffer)
+    (message value)
+    (insert (format "%s %s:\n%s"
+                    message
+                    buffer
+                    (tawny-de-escape value))))
+  (display-buffer tawny-mode-unsatisfiable-buffer))
 
 (defun tawny-mode-unsatisfiable-response-handler (buffer)
   (nrepl-make-response-handler
    buffer
    (lambda (buffer value)
-     (save-excursion
-       (set-buffer tawny-mode-unsatisfiable-buffer)
-       (erase-buffer)
-       (message value)
-       (insert (format "Unsatisfiable classes for %s:\n%s" buffer
-                       (tawny-de-escape value))))
-     (display-buffer tawny-mode-unsatisfiable-buffer))
+     (tawny-mode-display-classes
+      "Unsatisfiable classes for" buffer value))
    (lambda (buffer value)
      (tawny-message "Output: %s %s" buffer value))
    (lambda (buffer value)
      (tawny-message "Error: %s %s" buffer value))
-   (lambda (buffer value)
-     (tawny-message "Complete: %s %s" buffer value))))
-
+   (lambda (buffer)
+     (tawny-message "Complete: %s" buffer))))
 
 (defun tawny-doc (query)
   "Opens a window with docstring for QUERY."
