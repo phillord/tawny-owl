@@ -1,6 +1,6 @@
 ;; The contents of this file are subject to the GPL License, Version 3.0.
 ;;
-;; Copyright (C) 2013, Phillip Lord, Newcastle University
+;; Copyright (C) 2013, 2016, Phillip Lord, Newcastle University
 ;;
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
   (if (nrepl-connection-buffer-name)
       t
     (message
-     "No nREPL buffer exists. Please use `nrepl-jack-in'")
+     "No nREPL buffer exists. Please use `cider-jack-in'")
     nil
     ))
 
