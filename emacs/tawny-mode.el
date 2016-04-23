@@ -65,6 +65,7 @@
 (defun tawny-mode-unsatisfiable ()
   (interactive)
   (when (tawny-mode-check-for-nrepl-buffer)
+    (tawny-mode-display-classes-clear)
     (nrepl-request:eval
      (format
       "(do (require 'tawny.emacs)(tawny.emacs/get-unsatisfiable \"%s\"))"
@@ -102,19 +103,24 @@
    (lambda (buffer)
      (tawny-message "Complete: %s" buffer))))
 
-(defvar tawny-mode-class-list-buffer
-  (get-buffer-create "*tawny-classes*"))
+(defvar tawny-mode-class-list-buffer "*tawny-classes*")
+
+(defun tawny-mode-display-classes-clear()
+  (when (buffer-live-p (get-buffer tawny-mode-class-list-buffer))
+    (save-excursion
+      (set-buffer tawny-mode-class-list-buffer)
+      (erase-buffer))))
 
 (defun tawny-mode-display-classes (message buffer classes)
   (save-excursion
-    (set-buffer tawny-mode-class-list-buffer)
-    (erase-buffer)
+    (set-buffer
+     (get-buffer-create tawny-mode-class-list-buffer))
     (message value)
     (insert (format "%s %s:\n%s"
                     message
                     buffer
                     (tawny-de-escape value))))
-  (display-buffer tawny-mode-unsatisfiable-buffer))
+  (display-buffer tawny-mode-class-list-buffer))
 
 (defun tawny-mode-unsatisfiable-response-handler (buffer)
   (nrepl-make-response-handler
@@ -149,6 +155,33 @@
    (replace-regexp-in-string
     "\\\"" ""
     string)))
+
+(defun tawny-mode-inferred-superclasses ()
+  (interactive)
+  (when (tawny-mode-check-for-nrepl-buffer)
+    (tawny-mode-display-classes-clear)
+    (nrepl-request:eval
+     (format
+      "(do (require 'tawny.emacs)(tawny.emacs/get-inferred-superclasses \"%s\" \"%s\"))"
+      (clojure-find-ns)
+      (thing-at-point 'symbol t))
+     (tawny-mode-inferred-superclass-response-handler (current-buffer))
+     (cider-current-connection)
+     (cider-current-tooling-session))))
+
+(defun tawny-mode-inferred-superclass-response-handler (buffer)
+  (nrepl-make-response-handler
+   buffer
+   (lambda (buffer value)
+     (tawny-mode-display-classes
+      "Inferred superclasses for" buffer value))
+   (lambda (buffer value)
+     (tawny-message "Output: %s %s" buffer value))
+   (lambda (buffer value)
+     (tawny-message "Error: %s %s" buffer value))
+   (lambda (buffer)
+     (tawny-message "Complete: %s" buffer))))
+
 
 ;; Protege section
 (defvar tawny-mode-protege-entity-last nil)
@@ -225,6 +258,8 @@
          :help "Check ontology in current buffer for consistency"]
         ["Unsatisfiable" tawny-mode-unsatisfiable
          :help "Display Unsatisfiable Classes"]
+        ["Inferred Superclasses" tawny-mode-inferred-superclasses
+         :help "Display Inferred Superclasses"]
         ("Reasoner"
          ["Hermit" (tawny-mode-select-reasoner "hermit")]
          ["Elk" (tawny-mode-select-reasoner "elk")]
@@ -246,7 +281,7 @@
         )
       )
 
-
+    (define-key map (kbd "C-c s p") 'tawny-mode-inferred-superclasses)
     (define-key map (kbd "C-c s c") 'tawny-mode-is-coherent)
     (define-key map (kbd "C-c s v") 'tawny-mode-is-consistent)
     (define-key map (kbd "C-c s u") 'tawny-mode-unsatisfiable)

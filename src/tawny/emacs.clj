@@ -54,7 +54,7 @@ NAMESPACE"
   (let [ns (check-namespace namespace)]
     (if (instance? String ns)
       ns
-      (if 
+      (if
         (tawny.reasoner/coherent?
          (tawny.owl/get-current-ontology ns))
         "Ontology is coherent."
@@ -71,7 +71,6 @@ NAMESPACE"
           (tawny.reasoner/consistent? (tawny.owl/get-current-ontology ns))
         "Ontology is consistent."
         "Ontology is not consistent."))))
-
 
 (defn list-classes
   "Given a set of classes, returns a string representation."
@@ -94,3 +93,14 @@ NAMESPACE"
                  (tawny.owl/get-current-ontology ns)))]
         (list-classes unsatis)
         "Ontology has no unsatisfiable classes."))))
+
+(defn get-inferred-superclasses
+  "Returns a string of inferred superclasses."
+  [namespace class]
+  (let [ns (check-namespace namespace)]
+    (if-let [superclasses
+             (seq (tawny.reasoner/isuperclasses
+                   (tawny.owl/get-current-ontology ns)
+                   class))]
+      (list-classes superclasses)
+      "Ontology has no inferred superclasses.")))
