@@ -159,8 +159,11 @@
     "\\\"" ""
     string)))
 
-(defun tawny-mode-inferred-superclasses ()
-  (interactive)
+(defun tawny-mode-inferred-superclasses (class)
+  (interactive "P")
+  (cider-read-symbol-name "Class:" 'tawny-mode--inferred-superclasses-1))
+
+(defun tawny-mode--inferred-superclasses-1 (class)
   (when (tawny-mode-check-for-nrepl-buffer)
     (tawny-mode-display-classes-clear)
     (nrepl-request:eval
@@ -170,9 +173,29 @@
       (thing-at-point 'symbol t))
      (tawny-mode-class-list-response-handler
       (current-buffer)
-      "Inferred suerclasses for" buffer value)
+      "Inferred superclasses for")
      (cider-current-connection)
      (cider-current-tooling-session))))
+
+(defun tawny-mode-inferred-subclasses (class)
+  (interactive "P")
+  (cider-read-symbol-name "Class:" 'tawny-mode--inferred-subclasses-1))
+
+(defun tawny-mode--inferred-subclasses-1 (class)
+  (interactive)
+  (when (tawny-mode-check-for-nrepl-buffer)
+    (tawny-mode-display-classes-clear)
+    (nrepl-request:eval
+     (format
+      "(do (require 'tawny.emacs)(tawny.emacs/get-inferred-subclasses \"%s\" \"%s\"))"
+      (clojure-find-ns)
+      (thing-at-point 'symbol t))
+     (tawny-mode-class-list-response-handler
+      (current-buffer)
+      "Inferred subclasses for")
+     (cider-current-connection)
+     (cider-current-tooling-session))))
+
 
 ;; Protege section
 (defvar tawny-mode-protege-entity-last nil)
@@ -251,6 +274,9 @@
          :help "Display Unsatisfiable Classes"]
         ["Inferred Superclasses" tawny-mode-inferred-superclasses
          :help "Display Inferred Superclasses"]
+        ["Inferred Subclasses" tawny-mode-inferred-subclasses
+         :help "Display Inferred Superclasses"]
+
         ("Reasoner"
          ["Hermit" (tawny-mode-select-reasoner "hermit")]
          ["Elk" (tawny-mode-select-reasoner "elk")]
@@ -273,6 +299,7 @@
       )
 
     (define-key map (kbd "C-c s p") 'tawny-mode-inferred-superclasses)
+    (define-key map (kbd "C-c s b") 'tawny-mode-inferred-subclassess)
     (define-key map (kbd "C-c s c") 'tawny-mode-is-coherent)
     (define-key map (kbd "C-c s v") 'tawny-mode-is-consistent)
     (define-key map (kbd "C-c s u") 'tawny-mode-unsatisfiable)

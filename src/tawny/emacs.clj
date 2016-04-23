@@ -104,3 +104,14 @@ NAMESPACE"
                    class))]
       (list-classes superclasses)
       "Ontology has no inferred superclasses.")))
+
+(defn get-inferred-subclasses
+  "Returns a string of inferred subclasses."
+  [namespace class]
+  (let [ns (check-namespace namespace)]
+    (if-let [subclasses
+             (seq (tawny.reasoner/isubclasses
+                   (tawny.owl/get-current-ontology ns)
+                   class))]
+      (list-classes subclasses)
+      "Ontology has no inferred subclasses.")))
