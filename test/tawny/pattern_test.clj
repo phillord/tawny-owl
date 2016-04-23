@@ -108,6 +108,12 @@
   (is
    (p/value-partition to "A" ["B" "C" "D"])))
 
+(deftest partition-values
+  (is
+   (let [[p & v] (p/value-partition to "A" ["B" "C" "D"])]
+     (= (p/partition-values p)
+        (map :entity (drop 2 v))))))
+
 (deftest as-facet
   (is
    (let [o (o/object-property to "o")

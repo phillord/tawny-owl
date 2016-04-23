@@ -444,9 +444,22 @@ This returns a list of entity vectors created by the p function."
           `(tawny.util/quote-word-or-head ~@partition-values)
           options)))
 
-(defn partition-values [p]
-  (pattern-entities
-   (which-pattern p)))
+(o/defmontfn partition-values
+  "Given a value partition return the values.
+O is the Ontology, P the value partition."
+  [o p]
+  (filter
+   #(and
+     (not (= p %))
+     (instance? OWLClass %)
+     (o/subclass? o p %))
+   ;; We could just check all entities here, but that is hostage to users
+   ;; making subclasses of values. Limiting to those in the same pattern
+   ;; prevents this.
+   (flatten
+    (map
+     pattern-entities
+     (which-pattern p)))))
 ;; #+end_src
 
 
