@@ -41,8 +41,14 @@
                  [net.sourceforge.owlapi/jfact "4.0.2"
                   :exclusions [net.sourceforge.owlapi/owlapi-apibinding]]
 
-                 ;; need to access log4j to control elk.
-                 [log4j/log4j "1.2.17"]]
+                 ;; I have to explicitly include several dependencies
+                 ;; specifically so I can switch the logging off. How does
+                 ;; this make sense?
+
+                 ;; Shut up ELK
+                 [log4j/log4j "1.2.17"]
+                 ;; Shut up OWL API
+                 [org.slf4j/slf4j-nop "1.7.10"]]
 
   ;; multiple profiles for testing against different OWL versions. The :base
   ;; dependency adds dev-resources to the path which I need for testing.
