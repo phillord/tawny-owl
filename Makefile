@@ -10,8 +10,8 @@ clean-src:
 html: gen-src
 	cask exec emacs --script script/build.el -- gen-html
 
-test:
-	lein test
+commit-test: travis
+	lein test :commit
 
 travis:
 	$(MAKE) html 2>&1 | grep --invert-match "newer than byte-compiled file"
