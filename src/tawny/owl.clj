@@ -206,7 +206,7 @@ an exception."
 ;; #+begin_src clojure
 (defprotocol Entityable
   "Entityable objects are objects which wrap an OWLObject for some purpose."
-  (^OWLObject as-entity [entity]
+  (^OWLEntity as-entity [entity]
     "Returns the bare OWLObject from an Entityable entity."))
 
 ;; extend to object so that we can support numbers and strings, and so forth.

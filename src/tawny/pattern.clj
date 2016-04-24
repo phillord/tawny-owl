@@ -35,7 +35,7 @@
   (:import [org.semanticweb.owlapi.model
             OWLAnnotation OWLAnnotationAxiom
             OWLAnnotationAssertionAxiom OWLEntity
-            OWLOntology OWLClass]
+            OWLOntology OWLClass OWLObject]
            [org.semanticweb.owlapi.search
             EntitySearcher]))
 
@@ -65,7 +65,7 @@
 ;; #+begin_src clojure
 (defrecord Named [name entity]
   tawny.owl.Entityable
-  (as-entity [this] entity))
+  (tawny.owl/as-entity [this] entity))
 
 (defn intern-owl-entities
   "Given a list of vectors of form [name entity], as returned by the p
@@ -249,13 +249,13 @@ with other entities that are annotated to the same anonymous individual.")
 
 (o/defdontfn pattern-annotations
   "Returns pattern annotations of ENTITY or the empty list."
-  [^OWLOntology o ^OWLEntity entity]
+  [^OWLOntology o entity]
   (filter
    (fn [^OWLAnnotation anon]
      (= (.getProperty anon)
         inpattern))
    (EntitySearcher/getAnnotations
-    entity o)))
+    (o/as-entity entity) o)))
 
 (o/defdontfn which-pattern
   "Returns the OWLAnonymousIndividual(s) describing the pattern(s)
@@ -295,7 +295,7 @@ an anonymous invididual."
 an anonymous invididual."
   [^OWLOntology o pattern]
   (map
-   o/entity-for-iri
+   #(o/entity-for-iri o %)
    (pattern-iris o pattern)))
 ;; #+end_src
 
@@ -458,8 +458,8 @@ O is the Ontology, P the value partition."
    ;; prevents this.
    (flatten
     (map
-     pattern-entities
-     (which-pattern p)))))
+     (partial pattern-entities o)
+     (which-pattern o p)))))
 ;; #+end_src
 
 

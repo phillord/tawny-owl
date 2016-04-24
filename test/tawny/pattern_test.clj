@@ -110,9 +110,9 @@
 
 (deftest partition-values
   (is
-   (let [[p & v] (p/value-partition to "A" ["B" "C" "D"])]
-     (= (p/partition-values p)
-        (map :entity (drop 2 v))))))
+   (let [[p _ & v] (p/value-partition to "A" ["B" "C" "D"])]
+     (= (sort (p/partition-values to (:entity p)))
+        (sort (map :entity v))))))
 
 (deftest as-facet
   (is
@@ -141,7 +141,7 @@
   (is
    (seq
     (apply
-     p/shared-pattern to
+     (partial p/shared-pattern to)
      (p/pattern-annotator
       to (list (o/owl-class to "c")
                (o/owl-class to "d"))))))
@@ -150,11 +150,9 @@
          c2 (o/owl-class to "c2")
          c3 (o/owl-class to "c3")]
      (= (set
-         (map
-          o/as-iri
-          (p/pattern-annotator
-           to
-           (list c1 c2 c3))))
+         (p/pattern-annotator
+          to
+          (list c1 c2 c3)))
         (set (p/pattern-entities
               to
               (first (p/which-pattern to c1))))))))
