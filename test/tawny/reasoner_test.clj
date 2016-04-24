@@ -77,7 +77,7 @@
 (defn ontology-abc-reasoning []
   ;; simple ontology -- c should be reasoned to be a subclass of a.
   (o/owl-class to "a"
-              :equivalent 
+              :equivalent
               (o/object-some to "p" "b"))
   (o/owl-class to "b")
   (o/owl-class to "c"
@@ -92,20 +92,22 @@
     (fn [x]
       (r/reasoner-factory x)
       (func))
-    reasonerlist)))
+    reasonerlist))
+  ;; nil the reasoner factory afterwards to prevent bleed-through
+  (r/reasoner-factory :nil))
 
 ;; for all reasoners
 (defn far [func]
   (far-reasoner func
                 '(:elk
-                  ;;:hermit
+                  :hermit
                   :jfact)))
 
 ;; for all dl reasoners
 (defn fadlr [func]
   (far-reasoner func
                 '(
-                  ;;:hermit
+                  :hermit
                   :jfact)))
 ;; (map
 ;;  (fn [x]

@@ -62,7 +62,8 @@
 
 (defn ^OWLReasonerFactory reasoner-factory
   "Return or set the reasoner factory. The reasoner must be either
-:hermit or :elk."
+  :hermit, :elk or :jfact. It can also be :nil, which will leave no reasoner
+  factory set."
   ([]
      (when (nil? @vreasoner-factory)
        (throw (IllegalStateException. "No reasoner has been chosen")))
@@ -70,9 +71,9 @@
   ([reasoner-keyword]
      (dosync
       ;; blitz the reasoners
-      (doseq [^OWLReasoner r @reasoner-list]
-        (when-not (instance? uk.ac.manchester.cs.jfact.JFactReasoner r)
-          (.dispose r)))
+      ;; (doseq [^OWLReasoner r @reasoner-list]
+      ;;   (when-not (instance? uk.ac.manchester.cs.jfact.JFactReasoner r)
+      ;; (.dispose r)))
       ;; blitz the reasoner list
       (ref-set reasoner-list ())
       ;; create a new reasoner
@@ -87,9 +88,7 @@
                  ;; kill for the moment.
                  :hermit (org.semanticweb.HermiT.Reasoner$ReasonerFactory.)
                  :jfact (uk.ac.manchester.cs.jfact.JFactFactory.)
-                 }
-                )))))
-
+                 :nil nil})))))
 
 (defn reasoner-progress-monitor-gui
   "Return a new graphical progress monitor."
