@@ -20,12 +20,42 @@
   (:require [tawny.profile :as p]
             [tawny.owl :as o]))
 
-(def o (o/ontology))
+(def to nil)
 
-(deftest inprofile?
+(defn createtestontology[]
+  (alter-var-root
+   #'to
+   (fn [x]
+     (o/ontology :iri "http://example.com"))))
+
+(defn createandsavefixture[test]
+  (let [exp
+        #(throw (Exception. "default ontology used"))
+        trace
+        #(tawny.debug/tracing-println "default ontology used")
+        ]
+    (when true
+      (tawny.util/add-hook
+       o/default-ontology-hook exp
+       ))
+    (when false
+      (tawny.util/add-hook
+       o/default-ontology-hook trace))
+    (createtestontology)
+    (test)
+    (tawny.util/remove-hook o/default-ontology-hook exp)
+    (tawny.util/remove-hook o/default-ontology-hook trace)))
+
+(use-fixtures :each createandsavefixture)
+
+(deftest inprofile-owl2dl?
   (is
-   (not (p/inprofile? o p/profile-owl2dl)))
+   (p/inprofile? to p/profile-owl2dl)))
+
+(deftest inprofile-owl2
   (is
-   (not (p/inprofile? o p/profile-owl2)))
+   (p/inprofile? to p/profile-owl2)))
+
+(deftest inprofile-owl2el
   (is
-   (not (p/inprofile? o p/profile-owl2el))))
+   (p/inprofile? to p/profile-owl2el)))
