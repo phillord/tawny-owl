@@ -933,8 +933,11 @@ the moment it is very simple."
   "Interns an OWL Entity. Compared to the clojure.core/intern function this
 signals a hook, and adds :owl true to the metadata. NAME must be a strings"
   ([name entity]
+   (intern-owl-string
+    *ns* name entity))
+  ([ns name entity]
      (tawny.owl/run-intern-hook
-      (intern *ns*
+      (intern ns
               (with-meta
                 (symbol name)
                 {:owl true})

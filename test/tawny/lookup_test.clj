@@ -29,7 +29,8 @@
   ([ns]
      (let [o (o/ontology :iri "http://iri/" :prefix "test:")]
        (o/ontology-to-namespace o)
-       (intern ns 'a-test-ontology o))))
+       (intern ns 'a-test-ontology o)
+       o)))
 
 
 ;; test it don't crash -- all I can do
@@ -40,25 +41,32 @@
 
 (deftest iri-to-var
   (is
-   (= 3
-      (try
-        (test-ontology)
-        (o/declare-classes a b c)
-        (count (l/iri-to-var-no-ontology lookup-test-namespace))
-        (finally
-          (ns-unmap lookup-test-namespace 'a)
-          (ns-unmap lookup-test-namespace 'b)
-          (ns-unmap lookup-test-namespace 'c)))))
+   (= 1
+      (let [o
+            (test-ontology)]
+        (try
+          (o/intern-owl-string lookup-test-namespace "a"
+                               (o/owl-class o "a"))
+          (count (l/iri-to-var-no-ontology lookup-test-namespace))
+          (finally
+            (ns-unmap lookup-test-namespace 'a)
+            (#'tawny.owl/remove-ontology-from-namespace-map o)
+            (.removeOntology (tawny.owl/owl-ontology-manager) o)
+            (ns-unmap lookup-test-namespace 'a-test-ontology)))))))
+
+(deftest iri-to-var-2
   (is
-   (= 4
-      (try
-        (test-ontology)
-        (o/declare-classes a b c)
-        (count (l/iri-to-var lookup-test-namespace))
-        (finally
-          (ns-unmap lookup-test-namespace 'a)
-          (ns-unmap lookup-test-namespace 'b)
-          (ns-unmap lookup-test-namespace 'c))))))
+   (= 2
+      (let [o (test-ontology)]
+        (try
+          (o/intern-owl-string lookup-test-namespace "a"
+                               (o/owl-class o "a"))
+          (count (l/iri-to-var lookup-test-namespace))
+          (finally
+            (ns-unmap lookup-test-namespace 'a)
+            (#'tawny.owl/remove-ontology-from-namespace-map o)
+            (.removeOntology (tawny.owl/owl-ontology-manager) o)
+            (ns-unmap lookup-test-namespace 'a-test-ontology)))))))
 
 (deftest resolve-entity
   (is

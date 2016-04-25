@@ -57,10 +57,10 @@ var with OWLOntology object."
           [iri var])))
 
 (def iri-to-var-no-ontology
-  (partial iri-to-var-map iri-for-var-named-entity))
+  (partial #'iri-to-var-map iri-for-var-named-entity))
 
 (def iri-to-var
-  (partial iri-to-var-map iri-for-var))
+  (partial #'iri-to-var-map iri-for-var))
 
 (defn var-str
   "Given a var, return a string representation of its name"
