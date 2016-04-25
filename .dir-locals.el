@@ -5,4 +5,4 @@
   (projectile-project-type . lein-test))
  (clojure-mode
   (lentic-init . lentic-clojure-org-init)
-  (cider-jack-in-auto-inject-clojure . :latest)))
+  (cider-jack-in-auto-inject-clojure . latest)))
