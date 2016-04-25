@@ -18,12 +18,15 @@
 (ns tawny.read-test
   (:refer-clojure :exclude [read])
   (:use [clojure.test])
-  (:require [tawny.read :as r]
-            [tawny.owl :as o])
+  (:require
+   [clojure.set]
+   [tawny.read :as r]
+   [tawny.owl :as o]
+   [tawny.lookup :as l])
   (:import (org.semanticweb.owlapi.model IRI OWLNamedObject OWLOntologyID)
-           (org.semanticweb.owlapi.util SimpleIRIMapper))
+           (org.semanticweb.owlapi.util SimpleIRIMapper)))
 
-  )
+(def read-test-namespace (find-ns 'tawny.read-test))
 
 (defn get-go-ontology []
   (tawny.owl/remove-ontology-maybe
@@ -32,6 +35,15 @@
    (tawny.owl/owl-ontology-manager)
    (IRI/create (clojure.java.io/resource "go-snippet.owl"))))
 
+
+(defn unmap-all-owl [ns]
+  (let [var-to-iri
+        (clojure.set/map-invert
+         (l/iri-to-var ns))]
+    (doseq
+        [[var sym] (clojure.set/map-invert (ns-publics ns))
+         :when (get var-to-iri var)]
+      (ns-unmap ns sym))))
 
 (deftest read
   (is
@@ -47,15 +59,16 @@
        (r/read :location
                (IRI/create (clojure.java.io/resource "wine.rdf"))
                :iri "http://www.w3.org/TR/2003/CR-owl-guide-20030818/wine"
-               :prefix "wine:"
-               )
+               :namespace read-test-namespace
+               :prefix "wine:")
        ;; we shouldn't be using this again, but clean up anyway.
        (finally
          (doseq
              [o
               (.getOntologies (tawny.owl/owl-ontology-manager))]
            (tawny.owl/remove-ontology-maybe (.getOntologyID o)))
-         (.clearIRIMappers (tawny.owl/owl-ontology-manager)))))))
+         (.clearIRIMappers (tawny.owl/owl-ontology-manager))
+         (unmap-all-owl read-test-namespace))))))
 
 
 (deftest read-with-mapper
@@ -65,6 +78,7 @@
              (IRI/create (clojure.java.io/resource "wine.rdf"))
              :iri "http://www.w3.org/TR/2003/CR-owl-guide-20030818/wine"
              :prefix "wine:"
+             :namespace read-test-namespace
              :mapper
              (r/resource-iri-mapper
               {"http://www.w3.org/TR/2003/PR-owl-guide-20031209/food",
@@ -73,7 +87,8 @@
          (doseq
              [o
               (.getOntologies (tawny.owl/owl-ontology-manager))]
-           (tawny.owl/remove-ontology-maybe (.getOntologyID o)))))))
+           (tawny.owl/remove-ontology-maybe (.getOntologyID o))
+         (unmap-all-owl read-test-namespace))))))
 
 (deftest go-snippet-as-resource
   (is (clojure.java.io/resource "go-snippet.owl")))
@@ -149,10 +164,14 @@
   )
 
 (deftest go-snippet-read
-  (is (r/read :location
-              (IRI/create (clojure.java.io/resource "go-snippet.owl"))
-              :iri "http://purl.obolibrary.org/obo/go.owl"
-              :prefix "go:")))
+  (is
+   (try (r/read :location
+                (IRI/create (clojure.java.io/resource "go-snippet.owl"))
+                :iri "http://purl.obolibrary.org/obo/go.owl"
+                :prefix "go:"
+                :namespace read-test-namespace)
+        (finally
+           (doall (map ns-unmap (vals (l/iri-to-var read-test-namespace))))))))
 
 
 (deftest stop-characters-transform

@@ -90,7 +90,6 @@ starts-with. Use this partially applied with a filter for 'read'."
     trans
     ))
 
-
 (tawny.owl/defmontfn exception-nil-label-transform
  "Check for empty labels noisily"
  [o e]
@@ -123,14 +122,14 @@ Clojure symbol. Use this composed with a entity transform function"
 (defn intern-entity
   "Intern the OWL entity, applying transform to the entity to generate a name
 to intern."
-  ([e]
-     (intern-entity e fragment-transform))
-  ([e transform]
+  ([ns e]
+   (intern-entity ns e default-transform))
+  ([ns e transform]
      (try
        (when (instance? OWLNamedObject e)
          (let [name
                (stop-characters-transform (transform e))]
-           (tawny.owl/intern-owl-string name e)))
+           (tawny.owl/intern-owl-string ns name e)))
        (catch IllegalArgumentException i
          (print "Broken Intern on:" e)
          (throw i)))))
@@ -164,10 +163,11 @@ passed to .loadOntologyFromOntologyDocument on the OWLOntologyManager.
 :filter -- a filter function -- only entities returning true are interned.
 :transform -- entities are interned using a name returned by this function
 :mapper -- an OWLOntologyIRIMapper which is to be used for loading. See
-iri-mapper and resource-iri-mapper."
+iri-mapper and resource-iri-mapper.
+:namespace -- the namespace in which to intern (or *ns*)."
   [& rest]
   (let [{:keys [location iri prefix filter transform version-iri
-                mapper]} rest
+                mapper namespace]} rest
         jiri (tawny.owl/iri iri)
         viri (if version-iri
                (tawny.owl/iri version-iri))
@@ -209,14 +209,14 @@ iri-mapper and resource-iri-mapper."
       (fn [x]
         ;; grab each entity, put classes, object properties and so forth into
         ;; current system.
-        (intern-entity x
-                       (or transform default-transform)))
+        (intern-entity
+         (or namespace *ns*) x
+         (or transform default-transform)))
       ;; filter this so that it only puts stuff with the given IRI prefix
       (doall
        (clojure.core/filter (or filter default-filter)
                                    (.getSignature owlontology)))))
     owlontology))
-
 
 (defn iri-create
   "DEPRECATED: Use iri method in tawny.owl.
