@@ -1,9 +1,5 @@
-(ns
-    ^{:doc "An ontology for annotations of tawny"
-      :author "Phillip Lord"} tawny.tawny
-  (:refer-clojure :only [var-get])
-  (:require [tawny.owl]))
-
+(refer-clojure :only '[var-get])
+(require 'tawny.owl)
 
 ;; The sensible thing would be to build this ontology in tawny and then load
 ;; it directly, but this causes bootstrap problems. So, the ontology is build
