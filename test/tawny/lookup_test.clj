@@ -21,17 +21,12 @@
    [tawny.owl :as o]
    [tawny.lookup :as l]))
 
-(def lookup-test-namespace (find-ns 'tawny.lookup-test))
+(def lookup-test-namespace (create-ns 'tawny.lookup-test-test-namespace))
 
 (defn test-ontology
   ([]
-     (test-ontology lookup-test-namespace))
-  ([ns]
-     (let [o (o/ontology :iri "http://iri/" :prefix "test:")]
-       (o/ontology-to-namespace o)
-       (intern ns 'a-test-ontology o)
-       o)))
-
+   (let [o (o/ontology :iri "http://iri/" :prefix "test:")]
+     o)))
 
 ;; test it don't crash -- all I can do
 (deftest all-iri-to-var
@@ -50,13 +45,12 @@
           (count (l/iri-to-var-no-ontology lookup-test-namespace))
           (finally
             (ns-unmap lookup-test-namespace 'a)
-            (#'tawny.owl/remove-ontology-from-namespace-map o)
             (.removeOntology (tawny.owl/owl-ontology-manager) o)
             (ns-unmap lookup-test-namespace 'a-test-ontology)))))))
 
 (deftest iri-to-var-2
   (is
-   (= 2
+   (= 1
       (let [o (test-ontology)]
         (try
           (o/intern-owl-string lookup-test-namespace "a"
@@ -64,17 +58,17 @@
           (count (l/iri-to-var lookup-test-namespace))
           (finally
             (ns-unmap lookup-test-namespace 'a)
-            (#'tawny.owl/remove-ontology-from-namespace-map o)
             (.removeOntology (tawny.owl/owl-ontology-manager) o)
             (ns-unmap lookup-test-namespace 'a-test-ontology)))))))
 
 (deftest resolve-entity
   (is
-   (= "tawny.lookup-test/hello"
+   (= "tawny.lookup-test-test-namespace/hello"
       (try
-        (test-ontology)
-        (def hello (o/owl-class "test"))
-        (l/resolve-entity (o/owl-class "test")
-                        (l/iri-to-var lookup-test-namespace))
+        (let [o (test-ontology)]
+          (tawny.owl/intern-owl-string lookup-test-namespace
+                                       "hello" (o/owl-class o "test"))
+          (l/resolve-entity (o/owl-class o "test")
+                            (l/iri-to-var lookup-test-namespace)))
         (finally
           (ns-unmap lookup-test-namespace 'hello))))))
