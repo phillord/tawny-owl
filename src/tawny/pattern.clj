@@ -63,9 +63,11 @@
 ;; Examples of these in use will be seen later.
 
 ;; #+begin_src clojure
-(defrecord Named [name entity]
-  tawny.owl.Entityable
-  (tawny.owl/as-entity [this] entity))
+(defrecord Named [name entity])
+
+(extend-type
+    Named
+  tawny.owl/Entityable (as-entity [this] (:entity this)))
 
 (defn intern-owl-entities
   "Given a list of vectors of form [name entity], as returned by the p
