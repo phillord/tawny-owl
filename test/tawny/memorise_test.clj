@@ -19,32 +19,40 @@
   (:require [tawny.memorise :as m]
             [tawny.owl :as o]))
 
+(def memorise-test-namespace (create-ns 'tawny.memorise-test-test-namespace))
 
 (defn test-memorise-map []
-  (m/memorise-map *ns*))
+  (m/memorise-map memorise-test-namespace))
 
-(defn bind-some-vars []
-  (eval
-   '(do
-      (tawny.owl/defclass a)
-      (tawny.owl/defclass b)
-      (tawny.owl/defclass c))))
+(defn bind-some-vars
+  ([]
+   (throw (Exception. "to be fixed")))
+  ([o]
+   (o/intern-owl-string
+    memorise-test-namespace
+    "a" (tawny.owl/owl-class o "a"))
+   (o/intern-owl-string
+    memorise-test-namespace
+    "b" (tawny.owl/owl-class o "b"))
+   (o/intern-owl-string
+    memorise-test-namespace
+    "c" (tawny.owl/owl-class o "c"))))
 
 (defn- unbind-some-vars []
-  (ns-unmap *ns* 'a)
-  (ns-unmap *ns* 'b)
-  (ns-unmap *ns* 'c))
+  (ns-unmap memorise-test-namespace 'a)
+  (ns-unmap memorise-test-namespace 'b)
+  (ns-unmap memorise-test-namespace 'c))
 
 (deftest bind-and-unbind
   (is
    (= 0 (count
-         (do (o/ontology)
-             (test-memorise-map)))))
+         (do
+           (test-memorise-map)))))
 
   (is
    (= 3
-      (do (o/ontology)
-          (bind-some-vars)
+      (let [o (o/ontology)]
+          (bind-some-vars o)
           (let [x
                 (count
                  (test-memorise-map))]
@@ -53,10 +61,11 @@
 
   (is
    (= 0 (count
-         (do (o/ontology)
-             (bind-some-vars)
-             (unbind-some-vars)
-             (test-memorise-map)))))
+         (let
+             [o (o/ontology)]
+           (bind-some-vars o)
+           (unbind-some-vars)
+           (test-memorise-map)))))
 
   (is
    (= 0
@@ -73,8 +82,8 @@
     {"http://iri/#a" #{"a"},
      "http://iri/#b" #{"b"},
      "http://iri/#c" #{"c"}}
-    (do (o/ontology)
-        (bind-some-vars)
+    (let [o (o/ontology)]
+        (bind-some-vars o)
         (let [x
               (#'m/change-values-to-string-set (test-memorise-map))]
           (unbind-some-vars)
@@ -121,16 +130,18 @@
        "http://iri/#c" #{"c"},
        "http://iri/#a" #{"a"},
        }
-      (do
-        (bind-some-vars)
+      (let [o (o/ontology :iri "http://iri/")]
+        (bind-some-vars o)
         (let [retn
-              (#'m/change-values-to-string-set (m/memorise-map *ns*))]
+              (#'m/change-values-to-string-set
+               (m/memorise-map memorise-test-namespace))]
           (unbind-some-vars)
           retn))))
 
   (is
    (= {}
-      (#'m/change-values-to-string-set (m/memorise-map *ns*)))))
+      (#'m/change-values-to-string-set
+       (m/memorise-map memorise-test-namespace)))))
 
 
 
