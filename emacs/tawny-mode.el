@@ -26,9 +26,15 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
+;;; Commentary:
+;;
+
 (require 'nrepl-client)
 (require 'clojure-mode)
 (require 'easymenu)
+
+;;; Code:
 
 (defun tawny-mode-check-for-nrepl-buffer ()
   (if (nrepl-connection-buffer-name)
@@ -369,3 +375,4 @@
 
 
 (provide 'tawny-mode)
+;;; tawny-mode.el ends here
