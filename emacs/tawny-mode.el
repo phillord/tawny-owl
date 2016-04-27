@@ -1,4 +1,4 @@
-;; tawny-mode.el --- Ontology Editing with Tawny-OWL -*- lexical-binding: t -*-
+;;; tawny-mode.el --- Ontology Editing with Tawny-OWL -*- lexical-binding: t -*-
 
 ;;; Header:
 
