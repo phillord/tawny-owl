@@ -6,7 +6,7 @@
 
 ;; Author: Phillip Lord <phillip.lord@newcastle.ac.uk>
 ;; Maintainer: Phillip Lord <phillip.lord@newcastle.ac.uk>
-;; Version: 1.50
+;; Version: 1.5.0
 ;; Package-Requires: ((cider "0.12"))
 
 ;; The contents of this file are subject to the GPL License, Version 3.0.
@@ -354,6 +354,7 @@
     map
     ))
 
+;;;###autoload
 (define-minor-mode tawny-mode
   "Interact with an ontology in tawny-owl."
   nil " Tawny" tawny-mode-map
