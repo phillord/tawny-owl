@@ -1,4 +1,13 @@
-;; -*- lexical-binding: t -*-
+;; tawny-mode.el --- Ontology Editing with Tawny-OWL -*- lexical-binding: t -*-
+
+;;; Header:
+
+;; This file is not part of Emacs
+
+;; Author: Phillip Lord <phillip.lord@newcastle.ac.uk>
+;; Maintainer: Phillip Lord <phillip.lord@newcastle.ac.uk>
+;; Version: 1.50
+;; Package-Requires: ((cider "0.12"))
 
 ;; The contents of this file are subject to the GPL License, Version 3.0.
 ;;
@@ -138,6 +147,35 @@
    (lambda (buffer)
      (tawny-message "Complete: %s" buffer))))
 
+
+(defun tawny-mode-save ()
+  "Save the current namespace and open the file if needed."
+  (interactive)
+  (when (tawny-mode-check-for-nrepl-buffer)
+    (nrepl-request:eval
+     (format
+      "(do (require 'tawny.emacs)(tawny.emacs/save-namespace-ontology \"%s\"))"
+      (clojure-find-ns))
+     (tawny-mode-save-handler (current-buffer))
+     (cider-current-connection)
+     (cider-current-tooling-session))))
+
+(defun tawny-mode-save-handler (buffer)
+  (nrepl-make-response-handler
+   buffer
+   (lambda (&rest value))
+   (lambda (&rest stdout))
+   (lambda (&rest sterr))
+   (lambda (&rest done)
+     (let ((o-omn
+            (concat (clojure-project-dir) "o.omn")))
+       (if-let ((b (find-buffer-visiting o-omn)))
+           (display-buffer b)
+         (with-current-buffer
+             (find-file o-omn)
+           (auto-revert-mode 1)
+           (display-buffer (current-buffer))))))))
+
 (defun tawny-doc (query)
   "Opens a window with docstring for QUERY."
   (interactive "P")
@@ -266,6 +304,8 @@
     (easy-menu-define tawny-mode-menu-map
       map "`tawny-minor-mode' menu"
       '("Tawny"
+        ["Save" tawny-mode-save
+         :help "Save current ontology and open in Emacs"]
         ["Coherent" tawny-mode-is-coherent
          :help "Check ontology in current buffer for coherency"]
         ["Consistency" tawny-mode-is-consistent
@@ -298,6 +338,7 @@
         )
       )
 
+    (define-key map (kbd "C-c s s") 'tawny-mode-save)
     (define-key map (kbd "C-c s p") 'tawny-mode-inferred-superclasses)
     (define-key map (kbd "C-c s b") 'tawny-mode-inferred-subclassess)
     (define-key map (kbd "C-c s c") 'tawny-mode-is-coherent)

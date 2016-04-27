@@ -115,3 +115,11 @@ NAMESPACE"
                    class))]
       (list-classes subclasses)
       "Ontology has no inferred subclasses.")))
+
+(defn save-namespace-ontology
+  "Save ontology in the given namespace."
+  [namespace]
+  (tawny.owl/save-ontology
+   (get @tawny.owl/ontology-for-namespace
+        (find-ns (symbol namespace)))
+   "o.omn" :omn))
