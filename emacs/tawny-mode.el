@@ -193,7 +193,7 @@
     (nrepl-request:eval form
                        (cider-popup-eval-out-handler doc-buffer)
                        (cider-current-connection)
-                       (nrepl-current-tooling-session)
+                       (cider-current-tooling-session)
                        (cider-current-ns))))
 
 (defun tawny-de-escape (string)
