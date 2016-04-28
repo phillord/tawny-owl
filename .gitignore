@@ -16,3 +16,5 @@ o.*
 /tawny.html
 /src/tawny/owl.org
 /src/tawny/pattern.org
+/emacs/.cask/
+/emacs/dist/

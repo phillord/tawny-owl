@@ -1,0 +1,4 @@
+(source gnu)
+(source melpa-stable)
+
+(package-file "tawny-mode.el")
