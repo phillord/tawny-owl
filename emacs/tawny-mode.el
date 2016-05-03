@@ -38,18 +38,22 @@
 ;;; Code:
 
 (defun tawny-mode-check-for-nrepl-buffer ()
-  (if (not (nrepl-connection-buffer-name))
-      (error
-       "No nREPL buffer exists. Please use `cider-jack-in'")))
+  "Error if there is no NREPL buffer."
+  (unless (nrepl-connection-buffer-name)
+    (error
+     "No nREPL buffer exists. Please use `cider-jack-in'")))
 
 ;; select reasoner
 (defun tawny-mode-select-reasoner (reasoner)
-  "Selects the current reasoner"
+  "Select the current reasoner.
+
+REASONER is the name of the reasoner, and must be one of hermit,
+elk or jfact."
   (interactive
    (list
     (completing-read
      "Select reasoner: "
-     '("hermit" "elk")
+     '("hermit" "elk" "jfact")
      nil t)))
   (tawny-mode-check-for-nrepl-buffer)
   (if (equal "" reasoner)
@@ -60,15 +64,16 @@
       reasoner))))
 
 (defun tawny-mode-is-coherent ()
+  "Prints a message describing coherency of current ontology."
   (interactive)
   (tawny-mode-check-for-nrepl-buffer)
   (tawny-mode-nrepl-reasoner-eval-string
    (format
     "(do (require 'tawny.emacs)(tawny.emacs/is-coherent \"%s\"))"
-    (clojure-find-ns)
-    )))
+    (clojure-find-ns))))
 
 (defun tawny-mode-is-consistent ()
+  "Prints a message describing consistency of current ontology."
   (interactive)
   (tawny-mode-check-for-nrepl-buffer)
   (tawny-mode-nrepl-reasoner-eval-string
@@ -78,6 +83,7 @@
     )))
 
 (defun tawny-mode-unsatisfiable ()
+  "Prints a message describing unsatisfiability of current ontology."
   (interactive)
   (tawny-mode-check-for-nrepl-buffer)
   (tawny-mode-display-classes-clear)
@@ -91,9 +97,14 @@
    (cider-current-connection)
    (cider-current-tooling-session)))
 
-(defvar tawny-interaction-buffer (get-buffer-create "*tawny-interaction*"))
+(defvar tawny-interaction-buffer
+  "A buffer for interaction with tawny."
+  (get-buffer-create "*tawny-interaction*"))
 
 (defun tawny-message (string &rest values)
+  "Add message to `tawny-interaction-buffer'.
+Argument STRING is a format string.
+Optional argument VALUES are the values for the format string."
   (let ((msg (apply 'format string values)))
     (save-excursion
       (set-buffer tawny-interaction-buffer)
@@ -102,6 +113,7 @@
     (message msg)))
 
 (defun tawny-mode-nrepl-reasoner-eval-string (string)
+  "Eval STRING in clojure."
   (nrepl-request:eval
    string
    (tawny-mode-make-reasoner-response-handler (current-buffer))
@@ -109,6 +121,7 @@
    (cider-current-tooling-session)))
 
 (defun tawny-mode-make-reasoner-response-handler (buffer)
+  "Return a messaging response handler for BUFFER."
   (nrepl-make-response-handler
    buffer
    (lambda (buffer value)
@@ -120,15 +133,23 @@
    (lambda (buffer)
      (tawny-message "Complete: %s" buffer))))
 
-(defvar tawny-mode-class-list-buffer "*tawny-classes*")
+(defvar tawny-mode-class-list-buffer
+  "*tawny-classes*"
+  "Name of the Class list buffer.")
 
 (defun tawny-mode-display-classes-clear()
+  "Clear the class list buffer."
   (when (buffer-live-p (get-buffer tawny-mode-class-list-buffer))
     (save-excursion
       (set-buffer tawny-mode-class-list-buffer)
       (erase-buffer))))
 
 (defun tawny-mode-display-classes (message buffer classes)
+  "Display a list of classes.
+
+Argument MESSAGE is a message.
+Argument BUFFER is the buffer.
+Argument CLASSES is the list of classes."
   (save-excursion
     (set-buffer
      (get-buffer-create tawny-mode-class-list-buffer))
@@ -139,6 +160,9 @@
   (display-buffer tawny-mode-class-list-buffer))
 
 (defun tawny-mode-class-list-response-handler (buffer message)
+  "Return a response handler which display classes.
+Argument BUFFER is the buffer.
+Argument MESSAGE is the message."
   (nrepl-make-response-handler
    buffer
    (lambda (buffer value)
@@ -165,6 +189,7 @@
    (cider-current-tooling-session)))
 
 (defun tawny-mode-save-handler (buffer)
+  "Open the ontology BUFFER after Clojure has saved it."
   (nrepl-make-response-handler
    buffer
    (lambda (&rest value))
@@ -186,6 +211,8 @@
   (cider-read-symbol-name "Term: " 'tawny-doc-handler))
 
 (defun tawny-doc-handler (symbol)
+  "Return a documentation popup.
+Argument SYMBOL is the symbol to document."
   (let ((form (format "(do (require 'tawny.repl)(tawny.repl/print-doc %s))" symbol))
         (doc-buffer (cider-popup-buffer cider-doc-buffer t)))
     (nrepl-request:eval form
@@ -195,6 +222,7 @@
                        (cider-current-ns))))
 
 (defun tawny-de-escape (string)
+  "Remove escape sequences from STRING."
   (replace-regexp-in-string
    "\\\\n" "\n"
    (replace-regexp-in-string
@@ -202,10 +230,13 @@
     string)))
 
 (defun tawny-mode-inferred-superclasses (class)
+  "Show the inferred superclasses of CLASS."
   (interactive "P")
   (cider-read-symbol-name "Class:" 'tawny-mode--inferred-superclasses-1))
 
 (defun tawny-mode--inferred-superclasses-1 (class)
+  "Support function for `tawny-mode-inferred-superclasses'.
+Argument CLASS is the class."
   (tawny-mode-check-for-nrepl-buffer)
   (tawny-mode-display-classes-clear)
   (nrepl-request:eval
@@ -220,10 +251,13 @@
    (cider-current-tooling-session)))
 
 (defun tawny-mode-inferred-subclasses (class)
+  "Show the inferred subclasses of CLASS."
   (interactive "P")
   (cider-read-symbol-name "Class:" 'tawny-mode--inferred-subclasses-1))
 
 (defun tawny-mode--inferred-subclasses-1 (class)
+  "Support function for `tawny-mode-inferred-subclasses'.
+Argument CLASS is the class."
   (interactive)
   (tawny-mode-check-for-nrepl-buffer)
   (tawny-mode-display-classes-clear)
@@ -242,6 +276,7 @@
 ;; Protege section
 (defvar tawny-mode-protege-entity-last nil)
 (defun tawny-mode-protege-entity ()
+  "Track the entity at point in Protege."
   (interactive)
   (when (equal major-mode 'clojure-mode)
     (let* ((thing
@@ -272,6 +307,10 @@
          cider-buffer-ns)))))
 
 (defun tawny-mode-nrepl-protege-display-handler (buffer)
+  "Return a response handler for Protege.
+
+This is null, as everything happens by side effect.
+Argument BUFFER is the buffer."
   (nrepl-make-response-handler
    buffer
    (lambda (&rest value))
@@ -281,12 +320,15 @@
 
 
 (defvar tawny-mode-protege-track-timer
+  "Timer for protege tracking. "
   nil)
 
 (defun tawny-mode-protege-entity-idle ()
+  "Function which appears to do nothing."
   (tawny-mode-protege-entity))
 
 (defun tawny-mode-protege-track-toggle ()
+  "Toggle tracking of entities in protege."
   (interactive)
   (setq tawny-mode-protege-track-timer
         (if tawny-mode-protege-track-timer
@@ -361,6 +403,7 @@
 (defvar tawny-mode-block nil)
 
 (defun tawny-mode-maybe-enable ()
+  "Enable tawny based on heuristics."
   (interactive)
   (save-excursion
     (goto-char (point-min))
