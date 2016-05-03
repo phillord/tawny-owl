@@ -79,13 +79,7 @@
       ;; create a new reasoner
       (ref-set vreasoner-factory
                (reasoner-keyword
-                {:elk
-                 (do
-                   ;; ELK is noisy, so shut it up
-                   (-> (Logger/getLogger "org.semanticweb.elk")
-                       (.setLevel Level/ERROR));
-                   (ElkReasonerFactory.))
-                 ;; kill for the moment.
+                {:elk (ElkReasonerFactory.)
                  :hermit (org.semanticweb.HermiT.Reasoner$ReasonerFactory.)
                  :jfact (uk.ac.manchester.cs.jfact.JFactFactory.)
                  :nil nil})))))
