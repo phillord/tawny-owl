@@ -7,7 +7,7 @@
 ;; Author: Phillip Lord <phillip.lord@newcastle.ac.uk>
 ;; Maintainer: Phillip Lord <phillip.lord@newcastle.ac.uk>
 ;; Version: 1.5.0
-;; Package-Requires: ((cider "0.12"))
+;; Package-Requires: ((cider "0.12")(emacs "25"))
 
 ;; The contents of this file are subject to the GPL License, Version 3.0.
 ;;
