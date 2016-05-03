@@ -342,13 +342,13 @@
         )
       )
 
-    (define-key map (kbd "C-c s s") 'tawny-mode-save)
-    (define-key map (kbd "C-c s p") 'tawny-mode-inferred-superclasses)
-    (define-key map (kbd "C-c s b") 'tawny-mode-inferred-subclassess)
-    (define-key map (kbd "C-c s c") 'tawny-mode-is-coherent)
-    (define-key map (kbd "C-c s v") 'tawny-mode-is-consistent)
-    (define-key map (kbd "C-c s u") 'tawny-mode-unsatisfiable)
-    (define-key map (kbd "C-c s d") 'tawny-doc)
+    (define-key map (kbd "C-c . s") 'tawny-mode-save)
+    (define-key map (kbd "C-c . p") 'tawny-mode-inferred-superclasses)
+    (define-key map (kbd "C-c . b") 'tawny-mode-inferred-subclassess)
+    (define-key map (kbd "C-c . c") 'tawny-mode-is-coherent)
+    (define-key map (kbd "C-c . v") 'tawny-mode-is-consistent)
+    (define-key map (kbd "C-c . u") 'tawny-mode-unsatisfiable)
+    (define-key map (kbd "C-c . d") 'tawny-doc)
     map
     ))
 
