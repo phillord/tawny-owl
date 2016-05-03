@@ -38,12 +38,9 @@
 ;;; Code:
 
 (defun tawny-mode-check-for-nrepl-buffer ()
-  (if (nrepl-connection-buffer-name)
-      t
-    (message
-     "No nREPL buffer exists. Please use `cider-jack-in'")
-    nil
-    ))
+  (if (not (nrepl-connection-buffer-name))
+      (error
+       "No nREPL buffer exists. Please use `cider-jack-in'")))
 
 ;; select reasoner
 (defun tawny-mode-select-reasoner (reasoner)
@@ -54,45 +51,45 @@
      "Select reasoner: "
      '("hermit" "elk")
      nil t)))
-  (when (tawny-mode-check-for-nrepl-buffer)
-    (if (equal "" reasoner)
-        (message "You must choose a reasoner")
-      (tawny-mode-nrepl-reasoner-eval-string
-       (format
-        "(do (require 'tawny.emacs)(tawny.emacs/set-reasoner :%s))"
-        reasoner)))))
+  (tawny-mode-check-for-nrepl-buffer)
+  (if (equal "" reasoner)
+      (message "You must choose a reasoner")
+    (tawny-mode-nrepl-reasoner-eval-string
+     (format
+      "(do (require 'tawny.emacs)(tawny.emacs/set-reasoner :%s))"
+      reasoner))))
 
 (defun tawny-mode-is-coherent ()
   (interactive)
-  (when (tawny-mode-check-for-nrepl-buffer)
-    (tawny-mode-nrepl-reasoner-eval-string
-     (format
-      "(do (require 'tawny.emacs)(tawny.emacs/is-coherent \"%s\"))"
-      (clojure-find-ns)
-      ))))
+  (tawny-mode-check-for-nrepl-buffer)
+  (tawny-mode-nrepl-reasoner-eval-string
+   (format
+    "(do (require 'tawny.emacs)(tawny.emacs/is-coherent \"%s\"))"
+    (clojure-find-ns)
+    )))
 
 (defun tawny-mode-is-consistent ()
   (interactive)
-  (when (tawny-mode-check-for-nrepl-buffer)
-    (tawny-mode-nrepl-reasoner-eval-string
-     (format
-      "(do (require 'tawny.emacs)(tawny.emacs/is-consistent \"%s\"))"
-      (clojure-find-ns)
-      ))))
+  (tawny-mode-check-for-nrepl-buffer)
+  (tawny-mode-nrepl-reasoner-eval-string
+   (format
+    "(do (require 'tawny.emacs)(tawny.emacs/is-consistent \"%s\"))"
+    (clojure-find-ns)
+    )))
 
 (defun tawny-mode-unsatisfiable ()
   (interactive)
-  (when (tawny-mode-check-for-nrepl-buffer)
-    (tawny-mode-display-classes-clear)
-    (nrepl-request:eval
-     (format
-      "(do (require 'tawny.emacs)(tawny.emacs/get-unsatisfiable \"%s\"))"
-      (clojure-find-ns))
-     (tawny-mode-class-list-response-handler
-      (current-buffer)
-      "Unsatisfiable classes for")
-     (cider-current-connection)
-     (cider-current-tooling-session))))
+  (tawny-mode-check-for-nrepl-buffer)
+  (tawny-mode-display-classes-clear)
+  (nrepl-request:eval
+   (format
+    "(do (require 'tawny.emacs)(tawny.emacs/get-unsatisfiable \"%s\"))"
+    (clojure-find-ns))
+   (tawny-mode-class-list-response-handler
+    (current-buffer)
+    "Unsatisfiable classes for")
+   (cider-current-connection)
+   (cider-current-tooling-session)))
 
 (defvar tawny-interaction-buffer (get-buffer-create "*tawny-interaction*"))
 
@@ -158,14 +155,14 @@
 (defun tawny-mode-save ()
   "Save the current namespace and open the file if needed."
   (interactive)
-  (when (tawny-mode-check-for-nrepl-buffer)
-    (nrepl-request:eval
-     (format
-      "(do (require 'tawny.emacs)(tawny.emacs/save-namespace-ontology \"%s\"))"
-      (clojure-find-ns))
-     (tawny-mode-save-handler (current-buffer))
-     (cider-current-connection)
-     (cider-current-tooling-session))))
+  (tawny-mode-check-for-nrepl-buffer)
+  (nrepl-request:eval
+   (format
+    "(do (require 'tawny.emacs)(tawny.emacs/save-namespace-ontology \"%s\"))"
+    (clojure-find-ns))
+   (tawny-mode-save-handler (current-buffer))
+   (cider-current-connection)
+   (cider-current-tooling-session)))
 
 (defun tawny-mode-save-handler (buffer)
   (nrepl-make-response-handler
@@ -209,18 +206,18 @@
   (cider-read-symbol-name "Class:" 'tawny-mode--inferred-superclasses-1))
 
 (defun tawny-mode--inferred-superclasses-1 (class)
-  (when (tawny-mode-check-for-nrepl-buffer)
-    (tawny-mode-display-classes-clear)
-    (nrepl-request:eval
-     (format
-      "(do (require 'tawny.emacs)(tawny.emacs/get-inferred-superclasses \"%s\" \"%s\"))"
-      (clojure-find-ns)
-      (thing-at-point 'symbol t))
-     (tawny-mode-class-list-response-handler
-      (current-buffer)
-      "Inferred superclasses for")
-     (cider-current-connection)
-     (cider-current-tooling-session))))
+  (tawny-mode-check-for-nrepl-buffer)
+  (tawny-mode-display-classes-clear)
+  (nrepl-request:eval
+   (format
+    "(do (require 'tawny.emacs)(tawny.emacs/get-inferred-superclasses \"%s\" \"%s\"))"
+    (clojure-find-ns)
+    (thing-at-point 'symbol t))
+   (tawny-mode-class-list-response-handler
+    (current-buffer)
+    "Inferred superclasses for")
+   (cider-current-connection)
+   (cider-current-tooling-session)))
 
 (defun tawny-mode-inferred-subclasses (class)
   (interactive "P")
@@ -228,18 +225,18 @@
 
 (defun tawny-mode--inferred-subclasses-1 (class)
   (interactive)
-  (when (tawny-mode-check-for-nrepl-buffer)
-    (tawny-mode-display-classes-clear)
-    (nrepl-request:eval
-     (format
-      "(do (require 'tawny.emacs)(tawny.emacs/get-inferred-subclasses \"%s\" \"%s\"))"
-      (clojure-find-ns)
-      (thing-at-point 'symbol t))
-     (tawny-mode-class-list-response-handler
-      (current-buffer)
-      "Inferred subclasses for")
-     (cider-current-connection)
-     (cider-current-tooling-session))))
+  (tawny-mode-check-for-nrepl-buffer)
+  (tawny-mode-display-classes-clear)
+  (nrepl-request:eval
+   (format
+    "(do (require 'tawny.emacs)(tawny.emacs/get-inferred-subclasses \"%s\" \"%s\"))"
+    (clojure-find-ns)
+    (thing-at-point 'symbol t))
+   (tawny-mode-class-list-response-handler
+    (current-buffer)
+    "Inferred subclasses for")
+   (cider-current-connection)
+   (cider-current-tooling-session)))
 
 
 ;; Protege section
