@@ -41,8 +41,19 @@
     Level
     Logger)
    (org.semanticweb.owlapi.reasoner SimpleConfiguration)
-   (org.semanticweb.HermiT Reasoner)
-   ))
+   (org.semanticweb.HermiT Reasoner)))
+
+(defn- reasoner-factory-1 [reasoner-keyword]
+  (reasoner-keyword
+   {:elk
+    (do
+      ;; ELK is noisy, so shut it up
+      (-> (Logger/getLogger "org.semanticweb.elk")
+          (.setLevel Level/ERROR));
+      (ElkReasonerFactory.))
+    :hermit (org.semanticweb.HermiT.Reasoner$ReasonerFactory.)
+    :jfact (uk.ac.manchester.cs.jfact.JFactFactory.)
+    :nil nil}))
 
 ;; defonce semantics because a new reasoner factory should cause us
 ;; to drop all existing reasoners.
@@ -50,7 +61,7 @@
   ^{:doc "The current reasoner factory."
     :private true}
   vreasoner-factory
-  (ref nil))
+  (ref (reasoner-factory-1 :jfact)))
 
 ;; defonce semantics because reasoners do not necessarily clear up nicely
 ;; even after GC.
@@ -78,17 +89,7 @@
       (ref-set reasoner-list ())
       ;; create a new reasoner
       (ref-set vreasoner-factory
-               (reasoner-keyword
-                {:elk
-                 (do
-                   ;; ELK is noisy, so shut it up
-                   (-> (Logger/getLogger "org.semanticweb.elk")
-                       (.setLevel Level/ERROR));
-                   (ElkReasonerFactory.))
-                 ;; kill for the moment.
-                 :hermit (org.semanticweb.HermiT.Reasoner$ReasonerFactory.)
-                 :jfact (uk.ac.manchester.cs.jfact.JFactFactory.)
-                 :nil nil})))))
+               (reasoner-factory-1 reasoner-keyword)))))
 
 (defn reasoner-progress-monitor-gui
   "Return a new graphical progress monitor."
