@@ -30,6 +30,7 @@
   tawny.owl
   (:require
    [clojure.walk :only postwalk]
+   [clojure.test :only is]
    [clojure.set]
    [clojure.java.io]
    [tawny.type :as t]
@@ -63,6 +64,31 @@
    (org.semanticweb.owlapi.model AddAxiom RemoveAxiom AddImport
                                  AddOntologyAnnotation)))
 
+;; #+end_src
+
+;; * Assertions
+
+;; We add type assertions to selected places because otherwise long
+;; definitions can be hard to debug, particularly form individuals.
+
+;; Unfortunately, clojure pre/post conditions report the form that has failed,
+;; but not the value of these forms which makes them largely useless for
+;; reporting errors.
+
+;; The `clojure.test/is` macro provides a (slightly strange) way of adding this
+;; reporting function. However, it requires only a single form. Using `and` fails
+;; because it then shows only `false` on failure. So we create an macro here
+;; which expands these out.
+
+;; #+begin_src
+(defmacro ^{:private true} say
+  "Reporter macro for assertions."
+  [& conditions]
+  `(do
+    ~@(map
+       (fn [con#]
+         `(clojure.test/is ~con#))
+       conditions)))
 ;; #+end_src
 
 ;; * Begin resource section
@@ -2846,6 +2872,10 @@ toward an either an individual or literal TO."
 (defmontfn object-get-fact
   "Returns an OWL Object property assertion axiom."
   [_ property from to annotations]
+  {:pre [(say
+          (t/obj-prop-exp? property)
+          (t/individual? from)
+          (t/individual? to))]}
   (.getOWLObjectPropertyAssertionAxiom
    (owl-data-factory)
    property from to annotations))
@@ -2856,6 +2886,10 @@ toward an either an individual or literal TO."
 (defmontfn object-get-fact-not
   "Returns a negative OWL Object property assertion axiom."
   [_ property from to annotations]
+  {:pre [(say
+          (t/obj-prop-exp? property)
+          (t/individual? from)
+          (t/individual? to))]}
   (.getOWLNegativeObjectPropertyAssertionAxiom
    (owl-data-factory)
    property from to annotations))
