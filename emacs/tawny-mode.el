@@ -386,7 +386,7 @@ Argument BUFFER is the buffer."
 
     (define-key map (kbd "C-c . s") 'tawny-mode-save)
     (define-key map (kbd "C-c . p") 'tawny-mode-inferred-superclasses)
-    (define-key map (kbd "C-c . b") 'tawny-mode-inferred-subclassess)
+    (define-key map (kbd "C-c . b") 'tawny-mode-inferred-subclasses)
     (define-key map (kbd "C-c . c") 'tawny-mode-is-coherent)
     (define-key map (kbd "C-c . v") 'tawny-mode-is-consistent)
     (define-key map (kbd "C-c . u") 'tawny-mode-unsatisfiable)
