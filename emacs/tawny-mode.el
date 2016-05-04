@@ -98,8 +98,8 @@ elk or jfact."
    (cider-current-tooling-session)))
 
 (defvar tawny-interaction-buffer
-  "A buffer for interaction with tawny."
-  (get-buffer-create "*tawny-interaction*"))
+  (get-buffer-create "*tawny-interaction*")
+  "A buffer for interaction with tawny.")
 
 (defun tawny-message (string &rest values)
   "Add message to `tawny-interaction-buffer'.
