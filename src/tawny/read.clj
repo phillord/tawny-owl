@@ -20,7 +20,8 @@
       :author "Phillip Lord"}
   tawny.read
   (:require [tawny owl util]
-            [clojure.string :only replace])
+            [clojure.string :only replace]
+            [tawny.type :as t])
   (:refer-clojure :exclude [read])
   (:import
    (java.io File)
@@ -36,7 +37,7 @@
   "Checks e to see if it is an OWLNamedObject and has an IRI starting with
 starts-with. Use this partially applied with a filter for 'read'."
   [starts-with e]
-  (and (instance? OWLNamedObject e)
+  (and (t/named? e)
        (.startsWith
         (str
          (.getIRI ^OWLNamedObject e))
@@ -126,7 +127,7 @@ to intern."
    (intern-entity ns e default-transform))
   ([ns e transform]
      (try
-       (when (instance? OWLNamedObject e)
+       (when (t/named? e)
          (let [name
                (stop-characters-transform (transform e))]
            (tawny.owl/intern-owl-string ns name e)))

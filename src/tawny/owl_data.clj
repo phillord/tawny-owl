@@ -201,7 +201,7 @@ which is an OWLDatatype object.
   [o literal & {:keys [lang type]}]
   (cond
    ;; null operation
-   (instance? OWLLiteral literal)
+   (t/literal? literal)
    literal
    lang
    (.getOWLLiteral (owl-data-factory) ^String literal ^String lang)
@@ -349,7 +349,7 @@ which is an OWLDatatype object.
   [o property literal]
   (.getOWLDataHasValue (owl-data-factory)
    (ensure-data-property o property)
-   (if (instance? OWLLiteral literal)
+   (if (t/literal? literal)
      literal
      (tawny.owl/literal literal))))
 

@@ -32,6 +32,7 @@
    [clojure.walk :only postwalk]
    [clojure.set]
    [clojure.java.io]
+   [tawny.type :as t]
    [tawny.util :as util])
   (:import
    (org.semanticweb.owlapi.model
@@ -175,18 +176,6 @@ an exception."
   (if (iriable? entity)
     entity
     (throw (IllegalArgumentException. "Expecting a IRIable entity"))))
-
-;; #+end_src
-
-;; ~OWLNamedObject~ is close to the same thing as an IRIable -- ~String~,
-;; ~OWLOntology~ and ~IRI~, I think, are counter examples. I may not need this
-;; distinction; I expect I have used the two inconsistently.
-
-;; #+begin_src clojure
-(defn named-object?
-  "Returns true iff entity is an OWLNamedObject."
-  [entity]
-  (instance? OWLNamedObject entity))
 
 ;; #+end_src
 
@@ -421,8 +410,7 @@ ontology. So, we search for :ontology frame or call ffco to fetch this ontology.
   ;; the majority of this macro is duplicated in variadic
   ;; version of dispatch-ontology-maybe
   `(if
-       (or (instance?
-            org.semanticweb.owlapi.model.OWLOntology ~(first args))
+       (or (t/ontology?  ~(first args))
            (nil? ~(first args)))
      (~f ~@args)
      (do
@@ -456,7 +444,7 @@ variadic calls most of the time."
      (dispatch-maybe f a b c d e fa g h i j))
   ([f a b c d e fa g h i j & args]
      (if (or
-          (instance? org.semanticweb.owlapi.model.OWLOntology a)
+          (t/ontology? a)
           (nil? a))
        (apply f a b c d e fa g h i j args)
        (apply default-ontology-base-dispatcher
@@ -469,8 +457,7 @@ variadic calls most of the time."
   ;; the majority of this macro is duplicated in variadic
   ;; version of dispatch-ontology
   `(if
-       (instance?
-        org.semanticweb.owlapi.model.OWLOntology ~(first args))
+       (t/ontology? ~(first args))
      (~f ~@args)
      (do
        (util/run-hook default-ontology-hook)
@@ -506,7 +493,7 @@ multi-arity as a micro optimization, to avoid a variadic invocation."
      (dispatch f a b c d e fa g h i j))
   ([f a b c d e fa g h i j & args]
      (if (or
-          (instance? org.semanticweb.owlapi.model.OWLOntology a)
+          (t/ontology? a)
           (nil? a))
        (apply f a b c d e fa g h i j args)
        (apply default-ontology-base-dispatcher
@@ -1050,7 +1037,7 @@ or the ontology. Broadcasts over annotations."
                  [named-entity & annotations]
                    [ontology & annotations][annotations])}
   [o & args]
-  (if (named-object? (first args))
+  (if (t/named? (first args))
     (add-a-simple-annotation
      o (first args) (rest args))
     (add-an-ontology-annotation
@@ -1063,9 +1050,9 @@ or the ontology. Broadcasts over annotations."
 converting it from a string or IRI if necessary."
   [o property]
   (cond
-   (instance? OWLAnnotationProperty property)
+   (t/ann-prop? property)
    property
-   (instance? IRI property)
+   (t/iri? property)
    (.getOWLAnnotationProperty
     (owl-data-factory) property)
    (instance? String property)
@@ -1084,7 +1071,7 @@ can be co-erced to an IRI"
      (cond
       (instance? String literal)
       (annotation o annotation-property literal "en")
-      (instance? org.semanticweb.owlapi.model.OWLAnnotationValue literal)
+      (t/ann-val? literal)
       (.getOWLAnnotation
        (owl-data-factory)
        (ensure-annotation-property o annotation-property)
@@ -1750,34 +1737,26 @@ using the current ontology rules, and check again. Finally, check convert to
 an IRI with no transformation. nil is returned when the result is not clear.
 "
   [o entity]
-  (let [entity (as-entity entity)
-        oneof? (fn[& rest]
-                 (some
-                  #(instance? % entity) rest))
-        ]
+  (let [entity (as-entity entity)]
     (cond
      ;; it's a collection -- find the first entity
      (coll? entity)
      (some (partial guess-type o) entity)
      ;; return if individual, class, datatype
-     (oneof?
-      OWLClassExpression)
+     (t/class-exp? entity)
      ::class
-     (oneof? OWLObjectPropertyExpression)
+     (t/obj-prop-exp? entity)
      ::object-property
-     (oneof?
-      OWLAnnotationProperty)
+     (t/ann-prop? entity)
      ::annotation
-     (oneof?
-      OWLDataPropertyExpression)
+     (t/data-prop-exp? entity)
      ::data-property
-     (oneof?
-      OWLDataRange)
+     (t/data-range? entity)
      ::data
      ;; up to this point, o can be nil -- after this point, we need to know
      ;; the ontology we are searching in.
      ;; if an IRI, see if it is the current ontology
-     (instance? IRI entity)
+     (t/iri? entity)
      (when o
        (guess-type o (entity-for-iri o entity)))
      ;; keyword -- these are builtin OWL2Datatypes
@@ -1789,7 +1768,7 @@ an IRI with no transformation. nil is returned when the result is not clear.
      (when o
        (guess-type o (entity-for-string o entity)))
      ;; owl individuals tell us nothing, cause we still don't know!
-     (instance? OWLIndividual entity)
+     (t/individual? entity)
      nil
      (number? entity)
      nil
@@ -1808,11 +1787,11 @@ an IRI with no transformation. nil is returned when the result is not clear.
     (cond
      (coll? entity)
      (some (partial guess-individual-literal o) entity)
-     (instance? OWLIndividual entity)
+     (t/individual? entity)
      ::individual
-     (instance? OWLLiteral entity)
+     (t/literal? entity)
      ::literal
-     (instance? IRI entity)
+     (t/iri? entity)
      (guess-individual-literal o
                                (entity-for-iri o entity))
      (string? entity)
@@ -1845,9 +1824,9 @@ or throw an exception if it cannot be converted."
     (cond
      (fn? prop)
      (ensure-object-property o (prop))
-     (instance? OWLObjectPropertyExpression prop)
+     (t/obj-prop-exp? prop)
      prop
-     (instance? IRI prop)
+     (t/iri? prop)
      (.getOWLObjectProperty (owl-data-factory) prop)
      (string? prop)
      (ensure-object-property o (iri-for-name o prop))
@@ -1866,9 +1845,9 @@ else if clz is a OWLClassExpression add that."
   ;; convert to entity if necessary
   (let [clz (as-entity clz)]
     (cond
-     (instance? org.semanticweb.owlapi.model.OWLClassExpression clz)
+     (t/class-exp? clz)
      clz
-     (instance? IRI clz)
+     (t/iri? clz)
      (.getOWLClass (owl-data-factory) clz)
      (string? clz)
      (ensure-class o (iri-for-name o clz))
@@ -1886,9 +1865,9 @@ converting it from a string or IRI if necessary."
   [o property]
   (let [property (as-entity property)]
     (cond
-     (instance? OWLDataProperty property)
+     (t/data-prop-exp? property)
      property
-     (instance? IRI property)
+     (t/iri? property)
      (.getOWLDataProperty
       (owl-data-factory) property)
      (instance? String property)
@@ -1925,7 +1904,7 @@ an OWLDataProperty"
   [o datatype]
   (let [datatype (as-entity datatype)]
     (cond
-     (instance? OWLDatatype datatype)
+     (t/data-type? datatype)
      datatype
      (instance? org.semanticweb.owlapi.vocab.OWL2Datatype datatype)
      datatype
@@ -1945,7 +1924,7 @@ an OWLDataProperty"
 as a datatype."
   [o data-range]
   (cond
-   (instance? org.semanticweb.owlapi.model.OWLDataRange data-range)
+   (t/data-range? data-range)
    data-range
    :default
    (ensure-datatype o data-range)))
@@ -1956,9 +1935,9 @@ If INDIVIDUAL is an OWLIndividual return individual, else
 interpret this as a string and create a new OWLIndividual."
   [o individual]
   (cond
-   (instance? org.semanticweb.owlapi.model.OWLIndividual individual)
+   (t/individual? individual)
    individual
-   (instance? IRI individual)
+   (t/iri? individual)
    (.getOWLNamedIndividual (owl-data-factory)
                            individual)
    (string? individual)
@@ -3127,7 +3106,7 @@ expressions."
   [^OWLOntology o name]
   (let [^OWLClass clz (ensure-class o name)]
     ;; general Class expressions return empty
-    (if (instance? OWLClass clz)
+    (if (t/owl-class? clz)
       (EntitySearcher/getSuperClasses clz o)
       ())))
 
@@ -3150,7 +3129,7 @@ direct or indirect superclass of itself."
   "Returns the direct subclasses of name."
   [^OWLOntology o name]
   (let [clz (ensure-class o name)]
-    (if (instance? OWLClass clz)
+    (if (t/owl-class? clz)
       (EntitySearcher/getSubClasses clz o) ())))
 
 (defdontfn subclasses
@@ -3254,7 +3233,7 @@ direct or indirect superclass of itself."
   "Return all direct instances of NAME class."
   [^OWLOntology o name]
   (let [clz (ensure-class o name)]
-    (if (instance? OWLClass clz)
+    (if (t/owl-class? clz)
       (EntitySearcher/getIndividuals clz o) ())))
 ;; #+end_src
 
