@@ -2944,8 +2944,9 @@ or to ONTOLOGY if present."
   [o name frames]
   (let [individual (ensure-individual o name)]
     ;; add the individual
-    (add-axiom o (.getOWLDeclarationAxiom
-                  (owl-data-factory) individual))
+    (when (.isNamed individual)
+      (add-axiom o (.getOWLDeclarationAxiom
+                    (owl-data-factory) individual)))
     ;; add a name annotation
     (add-a-name-annotation o individual name)
     ;; apply the handlers
@@ -2966,6 +2967,11 @@ or to ONTOLOGY if present."
 (defentity defindividual
   "Declare a new individual"
   'tawny.owl/individual)
+
+(defn anonymous-individual
+  "Return a new anonymous individual"
+  []
+  (.getOWLAnonymousIndividual (owl-data-factory)))
 
 (comment
   (defmacro defindividual
