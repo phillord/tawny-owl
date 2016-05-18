@@ -31,6 +31,7 @@
   (:require
    [clojure.set]
    [tawny.owl :as o]
+   [tawny.protocol :as p]
    [tawny.util :as u])
   (:import [org.semanticweb.owlapi.model
             OWLAnnotation OWLAnnotationAxiom
@@ -67,7 +68,7 @@
 
 (extend-type
     Named
-  tawny.owl/Entityable (as-entity [this] (:entity this)))
+  tawny.protocol/Entityable (as-entity [this] (:entity this)))
 
 (defn intern-owl-entities
   "Given a list of vectors of form [name entity], as returned by the p
@@ -243,7 +244,7 @@ with other entities that are annotated to the same anonymous individual.")
       (map
        #(o/refine
          o
-         (o/as-entity %)
+         (p/as-entity %)
          :annotation
          (o/annotation o inpattern anon))
        entities)))
@@ -257,7 +258,7 @@ with other entities that are annotated to the same anonymous individual.")
      (= (.getProperty anon)
         inpattern))
    (EntitySearcher/getAnnotations
-    (o/as-entity entity) o)))
+    (p/as-entity entity) o)))
 
 (o/defdontfn which-pattern
   "Returns the OWLAnonymousIndividual(s) describing the pattern(s)
@@ -335,10 +336,10 @@ to explicitly name the object property."
     (fn [e]
       (o/add-annotation
        o
-       (o/as-entity (#'o/var-get-maybe e))
+       (p/as-entity (#'o/var-get-maybe e))
        (o/annotation o facetvalue
-                     (o/as-iri
-                      (o/as-entity oprop)))))
+                     (p/as-iri
+                      (p/as-entity oprop)))))
     (flatten entities))))
 
 (defn- facet-property [^OWLOntology o

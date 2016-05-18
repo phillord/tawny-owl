@@ -25,7 +25,7 @@
     (owl-data-factory)
     (ensure-data-property o property)
     (ensure-class o domain)
-    (as-annotations domain))))
+    (p/as-annotations domain))))
 
 (defbdontfn add-data-range
   {:doc "Adds a range to a data property."
@@ -36,7 +36,7 @@
     (owl-data-factory)
     (ensure-data-property o property)
     (ensure-data-range o range)
-    (as-annotations range))))
+    (p/as-annotations range))))
 
 (defbdontfn add-data-subproperty
   "Adds a sub property to a data property."
@@ -47,7 +47,7 @@
     (owl-data-factory)
     (ensure-data-property o sub)
     (ensure-data-property o property)
-    (as-annotations sub))))
+    (p/as-annotations sub))))
 
 (defbdontfn add-data-superproperty
   "Adds a super property to a data property."
@@ -57,7 +57,7 @@
               (owl-data-factory)
               (ensure-data-property o property)
               (ensure-data-property o super)
-              (as-annotations super))))
+              (p/as-annotations super))))
 
 (def
   ^{:deprecated "1.1"
@@ -76,8 +76,8 @@ This is to deprecated the :superproperty frame"}
         ^OWLDataProperty dp]
      (.getOWLFunctionalDataPropertyAxiom
       df
-      (as-entity dp)
-      (as-annotations dp)))})
+      (p/as-entity dp)
+      (p/as-annotations dp)))})
 
 (defbdontfn add-data-characteristics
   "Add a list of characteristics to the property."
@@ -97,7 +97,7 @@ This is to deprecated the :superproperty frame"}
       (owl-data-factory)
       (ensure-data-property o property)
       (ensure-data-property o equivalent)
-      (as-annotations equivalent))))
+      (p/as-annotations equivalent))))
 
 (defdontfn equivalent-data-properties
   [o properties]
@@ -120,7 +120,7 @@ This is to deprecated the :superproperty frame"}
     (hash-set
      (ensure-data-property o name)
      (ensure-data-property o disjoint))
-    (as-annotations disjoint))))
+    (p/as-annotations disjoint))))
 
 (defdontfn disjoint-data-properties
   [o properties]
@@ -131,7 +131,7 @@ This is to deprecated the :superproperty frame"}
      o (.getOWLDisjointDataPropertiesAxiom
         (owl-data-factory)
         (hset properties)
-        (as-annotations properties)))))
+        (p/as-annotations properties)))))
 
 (def ^{:private true} datatype-property-handlers
   {
@@ -221,7 +221,7 @@ which is an OWLDatatype object.
    o (.getOWLDatatypeDefinitionAxiom
       (owl-data-factory) datatype
       (ensure-data-range o equivalent)
-      (as-annotations equivalent))))
+      (p/as-annotations equivalent))))
 
 (def ^{:private true} datatype-handlers
   {

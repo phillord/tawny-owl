@@ -19,7 +19,7 @@
     ^{:doc "Read external OWL files and use them in tawny"
       :author "Phillip Lord"}
   tawny.read
-  (:require [tawny owl util]
+  (:require [tawny owl util protocol]
             [clojure.string :only replace]
             [tawny.type :as t])
   (:refer-clojure :exclude [read])
@@ -47,7 +47,7 @@ starts-with. Use this partially applied with a filter for 'read'."
   "Filter for only named objects with an IRI the same as the ontology IRI."
   [o e]
   (iri-starts-with-filter
-   (str (tawny.owl/as-iri o)) e))
+   (str (tawny.protocol/as-iri o)) e))
 
 (defn default-transform
   "Extract the fragment from each IRI."
@@ -96,7 +96,7 @@ starts-with. Use this partially applied with a filter for 'read'."
  [o e]
   (let [trans (label-transform o e)]
     (when (nil? trans)
-      (throw (IllegalArgumentException. 
+      (throw (IllegalArgumentException.
               (str "Unable to generate transform for:" e))))
     trans
     ))

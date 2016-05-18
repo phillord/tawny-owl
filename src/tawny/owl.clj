@@ -6,7 +6,7 @@
 
 ;; The contents of this file are subject to the LGPL License, Version 3.0.
 
-;; Copyright (C) 2012, 2013, 2014, Newcastle University
+;; Copyright (C) 2012, 2013, 2014, 2015, 2016, Newcastle University
 
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU Lesser General Public License as published by
@@ -33,6 +33,7 @@
    [clojure.test :only is]
    [clojure.set]
    [clojure.java.io]
+   [tawny.protocol :as p]
    [tawny.type :as t]
    [tawny.util :as util])
   (:import
@@ -137,13 +138,6 @@
 
 ;; * Protocols and Predicates
 
-;; ** IRIable
-
-;; Within Tawny, we need to convert a number of things to IRI objects. We offer
-;; basic support for this conversion, and a protocol. The OWL API also offers an
-;; ~HasIRI~ interface (added during the tawny implementation), but I also want to
-;; extend this to Clojure types, hence the protocol.
-
 ;; #+begin_src clojure
 (defn ^IRI iri
   "Returns an IRI object given a string or URI. Does no transformation on the
@@ -153,38 +147,32 @@ string; use 'iri-for-name' to perform ontology specific expansion"
     [name [String java.net.URL java.io.File]]
     (IRI/create name)))
 
-;; for reasons that I do not understand IRI has to be fully-qualified or
-;; lookup.clj gives errors. I can't reproduce this with a simple test case.
-(defprotocol IRIable
-  (^org.semanticweb.owlapi.model.IRI as-iri [entity]
-    "Returns an IRI identifying the entity if this is possible"))
-
 (extend-type
     String
-  IRIable
-  (as-iri [entity] (iri entity)))
+  p/IRIable
+  (p/as-iri [entity] (iri entity)))
 
 (extend-type
     IRI
-  IRIable
-  (as-iri [entity] entity))
+  p/IRIable
+  (p/as-iri [entity] entity))
 
 (extend-type
     OWLNamedObject
-  IRIable
-  (as-iri [entity] (.getIRI entity)))
+  p/IRIable
+  (p/as-iri [entity] (.getIRI entity)))
 
 ;; #+end_src
 
-;; Extension of ~as-iri~ to ~OWLOntology~ is slightly questionable, since an
+;; Extension of ~p/as-iri~ to ~OWLOntology~ is slightly questionable, since an
 ;; Ontology is identified *not* by an IRI but the combination of an IRI and
 ;; version IRI.
 
 ;; #+begin_src clojure
 (extend-type
     OWLOntology
-  IRIable
-  (as-iri [entity]
+  p/IRIable
+  (p/as-iri [entity]
     (-> entity
         .getOntologyID
         .getOntologyIRI
@@ -193,9 +181,9 @@ string; use 'iri-for-name' to perform ontology specific expansion"
 (defn iriable?
   "Returns true iff entity is an IRIable."
   [entity]
-  (satisfies? IRIable entity))
+  (satisfies? p/IRIable entity))
 
-(defn ^IRIable as-iriable
+(defn as-iriable
   "If entity is a iriable do nothing, else throw
 an exception."
   [entity]
@@ -205,67 +193,12 @@ an exception."
 
 ;; #+end_src
 
-;; ** Entityable
-
-;; Where ever possible, I try to pass around OWL API objects and reuse their
-;; functionality directly. The original motivation for this was just pragmatic;
-;; Tawny was incomplete and I needed to fallback to OWL API calls often.
-;; Unfortunately, the OWL API does not support all of the functionality I need
-;; within Tawny, so I have worked around this with wrapping objects, usually
-;; Records. This seemed simpler than alternative methods, such as a ~WeakHashMap~
-;; store, or something similar to the ~ontology-options~ support added later.
-
-;; We extend to ~Object~ and ~nil~ primarily for datatypes, but also for ~String~
-;; based usage of Tawny.
-
-;; #+begin_src clojure
-(defprotocol Entityable
-  "Entityable objects are objects which wrap an OWLObject for some purpose."
-  (^OWLEntity as-entity [entity]
-    "Returns the bare OWLObject from an Entityable entity."))
-
-;; extend to object so that we can support numbers and strings, and so forth.
-(extend-type
-    Object
-  Entityable
-  (as-entity [entity] entity))
-
-(extend-type
-    nil
-  Entityable
-  (as-entity [entity] nil))
-;; #+end_src
-
-;; ** Annotatable
-
-;; ~Annotatable~ supports annotations of entities that need to be placed on the
-;; ~OWLAxiom~ that is used to assert its relationship with other things.
-;; The frame based syntax of tawny means that these annotations are implicit in
-;; the syntax (although not in the underlying code base) which makes them a bit
-;; of a pain to implement. We use a wrapping object as the most practical
-;; alternative here.
-
-;; The annotations are applied at the point that the relationship is asserted,
-;; not the point that the ~annotate~ function is called, so the same annotation
-;; could be applied to many axioms.
-
-;; #+begin_src clojure
-(defprotocol Annotatable
-  "Annotatable objects are objects which can contain a number of OWLAnnotations."
-  (^java.util.Set as-annotations [entity]
-    "Returns an OWLAnnotation set from an Annotatable entity."))
-
-(extend-type
-    Object
-  Annotatable
-  (as-annotations [entity]
-    #{}))
 
 (defrecord Annotated [entity annotations]
-  Entityable
-  (as-entity [this] entity)
-  Annotatable
-  (as-annotations [this] annotations))
+  p/Entityable
+  (p/as-entity [this] entity)
+  p/Annotatable
+  (p/as-annotations [this] annotations))
 
 (defn annotate
   "Given an entity or a list of entities, add annotations and return as an
@@ -289,7 +222,7 @@ an exception."
   entity has been derived from the existing entity. So, we might want to
   replace an IRI with an OWLObject, but the same annotations."
   [entity ^Annotated annotated]
-  (if (= entity (as-entity annotated))
+  (if (= entity (p/as-entity annotated))
     annotated
     (assoc annotated :entity entity)))
 
@@ -299,7 +232,7 @@ an exception."
   OWL API."
   [annotatables]
   (apply clojure.set/union
-         (map as-annotations annotatables)))
+         (map p/as-annotations annotatables)))
 
 (defn- ^java.util.Set hset
   "Same as clojure.core/set with a type hint."
@@ -912,7 +845,7 @@ the moment it is very simple."
   [o name]
   (if-let [iri-gen (:iri-gen (deref (ontology-options o)))]
     (iri-gen o name)
-    (iri (str (as-iri o) "#" name))))
+    (iri (str (p/as-iri o) "#" name))))
 ;; #+end_src
 
 ;; * Interning OWL Entities
@@ -1022,9 +955,9 @@ signals a hook, and adds :owl true to the metadata. NAME must be a symbol"
    o
    (.getOWLAnnotationAssertionAxiom
     (owl-data-factory)
-    (as-iri named-entity)
-    ^OWLAnnotation (as-entity annotation)
-    (as-annotations annotation))))
+    (p/as-iri named-entity)
+    ^OWLAnnotation (p/as-entity annotation)
+    (p/as-annotations annotation))))
 
 (defn- add-a-name-annotation
   "Add a tawny-name annotation to named-entity, unless the :noname
@@ -1103,7 +1036,7 @@ can be co-erced to an IRI"
        (ensure-annotation-property o annotation-property)
        literal)
       (iriable? literal)
-      (annotation o annotation-property (as-iri literal))
+      (annotation o annotation-property (p/as-iri literal))
       :default
       (throw (IllegalArgumentException.
               "annotation takes a String, OWLAnnotationValue or an object with an IRI."))))
@@ -1120,7 +1053,7 @@ can be co-erced to an IRI"
     (owl-data-factory)
     subproperty
     (ensure-annotation-property o superproperty)
-    (as-annotations superproperty))))
+    (p/as-annotations superproperty))))
 
 (def deprecated-add-sub-annotation
   "The same as add-super-annotation used to implement the old
@@ -1524,7 +1457,7 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
                  (AddImport. ontology-into
                              (.getOWLImportsDeclaration
                               (owl-data-factory)
-                                (as-iri o))))))
+                                (p/as-iri o))))))
 (defn- add-import [o olist]
   (doseq [n olist]
     (owl-import o n)))
@@ -1720,9 +1653,9 @@ If no ontology is given, use the current-ontology"
                  :when (get-prefix ont)]
            (.setPrefix
             (.asPrefixOWLOntologyFormat this-format) (get-prefix ont)
-            (str (as-iri ont) "#")))
+            (str (p/as-iri ont) "#")))
          (.setPrefix (.asPrefixOWLOntologyFormat this-format) (get-prefix o)
-                     (str (as-iri o) "#")))
+                     (str (p/as-iri o) "#")))
        (.print file-writer prepend)
        (.flush file-writer)
        (.saveOntology (owl-ontology-manager) o
@@ -1763,7 +1696,7 @@ using the current ontology rules, and check again. Finally, check convert to
 an IRI with no transformation. nil is returned when the result is not clear.
 "
   [o entity]
-  (let [entity (as-entity entity)]
+  (let [entity (p/as-entity entity)]
     (cond
      ;; it's a collection -- find the first entity
      (coll? entity)
@@ -1809,7 +1742,7 @@ an IRI with no transformation. nil is returned when the result is not clear.
 
 (defmontfn guess-individual-literal
   [o entity]
-  (let [entity (as-entity entity)]
+  (let [entity (p/as-entity entity)]
     (cond
      (coll? entity)
      (some (partial guess-individual-literal o) entity)
@@ -1846,7 +1779,7 @@ an IRI with no transformation. nil is returned when the result is not clear.
   "Ensures that the entity in question is an OWLObjectProperty
 or throw an exception if it cannot be converted."
   [o prop]
-  (let [prop (as-entity prop)]
+  (let [prop (p/as-entity prop)]
     (cond
      (fn? prop)
      (ensure-object-property o (prop))
@@ -1869,7 +1802,7 @@ or throw an exception if it cannot be converted."
 else if clz is a OWLClassExpression add that."
   [o clz]
   ;; convert to entity if necessary
-  (let [clz (as-entity clz)]
+  (let [clz (p/as-entity clz)]
     (cond
      (t/class-exp? clz)
      clz
@@ -1889,7 +1822,7 @@ else if clz is a OWLClassExpression add that."
   "Ensures that 'property' is an data property,
 converting it from a string or IRI if necessary."
   [o property]
-  (let [property (as-entity property)]
+  (let [property (p/as-entity property)]
     (cond
      (t/data-prop-exp? property)
      property
@@ -1911,7 +1844,7 @@ If prop is ambiguous (for example, a string or IRI that whose type has not
 been previously defined) this will create an OWLObjectProperty rather than
 an OWLDataProperty"
   [o prop]
-  (let [prop (as-entity prop)
+  (let [prop (p/as-entity prop)
         type
         (or
           ;; guess the type -- if we can't then object-property it's because
@@ -1928,7 +1861,7 @@ an OWLDataProperty"
   "Ensure that 'datatype' is an OWLDatatype. Will convert from an keyword for
   builtin datatypes."
   [o datatype]
-  (let [datatype (as-entity datatype)]
+  (let [datatype (p/as-entity datatype)]
     (cond
      (t/data-type? datatype)
      datatype
@@ -1988,7 +1921,7 @@ interpret this as a string and create a new OWLIndividual."
               (owl-data-factory)
               (ensure-class o name)
               (ensure-class o superclass)
-              (as-annotations superclass))))
+              (p/as-annotations superclass))))
 
 (defbdontfn
   add-subclass
@@ -2000,7 +1933,7 @@ interpret this as a string and create a new OWLIndividual."
               (owl-data-factory)
               (ensure-class o subclass)
               (ensure-class o name)
-              (as-annotations subclass))))
+              (p/as-annotations subclass))))
 ;; #+end_src
 
 ;; We had to deprecated the old ~add-subclass~ because it has exactly backward
@@ -2026,7 +1959,7 @@ opposite of this."
               (owl-data-factory)
               (ensure-class o name)
               (ensure-class o equivalent)
-              (as-annotations equivalent))))
+              (p/as-annotations equivalent))))
 
 (defbdontfn add-disjoint
   {:doc "Adds a disjoint axiom to the ontology."
@@ -2038,7 +1971,7 @@ opposite of this."
     (owl-data-factory)
     (hash-set (ensure-class o name)
               (ensure-class o disjoint))
-    (as-annotations disjoint))))
+    (p/as-annotations disjoint))))
 
 (defdontfn add-disjoint-union
   "Adds a disjoint union axiom to all subclasses."
@@ -2065,7 +1998,7 @@ opposite of this."
    (.getOWLDeclarationAxiom
     (owl-data-factory)
     (ensure-class o name)
-    (as-annotations name))))
+    (p/as-annotations name))))
 
 ;; a class can have only a single haskey, so ain't no point broadcasting this.
 (defdontfn add-has-key
@@ -2089,7 +2022,7 @@ opposite of this."
                   (owl-data-factory)
                   (ensure-class o class)
                   (set propertylist)
-                  (as-annotations propertylist))))))
+                  (p/as-annotations propertylist))))))
 ;; #+end_src
 
 ;; We end rather early here, and should probably bring the rest of the OWLClass
@@ -2108,7 +2041,7 @@ opposite of this."
               (owl-data-factory)
               (ensure-object-property o property)
               (ensure-class o domain)
-              (as-annotations domain))))
+              (p/as-annotations domain))))
 
 (defbdontfn add-range
   "Adds all the entities in rangelist as range to a property."
@@ -2118,7 +2051,7 @@ opposite of this."
               (owl-data-factory)
               (ensure-object-property o property)
               (ensure-class o range)
-              (as-annotations range))))
+              (p/as-annotations range))))
 
 (defbdontfn add-inverse
   "Adds all the entities in inverselist as inverses to a property."
@@ -2128,7 +2061,7 @@ opposite of this."
               (owl-data-factory)
               (ensure-object-property o property)
               (ensure-object-property o inverse)
-              (as-annotations inverse))))
+              (p/as-annotations inverse))))
 
 (defmontfn inverse
   "Creates an object inverse of expression."
@@ -2146,7 +2079,7 @@ a superproperty."
               (owl-data-factory)
               (ensure-object-property o property)
               (ensure-object-property o superproperty)
-              (as-annotations superproperty))))
+              (p/as-annotations superproperty))))
 
 (defbdontfn add-subproperty
   "Adds all items in superpropertylist to property as
@@ -2157,7 +2090,7 @@ a superproperty."
               (owl-data-factory)
               (ensure-object-property o subproperty)
               (ensure-object-property o property)
-              (as-annotations subproperty))))
+              (p/as-annotations subproperty))))
 
 (def ^{:deprecated "1.1"
        :doc "This is the same as add-superproperty but marked as deprecated
@@ -2183,7 +2116,7 @@ and used as the handler for :subproperty."
            (owl-data-factory)
            (map (partial ensure-object-property o) properties)
            property
-           (as-annotations properties))))
+           (p/as-annotations properties))))
        ;; add sequential entities as a chain in their own right
        (doall
         (map (partial add-subchain
@@ -2204,7 +2137,7 @@ and used as the handler for :subpropertychain."
       (owl-data-factory)
       (ensure-object-property o property)
       (ensure-object-property o equivalent)
-      (as-annotations equivalent))))
+      (p/as-annotations equivalent))))
 
 (defdontfn equivalent-properties
   "Adds properties as equivalent to the ontology."
@@ -2228,7 +2161,7 @@ and used as the handler for :subpropertychain."
     (hash-set
      (ensure-object-property o name)
      (ensure-object-property o disjoint))
-    (as-annotations disjoint))))
+    (p/as-annotations disjoint))))
 
 (defdontfn disjoint-properties
   "Make all the properties in PROPERTIES disjoint."
@@ -2306,7 +2239,7 @@ and used as the handler for :subpropertychain."
   "Add a list of characteristics to the property."
   [o property characteristic]
   (if-let [fchar (get charfuncs
-                     (as-entity characteristic))]
+                     (p/as-entity characteristic))]
     ;;; this is all totally wrong headed here because we are passing in the
 ;;; property which does not carry the annotations. So need to change all the
 ;;; functions above to take the annotation as an extra argument
@@ -2315,7 +2248,7 @@ and used as the handler for :subpropertychain."
      (fchar
       (owl-data-factory)
       (ensure-object-property o property)
-      (as-annotations characteristic)))
+      (p/as-annotations characteristic)))
     (throw (IllegalArgumentException.
             (str "Characteristic is not recognised:" characteristic)))))
 
@@ -2831,8 +2764,8 @@ or ONTOLOGY if present."
    (.getOWLClassAssertionAxiom
     (owl-data-factory)
     (ensure-class o clazz)
-    (as-entity individual)
-    (as-annotations individual))))
+    (p/as-entity individual)
+    (p/as-annotations individual))))
 
 (defbdontfn add-fact
   {:doc "Add FACTS to an INDIVIDUAL in the current ontology or
@@ -2841,9 +2774,9 @@ or ONTOLOGY if present."
   [o individual fact]
   (add-axiom
    o
-   ((as-entity fact)
+   ((p/as-entity fact)
     individual
-    (as-annotations fact))))
+    (p/as-annotations fact))))
 
 (defmulti get-fact guess-type-args)
 (defmulti get-fact-not guess-type-args)

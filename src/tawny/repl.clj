@@ -20,6 +20,7 @@
     tawny.repl
   (:require [tawny.owl :as o]
             [tawny.lookup]
+            [tawny.protocol :as p]
             [tawny.render]
             [clojure.pprint]
             )
@@ -214,7 +215,7 @@ to file names. Save ontologies in 'root' or the resources directory."
                           (.getOntologyID)
                           (.getOntologyIRI)
                           (.orNull)
-                          (o/as-iri)
+                          (p/as-iri)
                           (.getFragment))
                       stem
                       (if file-maybe

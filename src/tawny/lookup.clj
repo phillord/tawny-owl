@@ -19,7 +19,7 @@
     ^{:doc "Facilities to find the var of an OWL object."
       :author "Phillip Lord"}
     tawny.lookup
-  (:require [tawny owl util]))
+  (:require [tawny owl util protocol]))
 
 (defn- iri-for-var-named-entity
   "Return the IRI for var if it is a OWLNamedObject or nil otherwise.
@@ -29,13 +29,13 @@ var with OWLOntology object."
   [var]
   (when (instance?
          org.semanticweb.owlapi.model.OWLNamedObject (var-get var))
-    (str (tawny.owl/as-iri (var-get var)))))
+    (str (tawny.protocol/as-iri (var-get var)))))
 
 (defn- iri-for-var
   "Return the IRI for var if it is IRIable or nil otherwise."
   [var]
   (when (tawny.owl/iriable? (var-get var))
-    (str (tawny.owl/as-iri (var-get var)))))
+    (str (tawny.protocol/as-iri (var-get var)))))
 
 (defn- vars-in-namespace
   "Return all the vars in the given namespace."
@@ -88,7 +88,7 @@ space, if it the var is not in the current namespace."
   [entity]
   (-> entity
       tawny.owl/as-iriable
-      tawny.owl/as-iri
+      tawny.protocol/as-iri
       (.toString)))
 
 (declare all-iri-to-var)

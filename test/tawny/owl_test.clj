@@ -27,6 +27,7 @@
    [org.semanticweb.owlapi.search  EntitySearcher])
   (:require [tawny.owl :as o]
             [tawny.render :as r]
+            [tawny.protocol :as p]
             [tawny.util])
   (:require [tawny.debug])
   [:use clojure.test])
@@ -108,8 +109,8 @@
       (let [o1 (o/ontology)
             o2 (o/ontology)
             o (o/ontology :noname true :import
-                          (o/as-iri "http://iri1")
-                          (o/as-iri "http://iri2"))]
+                          (p/as-iri "http://iri1")
+                          (p/as-iri "http://iri2"))]
         (.size
          ;; have to use getImportsDeclarations because these imports are not
          ;; loaded, so are not returned by getDirectImports
@@ -134,9 +135,9 @@
 
 (deftest as-iri
   (is (= "http://iri/"
-         (.toString (o/as-iri (o/ontology :iri "http://iri/")))))
+         (.toString (p/as-iri (o/ontology :iri "http://iri/")))))
   (is (= "http://iri/"
-         (.toString (o/as-iri to)))))
+         (.toString (p/as-iri to)))))
 
 
 ;; just test to see if default ontology is working

@@ -20,6 +20,7 @@
     ^{:doc "Type based predicates for OWL."
       :author "Phillip Lord"}
     tawny.type
+  (:require [tawny.protocol])
   (:import (org.semanticweb.owlapi.model
             IRI
             OWLAnnotationProperty
@@ -36,72 +37,78 @@
             OWLObjectPropertyExpression
             OWLOntology)))
 
+
+(defn- entity-instance?
+  "Return true if the entity of `e` is an instance of `type`."
+  [type e]
+  (instance? type (tawny.protocol/as-entity e)))
+
 (defn iri?
   "Return true if `e` is an instance of `IRI`."
   [e]
-  (instance? IRI e))
+  (entity-instance? IRI e))
 
 (defn ann-val?
   "Return true if `e` is an instance of `OWLAnnotationValue`."
   [e]
-  (instance? OWLAnnotationValue e))
+  (entity-instance? OWLAnnotationValue e))
 
 (defn ann-prop?
   "Return true if `e` is an instance of `OWLAnnotationProperty`."
   [e]
-  (instance? OWLAnnotationProperty e))
+  (entity-instance? OWLAnnotationProperty e))
 
 (defn owl-class?
   "Return true if `e` is an instance of `OWLClass`."
   [e]
-  (instance? OWLClass e))
+  (entity-instance? OWLClass e))
 
 (defn class-exp?
   "Return true if `e` is an instance of `OWLClassExpression`."
   [e]
-  (instance? OWLClassExpression e))
+  (entity-instance? OWLClassExpression e))
 
 (defn data-prop?
   "Return true if `e` is an instance of `OWLDataProperty`."
   [e]
-  (instance? OWLDataProperty e))
+  (entity-instance? OWLDataProperty e))
 
 (defn data-prop-exp?
   "Return true if `e` is an instance of `OWLDataPropertyExpression`."
   [e]
-  (instance? OWLDataPropertyExpression e))
+  (entity-instance? OWLDataPropertyExpression e))
 
 (defn data-range?
   "Return true if `e` is an instance of `OWLDataRange`."
   [e]
-  (instance? OWLDataRange e))
+  (entity-instance? OWLDataRange e))
 
 (defn data-type?
   "Return true if `e` is an instance of `OWLDatatype`."
   [e]
-  (instance? OWLDatatype e))
+  (entity-instance? OWLDatatype e))
 
 (defn individual?
   "Return true if `e` is an instance of `OWLIndividual`."
   [e]
-  (instance? OWLIndividual e))
+  (entity-instance? OWLIndividual e))
 
 (defn literal?
   "Return true if `e` is an instance of `OWLLiteral`."
   [e]
-  (instance? OWLLiteral e))
+  (entity-instance? OWLLiteral e))
 
 (defn named?
   "Return true if `e` is an instance of `OWLNamedObject`."
   [e]
-  (instance? OWLNamedObject e))
+  (entity-instance? OWLNamedObject e))
 
 (defn obj-prop-exp?
   "Return true if `e` is an instance of `OWLPropertyExpression`."
   [e]
-  (instance? OWLObjectPropertyExpression e))
+  (entity-instance? OWLObjectPropertyExpression e))
 
 (defn ontology?
   "Return true if `e` is an instance of `OWLOntology`."
   [e]
-  (instance? OWLOntology e))
+  (entity-instance? OWLOntology e))
