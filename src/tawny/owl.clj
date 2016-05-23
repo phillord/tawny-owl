@@ -1893,17 +1893,18 @@ as a datatype."
 If INDIVIDUAL is an OWLIndividual return individual, else
 interpret this as a string and create a new OWLIndividual."
   [o individual]
-  (cond
-   (t/individual? individual)
-   individual
-   (t/iri? individual)
-   (.getOWLNamedIndividual (owl-data-factory)
-                           individual)
-   (string? individual)
-   (ensure-individual o (iri-for-name o individual))
-   :default
-   (throw (IllegalArgumentException.
-           (str "Expecting an Individual. Got: " individual)))))
+  (let [individual (p/as-entity individual)]
+    (cond
+      (t/individual? individual)
+      individual
+      (t/iri? individual)
+      (.getOWLNamedIndividual (owl-data-factory)
+                              individual)
+      (string? individual)
+      (ensure-individual o (iri-for-name o individual))
+      :default
+      (throw (IllegalArgumentException.
+              (str "Expecting an Individual. Got: " individual))))))
 ;; #+end_src
 
 ;; * OWL Class
