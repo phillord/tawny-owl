@@ -54,6 +54,12 @@
   ;; dependency adds dev-resources to the path which I need for testing.
   :profiles
   {
+   :1.9-alpha
+
+   [:base
+    {:dependencies [[org.clojure/clojure "1.9.0-alpha11"]]}]
+
+
    :1.8-direct
    [:base
     {:jvm-opts ["-Dclojure.compiler.direct-linking=true"]
