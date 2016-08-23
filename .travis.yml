@@ -2,7 +2,7 @@ language: clojure
 sudo: no
 before_install:
   - curl -fsSkL https://gist.github.com/rejeep/ebcd57c3af83b049833b/raw > x.sh && source ./x.sh
-  - evm install emacs-24.5-travis --skip --use
+  - evm install emacs-25.pre-travis --skip --use
   - cask
 lein: lein2
 env:
