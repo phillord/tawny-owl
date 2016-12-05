@@ -65,7 +65,7 @@ These are:
 There is also a single convenience constructor: `some-only` which combines
 both `some` and `only` property restrictions in a single step.
 
-## Forward Declarartions
+## Forward Declarations
 
 Unlike OWL itself, Tawny-OWL requires symbols (i.e. classes or properties) to
 have been created before they are used. A more naturalistic interpretation of
