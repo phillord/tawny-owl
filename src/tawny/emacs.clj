@@ -119,7 +119,9 @@ NAMESPACE"
 (defn save-namespace-ontology
   "Save ontology in the given namespace."
   [namespace]
-  (tawny.owl/save-ontology
-   (get @tawny.owl/ontology-for-namespace
-        (find-ns (symbol namespace)))
-   "o.omn" :omn))
+  (let [o (get @tawny.owl/ontology-for-namespace
+               (find-ns (symbol namespace)))]
+    (tawny.owl/save-ontology
+     o "o.omn" :omn)
+    (tawny.owl/save-ontology
+     o "o.owl" :owl)))
