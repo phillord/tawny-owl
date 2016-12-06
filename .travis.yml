@@ -1,8 +1,12 @@
 language: clojure
 sudo: no
 before_install:
-  - curl -fsSkL https://gist.github.com/rejeep/ebcd57c3af83b049833b/raw > x.sh && source ./x.sh
-  - evm install emacs-24.5-travis --skip --use
+  - curl -fsSkL https://raw.github.com/rejeep/evm/master/go | bash
+  - export PATH="$HOME/.evm/bin:$PATH"
+  - evm config path /tmp
+  - evm install emacs-25.1-travis --skip --use
+  - curl -fsSL https://raw.githubusercontent.com/cask/cask/master/go | python
+  - export PATH="/home/travis/.cask/bin:$PATH"
   - cask
 lein: lein2
 env:
