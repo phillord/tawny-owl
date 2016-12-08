@@ -66,7 +66,7 @@ The ontology argument
 
 It is possible to set the "current ontology" using dynamic scoping and the
 `with-ontology` macro, using what has been called the
-http://stuartsierra.com/2013/03/29/perils-of-dynamic-scope[top anti-pattern]
+http://stuartsierra.com/2013/03/29/perils-of-dynamic-scope [top anti-pattern]
 for Clojure by Stuart Sierra; most of his reasons are not relevant here,
 because the use of the OWL API already means that dispatching to other threads
 or lazy sequences are already problematic and best avoided. It does make using
