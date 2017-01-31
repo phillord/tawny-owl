@@ -33,6 +33,8 @@
     OWLOntology OWLEntity)
    (org.semanticweb.owlapi.search EntitySearcher)))
 
+(def ^:dynamic *noisy-intern* nil)
+
 (defn iri-starts-with-filter
   "Checks e to see if it is an OWLNamedObject and has an IRI starting with
 starts-with. Use this partially applied with a filter for 'read'."
@@ -112,7 +114,7 @@ starts-with. Use this partially applied with a filter for 'read'."
   "Takes a string and treats characters not legal in a
 Clojure symbol. Use this composed with a entity transform function"
   [s]
-  (let [r (clojure.string/replace s #"[() /]" "_")
+  (let [r (clojure.string/replace s #"[() /,]" "_")
         ^Character f (first r)]
     (str
      (if (or (Character/isLetter f)
@@ -130,6 +132,8 @@ to intern."
        (when (t/named? e)
          (let [name
                (stop-characters-transform (transform e))]
+           (when *noisy-intern*
+             (println "Interning as:" name " entity: " e))
            (tawny.owl/intern-owl-string ns name e)))
        (catch IllegalArgumentException i
          (print "Broken Intern on:" e)
@@ -216,7 +220,7 @@ iri-mapper and resource-iri-mapper.
       ;; filter this so that it only puts stuff with the given IRI prefix
       (doall
        (clojure.core/filter (or filter default-filter)
-                                   (.getSignature owlontology)))))
+                            (.getSignature owlontology)))))
     owlontology))
 
 (defn iri-create
