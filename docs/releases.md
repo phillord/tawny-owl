@@ -4,11 +4,25 @@ Release Notes
 For future functionality please see [roadmap](roadmap.md)
 
 
-# master (unreleased)
+# 1.6
+
+Numerous small changes
 
 ## New Features
 
  - Value Partition now allows additional frames to be added to values.
+ - Patterns now now the entities they create
+ - Many improvements to tawny-mode.el
+ - Support for anonymouse individuals
+
+## Breaking Changes
+
+ - Protocols are now in their own namespace
+
+## Bug Fixes
+
+ - Logging message from SLF and ELK are off my default
+
 
 # 1.5
 
@@ -19,11 +33,11 @@ The 1.5 release is mostly to move to the OWL API version 4.
  - Save as turtle (thanks to Michael Gaare)
  - Annotation now supports any object with an IRI
 
-
 ## Breaking Changes
 
  - tawny-owl update to OWL API 4
  - tawny-mode update to CIDER 0.11
+
 
 # 1.4
 
