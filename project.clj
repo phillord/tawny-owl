@@ -29,7 +29,7 @@
   :dependencies [
 
                  ;; owl API
-                 [net.sourceforge.owlapi/owlapi-distribution "4.2.3"]
+                 [net.sourceforge.owlapi/owlapi-distribution "4.2.6"]
 
                  ;; clojure
                  [org.clojure/clojure "1.6.0"]

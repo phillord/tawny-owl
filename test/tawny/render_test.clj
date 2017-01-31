@@ -670,17 +670,21 @@
 (deftest ontology
   ;; simplest possible -- ontology with a specific IRI
   (is
-   (let [o (o/ontology :noname true :iri "iri")]
+   (let [o (o/ontology :noname true :iri "http://example.com/iri")]
      (= [
-         ['ontology :iri "iri"]
-         [:ontology o :iri "iri"]
+         ['ontology :iri "http://example.com/iri"]
+         [:ontology o :iri "http://example.com/iri"]
          ]
         (double-as-form o))))
   (is
-   (let [o (o/ontology :noname true :iri "iri" :viri "viri")]
+   (let [o (o/ontology :noname true
+                       :iri "http://example.com/iri"
+                       :viri "http://example.com/viri")]
      (= [
-         ['ontology :iri "iri" :viri "viri"]
-         [:ontology o :iri "iri" :viri "viri"]
+         ['ontology :iri "http://example.com/iri"
+          :viri "http://example.com/viri"]
+         [:ontology o :iri "http://example.com/iri"
+          :viri "http://example.com/viri"]
          ]
         (double-as-form o))))  )
 

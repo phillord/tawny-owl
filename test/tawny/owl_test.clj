@@ -81,9 +81,9 @@
 
 (deftest ontology-viri
   (is
-   (= "viri"
+   (= "http://example.com/viri"
       (..
-       (o/ontology :iri "iri" :viri "viri")
+       (o/ontology :iri "iri" :viri "http://example.com/viri")
        getOntologyID getVersionIRI get toString))))
 
 (deftest ontology-annotation
