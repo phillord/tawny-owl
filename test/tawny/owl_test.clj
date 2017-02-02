@@ -82,9 +82,14 @@
 (deftest ontology-viri
   (is
    (= "http://example.com/viri"
-      (..
-       (o/ontology :iri "iri" :viri "http://example.com/viri")
-       getOntologyID getVersionIRI get toString))))
+      (let [o
+            (o/ontology :iri "http://example.com/iri"
+                        :viri "http://example.com/viri")
+            iri
+            (.. o
+                getOntologyID getVersionIRI get toString)]
+        (o/remove-ontology-maybe (.getOntologyID o))
+        iri))))
 
 (deftest ontology-annotation
   (is
@@ -668,7 +673,7 @@ Assumes that fixture has been run"
 
   (is
    (instance? org.semanticweb.owlapi.model.OWLAnnotation
-              (o/annotation to
+              (o/annotation
                (o/annotation-property to "hello")
                "hello1"))))
 

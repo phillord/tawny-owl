@@ -1006,42 +1006,38 @@ or the ontology. Broadcasts over annotations."
 
 (defn- ^OWLAnnotationProperty ensure-annotation-property
   "Ensures that 'property' is an annotation property,
-converting it from a string or IRI if necessary."
-  [o property]
+converting it from an IRI if necessary."
+  [property]
   (cond
    (t/ann-prop? property)
    property
    (t/iri? property)
    (.getOWLAnnotationProperty
     (owl-data-factory) property)
-   (instance? String property)
-   (ensure-annotation-property
-    o
-    (iri-for-name o property))
    :default
    (throw (IllegalArgumentException.
            (format "Expecting an OWL annotation property: %s" property)))))
 
-(defmontfn annotation
+(defn annotation
   "Creates a new annotation. If literal is a string it is interpreted as a
 String in English. Otherwise, it can be any annotation value or object which
 can be co-erced to an IRI"
-  ([o annotation-property literal]
+  ([annotation-property literal]
      (cond
       (instance? String literal)
-      (annotation o annotation-property literal "en")
+      (annotation annotation-property literal "en")
       (t/ann-val? literal)
       (.getOWLAnnotation
        (owl-data-factory)
-       (ensure-annotation-property o annotation-property)
+       (ensure-annotation-property annotation-property)
        literal)
       (iriable? literal)
-      (annotation o annotation-property (p/as-iri literal))
+      (annotation annotation-property (p/as-iri literal))
       :default
       (throw (IllegalArgumentException.
               "annotation takes a String, OWLAnnotationValue or an object with an IRI."))))
-  ([o annotation-property ^String literal ^String language]
-     (annotation o annotation-property
+  ([annotation-property ^String literal ^String language]
+     (annotation annotation-property
                  (.getOWLLiteral (owl-data-factory) literal language))))
 
 (defbdontfn add-super-annotation
@@ -1052,7 +1048,7 @@ can be co-erced to an IRI"
    (.getOWLSubAnnotationPropertyOfAxiom
     (owl-data-factory)
     subproperty
-    (ensure-annotation-property o superproperty)
+    (ensure-annotation-property superproperty)
     (p/as-annotations superproperty))))
 
 (def deprecated-add-sub-annotation
@@ -1082,9 +1078,9 @@ add-sub-annotation functionality."
      default-ontology-maybe
       (fn
         ([o literal]
-           (annotation o annotation-property literal))
+           (annotation annotation-property literal))
         ([o literal language]
-           (annotation o annotation-property literal language)))
+           (annotation annotation-property literal language)))
       args)))
 
 (def label-property
@@ -1174,10 +1170,14 @@ add-sub-annotation functionality."
    :label #'add-label
    })
 
-(defdontfn annotation-property-explicit
+(defn annotation-property-explicit
   "Add this annotation property to the ontology"
   [o name frames]
-  (let [property (ensure-annotation-property o name)]
+  (let [property
+        (ensure-annotation-property
+         (if (instance? String name)
+           (iri-for-name o name)
+           name))]
     ;; add the property
     (.addAxiom (owl-ontology-manager)
                o

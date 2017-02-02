@@ -183,7 +183,7 @@ whose return values are interned."
   entire frames which only have nil arguments. Returns a vector of the name
   and the entity created, a form suitable for feeding to intern-owl-entities
   is necessary."
- [entity-f o name & options]
+  [entity-f o name & options]
   (let
       [options
        (cond
@@ -246,7 +246,7 @@ with other entities that are annotated to the same anonymous individual.")
          o
          (p/as-entity %)
          :annotation
-         (o/annotation o inpattern anon))
+         (o/annotation inpattern anon))
        entities)))
    entities))
 
@@ -337,7 +337,7 @@ to explicitly name the object property."
       (o/add-annotation
        o
        (p/as-entity (#'o/var-get-maybe e))
-       (o/annotation o facetvalue
+       (o/annotation facetvalue
                      (p/as-iri
                       (p/as-entity oprop)))))
     (flatten entities))))
