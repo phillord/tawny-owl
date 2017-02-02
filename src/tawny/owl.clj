@@ -1773,22 +1773,22 @@ an IRI with no transformation. nil is returned when the result is not clear.
 ;; Transform *anything* into *something* or crash!
 
 ;; #+begin_src clojure
+
+
 (defn-
   ^{:private true}
   ^OWLObjectProperty ensure-object-property
   "Ensures that the entity in question is an OWLObjectProperty
 or throw an exception if it cannot be converted."
-  [o prop]
+  [prop]
   (let [prop (p/as-entity prop)]
     (cond
      (fn? prop)
-     (ensure-object-property o (prop))
+     (ensure-object-property (prop))
      (t/obj-prop-exp? prop)
      prop
      (t/iri? prop)
      (.getOWLObjectProperty (owl-data-factory) prop)
-     (string? prop)
-     (ensure-object-property o (iri-for-name o prop))
      :default
      (throw (IllegalArgumentException.
              (str "Expecting an object property. Got: " prop))))))
@@ -1853,7 +1853,7 @@ an OWLDataProperty"
           ::object-property)]
     (case type
       ::object-property
-      (ensure-object-property o prop)
+      (ensure-object-property prop)
       ::data-property
       (ensure-data-property o prop))))
 
@@ -2011,7 +2011,7 @@ opposite of this."
           propertylist
           (cond
            (isa? type ::object)
-           (map (partial ensure-object-property o) propertylist)
+           (map ensure-object-property propertylist)
            (isa? type ::data)
            (map (partial ensure-data-property o) propertylist)
            :default
@@ -2040,7 +2040,7 @@ opposite of this."
   (add-axiom o
              (.getOWLObjectPropertyDomainAxiom
               (owl-data-factory)
-              (ensure-object-property o property)
+              (ensure-object-property property)
               (ensure-class o domain)
               (p/as-annotations domain))))
 
@@ -2050,7 +2050,7 @@ opposite of this."
   (add-axiom o
              (.getOWLObjectPropertyRangeAxiom
               (owl-data-factory)
-              (ensure-object-property o property)
+              (ensure-object-property property)
               (ensure-class o range)
               (p/as-annotations range))))
 
@@ -2060,8 +2060,8 @@ opposite of this."
   (add-axiom o
              (.getOWLInverseObjectPropertiesAxiom
               (owl-data-factory)
-              (ensure-object-property o property)
-              (ensure-object-property o inverse)
+              (ensure-object-property property)
+              (ensure-object-property inverse)
               (p/as-annotations inverse))))
 
 (defmontfn inverse
@@ -2069,7 +2069,7 @@ opposite of this."
   [o property]
   (.getOWLObjectInverseOf
    (owl-data-factory)
-   (ensure-object-property o property)))
+   (ensure-object-property property)))
 
 (defbdontfn add-superproperty
   "Adds all items in superpropertylist to property as
@@ -2078,8 +2078,8 @@ a superproperty."
   (add-axiom o
              (.getOWLSubObjectPropertyOfAxiom
               (owl-data-factory)
-              (ensure-object-property o property)
-              (ensure-object-property o superproperty)
+              (ensure-object-property property)
+              (ensure-object-property superproperty)
               (p/as-annotations superproperty))))
 
 (defbdontfn add-subproperty
@@ -2089,8 +2089,8 @@ a superproperty."
   (add-axiom o
              (.getOWLSubObjectPropertyOfAxiom
               (owl-data-factory)
-              (ensure-object-property o subproperty)
-              (ensure-object-property o property)
+              (ensure-object-property subproperty)
+              (ensure-object-property property)
               (p/as-annotations subproperty))))
 
 (def ^{:deprecated "1.1"
@@ -2104,7 +2104,7 @@ and used as the handler for :subproperty."
   "Adds a property chain to property."
   [o property subpropertylist]
   (when subpropertylist
-    (let [property (ensure-object-property o property)
+    (let [property (ensure-object-property property)
           lists (filter sequential? subpropertylist)
           properties (filter (comp not sequential?) subpropertylist)
           ]
@@ -2115,7 +2115,7 @@ and used as the handler for :subproperty."
           o
           (.getOWLSubPropertyChainOfAxiom
            (owl-data-factory)
-           (map (partial ensure-object-property o) properties)
+           (map ensure-object-property properties)
            property
            (p/as-annotations properties))))
        ;; add sequential entities as a chain in their own right
@@ -2136,16 +2136,15 @@ and used as the handler for :subpropertychain."
   (add-axiom
    o (.getOWLEquivalentObjectPropertiesAxiom
       (owl-data-factory)
-      (ensure-object-property o property)
-      (ensure-object-property o equivalent)
+      (ensure-object-property property)
+      (ensure-object-property equivalent)
       (p/as-annotations equivalent))))
 
 (defn equivalent-properties
   "Adds properties as equivalent to the ontology."
   [o properties]
   (let [properties
-        (map (partial
-               ensure-object-property o) properties)]
+        (map ensure-object-property properties)]
     (add-axiom
      o (.getOWLEquivalentObjectPropertiesAxiom
         (owl-data-factory)
@@ -2160,8 +2159,8 @@ and used as the handler for :subpropertychain."
    (.getOWLDisjointObjectPropertiesAxiom
     (owl-data-factory)
     (hash-set
-     (ensure-object-property o name)
-     (ensure-object-property o disjoint))
+     (ensure-object-property name)
+     (ensure-object-property disjoint))
     (p/as-annotations disjoint))))
 
 (defn disjoint-properties
@@ -2169,7 +2168,7 @@ and used as the handler for :subpropertychain."
   [o properties]
   (let [properties
         (doall
-         (map (partial ensure-object-property o) properties))]
+         (map ensure-object-property properties))]
     (add-axiom
      o (.getOWLDisjointObjectPropertiesAxiom
         (owl-data-factory)
@@ -2248,7 +2247,7 @@ and used as the handler for :subpropertychain."
      o
      (fchar
       (owl-data-factory)
-      (ensure-object-property o property)
+      (ensure-object-property property)
       (p/as-annotations characteristic)))
     (throw (IllegalArgumentException.
             (str "Characteristic is not recognised:" characteristic)))))
@@ -2278,7 +2277,11 @@ value for each frame."
   [o name frames]
   (let [o (or (first (get frames :ontology))
               o)
-        property (ensure-object-property o name)]
+        property
+        (ensure-object-property
+         (if (instance? String name)
+           (iri-for-name o name)
+           name))]
     (do
       ;; add the property
       (add-axiom o
@@ -2475,7 +2478,7 @@ data ranges."
   [o property class]
   (.getOWLObjectSomeValuesFrom
    (owl-data-factory)
-   (ensure-object-property o property)
+   (ensure-object-property property)
    (ensure-class o class)))
 
 ;; use add method because we want object-some to have independent life!
@@ -2488,7 +2491,7 @@ data ranges."
   [o property class]
   (.getOWLObjectAllValuesFrom
    (owl-data-factory)
-   (ensure-object-property o property)
+   (ensure-object-property property)
    (ensure-class o class)))
 
 (defmethod only ::object [& rest]
@@ -2584,7 +2587,7 @@ n is evaluated only once, so can have side effects."
     o class
     (.getOWLObjectMinCardinality
      (owl-data-factory) cardinality
-     (ensure-object-property o property))))
+     (ensure-object-property property))))
 
 (defmethod at-least ::object [& rest]
   (apply object-at-least rest))
@@ -2597,7 +2600,7 @@ n is evaluated only once, so can have side effects."
   (with-optional-class o class
     (.getOWLObjectMaxCardinality
      (owl-data-factory) cardinality
-     (ensure-object-property o property))))
+     (ensure-object-property property))))
 
 (defmethod at-most ::object [& rest]
   (apply object-at-most rest))
@@ -2612,7 +2615,7 @@ n is evaluated only once, so can have side effects."
   (with-optional-class o class
     (.getOWLObjectExactCardinality
      (owl-data-factory) cardinality
-     (ensure-object-property o property))))
+     (ensure-object-property property))))
 
 (defmethod exactly ::object [& rest]
   (apply object-exactly rest))
@@ -2633,7 +2636,7 @@ n is evaluated only once, so can have side effects."
   "Adds an OWL has-value restriction."
   [o property individual]
   (.getOWLObjectHasValue (owl-data-factory)
-                         (ensure-object-property o property)
+                         (ensure-object-property property)
                          (ensure-individual o individual)))
 
 (defmethod has-value ::object [& rest]
@@ -2643,7 +2646,7 @@ n is evaluated only once, so can have side effects."
   "Returns an OWL has self restriction."
   [o property]
   (.getOWLObjectHasSelf (owl-data-factory)
-                        (ensure-object-property o property)))
+                        (ensure-object-property property)))
 ;; #+end_src
 
 ;; * OWL Class Complete

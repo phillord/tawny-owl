@@ -160,14 +160,14 @@
 
 (deftest broadcast-ontology
   ;; simple non-broadcast version doesn't return a list
-  (is (o/object-some to "a" "b"))
-  (is (= 2 (count (o/object-some to "a" "b" "c"))))
-  (is (= 3 (count (o/object-some to "a" "b" "c" "d"))))
-  (is (= 4 (count (o/object-some to "a" "b" "c" "d" "e"))))
-  (is (= 5 (count (o/object-some to "a" "b" "c" "d" "e" "f"))))
-  (is (= 6 (count (o/object-some to "a" "b" "c" "d" "e" "f" "g"))))
-  (is (= 7 (count (o/object-some to "a" "b" "c" "d" "e" "f" "g" "h"))))
-  (is (= 8 (count (o/object-some to "a" "b" "c" "d" "e" "f" "g" "h" "i")))))
+  (is (o/object-some to (o/object-property to "a") "b"))
+  (is (= 2 (count (o/object-some to (o/object-property to "a") "b" "c"))))
+  (is (= 3 (count (o/object-some to (o/object-property to "a") "b" "c" "d"))))
+  (is (= 4 (count (o/object-some to (o/object-property to "a") "b" "c" "d" "e"))))
+  (is (= 5 (count (o/object-some to (o/object-property to "a") "b" "c" "d" "e" "f"))))
+  (is (= 6 (count (o/object-some to (o/object-property to "a") "b" "c" "d" "e" "f" "g"))))
+  (is (= 7 (count (o/object-some to (o/object-property to "a") "b" "c" "d" "e" "f" "g" "h"))))
+  (is (= 8 (count (o/object-some to (o/object-property to "a") "b" "c" "d" "e" "f" "g" "h" "i")))))
 
 (deftest declare-classes
   (is
@@ -220,12 +220,6 @@
 (deftest iri-for-name
   (is (= (.toString (#'o/iri-for-name to "test"))
          "http://iri/#test")))
-
-(deftest ensure-object-property
-  (is
-   ;; check whether it makes an object out of a string
-   (instance? org.semanticweb.owlapi.model.OWLObjectProperty
-              (#'o/ensure-object-property to "hello"))))
 
 (deftest defoproperty
   (is
@@ -360,7 +354,7 @@
 (deftest owl-some []
   (is (not (nil? (o/owl-some to (o/object-property to "b") "a"))))
   (is (o/object-some
-       to "has" "leg"))
+       to (o/object-property to "has") "leg"))
   ;; failing test
   (is (thrown? clojure.lang.ArityException
                (o/owl-some to (ensure-class to "hasLeg")))))
@@ -1347,5 +1341,7 @@ Assumes that fixture has been run"
 
 (deftest broadcasting-annotate
   (is (seq? (o/annotate
-            (o/object-some to "r" "A" "B")
+             (o/object-some to
+                            (o/object-property to "r")
+                           "A" "B")
             (o/owl-comment to "c")))))
