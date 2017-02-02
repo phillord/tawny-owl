@@ -768,14 +768,14 @@ Uses the default ontology if not supplied and throws an IllegalStateException
 ;; Just some utility functions for adding or removing axioms.
 
 ;; #+begin_src clojure
-(defdontfn add-axiom
+(defn add-axiom
   "Adds an axiom from the given ontology, or the current one."
   [^OWLOntology o  ^OWLAxiom axiom]
   (.applyChange (owl-ontology-manager)
                 (AddAxiom. o axiom))
   axiom)
 
-(defdontfn remove-axiom
+(defn remove-axiom
   "Removes a list of axioms from the given ontology, or the current one."
   [o & axiom-list]
   (doall
@@ -784,7 +784,7 @@ Uses the default ontology if not supplied and throws an IllegalStateException
                         (RemoveAxiom. o axiom)))
         (flatten axiom-list))))
 
-(defdontfn remove-entity
+(defn remove-entity
   "Remove from the ontology an entity created and added by
 owl-class, defclass, object-property or defoproperty. Entity is the value
 returned by these functions.
@@ -825,7 +825,7 @@ of c."
   ontology-options-atom (atom {}))
 
 ;; return options for ontology -- lazy (defn get-ontology-options [ontology])
-(defdontfn ontology-options
+(defn ontology-options
   "Returns the ontology options for 'ontology'
 or the current-ontology"
   [o]
@@ -837,7 +837,7 @@ or the current-ontology"
       ontology-options-atom assoc o (ref {}))
      o)))
 
-(defdontfn iri-for-name
+(defn iri-for-name
   "Returns an IRI object for the given name.
 
 This is likely to become a property of the ontology at a later date, but at
@@ -989,7 +989,7 @@ ontology option has been specified, in which case do nothing."
 ;; performance hit that this method takes.
 
 ;; #+begin_src clojure
-(defdontfn add-annotation
+(defn add-annotation
   {:doc "Add an annotation in the ontology to either the named-entity
 or the ontology. Broadcasts over annotations."
    :arglists '([ontology named-entity & annotations]
@@ -1580,7 +1580,7 @@ The following keys must be supplied.
   (when (= 1 (count entity-set))
     (first entity-set)))
 
-(defdontfn entity-for-iri
+(defn entity-for-iri
   "Return the OWLObject for a given IRI if it exists, checking
 'ontology' first, but checking all loaded ontologies.
 
@@ -1607,7 +1607,7 @@ method of OWLOntology."
           (vals @ontology-for-namespace)))
     iri)))
 
-(defdontfn entity-for-string
+(defn entity-for-string
   "Returns the OWLObject for a given string.
 See 'entity-for-iri' for more details. Attempts both ontology specific iri to name
 conversion, and direct use of string as an IRI."
@@ -1616,7 +1616,7 @@ conversion, and direct use of string as an IRI."
       ;; string name somewhere?
       (entity-for-iri o (iri string))))
 
-(defdontfn ^String get-prefix
+(defn ^String get-prefix
   "Returns the prefix for the given ontology, or the current ontology if none
 is given."
   [^OWLOntology o]
@@ -1682,7 +1682,7 @@ If no ontology is given, use the current-ontology"
 (derive ::data-property ::property)
 (derive ::data-property ::data)
 
-(defmontfn guess-type
+(defn guess-type
   "Guesses the type of the entity. Returns ::object, :data or :annotation or
 nil where the type cannot be guessed. IllegalArgumentException is thrown for
 arguments which make no sense (not an OWLObject, IRI, String or number).
@@ -1740,7 +1740,7 @@ an IRI with no transformation. nil is returned when the result is not clear.
      (throw (IllegalArgumentException.
              (str "Cannot guess this type:" entity))))))
 
-(defmontfn guess-individual-literal
+(defn guess-individual-literal
   [o entity]
   (let [entity (p/as-entity entity)]
     (cond
@@ -1974,7 +1974,7 @@ opposite of this."
               (ensure-class o disjoint))
     (p/as-annotations disjoint))))
 
-(defdontfn add-disjoint-union
+(defn add-disjoint-union
   "Adds a disjoint union axiom to all subclasses."
   [o clazz subclasses]
   (let [ensured-subclasses
@@ -1991,7 +1991,7 @@ opposite of this."
                    subclasses))
                  (union-annotations subclasses))))))
 
-(defdontfn add-class
+(defn add-class
   "Adds a class to the ontology."
   [o name]
   (add-axiom
@@ -2002,7 +2002,7 @@ opposite of this."
     (p/as-annotations name))))
 
 ;; a class can have only a single haskey, so ain't no point broadcasting this.
-(defdontfn add-has-key
+(defn add-has-key
   "Adds a has-key to the class."
   [o class propertylist]
   ;; nil or empty list safe
@@ -2100,7 +2100,7 @@ and used as the handler for :subproperty."
   add-superproperty)
 
 ;; broadcasts specially
-(defdontfn add-subchain
+(defn add-subchain
   "Adds a property chain to property."
   [o property subpropertylist]
   (when subpropertylist
@@ -2140,7 +2140,7 @@ and used as the handler for :subpropertychain."
       (ensure-object-property o equivalent)
       (p/as-annotations equivalent))))
 
-(defdontfn equivalent-properties
+(defn equivalent-properties
   "Adds properties as equivalent to the ontology."
   [o properties]
   (let [properties
@@ -2164,7 +2164,7 @@ and used as the handler for :subpropertychain."
      (ensure-object-property o disjoint))
     (p/as-annotations disjoint))))
 
-(defdontfn disjoint-properties
+(defn disjoint-properties
   "Make all the properties in PROPERTIES disjoint."
   [o properties]
   (let [properties
@@ -2714,7 +2714,7 @@ combination of the two. The class object is stored in a var called classname."
            class# (tawny.owl/owl-class string-name# ~@frames)]
        (intern-owl ~classname class#))))
 
-(defdontfn disjoint-classes
+(defn disjoint-classes
   "Makes all elements in list disjoint.
 All arguments must of an instance of OWLClassExpression"
   [o list]
@@ -2732,7 +2732,7 @@ All arguments must of an instance of OWLClassExpression"
       (set classlist)
       (union-annotations classlist)))))
 
-(defdontfn equivalent-classes
+(defn equivalent-classes
   "Makes all elements in list equivalent.
 All arguments must of an instance of OWLClassExpression"
   [o list]
@@ -2831,7 +2831,7 @@ toward an either an individual or literal TO."
 (defmethod get-fact-not ::object [& rest]
   (apply object-get-fact-not rest))
 
-(defdontfn
+(defn
   add-same
   {:doc "Adds all arguments as the same individual to the current ontology
 or to ONTOLOGY if present."
@@ -2847,7 +2847,7 @@ or to ONTOLOGY if present."
         (set individuals)
         (union-annotations individuals))))))
 
-(defmontfn add-different
+(defn add-different
   {:doc "Adds all arguments as different individuals to the current
   ontology unless first arg is an ontology in which case this is used"}
   [o & individuals]

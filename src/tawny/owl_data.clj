@@ -99,7 +99,7 @@ This is to deprecated the :superproperty frame"}
       (ensure-data-property o equivalent)
       (p/as-annotations equivalent))))
 
-(defdontfn equivalent-data-properties
+(defn equivalent-data-properties
   [o properties]
   (let [properties
         (doall
@@ -122,7 +122,7 @@ This is to deprecated the :superproperty frame"}
      (ensure-data-property o disjoint))
     (p/as-annotations disjoint))))
 
-(defdontfn disjoint-data-properties
+(defn disjoint-data-properties
   [o properties]
   (let [properties
         (doall
