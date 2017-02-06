@@ -283,7 +283,7 @@ set and does not return top or bottom."
   (no-top-bottom
    (entities
     (.getSuperClasses (reasoner ontology)
-                      (#'tawny.owl/ensure-class ontology name)
+                      (#'tawny.owl/ensure-class name)
                       false))))
 
 ;; move this to using isuperclasses
@@ -302,7 +302,7 @@ Returns a clojure set, and does not return top or bottom."
   (no-top-bottom
    (entities
     (.getSubClasses (reasoner o)
-                    (#'tawny.owl/ensure-class o name)
+                    (#'tawny.owl/ensure-class name)
                     false))))
 
 (defdontfn isubclass?
@@ -319,7 +319,7 @@ may include top or bottom."
   [ontology name]
   (.getEntities
    (.getEquivalentClasses (reasoner ontology)
-                          (#'tawny.owl/ensure-class ontology name))))
+                          (#'tawny.owl/ensure-class name))))
 
 (defdontfn iequivalent-class?
   "Returns true if name and equiv are equivalent in ontology."

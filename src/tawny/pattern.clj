@@ -365,7 +365,7 @@ to explicitly name the object property."
    o
    (facet-property
     o
-    (#'tawny.owl/ensure-class o clazz))
+    (#'tawny.owl/ensure-class clazz))
    clazz))
 
 (o/defdontfn facet

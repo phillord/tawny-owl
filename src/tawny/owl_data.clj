@@ -24,7 +24,7 @@
    (.getOWLDataPropertyDomainAxiom
     (owl-data-factory)
     (ensure-data-property o property)
-    (ensure-class o domain)
+    (ensure-class domain)
     (p/as-annotations domain))))
 
 (defbdontfn add-data-range

@@ -1800,7 +1800,7 @@ or throw an exception if it cannot be converted."
 (defn- ^OWLClass ensure-class
   "If clz is a String return a class of with that name,
 else if clz is a OWLClassExpression add that."
-  [o clz]
+  [clz]
   ;; convert to entity if necessary
   (let [clz (p/as-entity clz)]
     (cond
@@ -1808,11 +1808,9 @@ else if clz is a OWLClassExpression add that."
      clz
      (t/iri? clz)
      (.getOWLClass (owl-data-factory) clz)
-     (string? clz)
-     (ensure-class o (iri-for-name o clz))
      (fn? clz)
      (try
-       (ensure-class o (clz))
+       (ensure-class (clz))
        (catch clojure.lang.ArityException e
          (ensure-class-except clz)))
      true (ensure-class-except clz))))
@@ -1920,8 +1918,8 @@ interpret this as a string and create a new OWLIndividual."
   (add-axiom o
              (.getOWLSubClassOfAxiom
               (owl-data-factory)
-              (ensure-class o name)
-              (ensure-class o superclass)
+              (ensure-class name)
+              (ensure-class superclass)
               (p/as-annotations superclass))))
 
 (defbdontfn
@@ -1932,8 +1930,8 @@ interpret this as a string and create a new OWLIndividual."
   (add-axiom o
              (.getOWLSubClassOfAxiom
               (owl-data-factory)
-              (ensure-class o subclass)
-              (ensure-class o name)
+              (ensure-class subclass)
+              (ensure-class name)
               (p/as-annotations subclass))))
 ;; #+end_src
 
@@ -1958,8 +1956,8 @@ opposite of this."
   (add-axiom o
              (.getOWLEquivalentClassesAxiom
               (owl-data-factory)
-              (ensure-class o name)
-              (ensure-class o equivalent)
+              (ensure-class name)
+              (ensure-class equivalent)
               (p/as-annotations equivalent))))
 
 (defbdontfn add-disjoint
@@ -1970,36 +1968,26 @@ opposite of this."
    o
    (.getOWLDisjointClassesAxiom
     (owl-data-factory)
-    (hash-set (ensure-class o name)
-              (ensure-class o disjoint))
+    (hash-set (ensure-class name)
+              (ensure-class disjoint))
     (p/as-annotations disjoint))))
 
 (defn add-disjoint-union
   "Adds a disjoint union axiom to all subclasses."
   [o clazz subclasses]
   (let [ensured-subclasses
-        (util/domap #(ensure-class o %) subclasses)
+        (util/domap #(ensure-class %) subclasses)
         ]
     (list
      (add-axiom o
                 (.getOWLDisjointUnionAxiom
                  (owl-data-factory)
-                 (ensure-class o clazz)
+                 (ensure-class clazz)
                  (set
                   (map
-                   (partial ensure-class o)
+                   ensure-class
                    subclasses))
                  (union-annotations subclasses))))))
-
-(defn add-class
-  "Adds a class to the ontology."
-  [o name]
-  (add-axiom
-   o
-   (.getOWLDeclarationAxiom
-    (owl-data-factory)
-    (ensure-class o name)
-    (p/as-annotations name))))
 
 ;; a class can have only a single haskey, so ain't no point broadcasting this.
 (defn add-has-key
@@ -2021,7 +2009,7 @@ opposite of this."
       (add-axiom o
                  (.getOWLHasKeyAxiom
                   (owl-data-factory)
-                  (ensure-class o class)
+                  (ensure-class class)
                   (set propertylist)
                   (p/as-annotations propertylist))))))
 ;; #+end_src
@@ -2041,7 +2029,7 @@ opposite of this."
              (.getOWLObjectPropertyDomainAxiom
               (owl-data-factory)
               (ensure-object-property property)
-              (ensure-class o domain)
+              (ensure-class domain)
               (p/as-annotations domain))))
 
 (defbdontfn add-range
@@ -2051,7 +2039,7 @@ opposite of this."
              (.getOWLObjectPropertyRangeAxiom
               (owl-data-factory)
               (ensure-object-property property)
-              (ensure-class o range)
+              (ensure-class range)
               (p/as-annotations range))))
 
 (defbdontfn add-inverse
@@ -2479,7 +2467,7 @@ data ranges."
   (.getOWLObjectSomeValuesFrom
    (owl-data-factory)
    (ensure-object-property property)
-   (ensure-class o class)))
+   (ensure-class class)))
 
 ;; use add method because we want object-some to have independent life!
 (defmethod owl-some ::object [& rest]
@@ -2492,7 +2480,7 @@ data ranges."
   (.getOWLObjectAllValuesFrom
    (owl-data-factory)
    (ensure-object-property property)
-   (ensure-class o class)))
+   (ensure-class class)))
 
 (defmethod only ::object [& rest]
   (apply object-only rest))
@@ -2509,7 +2497,7 @@ data ranges."
      (owl-data-factory)
      (java.util.HashSet.
       (util/domap
-       #(ensure-class o %)
+       #(ensure-class %)
        ;; flatten list for things like owl-some which return lists
        classes)))))
 
@@ -2527,7 +2515,7 @@ data ranges."
     (.getOWLObjectUnionOf
      (owl-data-factory)
      (java.util.HashSet.
-      (util/domap #(ensure-class o %)
+      (util/domap #(ensure-class %)
                   (flatten classes))))))
 
 (defmethod owl-or ::object [& rest]
@@ -2542,7 +2530,7 @@ data ranges."
             (count (flatten class)))]}
   (.getOWLObjectComplementOf
    (owl-data-factory)
-   (ensure-class o (first (flatten class)))))
+   (ensure-class (first (flatten class)))))
 
 (defmethod owl-not-one ::object [& rest]
   (apply object-not rest))
@@ -2573,7 +2561,7 @@ n is evaluated only once, so can have side effects."
          ~form
          ~(concat
            form
-           `((ensure-class ~o ~nn)))))))
+           `((ensure-class ~nn)))))))
 
 
 (defmontfn object-at-least
@@ -2675,9 +2663,18 @@ flexible 'owl-class' is normally preferred. However, this function should be
 slightly faster.
 "
   [o name frames]
-  (let [class (ensure-class o name)]
+  (let [class
+        (ensure-class
+         (if (string? name)
+           (iri-for-name o name)
+           name))]
     ;; add the class
-    (add-class o class)
+    (add-axiom
+     o
+     (.getOWLDeclarationAxiom
+      (owl-data-factory)
+      class
+      (p/as-annotations name)))
     ;; add an name annotation
     (add-a-name-annotation o class name)
     ;; apply the handlers to the frames
@@ -2726,7 +2723,7 @@ All arguments must of an instance of OWLClassExpression"
   (let [classlist
         (util/domap
          (fn [x]
-           (ensure-class o x))
+           (ensure-class x))
          list)]
     (add-axiom
      o
@@ -2745,7 +2742,7 @@ All arguments must of an instance of OWLClassExpression"
         (doall
          (map
           (fn [x]
-            (ensure-class o x))
+            (ensure-class x))
           list))]
     (add-axiom
      o
@@ -2767,7 +2764,7 @@ or ONTOLOGY if present."
    o
    (.getOWLClassAssertionAxiom
     (owl-data-factory)
-    (ensure-class o clazz)
+    (ensure-class clazz)
     (p/as-entity individual)
     (p/as-annotations individual))))
 
@@ -3081,7 +3078,7 @@ f to get the neighbours."
 Name can be either a class or a string name. Returns a list of class
 expressions."
   [^OWLOntology o name]
-  (let [^OWLClass clz (ensure-class o name)]
+  (let [^OWLClass clz (ensure-class name)]
     ;; general Class expressions return empty
     (if (t/owl-class? clz)
       (EntitySearcher/getSuperClasses clz o)
@@ -3098,14 +3095,14 @@ direct or indirect superclass of itself."
 (defdontfn superclass?
   "Returns true if name is asserted to be a superclass."
   [o name superclass]
-  (let [namecls (ensure-class o name)
-        superclasscls (ensure-class o superclass)]
+  (let [namecls (ensure-class name)
+        superclasscls (ensure-class superclass)]
     (some #(.equals superclasscls %) (superclasses o name))))
 
 (defdontfn direct-subclasses
   "Returns the direct subclasses of name."
   [^OWLOntology o name]
-  (let [clz (ensure-class o name)]
+  (let [clz (ensure-class name)]
     (if (t/owl-class? clz)
       (EntitySearcher/getSubClasses clz o) ())))
 
@@ -3118,8 +3115,8 @@ direct or indirect superclass of itself."
 (defdontfn subclass?
   "Returns true if name has subclass as a subclass."
   [o name subclass]
-  (let [namecls (ensure-class o name)
-        subclasscls (ensure-class o subclass)]
+  (let [namecls (ensure-class name)
+        subclasscls (ensure-class subclass)]
     (some #(.equals subclasscls %) (subclasses o name))))
 
 (defdontfn disjoint?
@@ -3209,7 +3206,7 @@ direct or indirect superclass of itself."
 (defdontfn direct-instances
   "Return all direct instances of NAME class."
   [^OWLOntology o name]
-  (let [clz (ensure-class o name)]
+  (let [clz (ensure-class name)]
     (if (t/owl-class? clz)
       (EntitySearcher/getIndividuals clz o) ())))
 ;; #+end_src

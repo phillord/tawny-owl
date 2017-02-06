@@ -64,25 +64,29 @@
    (not
     (nil? to))))
 
+(defn a []
+  (o/owl-class to "a"))
+(defn b []
+  (o/owl-class to "b"))
+(defn c []
+  (o/owl-class to "c"))
+
 (defn ontology-abc []
-  (o/owl-class to "a")
-  (o/owl-class to "b")
-  (o/owl-class to "c" :super "a" "b"))
+  (o/owl-class to (c) :super (a) (b)))
 
 (defn ontology-abc-indc []
   (ontology-abc)
-  (o/individual to "indC" :type "c"))
+  (o/individual to "indC" :type (c)))
 
 
 (defn ontology-abc-reasoning []
   ;; simple ontology -- c should be reasoned to be a subclass of a.
   (o/owl-class to "a"
               :equivalent
-              (o/object-some to (o/object-property "p") "b"))
-  (o/owl-class to "b")
+              (o/object-some to (o/object-property to "p") a))
   (o/owl-class to "c"
               :super
-              (o/object-some to (o/object-property "p") "b")))
+              (o/object-some to (o/object-property to "p") b)))
 
 
 (defn far-reasoner [func reasonerlist]
@@ -158,10 +162,10 @@
     complement
     (do
       (ontology-abc)
-      (o/as-disjoint to "a" "b")
+      (o/as-disjoint to (a) (b))
       (far #(r/consistent? to))))))
 
-  
+
 (deftest disjoint-and-individual []
   ;; now ontology should be inconsistent also
   (is
@@ -169,7 +173,7 @@
     complement
     (do
       (ontology-abc-indc)
-      (o/as-disjoint to "a" "b")
+      (o/as-disjoint to (a) (b))
       (far #(r/consistent? to))))))
 
 (deftest unsatisfiable []
@@ -183,7 +187,7 @@
     #(= 1 (count %))
     (do
       (ontology-abc)
-      (o/as-disjoint to "a" "b")
+      (o/as-disjoint to (a) (b))
       (far #(r/unsatisfiable to))))))
 
 ;; had lots of problems getting this working so lets try with a single reasoner
@@ -201,7 +205,7 @@
     identity
     (do
       (ontology-abc)
-      (far #(do 
+      (far #(do
               (r/coherent? to)))))))
 
 
@@ -211,19 +215,18 @@
     not
     (do
       (ontology-abc)
-      (o/as-disjoint to "a" "b")
+      (o/as-disjoint to (a) (b))
       (far #(r/coherent? to))))))
 
 
 (deftest isuperclass?
   (is
-   (every? 
+   (every?
     identity
-    (do 
+    (do
       (ontology-abc-reasoning)
-      (far #(r/isuperclass? to
-             (o/owl-class to "c") 
-             (o/owl-class to "a")))))))
+      (far #(r/isuperclass?
+             to (c) (a)))))))
 
 (deftest isubclass?
   (is
@@ -231,9 +234,7 @@
     identity
     (do
       (ontology-abc-reasoning)
-      (far #(r/isubclass? to
-             (o/owl-class to "a")
-             (o/owl-class to "c"))))
+      (far #(r/isubclass? to (a) (c))))
     )))
 
 
@@ -247,7 +248,7 @@
     (do
       (ontology-abc)
       (o/with-probe-axioms to
-        [a (o/as-disjoint to "a" "b")]
+        [a (o/as-disjoint to (a) (b))]
         (doall (far #(r/coherent? to)))))))
 
   ;; add a disjoint test whether it breaks after
@@ -257,7 +258,7 @@
     (do 
       (ontology-abc)
       (o/with-probe-axioms to
-        [a (o/as-disjoint to "a" "b")])
+        [a (o/as-disjoint to (a) (b))])
       (doall (far #(r/coherent? to)))))))
 
 
