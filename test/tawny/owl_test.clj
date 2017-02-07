@@ -15,7 +15,6 @@
 ;; You should have received a copy of the GNU Lesser General Public License
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
 
-
 (ns tawny.owl-test
   (:import
    (org.semanticweb.owlapi.model OWLOntologyManager OWLOntology IRI
@@ -778,11 +777,12 @@ Assumes that fixture has been run"
    (not
     (nil? (#'o/add-annotation to
            (o/owl-class to "a")
-           (list (o/owl-comment to "comment"))))))
+           (o/owl-comment to "comment"))))))
 
+(deftest add-ontology-annotation
   (is
    (not
-    (nil? (#'o/add-annotation
+    (nil? (#'o/add-ontology-annotation
            to
            (list (o/owl-comment to "comment")))))))
 
@@ -792,7 +792,7 @@ Assumes that fixture has been run"
     "hello"
     (do
       (let [b (o/owl-class to "b")]
-        (o/add-annotation to
+        (#'o/add-annotation to
          b (list (o/label to "hello")))
         (.getLiteral
          (.getValue

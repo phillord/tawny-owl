@@ -52,7 +52,7 @@
         ;; when there is a label
         (let [label (.getProperty props k)]
           (if (seq label)
-            (tawny.owl/add-annotation
+            (#'tawny.owl/add-annotation
              (var-get v)
              (list (tawny.owl/label label locale)))
             (println

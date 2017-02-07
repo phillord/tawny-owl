@@ -794,7 +794,7 @@ every? requires a list at run time when we have an list of arguments."
 ;; (owl-some r "a")
 ;; #+END_EXAMPLE
 
-;; will do since it is equivalent to 
+;; will do since it is equivalent to
 
 ;; #+BEGIN_EXAMPLE
 ;; (owl-some r (owl-class "a"))
@@ -1035,16 +1035,19 @@ signals a hook, and adds :owl true to the metadata. NAME must be a symbol"
 ;; ~OWLOntology~ to which annotation must be added in a totally different way.
 
 ;; #+begin_src clojure
-(defbdontfn add-a-simple-annotation
-  "Adds an annotation to a named objecqt."
-  [o ^OWLNamedObject named-entity annotation]
-  (add-axiom
-   o
-   (.getOWLAnnotationAssertionAxiom
-    (owl-data-factory)
-    (p/as-iri named-entity)
-    ^OWLAnnotation (p/as-entity annotation)
-    (p/as-annotations annotation))))
+(def
+  ^{:doc "Adds an annotation to a named object."
+    :private true}
+  add-annotation
+  (broadcast-2
+   (fn add-annotation [o ^OWLNamedObject named-entity annotation]
+     (add-axiom
+      o
+      (.getOWLAnnotationAssertionAxiom
+       (owl-data-factory)
+       (p/as-iri named-entity)
+       ^OWLAnnotation (p/as-entity annotation)
+       (p/as-annotations annotation))))))
 
 (defn- add-a-name-annotation
   "Add a tawny-name annotation to named-entity, unless the :noname
@@ -1055,18 +1058,22 @@ ontology option has been specified, in which case do nothing."
        (not (get @(ontology-options o)
                  :noname false))
        (instance? String name))
-    (add-a-simple-annotation o named-entity (tawny-name name))))
+    (add-annotation o named-entity (tawny-name name))))
 ;; #+end_src
 
 ;; Now we add support for annotating ontologies.
 
 ;; #+begin_src clojure
-(defbdontfn add-an-ontology-annotation
+(def
+  ^:private
+  add-ontology-annotation
   "Adds an annotation to an ontology."
-  [o o annotation]
-  (.applyChange
-   (owl-ontology-manager)
-   (AddOntologyAnnotation. o annotation)))
+  (broadcast
+   (fn
+     [o annotation]
+     (.applyChange
+      (owl-ontology-manager)
+      (AddOntologyAnnotation. o annotation)))))
 ;; #+end_src
 
 ;; And, finally, overarching support for adding annotation to both -- we add this
@@ -1076,21 +1083,6 @@ ontology option has been specified, in which case do nothing."
 ;; performance hit that this method takes.
 
 ;; #+begin_src clojure
-(defn add-annotation
-  {:doc "Add an annotation in the ontology to either the named-entity
-or the ontology. Broadcasts over annotations."
-   :arglists '([ontology named-entity & annotations]
-                 [named-entity & annotations]
-                   [ontology & annotations][annotations])}
-  [o & args]
-  (if (t/named? (first args))
-    (add-a-simple-annotation
-     o (first args) (rest args))
-    (add-an-ontology-annotation
-     ;; okay, so this is wierd, but broadcasting requires a three arg
-     ;; function, first being an ontology.
-     o o args)))
-
 (defn- ^OWLAnnotationProperty ensure-annotation-property
   "Ensures that 'property' is an annotation property,
 converting it from an IRI if necessary."
@@ -1479,11 +1471,8 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
        (not (get @(ontology-options o)
                  :noname false))
        n)
-    (add-an-ontology-annotation
-     o o (tawny-name n))))
-
-(defn- add-ontology-annotation-handler [o annotations]
-  (add-an-ontology-annotation o o annotations))
+    (add-ontology-annotation
+     o (tawny-name n))))
 
 (defn- set-iri-gen
   "Add an IRI gen function to the ontology options."
@@ -1517,13 +1506,13 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
   "Adds a comment annotation to the ontology"
   [o s]
   (if s
-    (add-annotation o (owl-comment o s))))
+    (add-ontology-annotation o (owl-comment o s))))
 
 (defn- add-see-also
   "Adds a see also annotation to the ontology"
   [o s]
   (if s
-    (add-annotation o (see-also o s))))
+    (add-ontology-annotation o (see-also o s))))
 
 (defn- add-version-info
   "Adds a version info annotation to the ontology."
@@ -1531,7 +1520,7 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
   (if v
     ;; ontology annotation is a default ontology function, so need to pass
     ;; ontology twice even if this makes little sense!
-    (add-annotation o (version-info o v))))
+    (add-ontology-annotation o (version-info o v))))
 
 ;; owl imports
 (defn owl-import
@@ -1565,7 +1554,7 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
    :comment #'add-ontology-comment
    :versioninfo #'add-version-info
    ;; these two are specially dealt with and are broadcast
-   :annotation #'add-ontology-annotation-handler
+   :annotation #'add-ontology-annotation
    :import #'add-import
    })
 

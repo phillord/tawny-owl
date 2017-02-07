@@ -334,7 +334,7 @@ to explicitly name the object property."
   (doall
    (map
     (fn [e]
-      (o/add-annotation
+      (#'o/add-annotation
        o
        (p/as-entity (#'o/var-get-maybe e))
        (o/annotation facetvalue
