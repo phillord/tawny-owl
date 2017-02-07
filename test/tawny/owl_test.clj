@@ -180,6 +180,42 @@
                    (map (partial o/owl-class to)
                         ["b" "c" "d" "e" "f" "g" "h" "i"]))))))
 
+(defn brd [x a] (list x a))
+
+(deftest broadcasting
+  (is
+   (= [1 2]
+      ((o/broadcast brd)
+       1 2)))
+  (is
+   (= [[1 2] [1 3]]
+      ((o/broadcast brd)
+       1 2 3)))
+  (is
+   (= [[1 2] [1 3]]
+      ((o/broadcast brd) 1 [2 3])))
+  (is
+   (= [[1 2] [1 3] [1 4]]
+      ((o/broadcast brd) 1 2 3 4)))
+  (is
+   (= [[1 2] [1 3] [1 4] [1 5]]
+      ((o/broadcast brd) 1 2 3 4 5)))
+  (is
+   (= [[1 2] [1 3] [1 4] [1 5] [1 6]]
+      ((o/broadcast brd) 1 2 3 4 5 6)))
+  (is
+   (= [[1 2] [1 3] [1 4] [1 5] [1 6] [1 7]]
+      ((o/broadcast brd) 1 2 3 4 5 6 7)))
+  (is
+   (= [[1 2] [1 3] [1 4] [1 5] [1 6] [1 7] [1 8]]
+      ((o/broadcast brd) 1 2 3 4 5 6 7 8)))
+  (is
+   (= [[1 2] [1 3] [1 4] [1 5] [1 6] [1 7] [1 8] [1 9]]
+      ((o/broadcast brd) 1 2 3 4 5 6 7 8 9)))
+  (is
+   (= [[1 2] [1 3] [1 4] [1 5] [1 6] [1 7] [1 8] [1 9] [1 10]]
+      ((o/broadcast brd) 1 2 3 4 5 6 7 8 9 10))))
+
 (deftest declare-classes
   (is
    (-> (o/declare-classes a :ontology to)

@@ -674,6 +674,93 @@ default ontology."
      (apply broadcast-ontology-maybe-full
             fnc a b c d e f g args)))
 
+(defmacro ^{:private true}
+  if-not-sequential
+  "If all seqs are not sequential. This is a micro-optimisation, as use of
+every? requires a list at run time when we have an list of arguments."
+  [seqs & rest]
+  `(if (and
+        ~@(map
+           (fn [seq]
+             `(not (sequential? ~seq)))
+           ;; reverse the seqs because the last argument is often a list, for
+           ;; calls from the named entity functions, such as owl-class. So, we
+           ;; can break early and fail fast in these cases.
+           (reverse seqs)))
+     ~@rest))
+
+;; New broadcast
+(defn- broadcast-full [special f args]
+  (doall
+   (let [splt (split-at special args)]
+     (map
+      (apply partial f (first splt))
+      (flatten (second splt))))))
+
+(defmacro ^:private broadcast-call [special f & rest]
+  (let [[special-args normal-args] (split-at special rest)]
+    `(if (not
+          (or
+           ~@(map
+              (fn [arg#]
+                `(sequential? ~arg#))
+              normal-args)))
+       (list
+        ~@(map
+           (fn [arg#]
+             `(~f ~@special-args ~arg#))
+           normal-args))
+       (broadcast-full ~special ~f (list ~@special-args ~@normal-args)))))
+
+(defn broadcast [f]
+  (fn
+    ([x a]
+     (if (not (sequential? a))
+       (f x a)
+       (broadcast-full 1 f (list x a))))
+    ([x a b]
+     (broadcast-call 1 f x a b))
+    ([x a b c]
+     (broadcast-call 1 f x a b c))
+    ([x a b c d]
+     (broadcast-call 1 f x a b c d))
+    ([x a b c d e]
+     (broadcast-call 1 f x a b c d e))
+    ([x a b c d e f']
+     (broadcast-call 1 f x a b c d e f'))
+    ([x a b c d e f' g]
+     (broadcast-call 1 f x a b c d e f' g))
+    ([x a b c d e f' g h]
+     (broadcast-call 1 f x a b c d e f' g h))
+    ([x a b c d e f' g h i]
+     (broadcast-call 1 f x a b c d e f' g h i))
+    ([x a b c d e f' g h i & rest]
+     (broadcast-full 1 f (list* x a b c d e f' g h i rest)))))
+
+(defn broadcast-2 [f]
+  (fn
+    ([x a]
+     (if (not (sequential? a))
+       (f x a)
+       (broadcast-full 2 f (list x a))))
+    ([x a b]
+     (broadcast-call 2 f x a b))
+    ([x a b c]
+     (broadcast-call 2 x a b c))
+    ([x a b c d]
+     (broadcast-call 2 x a b c d))
+    ([x a b c d e]
+     (broadcast-call 2 f x a b c d e))
+    ([x a b c d e f']
+     (broadcast-call 2 f x a b c d e f'))
+    ([x a b c d e f' g]
+     (broadcast-call 2 f x a b c d e f' g))
+    ([x a b c d e f' g h]
+     (broadcast-call 2 f x a b c d e f' g h))
+    ([x a b c d e f' g h i]
+     (broadcast-call 2 f x a b c d e f' g h i))
+    ([x a b c d e f' g h i & rest]
+     (broadcast-full 2 f (list* x a b c d e f' g h i rest)))))
 
 ;; #+end_src
 
