@@ -698,7 +698,7 @@ default ontology."
        (broadcast-full ~special ~f (list ~@special-args ~@normal-args)))))
 
 (defn broadcast [f]
-  (fn
+  (fn broadcasting
     ([x a]
      (if (not (sequential? a))
        (f x a)
@@ -723,7 +723,7 @@ default ontology."
      (broadcast-full 1 f (list* x a b c d e f' g h i rest)))))
 
 (defn broadcast-2 [f]
-  (fn
+  (fn broadcasting-2
     ([x a]
      (if (not (sequential? a))
        (f x a)
