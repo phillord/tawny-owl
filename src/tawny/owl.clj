@@ -3,7 +3,6 @@
 
 ;; * Header :no-export
 
-
 ;; The contents of this file are subject to the LGPL License, Version 3.0.
 
 ;; Copyright (C) 2012, 2013, 2014, 2015, 2016, Newcastle University
@@ -25,7 +24,7 @@
 ;; * Namespace
 
 ;; #+begin_src clojure
-(ns ^{:doc "Build ontologies in OWL."
+(ns ^{:doc    "Build ontologies in OWL."
       :author "Phillip Lord"}
   tawny.owl
   (:require
@@ -674,20 +673,6 @@ default ontology."
      (apply broadcast-ontology-maybe-full
             fnc a b c d e f g args)))
 
-(defmacro ^{:private true}
-  if-not-sequential
-  "If all seqs are not sequential. This is a micro-optimisation, as use of
-every? requires a list at run time when we have an list of arguments."
-  [seqs & rest]
-  `(if (and
-        ~@(map
-           (fn [seq]
-             `(not (sequential? ~seq)))
-           ;; reverse the seqs because the last argument is often a list, for
-           ;; calls from the named entity functions, such as owl-class. So, we
-           ;; can break early and fail fast in these cases.
-           (reverse seqs)))
-     ~@rest))
 
 ;; New broadcast
 (defn- broadcast-full [special f args]
