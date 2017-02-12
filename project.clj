@@ -27,12 +27,11 @@
                    ]
 
   :dependencies [
-
                  ;; owl API
                  [net.sourceforge.owlapi/owlapi-distribution "4.2.8"]
 
                  ;; clojure
-                 [org.clojure/clojure "1.6.0"]
+                 [org.clojure/clojure "1.7.0"]
                  [org.clojure/core.logic "0.8.10"]
 
                  ;; reasoners
@@ -62,10 +61,6 @@
    :1.8
    [:base
     {:dependencies [[org.clojure/clojure "1.8.0"]]}]
-
-   :1.7
-   [:base
-    {:dependencies [[org.clojure/clojure "1.7.0"]]}]
 
    }
 )
