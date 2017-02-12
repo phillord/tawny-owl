@@ -99,8 +99,8 @@
             ;; we don't need an ontology to create an owl-comment
             ;; but unfortunately it does trigger the default ontology hook.
             ;; so we a dubious side-step instead
-            c1 (o/owl-comment o "1")
-            c2 (o/owl-comment o "2")
+            c1 (o/owl-comment "1")
+            c2 (o/owl-comment "2")
             o2 (o/ontology :iri "http://iri"
                            :prefix "pre"
                            :annotation c1 c2)]
@@ -624,7 +624,7 @@ Assumes that fixture has been run"
 
 (deftest individual-annotation []
   (is (o/individual to "ind"
-                    :annotation (o/label to "annotation")))
+                    :annotation (o/label "annotation")))
   (is (o/individual to "ind"
                     :label "label"))
   (is (o/individual to "ind"
@@ -735,26 +735,26 @@ Assumes that fixture has been run"
 (deftest annotation
   (is
    (instance? org.semanticweb.owlapi.model.OWLAnnotation
-              (o/label to "hello")))
+              (o/label "hello")))
 
   (is
    (instance? org.semanticweb.owlapi.model.OWLAnnotation
-              (o/owl-comment to "hello")))
+              (o/owl-comment "hello")))
 
   (is
    (instance? org.semanticweb.owlapi.model.OWLAnnotation
-              (o/is-defined-by to "hello")))
+              (o/is-defined-by "hello")))
 
   (is
    (instance? org.semanticweb.owlapi.model.OWLAnnotation
-              (o/see-also to "hello")))
+              (o/see-also "hello")))
   (is
    (instance? org.semanticweb.owlapi.model.OWLAnnotation
-              (o/backward-compatible-with to "hello")))
+              (o/backward-compatible-with "hello")))
 
   (is
    (instance? org.semanticweb.owlapi.model.OWLAnnotation
-              (o/incompatible-with to "hello")))
+              (o/incompatible-with "hello")))
 
   (is
    (instance? org.semanticweb.owlapi.model.OWLAnnotationProperty
@@ -769,22 +769,28 @@ Assumes that fixture has been run"
 
 (deftest add-version-info
   (is
-   (#'o/add-version-info
-    to "bob")))
+   (#'o/add-version-info to
+    "bob")))
 
 (deftest add-annotation
   (is
    (not
     (nil? (#'o/add-annotation to
            (o/owl-class to "a")
-           (o/owl-comment to "comment"))))))
+           (o/owl-comment "comment"))))))
 
 (deftest add-ontology-annotation
   (is
    (not
     (nil? (#'o/add-ontology-annotation
            to
-           (list (o/owl-comment to "comment")))))))
+           (list (o/owl-comment "comment")))))))
+
+(deftest add-super-annotation
+  (is
+   (let [a (o/annotation-property to "a")
+         b (o/annotation-property to "b")]
+     (#'o/add-super-annotation to a b))))
 
 (deftest add-annotation2
   (is
@@ -793,7 +799,7 @@ Assumes that fixture has been run"
     (do
       (let [b (o/owl-class to "b")]
         (#'o/add-annotation to
-         b (list (o/label to "hello")))
+         b (list (o/label "hello")))
         (.getLiteral
          (.getValue
           (first
@@ -1156,7 +1162,7 @@ Assumes that fixture has been run"
   (is
    (instance?
     OWLAnnotation
-    (o/owl-comment to
+    (o/owl-comment
      (o/literal to "comment"
                  :type :RDF_PLAIN_LITERAL)))))
 
@@ -1353,7 +1359,7 @@ Assumes that fixture has been run"
             to a
             (o/annotate
              b
-             (o/label to "annotate")
+             (o/label "annotate")
              ))]
     (is
      (= 1 (count (.getAnnotations ax))))))
@@ -1363,7 +1369,7 @@ Assumes that fixture has been run"
         b (o/owl-class
            to "b"
            :super
-           (o/annotate a (o/label to "l")))
+           (o/annotate a (o/label "l")))
         axs (filter
              #(instance? org.semanticweb.owlapi.model.OWLSubClassOfAxiom %)
              (seq (.getAxioms to)))]
@@ -1389,7 +1395,7 @@ Assumes that fixture has been run"
                 to r
                 (o/annotate
                  s
-                 (o/label to "annotatin")))]
+                 (o/label "annotatin")))]
         (count (.getAnnotations ax))))))
 
 (deftest annotation-on-add-characteristics
@@ -1408,7 +1414,7 @@ Assumes that fixture has been run"
          ax (o/add-characteristics
              to r
              (o/annotate :functional
-                         (o/owl-comment to "f")))]
+                         (o/owl-comment "f")))]
      (= 1
         (count (.getAnnotations ax))))))
 
@@ -1420,7 +1426,6 @@ Assumes that fixture has been run"
              to i
              (o/annotate (o/is to d (o/literal to 10))
                          (o/owl-comment
-                          to
                           (o/owl-class to "f"))))]
      (= 1
         (count (.getAnnotations ax))))))
@@ -1443,4 +1448,4 @@ Assumes that fixture has been run"
                             (o/object-property to "r")
                             (o/owl-class to "A")
                             (o/owl-class to "B"))
-            (o/owl-comment to "c")))))
+            (o/owl-comment "c")))))

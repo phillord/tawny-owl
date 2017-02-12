@@ -40,7 +40,7 @@
             ont "R" :domain A :range B)
            C
            (o/owl-class
-            ont "C" :equivalent (o/only R B))]
+            ont "C" :equivalent (o/only ont R B))]
        (r/iequivalent-class? ont C (o/owl-thing))))))
 
 (deftest bottom

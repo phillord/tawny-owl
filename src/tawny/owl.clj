@@ -1104,16 +1104,19 @@ can be co-erced to an IRI"
      (annotation annotation-property
                  (.getOWLLiteral (owl-data-factory) literal language))))
 
-(defbdontfn add-super-annotation
-  "Adds a set of superproperties to the given subproperty."
-  [o subproperty superproperty]
-  (add-axiom
-   o
-   (.getOWLSubAnnotationPropertyOfAxiom
-    (owl-data-factory)
-    subproperty
-    (ensure-annotation-property superproperty)
-    (p/as-annotations superproperty))))
+(def ^:private add-super-annotation
+  "Adds a set of super annotation properties to the given sub annotation
+  property."
+  (broadcast-2
+   (fn add-super-annotation
+     [o subproperty superproperty]
+     (add-axiom
+      o
+      (.getOWLSubAnnotationPropertyOfAxiom
+       (owl-data-factory)
+       subproperty
+       (ensure-annotation-property superproperty)
+       (p/as-annotations superproperty))))))
 
 (def deprecated-add-sub-annotation
   "The same as add-super-annotation used to implement the old
@@ -1137,15 +1140,11 @@ add-sub-annotation functionality."
   iri-for-name. The function returned can take an optional ontology argument
   which will be used in this case."
   [annotation-property]
-  (fn annotator-pattern [& args]
-    (apply
-     default-ontology-maybe
-      (fn
-        ([o literal]
-           (annotation annotation-property literal))
-        ([o literal language]
-           (annotation annotation-property literal language)))
-      args)))
+  (fn annotator-pattern
+    ([literal]
+     (annotation annotation-property literal))
+    ([literal language]
+     (annotation annotation-property literal language))))
 
 (def label-property
   (.getRDFSLabel (owl-data-factory)))
@@ -1205,19 +1204,22 @@ add-sub-annotation functionality."
   "Returns a deprecated annotation."
   (annotator deprecated-property))
 
-(defbmontfn add-label
+(def ^:private add-label
   "Add labels to the named entities."
-  [o named-entity label]
-  (add-annotation
-   o
-   named-entity
-   [(tawny.owl/label o label)]))
+  (broadcast-2
+   (fn add-label
+     [o named-entity label]
+     (add-annotation
+      o
+      named-entity
+      (tawny.owl/label label)))))
 
-(defbmontfn add-comment
+(def ^:private add-comment
   "Add comments to the named entities."
-  [o named-entity comment]
-  (add-annotation o named-entity
-                  [(owl-comment o comment)]))
+  (broadcast-2
+   (fn add-comment
+     [o named-entity comment]
+     (add-annotation o named-entity (owl-comment comment)))))
 ;; #+end_src
 
 ;; ** Annotation Property Support
@@ -1357,23 +1359,6 @@ The ontology frame is optional."
   "Defines a new annotation property in the current ontology.
 See 'defclass' for more details on the syntax"
   'tawny.owl/annotation-property)
-
-(comment
-  (defmacro defaproperty
-    "Defines a new annotation property in the current ontology.
-See 'defclass' for more details on the syntax."
-    [property & frames]
-    (let [ontsplit (extract-ontology-frame frames)
-          ont (:ontology ontsplit)
-          frames (:frames ontsplit)]
-      `(let [property-name# (name '~property)
-             property#
-             (tawny.owl/annotation-property
-              ~ont
-              property-name#
-              ~@frames)]
-         (intern-owl ~property property#)))))
-
 ;; #+end_src
 
 ;; * Ontology Manipulation
@@ -1491,21 +1476,19 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
   "Adds a comment annotation to the ontology"
   [o s]
   (if s
-    (add-ontology-annotation o (owl-comment o s))))
+    (add-ontology-annotation o (owl-comment s))))
 
 (defn- add-see-also
   "Adds a see also annotation to the ontology"
   [o s]
   (if s
-    (add-ontology-annotation o (see-also o s))))
+    (add-ontology-annotation o (see-also s))))
 
 (defn- add-version-info
   "Adds a version info annotation to the ontology."
   [o v]
   (if v
-    ;; ontology annotation is a default ontology function, so need to pass
-    ;; ontology twice even if this makes little sense!
-    (add-ontology-annotation o (version-info o v))))
+    (add-ontology-annotation o (version-info v))))
 
 ;; owl imports
 (defn owl-import

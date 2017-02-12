@@ -335,4 +335,5 @@ This is designed for repl uses with lein-shorthand."
   (use 'tawny.repl)
   (use 'tawny.reasoner)
   (use 'tawny.render)
-  (use 'tawny.pattern))
+  (use 'tawny.pattern)
+  (use 'tawny.print))
