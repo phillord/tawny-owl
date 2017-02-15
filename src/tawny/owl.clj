@@ -2084,19 +2084,21 @@ opposite of this."
               (ensure-class range)
               (p/as-annotations range))))
 
-(defbdontfn add-inverse
+(def
+  add-inverse
   "Adds all the entities in inverselist as inverses to a property."
-  [o property inverse]
-  (add-axiom o
-             (.getOWLInverseObjectPropertiesAxiom
-              (owl-data-factory)
-              (ensure-object-property property)
-              (ensure-object-property inverse)
-              (p/as-annotations inverse))))
+  (broadcast-2
+   (fn add-inverse [o property inverse]
+     (add-axiom o
+                (.getOWLInverseObjectPropertiesAxiom
+                 (owl-data-factory)
+                 (ensure-object-property property)
+                 (ensure-object-property inverse)
+                 (p/as-annotations inverse))))))
 
-(defmontfn inverse
+(defn inverse
   "Creates an object inverse of expression."
-  [o property]
+  [property]
   (.getOWLObjectInverseOf
    (owl-data-factory)
    (ensure-object-property property)))

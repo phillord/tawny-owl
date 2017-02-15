@@ -1422,3 +1422,9 @@ Assumes that fixture has been run"
               (o/owl-class to "A")
               (o/owl-class to "B"))
             (o/owl-comment "c")))))
+
+(deftest inverse
+  (is
+   (instance?
+    org.semanticweb.owlapi.model.OWLObjectInverseOf
+    (o/inverse (o/object-property to "p")))))
