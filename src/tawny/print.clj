@@ -26,10 +26,10 @@
     OWLOntology
     OWLNamedObject
     OWLNaryBooleanClassExpression
-    OWLObjectRestriction]
+    OWLQuantifiedRestriction]
    [java.io Writer]))
 
-(defn- shorten-iri [iri]
+(defn- shorten-iri [^IRI iri]
   (str (.getFragment iri)))
 
 (defmethod print-method IRI [o ^Writer w]
@@ -38,9 +38,9 @@
 (defn- name-for-class [o]
   (some
    (fn [clazz]
-     (when (isa? (.getClass o) clazz)
+     (when (isa? (.getClass ^Object o) clazz)
        (.substring
-        (.getSimpleName clazz)
+        (.getSimpleName ^Class clazz)
         3)))
    [org.semanticweb.owlapi.model.OWLObjectInverseOf
     org.semanticweb.owlapi.model.OWLDataHasValue
@@ -75,13 +75,71 @@
     org.semanticweb.owlapi.model.OWLIndividual
     org.semanticweb.owlapi.model.OWLProperty
     org.semanticweb.owlapi.model.OWLClass
-    org.semanticweb.owlapi.model.OWLOntology]))
+    org.semanticweb.owlapi.model.OWLOntology
+
+    org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom
+    org.semanticweb.owlapi.model.OWLAnnotationAxiom
+    org.semanticweb.owlapi.model.OWLAnnotationPropertyDomainAxiom
+    org.semanticweb.owlapi.model.OWLAnnotationPropertyRangeAxiom
+    org.semanticweb.owlapi.model.OWLAsymmetricObjectPropertyAxiom
+    org.semanticweb.owlapi.model.OWLClassAssertionAxiom
+    org.semanticweb.owlapi.model.OWLClassAxiom
+    org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom
+    org.semanticweb.owlapi.model.OWLDataPropertyAxiom
+    org.semanticweb.owlapi.model.OWLDataPropertyCharacteristicAxiom
+    org.semanticweb.owlapi.model.OWLDataPropertyDomainAxiom
+    org.semanticweb.owlapi.model.OWLDataPropertyRangeAxiom
+    org.semanticweb.owlapi.model.OWLDatatypeDefinitionAxiom
+    org.semanticweb.owlapi.model.OWLDeclarationAxiom
+    org.semanticweb.owlapi.model.OWLDifferentIndividualsAxiom
+    org.semanticweb.owlapi.model.OWLDisjointClassesAxiom
+    org.semanticweb.owlapi.model.OWLDisjointDataPropertiesAxiom
+    org.semanticweb.owlapi.model.OWLDisjointObjectPropertiesAxiom
+    org.semanticweb.owlapi.model.OWLDisjointUnionAxiom
+    org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom
+    org.semanticweb.owlapi.model.OWLEquivalentDataPropertiesAxiom
+    org.semanticweb.owlapi.model.OWLEquivalentObjectPropertiesAxiom
+    org.semanticweb.owlapi.model.OWLFunctionalDataPropertyAxiom
+    org.semanticweb.owlapi.model.OWLFunctionalObjectPropertyAxiom
+    org.semanticweb.owlapi.model.OWLHasKeyAxiom
+    org.semanticweb.owlapi.model.OWLIndividualAxiom
+    org.semanticweb.owlapi.model.OWLInverseFunctionalObjectPropertyAxiom
+    org.semanticweb.owlapi.model.OWLInverseObjectPropertiesAxiom
+    org.semanticweb.owlapi.model.OWLIrreflexiveObjectPropertyAxiom
+    org.semanticweb.owlapi.model.OWLLogicalAxiom
+    org.semanticweb.owlapi.model.OWLNaryAxiom
+    org.semanticweb.owlapi.model.OWLNaryClassAxiom
+    org.semanticweb.owlapi.model.OWLNaryIndividualAxiom
+    org.semanticweb.owlapi.model.OWLNaryPropertyAxiom
+    org.semanticweb.owlapi.model.OWLNegativeDataPropertyAssertionAxiom
+    org.semanticweb.owlapi.model.OWLNegativeObjectPropertyAssertionAxiom
+    org.semanticweb.owlapi.model.OWLObjectPropertyAssertionAxiom
+    org.semanticweb.owlapi.model.OWLObjectPropertyAxiom
+    org.semanticweb.owlapi.model.OWLObjectPropertyCharacteristicAxiom
+    org.semanticweb.owlapi.model.OWLObjectPropertyDomainAxiom
+    org.semanticweb.owlapi.model.OWLObjectPropertyRangeAxiom
+    org.semanticweb.owlapi.model.OWLPropertyAssertionAxiom
+    org.semanticweb.owlapi.model.OWLPropertyAxiom
+    org.semanticweb.owlapi.model.OWLPropertyDomainAxiom
+    org.semanticweb.owlapi.model.OWLPropertyRangeAxiom
+    org.semanticweb.owlapi.model.OWLReflexiveObjectPropertyAxiom
+    org.semanticweb.owlapi.model.OWLSameIndividualAxiom
+    org.semanticweb.owlapi.model.OWLSubAnnotationPropertyOfAxiom
+    org.semanticweb.owlapi.model.OWLSubClassOfAxiom
+    org.semanticweb.owlapi.model.OWLSubDataPropertyOfAxiom
+    org.semanticweb.owlapi.model.OWLSubObjectPropertyOfAxiom
+    org.semanticweb.owlapi.model.OWLSubPropertyAxiom
+    org.semanticweb.owlapi.model.OWLSubPropertyChainOfAxiom
+    org.semanticweb.owlapi.model.OWLSymmetricObjectPropertyAxiom
+    org.semanticweb.owlapi.model.OWLTransitiveObjectPropertyAxiom
+    org.semanticweb.owlapi.model.OWLUnaryPropertyAxiom
+    ]))
 
 (defn- join-seq [s]
   (clojure.string/join " " (map pr-str s)))
 
 ;; (remove-method print-method OWLObject)
-(defmethod print-method OWLObject [o ^Writer w]
+(defmethod print-method OWLObject [^OWLObject o ^Writer w]
   (.write
    w
    (format
@@ -97,12 +155,14 @@
        (.getSignature o))))
     "]")))
 
+
+
 (defn- print-short [o]
   (if (instance? OWLNamedObject o)
     (shorten-iri (.getIRI ^OWLNamedObject o))
     (pr-str o)))
 
-(defmethod print-method OWLObjectRestriction [o ^Writer w]
+(defmethod print-method OWLQuantifiedRestriction [^OWLQuantifiedRestriction o ^Writer w]
   (.write
    w
    (format
@@ -112,7 +172,8 @@
     (print-short (.getProperty o))
     (print-short (.getFiller o)))))
 
-(defmethod print-method OWLNaryBooleanClassExpression [o ^Writer w]
+(defmethod print-method OWLNaryBooleanClassExpression
+  [^OWLNaryBooleanClassExpression o ^Writer w]
   (.write
    w
    (format
@@ -126,7 +187,7 @@
       (.getOperands o)))
     "]")))
 
-(defmethod print-method OWLNamedObject [o ^Writer w]
+(defmethod print-method OWLNamedObject [^OWLNamedObject o ^Writer w]
   (.write
    w
    (format
@@ -136,7 +197,7 @@
     (shorten-iri
      (.getIRI o)))))
 
-(defmethod print-method OWLOntology [o ^Writer w]
+(defmethod print-method OWLOntology [^OWLOntology o ^Writer w]
   (.write
    w
    (format

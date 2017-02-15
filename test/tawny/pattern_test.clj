@@ -121,7 +121,7 @@
          c (o/owl-class to "c")]
      (p/as-facet to o c)
      (=
-      (list (o/owl-some to o c))
+      (list (o/owl-some o c))
       (p/facet to c)))))
 
 (deftest pattern-annotator

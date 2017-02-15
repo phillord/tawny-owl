@@ -109,7 +109,7 @@
   vowl-data-factory (atom nil))
 
 (defn ^OWLDataFactory owl-data-factory
-  "Returns the main factory for all other objects."
+ "Returns the main factory for all other objects."
   []
   (when-not @vowl-data-factory
     (reset! vowl-data-factory
@@ -724,12 +724,12 @@ default ontology."
 
 (defn broadcast-2 [f]
   (fn broadcasting-2
-    ([x a]
-     (if (not (sequential? a))
-       (f x a)
-       (broadcast-full 2 f (list x a))))
     ([x a b]
-     (broadcast-call 2 f x a b))
+     (if (not
+          (or (sequential? a)
+              (sequential? b)))
+       (f x a b)
+       (broadcast-full 2 f (list x a b))))
     ([x a b c]
      (broadcast-call 2 x a b c))
     ([x a b c d]
@@ -833,6 +833,20 @@ Uses the default ontology if not supplied and throws an IllegalStateException
      ~@body))
 
 
+;; #+end_src
+
+;; * OWL (No)thing
+
+;; #+begin_src clojure
+(defn owl-thing
+  "Returns OWL thing."
+  []
+  (.getOWLThing (owl-data-factory)))
+
+(defn owl-nothing
+  "Returns OWL nothing."
+  []
+  (.getOWLNothing (owl-data-factory)))
 ;; #+end_src
 
 ;; * Axiom mainpulation
@@ -1739,12 +1753,12 @@ known ontologies with their import clojure. For a string convert to an IRI
 using the current ontology rules, and check again. Finally, check convert to
 an IRI with no transformation. nil is returned when the result is not clear.
 "
-  [o entity]
+  [entity]
   (let [entity (p/as-entity entity)]
     (cond
      ;; it's a collection -- find the first entity
      (coll? entity)
-     (some (partial guess-type o) entity)
+     (some guess-type entity)
      ;; return if individual, class, datatype
      (t/class-exp? entity)
      ::class
@@ -1756,20 +1770,10 @@ an IRI with no transformation. nil is returned when the result is not clear.
      ::data-property
      (t/data-range? entity)
      ::data
-     ;; up to this point, o can be nil -- after this point, we need to know
-     ;; the ontology we are searching in.
-     ;; if an IRI, see if it is the current ontology
-     (t/iri? entity)
-     (when o
-       (guess-type o (entity-for-iri o entity)))
      ;; keyword -- these are builtin OWL2Datatypes
      (and (keyword? entity)
           (get owl2datatypes entity))
      ::data
-     ;; string name in current ontology?
-     (string? entity)
-     (when o
-       (guess-type o (entity-for-string o entity)))
      ;; owl individuals tell us nothing, cause we still don't know!
      (t/individual? entity)
      nil
@@ -1779,38 +1783,37 @@ an IRI with no transformation. nil is returned when the result is not clear.
      ;; from a later argument.
      (nil? entity)
      nil
+     ;; This is to catch old calls which used to pass the default ontology
+     (instance? OWLOntology entity)
+     (throw (IllegalArgumentException.
+             (str "Ontology is no longer a valid argument at this position.")))
      ;; probably it's something crazy here.
      :default
      (throw (IllegalArgumentException.
              (str "Cannot guess this type:" entity))))))
 
 (defn guess-individual-literal
-  [o entity]
+  [entity]
   (let [entity (p/as-entity entity)]
     (cond
      (coll? entity)
-     (some (partial guess-individual-literal o) entity)
+     (some guess-individual-literal entity)
      (t/individual? entity)
      ::individual
      (t/literal? entity)
      ::literal
-     (t/iri? entity)
-     (guess-individual-literal o
-                               (entity-for-iri o entity))
-     (string? entity)
-     (if-let [owlentity (entity-for-string o entity)]
-       (guess-individual-literal
-        o owlentity)
-       ::literal)
      (number? entity)
      ::literal
      (or (= true entity)
          (= false entity))
      ::literal
+     (string? entity)
+     ::literal
      :default
      (throw (IllegalArgumentException.
              (str "Cannot tell if this is individual or literal:" entity))))))
 ;; #+end_src
+
 
 ;; ** Ensure
 
@@ -1863,7 +1866,7 @@ else if clz is a OWLClassExpression add that."
   ^OWLDataProperty ensure-data-property
   "Ensures that 'property' is an data property,
 converting it from a string or IRI if necessary."
-  [o property]
+  [property]
   (let [property (p/as-entity property)]
     (cond
      (t/data-prop-exp? property)
@@ -1871,10 +1874,7 @@ converting it from a string or IRI if necessary."
      (t/iri? property)
      (.getOWLDataProperty
       (owl-data-factory) property)
-     (instance? String property)
-     (ensure-data-property o
-                           (iri-for-name o property))
-     :default
+    :default
      (throw (IllegalArgumentException.
              (format "Expecting an OWL data property: %s" property))))))
 
@@ -1885,24 +1885,24 @@ converting it from a string or IRI if necessary."
 If prop is ambiguous (for example, a string or IRI that whose type has not
 been previously defined) this will create an OWLObjectProperty rather than
 an OWLDataProperty"
-  [o prop]
+  [prop]
   (let [prop (p/as-entity prop)
         type
         (or
           ;; guess the type -- if we can't then object-property it's because
           ;; we don't know and not because it's illegal
-          (guess-type o prop)
+          (guess-type prop)
           ::object-property)]
     (case type
       ::object-property
       (ensure-object-property prop)
       ::data-property
-      (ensure-data-property o prop))))
+      (ensure-data-property prop))))
 
 (defn- ^OWLDatatype ensure-datatype
   "Ensure that 'datatype' is an OWLDatatype. Will convert from an keyword for
   builtin datatypes."
-  [o datatype]
+  [datatype]
   (let [datatype (p/as-entity datatype)]
     (cond
      (t/data-type? datatype)
@@ -1911,7 +1911,7 @@ an OWLDataProperty"
      datatype
      (keyword? datatype)
      (if-let [d (get owl2datatypes datatype)]
-       (ensure-datatype o d)
+       (ensure-datatype d)
        (throw (IllegalArgumentException.
                (str "Was expecting a datatype. Got " datatype "."))))
      (instance? IRI datatype)
@@ -1923,18 +1923,18 @@ an OWLDataProperty"
 (defn- ^org.semanticweb.owlapi.model.OWLDataRange ensure-data-range
   "Ensure that 'data-range' is a OWLDataRange either directly or
 as a datatype."
-  [o data-range]
+  [data-range]
   (cond
    (t/data-range? data-range)
    data-range
    :default
-   (ensure-datatype o data-range)))
+   (ensure-datatype data-range)))
 
 (defn- ^OWLIndividual ensure-individual
   "Returns an INDIVIDUAL.
 If INDIVIDUAL is an OWLIndividual return individual, else
 interpret this as a string and create a new OWLIndividual."
-  [o individual]
+  [individual]
   (let [individual (p/as-entity individual)]
     (cond
       (t/individual? individual)
@@ -1942,8 +1942,6 @@ interpret this as a string and create a new OWLIndividual."
       (t/iri? individual)
       (.getOWLNamedIndividual (owl-data-factory)
                               individual)
-      (string? individual)
-      (ensure-individual o (iri-for-name o individual))
       :default
       (throw (IllegalArgumentException.
               (str "Expecting an Individual. Got: " individual))))))
@@ -2039,7 +2037,7 @@ opposite of this."
   [o class propertylist]
   ;; nil or empty list safe
   (if (seq propertylist)
-    (let [type (guess-type o propertylist)
+    (let [type (guess-type propertylist)
           propertylist
           (cond
            (isa? type ::object)
@@ -2340,16 +2338,6 @@ value for each frame."
 (defentity defoproperty
   "Defines a new object property in the current ontology."
   'tawny.owl/object-property)
-
-(comment
-  (defmacro defoproperty
-    "Defines a new object property in the current ontology."
-    [property & frames]
-    `(let [property-name# (name '~property)
-           property# (tawny.owl/object-property property-name# ~@frames)]
-       (intern-owl ~property property#))))
-
-
 ;; #+end_src
 
 ;; * Random guess-type stuff
@@ -2358,18 +2346,64 @@ value for each frame."
 
 ;; #+begin_src clojure
 
-(defmontfn
+(defn
   guess-type-args
   {:doc  "Broadcasting version of guess-type"
    :private true}
-  [o & args]
-  (guess-type o args))
+  ;; unwind to avoid variadic args for the most common calls.
+  ([a]
+   (guess-type a))
+  ([a b]
+   (or
+    (guess-type a)
+    (guess-type b)))
+  ([a b c]
+   (or
+    (guess-type a)
+    (guess-type b)
+    (guess-type c)))
+  ([a b c d]
+   (or
+    (guess-type a)
+    (guess-type b)
+    (guess-type c)
+    (guess-type d)))
+  ([a b c d & args]
+   (or
+    (guess-type a)
+    (guess-type b)
+    (guess-type c)
+    (guess-type d)
+    ;; guess-type already copes with collections
+    (guess-type args))))
 
-(defmontfn guess-individual-literal-args
+(defn guess-individual-literal-args
   {:doc "Broadcasting version of guess-individual-literal"
    :private true}
-  [o & args]
-  (guess-individual-literal o args))
+  ([a]
+   (guess-individual-literal a))
+  ([a b]
+   (or
+    (guess-individual-literal a)
+    (guess-individual-literal b)))
+  ([a b c]
+   (or
+    (guess-individual-literal a)
+    (guess-individual-literal b)
+    (guess-individual-literal c)))
+  ([a b c d]
+   (or
+    (guess-individual-literal a)
+    (guess-individual-literal b)
+    (guess-individual-literal c)
+    (guess-individual-literal d)))
+  ([a b c d & args]
+   (or
+    (guess-individual-literal a)
+    (guess-individual-literal b)
+    (guess-individual-literal c)
+    (guess-individual-literal d)
+    (guess-individual-literal args))))
 ;; #+end_src
 
 ;; * Restriction Overloading
@@ -2440,25 +2474,23 @@ data ranges."
 ;; use declare here because I just don't want to owl-not later
 (declare fact-not)
 
-(defmontfn owl-not
+(defn owl-not
   "Returns a complement of restriction or negative property assertion axiom."
-  ([o entity]
-     (owl-not-one o entity))
-  ([o property entity]
-     (fact-not o property entity)))
+  ([entity]
+     (owl-not-one entity))
+  ([property entity]
+     (fact-not property entity)))
 
 (defn guess-type-error
   "Throws an exception always"
   [& args]
   (throw (IllegalArgumentException.
           (str "Unable to determine the type of: " args))))
-
 ;; #+end_src
 
 ;; ** Nil error methods
 
 ;; #+begin_src clojure
-
 (defmethod owl-some nil [& rest]
   (apply guess-type-error rest))
 
@@ -2504,35 +2536,35 @@ data ranges."
 ;; "long cuts" for consistency with some
 (def owl-only #'only)
 
-(defbmontfn object-some
-  {:doc "Returns an OWL some values from restriction."
-   :arglists '([property & clazzes] [ontology property & clazzes])}
-  [o property class]
-  (.getOWLObjectSomeValuesFrom
-   (owl-data-factory)
-   (ensure-object-property property)
-   (ensure-class class)))
+(def
+  ^{:doc "Returns an OWL some values from restriction."
+    :arglists '([property & clazzes] [ontology property & clazzes])}
+  object-some
+  (broadcast
+   (fn object-some [property class]
+     (.getOWLObjectSomeValuesFrom
+      (owl-data-factory)
+      (ensure-object-property property)
+      (ensure-class class)))))
 
-;; use add method because we want object-some to have independent life!
-(defmethod owl-some ::object [& rest]
-  (apply object-some rest))
+(util/defmethodf owl-some ::object object-some)
 
-(defbmontfn object-only
-  {:doc "Returns an OWL all values from restriction."
-   :arglists '([property & clazzes] [ontology property & clazzes])}
-  [o property class]
-  (.getOWLObjectAllValuesFrom
-   (owl-data-factory)
-   (ensure-object-property property)
-   (ensure-class class)))
+(def ^{:doc "Returns an OWL all values from restriction."
+       :arglists '([property & clazzes] [ontology property & clazzes])}
+  object-only
+  (broadcast
+   (fn object-only [property class]
+     (.getOWLObjectAllValuesFrom
+      (owl-data-factory)
+      (ensure-object-property property)
+      (ensure-class class)))))
 
-(defmethod only ::object [& rest]
-  (apply object-only rest))
+(util/defmethodf only ::object object-only)
 
 ;; union, intersection
-(defmontfn object-and
+(defn object-and
   "Returns an OWL intersection of restriction."
-  [o & classes]
+  [& classes]
   (let [classes (flatten classes)]
     (when (> 1 (count classes))
       (throw (IllegalArgumentException. "owl-and must have at least two classes")))
@@ -2545,13 +2577,11 @@ data ranges."
        ;; flatten list for things like owl-some which return lists
        classes)))))
 
-;; add to multi method
-(defmethod owl-and ::object [& rest]
-  (apply object-and rest))
+(util/defmethodf owl-and ::object object-and)
 
-(defmontfn object-or
+(defn object-or
   "Returns an OWL union of restriction."
-  [o & classes]
+  [& classes]
   (let [classes (flatten classes)]
     (when (> 1 (count classes))
       (throw (IllegalArgumentException. "owl-or must have at least two classes")))
@@ -2562,121 +2592,92 @@ data ranges."
       (util/domap #(ensure-class %)
                   (flatten classes))))))
 
-(defmethod owl-or ::object [& rest]
-  (apply object-or rest))
+(util/defmethodf owl-or ::object object-or)
 
 ;; lots of restrictions return a list which can be of size one. so all these
 ;; functions take a list but ensure that it is of size one.
-(defmontfn object-not
+(defn object-not
   "Returns an OWL complement of restriction."
-  [o & class]
+  [& class]
   {:pre [(= 1
             (count (flatten class)))]}
   (.getOWLObjectComplementOf
    (owl-data-factory)
    (ensure-class (first (flatten class)))))
 
-(defmethod owl-not-one ::object [& rest]
-  (apply object-not rest))
+(util/defmethodf owl-not-one ::object object-not)
 
-(defmontfn object-some-only
+(defn object-some-only
   "Returns an restriction combines the OWL some values from and
 all values from restrictions."
-  [o property & classes]
+  [property & classes]
   (list
-   (apply
-    object-some
-    o
-    property classes)
-   (object-only o property
-                (apply object-or o classes))))
+   (object-some property classes)
+   (object-only property
+                (object-or classes))))
 
-(defmethod some-only ::object [& rest]
-  (apply object-some-only rest))
+(util/defmethodf some-only ::object object-some-only)
 
-;; cardinality
-(defmacro with-optional-class
-  "Calls form as is, or adds n to it iff n is not nil.
-n is evaluated only once, so can have side effects."
-  [o n form]
-  (let [nn (gensym "n")]
-    `(let [~nn (first (flatten ~n))]
-       (if (nil? ~nn)
-         ~form
-         ~(concat
-           form
-           `((ensure-class ~nn)))))))
-
-
-(defmontfn object-at-least
+(defn object-at-least
   "Returns an OWL at-least cardinality restriction."
-  [o cardinality property & class]
-  {:pre [(> 2
-            (count (flatten class)))]}
-  ;; we only take a single class here, but it could be in any form because of
-  ;; the broadcasting functions
-  (with-optional-class
-    o class
-    (.getOWLObjectMinCardinality
-     (owl-data-factory) cardinality
-     (ensure-object-property property))))
+  ([cardinality property]
+   (object-at-least cardinality property (owl-thing)))
+  ([cardinality property class]
+   (.getOWLObjectMinCardinality
+    (owl-data-factory) cardinality
+    (ensure-object-property property)
+    (ensure-class class))))
 
-(defmethod at-least ::object [& rest]
-  (apply object-at-least rest))
+(util/defmethodf at-least ::object object-at-least)
 
-(defmontfn object-at-most
+(defn object-at-most
   "Returns an OWL at-most cardinality restriction."
-  [o cardinality property & class]
-  {:pre [(> 2
-            (count (flatten class)))]}
-  (with-optional-class o class
-    (.getOWLObjectMaxCardinality
-     (owl-data-factory) cardinality
-     (ensure-object-property property))))
+  ([cardinality property]
+   (object-at-most cardinality property (owl-thing)))
+  ([cardinality property class]
+   (.getOWLObjectMaxCardinality
+    (owl-data-factory) cardinality
+    (ensure-object-property property)
+    (ensure-class class))))
 
-(defmethod at-most ::object [& rest]
-  (apply object-at-most rest))
+(util/defmethodf at-most ::object object-at-most)
 
-(defmontfn object-exactly
+(defn object-exactly
   "Returns an OWL exact cardinality restriction."
-  [o cardinality property & class]
-  {:pre [(and
-          (number? cardinality)
-          (> 2
-             (count (flatten class))))]}
-  (with-optional-class o class
-    (.getOWLObjectExactCardinality
-     (owl-data-factory) cardinality
-     (ensure-object-property property))))
+  ([cardinality property]
+   (object-exactly cardinality property nil))
+  ([cardinality property class]
+   (.getOWLObjectExactCardinality
+    (owl-data-factory) cardinality
+    (ensure-object-property property)
+    (ensure-class class))))
 
-(defmethod exactly ::object [& rest]
-  (apply object-exactly rest))
+(util/defmethodf exactly ::object object-exactly)
 
-(defmontfn object-oneof
+(defn object-oneof
   "Returns an OWL one of property restriction."
-  [o & individuals]
+  [& individuals]
   (.getOWLObjectOneOf
    (owl-data-factory)
    (java.util.HashSet.
-    (util/domap (partial ensure-individual o)
+    (util/domap ensure-individual
                 (flatten individuals)))))
 
-(defmethod oneof ::individual [& rest]
-  (apply object-oneof rest))
+(util/defmethodf oneof ::individual object-oneof)
 
-(defmontfn object-has-value
+(def object-has-value
   "Adds an OWL has-value restriction."
-  [o property individual]
-  (.getOWLObjectHasValue (owl-data-factory)
-                         (ensure-object-property property)
-                         (ensure-individual o individual)))
+  (broadcast
+   (fn object-has-value [property individual]
+     (.getOWLObjectHasValue (owl-data-factory)
+                            (ensure-object-property property)
+                            (ensure-individual individual)))))
 
-(defmethod has-value ::object [& rest]
-  (apply object-has-value rest))
+(util/defmethodf has-value ::object object-has-value)
 
-(defmontfn has-self
+(defn has-self
   "Returns an OWL has self restriction."
-  [o property]
+  [property]
   (.getOWLObjectHasSelf (owl-data-factory)
                         (ensure-object-property property)))
 ;; #+end_src
@@ -2747,17 +2748,6 @@ by a keyword :subclass, :equivalent, :annotation, :name, :comment,
 combination of the two. The class object is stored in a var called classname."
   'tawny.owl/owl-class)
 
-(comment
-  (defmacro defclass
-    "Define a new class. Accepts a set number of frames, each marked
-by a keyword :subclass, :equivalent, :annotation, :name, :comment,
-:label or :disjoint. Each frame can contain an item, a list of items or any
-combination of the two. The class object is stored in a var called classname."
-    [classname & frames]
-    `(let [string-name# (name '~classname)
-           class# (tawny.owl/owl-class string-name# ~@frames)]
-       (intern-owl ~classname class#))))
-
 (defn disjoint-classes
   "Makes all elements in list disjoint.
 All arguments must of an instance of OWLClassExpression"
@@ -2799,40 +2789,44 @@ All arguments must of an instance of OWLClassExpression"
 ;; * Individuals
 
 ;; #+begin_src clojure
-(defbdontfn add-type
-  {:doc "Adds CLAZZES as a type to individual to current ontology
+(def
+  ^{:doc "Adds CLAZZES as a type to individual to current ontology
 or ONTOLOGY if present."
-   :arglists '([individual & clazzes] [o individual & clazzes])}
-  [o individual clazz]
-  (add-axiom
-   o
-   (.getOWLClassAssertionAxiom
-    (owl-data-factory)
-    (ensure-class clazz)
-    (p/as-entity individual)
-    (p/as-annotations individual))))
+    :arglists '([individual & clazzes] [o individual & clazzes])}
+  add-type
+  (broadcast-2
+   (fn add-type [o individual clazz]
+     (add-axiom
+      o
+      (.getOWLClassAssertionAxiom
+       (owl-data-factory)
+       (ensure-class clazz)
+       (p/as-entity individual)
+       (p/as-annotations individual))))))
 
-(defbdontfn add-fact
-  {:doc "Add FACTS to an INDIVIDUAL in the current ontology or
+(def
+  ^{:doc "Add FACTS to an INDIVIDUAL in the current ontology or
   ONTOLOGY if present. Facts are produced with `fact' and `fact-not'."
    :arglists '([individual & facts] [ontology individual & facts])}
-  [o individual fact]
-  (add-axiom
-   o
-   ((p/as-entity fact)
-    individual
-    (p/as-annotations fact))))
+  add-fact
+  (broadcast-2
+   (fn [o individual fact]
+     (add-axiom
+      o
+      ((p/as-entity fact)
+       individual
+       (p/as-annotations fact))))))
 
-(defmulti get-fact guess-type-args)
-(defmulti get-fact-not guess-type-args)
+(defmulti get-fact #'guess-type-args)
+(defmulti get-fact-not #'guess-type-args)
 
-(defmontfn fact
+(defn fact
   "Returns a fact assertion a relation by PROPERTY which can be
 either an object or data property toward either an individual or literal
 TO. This is the same as the function `is'."
-  [o property to]
+  [property to]
   (fn fact [from annotations]
-    (get-fact o property from to annotations)))
+    (get-fact property from to annotations)))
 
 (def ^{:doc "Returns a fact assertion a relation by PROPERTY which can be
 either an object or data property toward either an individual or literal
@@ -2840,16 +2834,16 @@ TO"}
   is
   fact)
 
-(defmontfn fact-not
+(defn fact-not
   "Returns a fact asserting the lack of a relationship along PROPERTY
 toward an either an individual or literal TO."
-  [o property to]
+  [property to]
   (fn fact-not [from annotations]
-    (get-fact-not o property from to annotations)))
+    (get-fact-not property from to annotations)))
 
-(defmontfn object-get-fact
+(defn object-get-fact
   "Returns an OWL Object property assertion axiom."
-  [_ property from to annotations]
+  [property from to annotations]
   {:pre [(say
           (t/obj-prop-exp? property)
           (t/individual? from)
@@ -2858,12 +2852,11 @@ toward an either an individual or literal TO."
    (owl-data-factory)
    property from to annotations))
 
-(defmethod get-fact ::object [& rest]
-  (apply object-get-fact rest))
+(util/defmethodf get-fact ::object object-get-fact)
 
-(defmontfn object-get-fact-not
+(defn object-get-fact-not
   "Returns a negative OWL Object property assertion axiom."
-  [_ property from to annotations]
+  [property from to annotations]
   {:pre [(say
           (t/obj-prop-exp? property)
           (t/individual? from)
@@ -2872,8 +2865,7 @@ toward an either an individual or literal TO."
    (owl-data-factory)
    property from to annotations))
 
-(defmethod get-fact-not ::object [& rest]
-  (apply object-get-fact-not rest))
+(util/defmethodf get-fact-not ::object object-get-fact-not)
 
 (defn
   add-same
@@ -2920,7 +2912,11 @@ or to ONTOLOGY if present."
 (defdontfn individual-explicit
   "Returns a new individual."
   [o name frames]
-  (let [individual (ensure-individual o name)]
+  (let [individual
+        (ensure-individual
+         (if (string? name)
+           (iri-for-name o name)
+           name))]
     ;; add the individual
     (when (.isNamed individual)
       (add-axiom o (.getOWLDeclarationAxiom
@@ -2951,13 +2947,6 @@ or to ONTOLOGY if present."
   []
   (.getOWLAnonymousIndividual (owl-data-factory)))
 
-(comment
-  (defmacro defindividual
-    "Declare a new individual."
-    [individualname & frames]
-    `(let [string-name# (name '~individualname)
-           individual# (tawny.owl/individual string-name# ~@frames)]
-       (intern-owl ~individualname individual#))))
 ;; #+end_src
 
 ;; * OWL Data
@@ -2989,7 +2978,7 @@ any structure and may also be a var. See also 'as-subclasses'."
   (let [entities
         (map var-get-maybe (flatten entities))]
     (case
-        (apply guess-type-args o
+        (apply guess-type-args
                (map var-get-maybe
                     (flatten
                      entities)))
@@ -3008,7 +2997,7 @@ any structure and may also be a var. See also 'as-subclasses'."
   (let [entities
         (map var-get-maybe (flatten entities))]
     (case
-        (apply guess-type-args o
+        (apply guess-type-args
                (map var-get-maybe
                     (flatten
                      entities)))
@@ -3052,7 +3041,7 @@ The first item may be an ontology, followed by options.
       (disjoint-classes o subclasses))
     (when (:cover options)
       (add-equivalent o superclass
-                      (owl-or o subclasses)))))
+                      (owl-or subclasses)))))
 
 (defdontfn
   as-disjoint-subclasses
@@ -3167,7 +3156,7 @@ direct or indirect superclass of itself."
   "Returns t iff entities (classes or properties) are asserted to be
   disjoint."
   [^OWLOntology o a b]
-  (let [type (guess-type-args o a b)]
+  (let [type (guess-type-args a b)]
     (cond
      (isa? type ::class)
      (contains?
@@ -3186,7 +3175,7 @@ direct or indirect superclass of itself."
 (defdontfn equivalent?
   "Returns t iff classes are asserted to be equivalent."
   [^OWLOntology o a b]
-  (let [type (guess-type-args o a b)]
+  (let [type (guess-type-args a b)]
     (cond
      (isa? type ::class)
      (contains?
@@ -3210,20 +3199,20 @@ direct or indirect superclass of itself."
   "Return all direct superproperties of property."
   [^OWLOntology o property]
   (EntitySearcher/getSuperProperties
-   (ensure-property o property) o))
+   (ensure-property property) o))
 
 (defdontfn superproperties
   "Return all superproperties of a property."
   [o property]
   (recurse-ontology-tree
    o direct-superproperties
-   (ensure-property o property)))
+   (ensure-property property)))
 
 (defdontfn superproperty?
   "Return true if superproperty is a superproperty of property."
   [o property superproperty]
   (some #(.equals
-          (ensure-property o superproperty) %)
+          (ensure-property superproperty) %)
         (superproperties o property)))
 
 (defdontfn direct-subproperties
@@ -3231,20 +3220,20 @@ direct or indirect superclass of itself."
   [^OWLOntology o
    property]
   (EntitySearcher/getSubProperties
-   (ensure-property o property) o))
+   (ensure-property property) o))
 
 (defdontfn subproperties
   "Returns all subproperties of property."
   [o property]
   (recurse-ontology-tree
    o direct-subproperties
-   (ensure-property o property)))
+   (ensure-property property)))
 
 (defdontfn subproperty?
   "Returns true if property is a subproperty of subproperty."
   [o property subproperty]
   (some #(.equals
-          (ensure-property o subproperty) %)
+          (ensure-property subproperty) %)
         (subproperties o property)))
 
 (defdontfn direct-instances
@@ -3338,20 +3327,6 @@ effectively unchanged."
      (throw (IllegalArgumentException.
              "with-probe-axioms only allows Symbols in bindings")))))
 
-;; #+end_src
-
-;; * OWL (No)thing
-
-;; #+begin_src clojure
-(defn owl-thing
-  "Returns OWL thing."
-  []
-  (.getOWLThing (owl-data-factory)))
-
-(defn owl-nothing
-  "Returns OWL nothing."
-  []
-  (.getOWLNothing (owl-data-factory)))
 ;; #+end_src
 
 ;; * More Grouping

@@ -147,35 +147,34 @@
 (deftest broadcast-ontology
   ;; simple non-broadcast version doesn't return a list
   (is (o/object-some
-       to
-       (o/object-property to "a")
+        (o/object-property to "a")
        (o/owl-class to "b")))
   (is (= 2 (count (o/object-some
-                   to (o/object-property to "a")
+                   (o/object-property to "a")
                    (map (partial o/owl-class to)
                         ["b" "c"])))))
   (is (= 3 (count (o/object-some
-                   to (o/object-property to "a")
+                   (o/object-property to "a")
                    (map (partial o/owl-class to)
                         ["b" "c" "d"])))))
   (is (= 4 (count (o/object-some
-                   to (o/object-property to "a")
+                   (o/object-property to "a")
                    (map (partial o/owl-class to)
                         ["b" "c" "d" "e"])))))
   (is (= 5 (count (o/object-some
-                   to (o/object-property to "a")
+                   (o/object-property to "a")
                    (map (partial o/owl-class to)
                         ["b" "c" "d" "e" "f"])))))
   (is (= 6 (count (o/object-some
-                   to (o/object-property to "a")
+                   (o/object-property to "a")
                    (map (partial o/owl-class to)
                         ["b" "c" "d" "e" "f" "g"])))))
   (is (= 7 (count (o/object-some
-                   to (o/object-property to "a")
+                   (o/object-property to "a")
                    (map (partial o/owl-class to)
                         ["b" "c" "d" "e" "f" "g" "h"])))))
   (is (= 8 (count (o/object-some
-                   to (o/object-property to "a")
+                   (o/object-property to "a")
                    (map (partial o/owl-class to)
                         ["b" "c" "d" "e" "f" "g" "h" "i"]))))))
 
@@ -407,90 +406,87 @@
   )
 
 (deftest owl-some []
-  (is (not (nil? (o/owl-some to (o/object-property to "b")
-                             (o/owl-class to "a")))))
+  (is (not (nil? (o/owl-some
+                  (o/object-property to "b")
+                  (o/owl-class to "a")))))
   (is (o/object-some
-       to (o/object-property to "has")
+       (o/object-property to "has")
        (o/owl-class to "leg")))
   ;; failing test
   (is (thrown? clojure.lang.ArityException
-               (o/owl-some to (o/owl-class to "hasLeg")))))
+               (o/owl-some (o/owl-class to "hasLeg")))))
 
 (deftest owlonly []
   (is (not (nil? (o/only
-                  to
                   (o/object-property to "b")
                   (o/owl-class to "a"))))))
 
 
 (deftest owl-and []
   (is (not (nil? (o/object-and
-                  to
                   (o/owl-class to "a")
                   (o/owl-class to "b")))))
   (is (instance?
        org.semanticweb.owlapi.model.OWLObjectIntersectionOf
-       (o/owl-and to
-                  (o/owl-class to "c") (o/owl-class to "d"))))
+       (o/owl-and
+        (o/owl-class to "c") (o/owl-class to "d"))))
   (is (thrown? IllegalArgumentException
                (o/owl-and to)))
   (is (instance?
        org.semanticweb.owlapi.model.OWLDataIntersectionOf
-       (o/owl-and to :XSD_INTEGER :XSD_FLOAT))))
+       (o/owl-and :XSD_INTEGER :XSD_FLOAT))))
 
 (deftest owl-or
   (is (not (nil? (o/object-or
-                  to
                   (o/owl-class to "a")
                   (o/owl-class to "b")))))
   (is (instance?
        org.semanticweb.owlapi.model.OWLObjectUnionOf
-       (o/owl-or to
-                 (o/owl-class to "c")
-                 (o/owl-class to "d"))))
+       (o/owl-or
+        (o/owl-class to "c")
+        (o/owl-class to "d"))))
   (is (thrown? IllegalArgumentException
                (o/owl-or to)))
   (is (instance?
        org.semanticweb.owlapi.model.OWLDataUnionOf
-       (o/data-or to :XSD_INTEGER :XSD_FLOAT)))
+       (o/data-or :XSD_INTEGER :XSD_FLOAT)))
   (is (instance?
        org.semanticweb.owlapi.model.OWLDataUnionOf
-       (o/owl-or to :XSD_INTEGER :XSD_FLOAT))))
+       (o/owl-or :XSD_INTEGER :XSD_FLOAT))))
 
 (deftest owl-not
   (is (instance?
        org.semanticweb.owlapi.model.OWLObjectComplementOf
        (do
          (let [b (o/owl-class to "b")]
-           (o/owl-not to b)))))
+           (o/owl-not b)))))
   (is (instance?
        org.semanticweb.owlapi.model.OWLObjectComplementOf
-       (o/owl-not to (o/owl-class to "d"))))
+       (o/owl-not (o/owl-class to "d"))))
   (is (thrown? IllegalArgumentException
                (o/owl-not to)))
   (is (instance?
        org.semanticweb.owlapi.model.OWLDataComplementOf
-       (o/data-not to :XSD_INTEGER)))
+       (o/data-not :XSD_INTEGER)))
   (is (instance?
        org.semanticweb.owlapi.model.OWLDataComplementOf
-       (o/owl-not to :XSD_FLOAT)))
+       (o/owl-not :XSD_FLOAT)))
   (is (fn?
        (let [i (o/individual to "i")
              r (o/object-property to "r")]
-         (o/owl-not to r i))))
+         (o/owl-not r i))))
   (is (instance?
        org.semanticweb.owlapi.model.OWLNegativeObjectPropertyAssertionAxiom
        (let [i (o/individual to "i")
              j (o/individual to "j")
              r (o/object-property to "r")]
-         ((o/owl-not to r i) j #{})))))
+         ((o/owl-not r i) j #{})))))
 
 (deftest some-only []
   (is
    (not
     (nil?
      (o/some-only
-      to
       (o/object-property to "p")
       (o/owl-class to "a")))))
 
@@ -498,7 +494,6 @@
    (not
     (nil?
      (o/some-only
-      to
       (o/object-property to "p")
       (o/owl-class to "a")
       (o/owl-class to "b"))))))
@@ -507,16 +502,16 @@
 (deftest data-some
   (is
    (instance? org.semanticweb.owlapi.model.OWLDataSomeValuesFrom
-              (o/owl-some to
-                          (o/datatype-property to "p")
-                          :XSD_INTEGER))))
+              (o/owl-some
+               (o/datatype-property to "p")
+               :XSD_INTEGER))))
 
 (deftest data-some-data-range
   (is
    (instance? org.semanticweb.owlapi.model.OWLDataSomeValuesFrom
-              (o/data-some to
-                           (o/datatype-property to "p")
-                           (o/span < 1)))))
+              (o/data-some
+               (o/datatype-property to "p")
+               (o/span < 1)))))
 
 (deftest disjoint-classes []
   (is
@@ -897,8 +892,8 @@ Assumes that fixture has been run"
         (o/equivalent?
          to
          (o/owl-class to "x")
-         (o/owl-or to (o/owl-class to "z")
-                  (o/owl-class to "y")))))
+         (o/owl-or (o/owl-class to "z")
+                   (o/owl-class to "y")))))
 
 
   (is
@@ -915,14 +910,15 @@ Assumes that fixture has been run"
 
       (o/equivalent? to
        (o/owl-class to "x")
-       (o/owl-or to (o/owl-class to "z")
-                (o/owl-class to "y")))))))
+       (o/owl-or (o/owl-class to "z")
+                 (o/owl-class to "y")))))))
 
 
 (deftest as-disjoint-subclasses
   (is
    (let [x (o/owl-class to "x")]
-     (o/as-disjoint-subclasses to
+     (o/as-disjoint-subclasses
+      to
       x
       (o/owl-class to "y")
       (o/owl-class to "z"))
@@ -948,88 +944,64 @@ Assumes that fixture has been run"
 
 (deftest guess
   (is (= :tawny.owl/class
-         (o/guess-type to
+         (o/guess-type
           (o/owl-class to "a"))))
 
   (is (isa?
        (o/guess-type
-        to
         (o/owl-class to "a"))
        :tawny.owl/object))
 
   (is (= :tawny.owl/annotation
-         (o/guess-type to
-          (o/annotation-property to "b"))))
-
-  (is (= :tawny.owl/class
-         (do
-           (o/owl-class to "c")
-           (o/guess-type to "c"))))
-
-  (is (= :tawny.owl/class
-         (o/guess-type to
-          (list (o/owl-class to "d") "e" "f"))))
-
-  (is (isa?
-         (o/guess-type to
-          (list (o/owl-class to "d") "e" "f"))
-         :tawny.owl/object))
-
-  (is (= :tawny.owl/class
-         (o/guess-type to
-          (list "e" "f" (o/owl-class to "d"))))))
+         (o/guess-type
+          (o/annotation-property to "b")))))
 
 
 (deftest literal-args
   (is
    (= :tawny.owl/literal
-       (o/guess-individual-literal to 10)))
+       (o/guess-individual-literal 10)))
   (is
    (= :tawny.owl/literal
-      (o/guess-individual-literal to "bob")))
-
-  (is
-   (= :tawny.owl/individual
-      (do (o/individual to "bob")
-          (o/guess-individual-literal to "bob")))))
+      (o/guess-individual-literal "bob"))))
 
 
 (deftest veggiepizza
   (is (= :tawny.owl/class
          (do
-           (o/guess-type to
+           (o/guess-type
             (o/with-probe-entities to
               [r (o/object-property to "hasTopping")
                c (o/owl-class to "MeatTopping")]
-              (o/owl-not to
-               (o/owl-some to r c))))))
+              (o/owl-not
+               (o/owl-some r c))))))
       "A regression tester from the pizza ontology"))
 
 (deftest oneof
   (is
    (instance?
     org.semanticweb.owlapi.model.OWLObjectOneOf
-    (o/oneof to (o/individual to "a"))))
+    (o/oneof (o/individual to "a"))))
 
   (is
    (instance?
     org.semanticweb.owlapi.model.OWLDataOneOf
-    (o/oneof to (o/literal to "hello"))))
+    (o/oneof (o/literal "hello"))))
 
   (is
    (instance?
     org.semanticweb.owlapi.model.OWLDataOneOf
-    (o/oneof to 10)))
+    (o/oneof 10)))
 
   (is
    (instance?
     org.semanticweb.owlapi.model.OWLDataOneOf
-    (o/oneof to 10 11 12 13)))
+    (o/oneof 10 11 12 13)))
 
   (is
    (instance?
     org.semanticweb.owlapi.model.OWLDataOneOf
-    (o/oneof to true))))
+    (o/oneof true))))
 
 
 (deftest add-different
@@ -1062,7 +1034,7 @@ Assumes that fixture has been run"
 (deftest hasself
   (is
    (instance? org.semanticweb.owlapi.model.OWLObjectHasSelf
-              (o/has-self to (o/object-property to "r")))))
+              (o/has-self (o/object-property to "r")))))
 
 ;; from bug report
 (deftest span-double
@@ -1147,15 +1119,15 @@ Assumes that fixture has been run"
   (is
    (instance?
     org.semanticweb.owlapi.model.OWLLiteral
-    (o/literal to "bob" :lang "en")))
+    (o/literal "bob" :lang "en")))
   (is
    (instance?
     org.semanticweb.owlapi.model.OWLLiteral
-    (o/literal to "bob")))
+    (o/literal "bob")))
   (is
    (instance?
     org.semanticweb.owlapi.model.OWLLiteral
-    (o/literal to "bob" :type :RDF_PLAIN_LITERAL))))
+    (o/literal "bob" :type :RDF_PLAIN_LITERAL))))
 
 
 (deftest owl-comment
@@ -1163,8 +1135,8 @@ Assumes that fixture has been run"
    (instance?
     OWLAnnotation
     (o/owl-comment
-     (o/literal to "comment"
-                 :type :RDF_PLAIN_LITERAL)))))
+     (o/literal "comment"
+                :type :RDF_PLAIN_LITERAL)))))
 
 (deftest as-equivalent
   (is
@@ -1212,12 +1184,12 @@ Assumes that fixture has been run"
          c (o/owl-class to "c")]
      (= c
         (.getFiller
-         (o/object-at-most to 1 p c)))))
+         (o/object-at-most 1 p c)))))
   (is
    (let [p (o/object-property to "p")]
      (=  (o/owl-thing)
          (.getFiller
-          (o/object-at-most to 1 p))))))
+          (o/object-at-most 1 p))))))
 
 
 ;; superclass (and subclass) is complicated
@@ -1423,8 +1395,9 @@ Assumes that fixture has been run"
    (let [d (o/datatype-property to "d")
          i (o/individual to "i")
          ax (o/add-fact
-             to i
-             (o/annotate (o/is to d (o/literal to 10))
+             to
+             i
+             (o/annotate (o/is d (o/literal 10))
                          (o/owl-comment
                           (o/owl-class to "f"))))]
      (= 1
@@ -1433,19 +1406,19 @@ Assumes that fixture has been run"
 ;; copy from tawny.render which is crashing
 (deftest individual
   (is
-   (o/fact to (o/datatype-property to "d") 10))
+   (o/fact (o/datatype-property to "d") 10))
   (is
    (o/individual to "I"
                  :fact
-                 (o/fact to (o/datatype-property to "d")
+                 (o/fact (o/datatype-property to "d")
                          10)
-                 (o/fact to (o/object-property to "r")
+                 (o/fact (o/object-property to "r")
                          (o/individual to "I2")))))
 
 (deftest broadcasting-annotate
   (is (seq? (o/annotate
-             (o/object-some to
-                            (o/object-property to "r")
-                            (o/owl-class to "A")
-                            (o/owl-class to "B"))
+             (o/object-some
+              (o/object-property to "r")
+              (o/owl-class to "A")
+              (o/owl-class to "B"))
             (o/owl-comment "c")))))

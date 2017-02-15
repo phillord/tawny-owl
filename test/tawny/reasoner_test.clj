@@ -83,10 +83,10 @@
   ;; simple ontology -- c should be reasoned to be a subclass of a.
   (o/owl-class to "a"
               :equivalent
-              (o/object-some to (o/object-property to "p") a))
+              (o/object-some (o/object-property to "p") a))
   (o/owl-class to "c"
               :super
-              (o/object-some to (o/object-property to "p") b)))
+              (o/object-some (o/object-property to "p") b)))
 
 
 (defn far-reasoner [func reasonerlist]
@@ -252,10 +252,10 @@
         (doall (far #(r/coherent? to)))))))
 
   ;; add a disjoint test whether it breaks after
-  (is 
+  (is
    (every?
     identity
-    (do 
+    (do
       (ontology-abc)
       (o/with-probe-axioms to
         [a (o/as-disjoint to (a) (b))])

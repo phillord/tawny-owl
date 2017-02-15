@@ -23,7 +23,7 @@
   (add-axiom o
    (.getOWLDataPropertyDomainAxiom
     (owl-data-factory)
-    (ensure-data-property o property)
+    (ensure-data-property property)
     (ensure-class domain)
     (p/as-annotations domain))))
 
@@ -34,8 +34,8 @@
   (add-axiom
    (.getOWLDataPropertyRangeAxiom
     (owl-data-factory)
-    (ensure-data-property o property)
-    (ensure-data-range o range)
+    (ensure-data-property property)
+    (ensure-data-range range)
     (p/as-annotations range))))
 
 (defbdontfn add-data-subproperty
@@ -45,8 +45,8 @@
    o
    (.getOWLSubDataPropertyOfAxiom
     (owl-data-factory)
-    (ensure-data-property o sub)
-    (ensure-data-property o property)
+    (ensure-data-property sub)
+    (ensure-data-property property)
     (p/as-annotations sub))))
 
 (defbdontfn add-data-superproperty
@@ -55,8 +55,8 @@
   (add-axiom o
              (.getOWLSubDataPropertyOfAxiom
               (owl-data-factory)
-              (ensure-data-property o property)
-              (ensure-data-property o super)
+              (ensure-data-property property)
+              (ensure-data-property super)
               (p/as-annotations super))))
 
 (def
@@ -87,7 +87,7 @@ This is to deprecated the :superproperty frame"}
             "Characteristic is not recognised:" characteristic)))
   (add-axiom o
              ((get datacharfuncs characteristic)
-              (owl-data-factory) (ensure-data-property o property))))
+              (owl-data-factory) (ensure-data-property property))))
 
 (defbdontfn add-data-equivalent
   "Adds a equivalent data properties axiom."
@@ -95,15 +95,15 @@ This is to deprecated the :superproperty frame"}
   (add-axiom
    o (.getOWLEquivalentDataPropertiesAxiom
       (owl-data-factory)
-      (ensure-data-property o property)
-      (ensure-data-property o equivalent)
+      (ensure-data-property property)
+      (ensure-data-property equivalent)
       (p/as-annotations equivalent))))
 
 (defn equivalent-data-properties
   [o properties]
   (let [properties
         (doall
-         (map (partial ensure-data-property o) properties))]
+         (map ensure-data-property properties))]
     (add-axiom
      o (.getOWLEquivalentDataPropertiesAxiom
         (owl-data-factory)
@@ -118,15 +118,15 @@ This is to deprecated the :superproperty frame"}
    (.getOWLDisjointDataPropertiesAxiom
     (owl-data-factory)
     (hash-set
-     (ensure-data-property o name)
-     (ensure-data-property o disjoint))
+     (ensure-data-property name)
+     (ensure-data-property disjoint))
     (p/as-annotations disjoint))))
 
 (defn disjoint-data-properties
   [o properties]
   (let [properties
         (doall
-         (map (partial ensure-data-property o) properties))]
+         (map ensure-data-property properties))]
     (add-axiom
      o (.getOWLDisjointDataPropertiesAxiom
         (owl-data-factory)
@@ -151,7 +151,11 @@ This is to deprecated the :superproperty frame"}
 (defdontfn datatype-property-explicit
   "Define a new datatype property with an explicit map"
   [o name frames]
-  (let [property (ensure-data-property o name)]
+  (let [property
+        (ensure-data-property
+         (if (string? name)
+           (iri-for-name o name)
+           name))]
     (.addAxiom (owl-ontology-manager)
                o
                (.getOWLDeclarationAxiom
@@ -180,17 +184,7 @@ This is to deprecated the :superproperty frame"}
   "Defines a new datatype property"
   'tawny.owl/datatype-property)
 
-(comment
- (defmacro defdproperty
-   "Defines a new datatype property and interns as a var."
-   [dataname & frames]
-   `(let [namestring# (name '~dataname)
-          datatype# (tawny.owl/datatype-property namestring#
-                                                 ~@frames)]
-      (intern-owl ~dataname datatype#))))
-
-
-(defmontfn literal
+(defn literal
   "Returns a OWL2 literal.
 
 `literal' is the value of the literal and must be a string or a number. Anything
@@ -198,7 +192,7 @@ else must by coerced into a string manually. Options can also be specified,
 with :lang definining the language where `literal' is a string, and :type
 which is an OWLDatatype object.
 "
-  [o literal & {:keys [lang type]}]
+  [literal & {:keys [lang type]}]
   (cond
    ;; null operation
    (t/literal? literal)
@@ -208,7 +202,7 @@ which is an OWLDatatype object.
    type
    (.getOWLLiteral (owl-data-factory)
                    ^String literal
-                   (ensure-datatype o type))
+                   (ensure-datatype type))
    :default
    (util/with-types
      [literal [String Long Double Boolean]]
@@ -220,7 +214,7 @@ which is an OWLDatatype object.
   (add-axiom
    o (.getOWLDatatypeDefinitionAxiom
       (owl-data-factory) datatype
-      (ensure-data-range o equivalent)
+      (ensure-data-range equivalent)
       (p/as-annotations equivalent))))
 
 (def ^{:private true} datatype-handlers
@@ -268,123 +262,109 @@ which is an OWLDatatype object.
   "Defines a new datatype"
   'tawny.owl/datatype)
 
-(comment
-  (defmacro defdatatype
-    "Defines a new datatype and interns it as a var."
-    [dataname & frames]
-    `(let [namestring# (name '~dataname)
-           datatype# (tawny.owl/datatype namestring#
-                                         ~@frames)]
-       (intern-owl ~dataname datatype#))))
-
-(defmontfn data-and
+(defn data-and
   "Returns the intersection of two data ranges."
-  [o & types]
+  [& types]
   (.getOWLDataIntersectionOf
    (owl-data-factory)
    ^java.util.Set
    (set
-    (map (partial ensure-data-range o)
+    (map ensure-data-range
          types))))
 
-(defmethod owl-and ::data [& rest]
-  (apply data-and rest))
+(util/defmethodf owl-and ::data data-and)
 
-(defmontfn data-or
+(defn data-or
   "Returns the union of two data ranges."
-  [o & types]
+  [& types]
   (.getOWLDataUnionOf
    (owl-data-factory)
    ^java.util.Set
-   (set (map (partial ensure-data-range o) types))))
+   (set (map ensure-data-range types))))
 
-(defmethod owl-or ::data [& rest]
-  (apply data-or rest))
+(util/defmethodf owl-or ::data data-or)
 
-(defmontfn data-not
+(defn data-not
   "Returns the complement of two data ranges."
-  [o type]
+  [type]
   (.getOWLDataComplementOf
    (owl-data-factory)
-   (ensure-data-range o type)))
+   (ensure-data-range type)))
 
-(defmethod owl-not-one ::data [& rest]
-  (apply data-not rest))
+(util/defmethodf owl-not-one ::data data-not)
 
-(defbmontfn data-some
+(def data-some
   "Returns a data some values from restriction."
-  [o property data-range]
-  (.getOWLDataSomeValuesFrom
-   (owl-data-factory)
-   (ensure-data-property o property)
-   (ensure-data-range o data-range)))
+  (broadcast
+   (fn data-some
+     [property data-range]
+     (.getOWLDataSomeValuesFrom
+      (owl-data-factory)
+      (ensure-data-property property)
+      (ensure-data-range data-range)))))
 
-(defmethod owl-some ::data [& rest]
-  (apply data-some rest))
+(util/defmethodf owl-some ::data data-some)
 
-(defbmontfn data-only
+(def data-only
   "Returns a data all values from restriction."
-  [o property datatype]
-  (.getOWLDataAllValuesFrom
-   (owl-data-factory)
-   (ensure-data-property o property)
-   (ensure-data-range o datatype)))
+  (broadcast
+   (fn data-only
+     [property datatype]
+     (.getOWLDataAllValuesFrom
+      (owl-data-factory)
+      (ensure-data-property property)
+      (ensure-data-range datatype)))))
 
-(defmethod only ::data [& rest]
-  (apply data-only rest))
+(util/defmethodf only ::data data-only)
 
-(defmontfn data-oneof
+(defn data-oneof
   "Returns a data one of restriction."
-  [o & literals]
+  [& literals]
   (.getOWLDataOneOf
    (owl-data-factory)
    ^java.util.Set
-   (set (map (partial literal o) literals))))
+   (set (map literal literals))))
 
-(defmethod oneof ::literal [& rest]
-  (apply data-oneof rest))
+(util/defmethodf oneof ::literal data-oneof)
 
-(defmontfn data-has-value
+(defn data-has-value
   "Returns a data has value restriction."
-  [o property literal]
+  [property literal]
   (.getOWLDataHasValue (owl-data-factory)
-   (ensure-data-property o property)
+   (ensure-data-property property)
    (if (t/literal? literal)
      literal
      (tawny.owl/literal literal))))
 
-(defmethod has-value ::data [& rest]
-  (apply data-has-value rest))
+(util/defmethodf has-value ::data data-has-value)
 
-(defmontfn data-exactly
+(def data-exactly
   "Returns a data exact cardinality restriction."
-  [o number property]
-  (.getOWLDataExactCardinality
-   (owl-data-factory)
-   number (ensure-data-property o property)))
+  (fn data-exactly
+    [number property]
+    (.getOWLDataExactCardinality
+     (owl-data-factory)
+     number (ensure-data-property property))))
 
-(defmethod exactly ::data [& rest]
-  (apply data-exactly rest))
+(util/defmethodf exactly ::data data-exactly)
 
-(defmontfn data-at-most
+(defn data-at-most
   "Returns a data max cardinality restriction."
-  [o number property]
+  [number property]
   (.getOWLDataMaxCardinality
    (owl-data-factory) number
-   (ensure-data-property o property)))
+   (ensure-data-property property)))
 
-(defmethod at-most ::data [& rest]
-  (apply data-at-most rest))
+(util/defmethodf at-most ::data data-at-most)
 
-(defmontfn data-at-least
+(defn data-at-least
   "Returns a data min cardinality restriction."
-  [o number property]
+  [number property]
   (.getOWLDataMinCardinality
    (owl-data-factory) number
-   (ensure-data-property o property)))
+   (ensure-data-property property)))
 
-(defmethod at-least ::data [& rest]
-  (apply data-at-least rest))
+(util/defmethodf at-least ::data data-at-least)
 
 (defn owl-min
   "Returns a data min exclusion restriction."
@@ -456,23 +436,21 @@ For example, (span < 10) returns a max exclusive restriction."
    :default
    (throw (IllegalArgumentException. (str "Unknown comparitor" comparitor)))))
 
-(defmontfn data-get-fact
+(defn data-get-fact
   "Returns a data fact."
-  [^OWLOntology o property ^OWLIndividual from to annotations]
+  [property ^OWLIndividual from to annotations]
   (.getOWLDataPropertyAssertionAxiom
    (owl-data-factory)
-   (ensure-data-property o property) from
-   (literal o to) annotations))
+   (ensure-data-property property) from
+   (literal to) annotations))
 
-(defmethod get-fact ::data [& rest]
-  (apply data-get-fact rest))
+(util/defmethodf get-fact ::data data-get-fact)
 
-(defmontfn data-get-fact-not
+(defn data-get-fact-not
   "Returns a data negative fact."
-  [o property from to annotations]
+  [property from to annotations]
   (.getOWLNegativeDataPropertyAssertionAxiom
    (owl-data-factory)
-   (ensure-data-property o property) from to annotations))
+   (ensure-data-property property) from to annotations))
 
-(defmethod get-fact-not ::data [& rest]
-  (apply data-get-fact-not rest))
+(util/defmethodf get-fact-not ::data data-get-fact-not)
