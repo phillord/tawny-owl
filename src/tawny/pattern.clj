@@ -222,7 +222,7 @@ with other entities that are annotated to the same anonymous individual.")
   pattern-annotator-cache
   (atom {}))
 
-(o/defmontfn pattern-annotator
+(o/defdontfn pattern-annotator
   "Annotates all ENTITIES as part of a pattern.
 
   This associated each entity with an anonymous individual. The individual is
@@ -383,7 +383,7 @@ to explicitly name the object property."
 ;; rainbow.
 
 ;; #+begin_src clojure
-(o/defmontfn value-partition
+(o/defdontfn value-partition
   "Return the entities for a new value partition.
 
 PARTITION-NAME is the overall name for the partition.
@@ -448,7 +448,7 @@ This returns a list of entity vectors created by the p function."
           `(tawny.util/quote-word-or-head ~@partition-values)
           options)))
 
-(o/defmontfn partition-values
+(o/defdontfn partition-values
   "Given a value partition return the values.
 O is the Ontology, P the value partition."
   [o p]
