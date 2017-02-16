@@ -117,7 +117,7 @@
     (comp not nil?)
     (let [fil
           (doall
-           (map #'r/default-transform
+           (map (partial #'r/default-transform nil)
                 ;; this transform works on the anntotations which start with
                 ;; "obo/go" rather than "obo/GO"
                 (filter (partial
