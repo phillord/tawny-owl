@@ -36,67 +36,65 @@
             ]
            ))
 
-(o/defmontfn fetch-doc
+(defn fetch-doc
   "Given an owlobject and potentially ontology, return documentation.
 The documentation is generated over the live object (owlobjects are mutable).
 It includes all labels, comments and a rendered version of the owlobject."
-  ([^OWLOntology ontology ^OWLEntity owlobject]
-     (let [annotation
-           (org.semanticweb.owlapi.search.EntitySearcher/getAnnotations
-            owlobject ontology)
-           label
-           (filter
-            (fn [^OWLAnnotation a]
-              (-> a
-                   (.getProperty)
-                   (.isLabel)))
+  [^OWLEntity owlobject]
+  (let [annotation
+        (org.semanticweb.owlapi.search.EntitySearcher/getAnnotationObjects
+         owlobject (.getOntologies (o/owl-ontology-manager)))
+        label
+        (filter
+         (fn [^OWLAnnotation a]
+           (-> a
+               (.getProperty)
+               (.isLabel)))
+         annotation)
 
-            annotation)
+        comment
+        (filter
+         (fn [^OWLAnnotation a]
+           (-> a
+               (.getProperty)
+               (.isComment)))
+         annotation)
 
-           comment
-           (filter
-            (fn [^OWLAnnotation a]
-              (-> a
-                  (.getProperty)
-                  (.isComment)))
-            annotation)
+        iri (-> owlobject
+                (.getIRI)
+                (.toString))
 
-           iri (-> owlobject
-                   (.getIRI)
-                   (.toURI)
-                   (.toString))
+        writer (StringWriter.)
+        pwriter (PrintWriter. writer)
+        line (fn [& args]
+               (.println pwriter
+                         (str (clojure.string/join args))))]
+    (line "")
+    (line
+     (str (.getEntityType owlobject))
+     ": "
+     (tawny.lookup/var-maybe-qualified-str
+      (get
+       (tawny.lookup/all-iri-to-var) iri)))
 
-           writer (StringWriter.)
-           pwriter (PrintWriter. writer)
-           line (fn [& args]
-                  (.println pwriter
-                            (str (clojure.string/join args))))]
-       (line "")
-       (line
-        (str (.getEntityType owlobject))
-        ": "
-        (tawny.lookup/var-maybe-qualified-str
-         (get
-          (tawny.lookup/all-iri-to-var) iri)))
+    (line "IRI: " iri)
+    (line "Labels:")
+    (doseq [^OWLAnnotation l label]
+      (line "\t" (.getValue l)))
 
-       (line "IRI: " iri)
-       (line "Labels:")
-       (doseq [^OWLAnnotation l label]
-         (line "\t" (.getValue l)))
+    (line "Comments:")
 
-       (line "Comments:")
-
-       (doseq [^OWLAnnotation c comment]
-         (line "\t" (.getValue c)))
-       (line "Full Definition:")
-       (line
-        ;; hmm pprint here takes 95% of the time. Problematic
-        ;; str is much much quicker, but produces a rubbishy output!
-        (clojure.pprint/pprint
-         (tawny.render/as-form owlobject)
-         writer))
-       (.close writer)
-       (str writer))))
+    (doseq [^OWLAnnotation c comment]
+      (line "\t" (.getValue c)))
+    (line "Full Definition:")
+    (line
+     ;; hmm pprint here takes 95% of the time. Problematic
+     ;; str is much much quicker, but produces a rubbishy output!
+     (clojure.pprint/pprint
+      (tawny.render/as-form owlobject)
+      writer))
+    (.close writer)
+    (str writer)))
 
 (defn print-doc
   "Print the documentation for the owlobject. See fetch-doc for more on how

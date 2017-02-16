@@ -21,7 +21,7 @@
   (:use [clojure.test])
   (:require [tawny.repl :as re]
             [tawny.owl :as o])
-  (:import (org.semanticweb.owlapi.model 
+  (:import (org.semanticweb.owlapi.model
             OWLOntologyID IRI)))
 
 
@@ -39,11 +39,11 @@
     :comment "This is a comment")
 
 (deftest fetch-doc
-  (is (re/fetch-doc testontology testclass)))
+  (is (re/fetch-doc testclass)))
 
 (defn get-go-ontology []
-  (tawny.owl/remove-ontology-maybe 
+  (tawny.owl/remove-ontology-maybe
    (OWLOntologyID. (IRI/create "http://purl.obolibrary.org/obo/go.owl")))
   (.loadOntologyFromOntologyDocument
-   (tawny.owl/owl-ontology-manager) 
+   (tawny.owl/owl-ontology-manager)
    (IRI/create (clojure.java.io/resource "go-snippet.owl"))))
