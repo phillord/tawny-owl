@@ -3402,10 +3402,11 @@ This is a convenience macro and is lexically scoped."
 
 ;; #+begin_src clojure
 
-(defmontfn
+(defdontfn
   ^:private
-  entity-class [o entity & _]
-  (class entity))
+  entity-class
+  ([o en & _]
+   (class en)))
 
 (defmulti refine
   "Takes an existing definition, adds it to the current ontology, and then
@@ -3421,24 +3422,17 @@ for example, building two interlocking ontologies with different OWL profiles.
 "
   #'entity-class)
 
-(defmethod refine OWLClass [& args]
-  (apply owl-class args))
+(util/defmethodf refine OWLClass owl-class)
 
-(defmethod refine OWLObjectProperty [& args]
-  (apply object-property args))
+(util/defmethodf refine OWLObjectProperty object-property)
 
-(defmethod refine OWLAnnotationProperty [& args]
-  (apply annotation-property args))
+(util/defmethodf refine OWLAnnotationProperty annotation-property)
 
-(defmethod refine OWLDataProperty [& args]
-  (apply datatype-property args))
+(util/defmethodf refine OWLDataProperty datatype-property)
 
-(defmethod refine OWLDatatype [& args]
-  (apply datatype args))
+(util/defmethodf refine OWLDatatype datatype)
 
-(defmethod refine OWLIndividual [& args]
-  (apply individual args))
-
+(util/defmethodf refine OWLIndividual individual)
 
 (defmacro defrefine
   "Takes an existing definition, add more frames.
