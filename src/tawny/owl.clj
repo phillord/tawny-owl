@@ -805,15 +805,6 @@ The 'd' stands for definitely."
   `(defnwithfn ~name #'default-ontology
      ~@body))
 
-(defmacro defmontfn
-  "Like defn, but automatically adds the current ontology or nil to the args
-  if the first arg is not an ontology.
-
-The 'm' stands for maybe."
-  [name & body]
-  `(defnwithfn ~name #'default-ontology-maybe
-     ~@body))
-
 (defmacro defbdontfn
   "Like the defn and defdontfn, but broadcasts. That is it expects a three arg
 function, f with ontology, x and y, but defines a new function which takes
@@ -825,13 +816,6 @@ Uses the default ontology if not supplied and throws an IllegalStateException
   [name & body]
   `(defnwithfn ~name #'broadcast-ontology
      ~@body))
-
-(defmacro defbmontfn
-  "Like defbdontfn, but also accepts nil as either the passed or default ontology."
-  [name & body]
-  `(defnwithfn ~name #'broadcast-ontology-maybe
-     ~@body))
-
 
 ;; #+end_src
 
