@@ -190,9 +190,6 @@ an exception."
     entity
     (throw (IllegalArgumentException. "Expecting a IRIable entity"))))
 
-;; #+end_src
-
-
 (defrecord Annotated [entity annotations]
   p/Entityable
   (p/as-entity [this] entity)
@@ -361,53 +358,6 @@ ontology. So, we search for :ontology frame or call ffco to fetch this ontology.
   [ffco f & args]
   (util/run-hook default-ontology-hook)
   (apply f (ffco) args))
-
-(defmacro ^{:private true} dispatch-maybe
-  "Dispatch with the default ontology if necessary and if it is present."
-  [f & args]
-  ;; the majority of this macro is duplicated in variadic
-  ;; version of dispatch-ontology-maybe
-  `(if
-       (or (t/ontology?  ~(first args))
-           (nil? ~(first args)))
-     (~f ~@args)
-     (do
-       (tawny.util/run-hook tawny.owl/default-ontology-hook)
-       (~f (tawny.owl/get-current-ontology-maybe) ~@args))))
-
-(defn default-ontology-maybe
-  "Invoke f ensuring the first argument is an ontology or nil.
-The logic used is the same as default-ontology except that no error is
-signalled if there is no current-ontology. The multi-arity function avoids
-variadic calls most of the time."
-  ([f a]
-     (dispatch-maybe f a))
-  ([f a b]
-     (dispatch-maybe f a b))
-  ([f a b c]
-     (dispatch-maybe f a b c))
-  ([f a b c d]
-     (dispatch-maybe f a b c d))
-  ([f a b c d e]
-     (dispatch-maybe f a b c d e))
-  ([f a b c d e fa]
-     (dispatch-maybe f a b c d e fa))
-  ([f a b c d e fa g]
-     (dispatch-maybe f a b c d e fa g))
-  ([f a b c d e fa g h]
-     (dispatch-maybe f a b c d e fa g h))
-  ([f a b c d e fa g h i]
-     (dispatch-maybe f a b c d e fa g h i))
-  ([f a b c d e fa g h i j]
-     (dispatch-maybe f a b c d e fa g h i j))
-  ([f a b c d e fa g h i j & args]
-     (if (or
-          (t/ontology? a)
-          (nil? a))
-       (apply f a b c d e fa g h i j args)
-       (apply default-ontology-base-dispatcher
-              get-current-ontology-maybe
-              f a b c d e fa g h i j args))))
 
 (defmacro ^{:private true} dispatch
   "Dispatch with the default ontology if necessary."
@@ -616,63 +566,6 @@ is micro-optimised to avoid use of variadic method calls or list operations."
   ([fnc a b c d e f g & args]
      (apply broadcast-ontology-full
             fnc a b c d e f g args)))
-
-(defn- broadcast-ontology-maybe-full
-  "Like broadcast-ontology-maybe-full but does not signal an error if there is no current
-ontology."
-  [f & args]
-  (apply default-ontology-maybe
-         (fn broadcast-ontology-maybe [o & narg]
-           (doall
-            (map (partial f o (first narg))
-                 (flatten
-                  (rest narg)))))
-         args))
-
-(defn broadcast-ontology-maybe
-  "Like broadcast-ontology but does not signal an error where there is no
-default ontology."
-  ([fnc a b]
-     (if-not-sequential
-      [a b]
-      (default-ontology-maybe
-        broadcast-ontology-int
-        a b fnc)
-      (broadcast-ontology-maybe-full fnc a b)))
-  ([fnc a b c]
-     (if-not-sequential
-      [a b c]
-      (default-ontology-maybe
-        broadcast-ontology-int a b c fnc)
-      (broadcast-ontology-maybe-full fnc a b c)))
-  ([fnc a b c d]
-     (if-not-sequential
-      [a b c d]
-      (default-ontology-maybe
-        broadcast-ontology-int a b c d fnc)
-      (broadcast-ontology-maybe-full fnc a b c d)))
-  ([fnc a b c d e]
-     (if-not-sequential
-      [a b c d e]
-      (default-ontology-maybe
-        broadcast-ontology-int a b c d e fnc)
-      (broadcast-ontology-maybe-full fnc a b c d e)))
-  ([fnc a b c d e f]
-     (if-not-sequential
-      [a b c d e f]
-      (default-ontology-maybe
-        broadcast-ontology-int a b c d e f fnc)
-      (broadcast-ontology-maybe-full fnc a b c d e f)))
-  ([fnc a b c d e f g]
-     (if-not-sequential
-      [a b c d e f g]
-      (default-ontology-maybe
-        broadcast-ontology-int a b c d e f g fnc)
-      (broadcast-ontology-maybe-full fnc a b c d e f g)))
-  ([fnc a b c d e f g & args]
-     (apply broadcast-ontology-maybe-full
-            fnc a b c d e f g args)))
-
 
 ;; New broadcast
 (defn- broadcast-full [special f args]
