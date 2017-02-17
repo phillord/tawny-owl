@@ -407,6 +407,15 @@ multi-arity as a micro optimization, to avoid a variadic invocation."
        (apply default-ontology-base-dispatcher
               get-current-ontology
               f a b c d e fa g h i j args))))
+
+(defn fontology [f]
+  (partial default-ontology f))
+
+(defmacro defofn [name & fn-tail]
+  `(def ~name
+     (fontology
+      (fn ~name
+        ~@fn-tail))))
 ;; #+end_src
 
 ;; * Broadcasting
@@ -1829,29 +1838,35 @@ interpret this as a string and create a new OWLIndividual."
 ;; We start ~OWLClass~ support rather randomly at this point.
 
 ;; #+begin_src clojure
-(defbdontfn
-  add-superclass
-  {:doc "Adds one or more superclasses to name in ontology."
+(def
+  ^{:doc "Adds one or more superclasses to name in ontology."
    :arglists '([name & superclass] [ontology name & superclass])}
-  [o name superclass]
-  (add-axiom o
-             (.getOWLSubClassOfAxiom
-              (owl-data-factory)
-              (ensure-class name)
-              (ensure-class superclass)
-              (p/as-annotations superclass))))
+  add-superclass
+  (fontology
+   (broadcast-2
+    (fn add-superclass
+      [o name superclass]
+      (add-axiom o
+                 (.getOWLSubClassOfAxiom
+                  (owl-data-factory)
+                  (ensure-class name)
+                  (ensure-class superclass)
+                  (p/as-annotations superclass)))))))
 
-(defbdontfn
-  add-subclass
-  {:doc "Adds one or more subclasses to name in ontology."
+(def
+  ^{:doc "Adds one or more subclasses to name in ontology."
    :arglists '([name & subclass] [ontology name & subclass])}
-  [o name subclass]
-  (add-axiom o
-             (.getOWLSubClassOfAxiom
-              (owl-data-factory)
-              (ensure-class subclass)
-              (ensure-class name)
-              (p/as-annotations subclass))))
+  add-subclass
+  (fontology
+   (broadcast-2
+    (fn add-subclass
+      [o name subclass]
+      (add-axiom o
+                 (.getOWLSubClassOfAxiom
+                  (owl-data-factory)
+                  (ensure-class subclass)
+                  (ensure-class name)
+                  (p/as-annotations subclass)))))))
 ;; #+end_src
 
 ;; We had to deprecated the old ~add-subclass~ because it has exactly backward
