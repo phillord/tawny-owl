@@ -104,7 +104,8 @@
    (every?
     (comp not nil?)
     (filter (partial r/iri-starts-with-filter
-                     "http://purl.obolibrary.org/obo/go")
+                     "http://purl.obolibrary.org/obo/go"
+                     nil)
             (.getSignature (get-go-ontology))))))
 
 
@@ -121,7 +122,9 @@
                 ;; this transform works on the anntotations which start with
                 ;; "obo/go" rather than "obo/GO"
                 (filter (partial
-                         r/iri-starts-with-filter "http://purl.obolibrary.org/obo/go")
+                         r/iri-starts-with-filter
+                         "http://purl.obolibrary.org/obo/go"
+                         nil)
                         (.getSignature (get-go-ontology)))))]
       ;; let form allows me to add println -- not totally stupid
       ;;(println "first fil:" fil)
@@ -137,7 +140,8 @@
                  ;; one annotation and one nil which it is superclass. We have
                  ;; chopped the annotation out of the snippet.
                  (filter (partial r/iri-starts-with-filter
-                                  "http://purl.obolibrary.org/obo/GO")
+                                  "http://purl.obolibrary.org/obo/GO"
+                                  nil)
                          (.getSignature (get-go-ontology)))))]
        ;;(println "This Fil:" fil)
        fil
@@ -153,7 +157,8 @@
                       ;; this should throw an exception because we have one class without
                       ;; annotation
                       (filter (partial r/iri-starts-with-filter
-                                       "http://purl.obolibrary.org/obo/GO")
+                                       "http://purl.obolibrary.org/obo/GO"
+                                       nil)
                               (.getSignature (get-go-ontology)))))]
       ;;(println  "Fil 1:" fil)
       fil

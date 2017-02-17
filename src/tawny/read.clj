@@ -38,7 +38,7 @@
 (defn iri-starts-with-filter
   "Checks e to see if it is an OWLNamedObject and has an IRI starting with
 starts-with. Use this partially applied with a filter for 'read'."
-  [starts-with e]
+  [starts-with _ e]
   (and (t/named? e)
        (.startsWith
         (str
@@ -49,7 +49,7 @@ starts-with. Use this partially applied with a filter for 'read'."
   "Filter for only named objects with an IRI the same as the ontology IRI."
   [o e]
   (iri-starts-with-filter
-   (str (tawny.protocol/as-iri o)) e))
+   (str (tawny.protocol/as-iri o)) nil e))
 
 (defn default-transform
   "Extract the fragment from each IRI."
