@@ -411,11 +411,33 @@ multi-arity as a micro optimization, to avoid a variadic invocation."
 (defn fontology [f]
   (partial default-ontology f))
 
-(defmacro defofn [name & fn-tail]
-  `(def ~name
-     (fontology
-      (fn ~name
-        ~@fn-tail))))
+(defmacro defno [& body]
+  (let [f (gensym)]
+    `(let [vr# (defn ~@body)]
+       (alter-var-root
+        vr#
+        (fn [~f]
+          (fontology ~f)))
+       vr#)))
+
+(defmacro defnb [& body]
+  (let [f (gensym)]
+    `(let [vr# (defn ~@body)]
+       (alter-var-root
+        vr#
+        (fn [~f]
+          (broadcast ~f)))
+       vr#)))
+
+(defmacro defnb2 [& body]
+  (let [f (gensym)]
+    `(let [vr# (defn ~@body)]
+       (alter-var-root
+        vr#
+        (fn [~f]
+          (broadcast-2 ~f)))
+       vr#)))
+
 ;; #+end_src
 
 ;; * Broadcasting
@@ -920,19 +942,18 @@ signals a hook, and adds :owl true to the metadata. NAME must be a symbol"
 ;; ~OWLOntology~ to which annotation must be added in a totally different way.
 
 ;; #+begin_src clojure
-(def
+(defnb2
   ^{:doc "Adds an annotation to a named object."
     :private true}
   add-annotation
-  (broadcast-2
-   (fn add-annotation [o ^OWLNamedObject named-entity annotation]
-     (add-axiom
-      o
-      (.getOWLAnnotationAssertionAxiom
-       (owl-data-factory)
-       (p/as-iri named-entity)
-       ^OWLAnnotation (p/as-entity annotation)
-       (p/as-annotations annotation))))))
+  [o ^OWLNamedObject named-entity annotation]
+  (add-axiom
+   o
+   (.getOWLAnnotationAssertionAxiom
+    (owl-data-factory)
+    (p/as-iri named-entity)
+    ^OWLAnnotation (p/as-entity annotation)
+    (p/as-annotations annotation))))
 
 (defn- add-a-name-annotation
   "Add a tawny-name annotation to named-entity, unless the :noname
@@ -949,16 +970,14 @@ ontology option has been specified, in which case do nothing."
 ;; Now we add support for annotating ontologies.
 
 ;; #+begin_src clojure
-(def
+(defnb
   ^:private
   add-ontology-annotation
   "Adds an annotation to an ontology."
-  (broadcast
-   (fn
-     [o annotation]
-     (.applyChange
-      (owl-ontology-manager)
-      (AddOntologyAnnotation. o annotation)))))
+  [o annotation]
+  (.applyChange
+   (owl-ontology-manager)
+   (AddOntologyAnnotation. o annotation)))
 ;; #+end_src
 
 ;; And, finally, overarching support for adding annotation to both -- we add this
@@ -1004,19 +1023,17 @@ can be co-erced to an IRI"
      (annotation annotation-property
                  (.getOWLLiteral (owl-data-factory) literal language))))
 
-(def ^:private add-super-annotation
+(defnb2 ^:private add-super-annotation
   "Adds a set of super annotation properties to the given sub annotation
   property."
-  (broadcast-2
-   (fn add-super-annotation
-     [o subproperty superproperty]
-     (add-axiom
-      o
-      (.getOWLSubAnnotationPropertyOfAxiom
-       (owl-data-factory)
-       subproperty
-       (ensure-annotation-property superproperty)
-       (p/as-annotations superproperty))))))
+  [o subproperty superproperty]
+  (add-axiom
+   o
+   (.getOWLSubAnnotationPropertyOfAxiom
+    (owl-data-factory)
+    subproperty
+    (ensure-annotation-property superproperty)
+    (p/as-annotations superproperty))))
 
 (def deprecated-add-sub-annotation
   "The same as add-super-annotation used to implement the old
@@ -1159,7 +1176,7 @@ add-sub-annotation functionality."
     ;; return the property
     property))
 
-(defdontfn annotation-property
+(defno annotation-property
   {:doc "Creates a new annotation property."
    :arglists '([ontology name & frames] [name & frames])}
   [o name & frames]
@@ -1571,7 +1588,7 @@ is given."
     (.getOntologyFormat (owl-ontology-manager)
                         o))))
 
-(defdontfn save-ontology
+(defno save-ontology
   "Save the current 'ontology' in the file or `filename' if given.
 If no ontology is given, use the current-ontology"
   ([o filename]
@@ -1838,35 +1855,29 @@ interpret this as a string and create a new OWLIndividual."
 ;; We start ~OWLClass~ support rather randomly at this point.
 
 ;; #+begin_src clojure
-(def
+(defnb2
   ^{:doc "Adds one or more superclasses to name in ontology."
-   :arglists '([name & superclass] [ontology name & superclass])}
+   :arglists '([ontology name & superclass])}
   add-superclass
-  (fontology
-   (broadcast-2
-    (fn add-superclass
-      [o name superclass]
-      (add-axiom o
-                 (.getOWLSubClassOfAxiom
-                  (owl-data-factory)
-                  (ensure-class name)
-                  (ensure-class superclass)
-                  (p/as-annotations superclass)))))))
+  [o name superclass]
+  (add-axiom o
+             (.getOWLSubClassOfAxiom
+              (owl-data-factory)
+              (ensure-class name)
+              (ensure-class superclass)
+              (p/as-annotations superclass))))
 
-(def
+(defnb2
   ^{:doc "Adds one or more subclasses to name in ontology."
-   :arglists '([name & subclass] [ontology name & subclass])}
+    :arglists '([name & subclass] [ontology name & subclass])}
   add-subclass
-  (fontology
-   (broadcast-2
-    (fn add-subclass
-      [o name subclass]
-      (add-axiom o
-                 (.getOWLSubClassOfAxiom
-                  (owl-data-factory)
-                  (ensure-class subclass)
-                  (ensure-class name)
-                  (p/as-annotations subclass)))))))
+  [o name subclass]
+  (add-axiom o
+             (.getOWLSubClassOfAxiom
+              (owl-data-factory)
+              (ensure-class subclass)
+              (ensure-class name)
+              (p/as-annotations subclass))))
 ;; #+end_src
 
 ;; We had to deprecated the old ~add-subclass~ because it has exactly backward
@@ -1882,10 +1893,10 @@ opposite of this."
     :arglists '([name & superclass] [ontology name & superclass])}
   #'add-superclass)
 
-(defbdontfn add-equivalent
-  {:doc "Adds an equivalent axiom to the ontology."
-   :arglists '([name equivalent] [ontology name equivalent])
-   }
+(defnb2
+  ^{:doc "Adds an equivalent axiom to the ontology."
+    :arglists '([ontology name equivalent])}
+  add-equivalent
   [o name equivalent]
   (add-axiom o
              (.getOWLEquivalentClassesAxiom
@@ -1894,9 +1905,10 @@ opposite of this."
               (ensure-class equivalent)
               (p/as-annotations equivalent))))
 
-(defbdontfn add-disjoint
-  {:doc "Adds a disjoint axiom to the ontology."
-   :arglists '([name disjoint] [ontology name disjoint])}
+(defnb2
+  ^{:doc "Adds a disjoint axiom to the ontology."
+    :arglists '([ontology name disjoint])}
+  add-disjoint
   [o name disjoint]
   (add-axiom
    o
@@ -1956,7 +1968,7 @@ opposite of this."
 ;; And now we move onto ~OWLObjectProperty~ support.
 
 ;; #+begin_src clojure
-(defbdontfn add-domain
+(defnb2 add-domain
   "Adds all the entities in domainlist as domains to a property."
   [o property domain]
   (add-axiom o
@@ -1966,7 +1978,7 @@ opposite of this."
               (ensure-class domain)
               (p/as-annotations domain))))
 
-(defbdontfn add-range
+(defnb2 add-range
   "Adds all the entities in rangelist as range to a property."
   [o property range]
   (add-axiom o
@@ -1976,17 +1988,16 @@ opposite of this."
               (ensure-class range)
               (p/as-annotations range))))
 
-(def
+(defnb2
   add-inverse
   "Adds all the entities in inverselist as inverses to a property."
-  (broadcast-2
-   (fn add-inverse [o property inverse]
-     (add-axiom o
-                (.getOWLInverseObjectPropertiesAxiom
-                 (owl-data-factory)
-                 (ensure-object-property property)
-                 (ensure-object-property inverse)
-                 (p/as-annotations inverse))))))
+  [o property inverse]
+  (add-axiom o
+             (.getOWLInverseObjectPropertiesAxiom
+              (owl-data-factory)
+              (ensure-object-property property)
+              (ensure-object-property inverse)
+              (p/as-annotations inverse))))
 
 (defn inverse
   "Creates an object inverse of expression."
@@ -1995,7 +2006,7 @@ opposite of this."
    (owl-data-factory)
    (ensure-object-property property)))
 
-(defbdontfn add-superproperty
+(defnb2 add-superproperty
   "Adds all items in superpropertylist to property as
 a superproperty."
   [o property superproperty]
@@ -2006,7 +2017,7 @@ a superproperty."
               (ensure-object-property superproperty)
               (p/as-annotations superproperty))))
 
-(defbdontfn add-subproperty
+(defnb2 add-subproperty
   "Adds all items in superpropertylist to property as
 a superproperty."
   [o property subproperty]
@@ -2054,15 +2065,18 @@ and used as the handler for :subpropertychain."
     :deprecated "1.1"} deprecated-add-subpropertychain
   add-subchain)
 
-(defbdontfn add-equivalent-property
+(def add-equivalent-property
   "Adds a equivalent data properties axiom."
-  [o property equivalent]
-  (add-axiom
-   o (.getOWLEquivalentObjectPropertiesAxiom
-      (owl-data-factory)
-      (ensure-object-property property)
-      (ensure-object-property equivalent)
-      (p/as-annotations equivalent))))
+  (fontology
+   (broadcast-2
+    (fn add-equivalent-property
+      [o property equivalent]
+      (add-axiom
+       o (.getOWLEquivalentObjectPropertiesAxiom
+          (owl-data-factory)
+          (ensure-object-property property)
+          (ensure-object-property equivalent)
+          (p/as-annotations equivalent)))))))
 
 (defn equivalent-properties
   "Adds properties as equivalent to the ontology."
@@ -2075,17 +2089,20 @@ and used as the handler for :subpropertychain."
         (hset properties)
         (union-annotations properties)))))
 
-(defbdontfn add-disjoint-property
+(def add-disjoint-property
   "Adds a disjoint property axiom to the ontology"
-  [o name disjoint]
-  (add-axiom
-   o
-   (.getOWLDisjointObjectPropertiesAxiom
-    (owl-data-factory)
-    (hash-set
-     (ensure-object-property name)
-     (ensure-object-property disjoint))
-    (p/as-annotations disjoint))))
+  (fontology
+   (broadcast-2
+    (fn add-disjoint-property
+      [o name disjoint]
+      (add-axiom
+       o
+       (.getOWLDisjointObjectPropertiesAxiom
+        (owl-data-factory)
+        (hash-set
+         (ensure-object-property name)
+         (ensure-object-property disjoint))
+        (p/as-annotations disjoint)))))))
 
 (defn disjoint-properties
   "Make all the properties in PROPERTIES disjoint."
@@ -2159,11 +2176,11 @@ and used as the handler for :subpropertychain."
       op
       an))})
 
-(defbdontfn add-characteristics
+(defnb2 add-characteristics
   "Add a list of characteristics to the property."
   [o property characteristic]
   (if-let [fchar (get charfuncs
-                     (p/as-entity characteristic))]
+                      (p/as-entity characteristic))]
     ;;; this is all totally wrong headed here because we are passing in the
 ;;; property which does not carry the annotations. So need to change all the
 ;;; functions above to take the annotation as an extra argument
@@ -2195,8 +2212,8 @@ and used as the handler for :subpropertychain."
    })
 
 ;; object properties
-(defdontfn object-property-explicit
-  "Returns an object-property. This requires an hash with a list
+(defn object-property-explicit
+   "Returns an object-property. This requires an hash with a list
 value for each frame."
   [o name frames]
   (let [o (or (first (get frames :ontology))
@@ -2219,7 +2236,7 @@ value for each frame."
         (f o property (get frames k))))
     property))
 
-(defdontfn object-property
+(defno object-property
   "Returns a new object property in the current ontology."
   [o name & frames]
   (let [keys (list* :ontology (keys object-property-handlers))]
@@ -2430,28 +2447,23 @@ data ranges."
 ;; "long cuts" for consistency with some
 (def owl-only #'only)
 
-(def
-  ^{:doc "Returns an OWL some values from restriction."
-    :arglists '([property & clazzes] [ontology property & clazzes])}
-  object-some
-  (broadcast
-   (fn object-some [property class]
-     (.getOWLObjectSomeValuesFrom
-      (owl-data-factory)
-      (ensure-object-property property)
-      (ensure-class class)))))
+(defnb object-some
+  "Returns an OWL some values from restriction."
+  [property class]
+  (.getOWLObjectSomeValuesFrom
+   (owl-data-factory)
+   (ensure-object-property property)
+   (ensure-class class)))
 
 (util/defmethodf owl-some ::object object-some)
 
-(def ^{:doc "Returns an OWL all values from restriction."
-       :arglists '([property & clazzes] [ontology property & clazzes])}
-  object-only
-  (broadcast
-   (fn object-only [property class]
-     (.getOWLObjectAllValuesFrom
-      (owl-data-factory)
-      (ensure-object-property property)
-      (ensure-class class)))))
+(defnb object-only
+  "Returns an OWL all values from restriction."
+  [property class]
+  (.getOWLObjectAllValuesFrom
+   (owl-data-factory)
+   (ensure-object-property property)
+   (ensure-class class)))
 
 (util/defmethodf only ::object object-only)
 
@@ -2559,13 +2571,12 @@ all values from restrictions."
 
 (util/defmethodf oneof ::individual object-oneof)
 
-(def object-has-value
+(defnb object-has-value
   "Adds an OWL has-value restriction."
-  (broadcast
-   (fn object-has-value [property individual]
-     (.getOWLObjectHasValue (owl-data-factory)
-                            (ensure-object-property property)
-                            (ensure-individual individual)))))
+  [property individual]
+  (.getOWLObjectHasValue (owl-data-factory)
+                         (ensure-object-property property)
+                         (ensure-individual individual)))
 
 (util/defmethodf has-value ::object object-has-value)
 
@@ -2594,7 +2605,7 @@ all values from restrictions."
    :label #'add-label
    })
 
-(defdontfn owl-class-explicit
+(defn owl-class-explicit
   "Creates a class in the current ontology.
 Frames is a map, keyed on the frame name, value a list of items (of other
 lists) containing classes. This function has a rigid syntax, and the more
@@ -2623,7 +2634,7 @@ slightly faster.
     ;; return the class object
     class))
 
-(defdontfn owl-class
+(defno owl-class
   "Creates a new class in the current ontology. See 'defclass' for
 full details."
   [o name & frames]
@@ -2683,33 +2694,31 @@ All arguments must of an instance of OWLClassExpression"
 ;; * Individuals
 
 ;; #+begin_src clojure
-(def
+(defnb2
   ^{:doc "Adds CLAZZES as a type to individual to current ontology
 or ONTOLOGY if present."
     :arglists '([individual & clazzes] [o individual & clazzes])}
   add-type
-  (broadcast-2
-   (fn add-type [o individual clazz]
-     (add-axiom
-      o
-      (.getOWLClassAssertionAxiom
-       (owl-data-factory)
-       (ensure-class clazz)
-       (p/as-entity individual)
-       (p/as-annotations individual))))))
+  [o individual clazz]
+  (add-axiom
+   o
+   (.getOWLClassAssertionAxiom
+    (owl-data-factory)
+    (ensure-class clazz)
+    (p/as-entity individual)
+    (p/as-annotations individual))))
 
-(def
+(defnb2
   ^{:doc "Add FACTS to an INDIVIDUAL in the current ontology or
   ONTOLOGY if present. Facts are produced with `fact' and `fact-not'."
    :arglists '([individual & facts] [ontology individual & facts])}
   add-fact
-  (broadcast-2
-   (fn [o individual fact]
-     (add-axiom
-      o
-      ((p/as-entity fact)
-       individual
-       (p/as-annotations fact))))))
+  [o individual fact]
+  (add-axiom
+   o
+   ((p/as-entity fact)
+    individual
+    (p/as-annotations fact))))
 
 (defmulti get-fact #'guess-type-args)
 (defmulti get-fact-not #'guess-type-args)
@@ -2803,7 +2812,7 @@ or to ONTOLOGY if present."
    :label #'add-label
    })
 
-(defdontfn individual-explicit
+(defno individual-explicit
   "Returns a new individual."
   [o name frames]
   (let [individual
@@ -2823,7 +2832,7 @@ or to ONTOLOGY if present."
       (f o individual (get frames k)))
     individual))
 
-(defdontfn individual
+(defno individual
   [o name & frames]
   (individual-explicit
    o name
@@ -2864,7 +2873,7 @@ or to ONTOLOGY if present."
     (var-get var-maybe)
     var-maybe))
 
-(defdontfn as-disjoint
+(defno as-disjoint
   {:doc "All entities are declared as disjoint. Entities may be
 any structure and may also be a var. See also 'as-subclasses'."
    :arglists '([ontology & entities] [& entities])}
@@ -2885,7 +2894,7 @@ any structure and may also be a var. See also 'as-subclasses'."
       (throw (IllegalArgumentException.
               "Unable to determine the type of entities.")))))
 
-(defdontfn as-equivalent
+(defno as-equivalent
   "Declare the properties or classes as disjoint."
   [o & entities]
   (let [entities
@@ -2904,7 +2913,7 @@ any structure and may also be a var. See also 'as-subclasses'."
       (throw (IllegalArgumentException.
               "Unable to determine the type of entities.")))))
 
-(defdontfn as-inverse
+(defno as-inverse
   {:doc "Declare the two properties as inverse"
    :arglist '([ontology prop1 prop2] [prop1 prop2])}
   [o p1 p2]
@@ -2912,7 +2921,7 @@ any structure and may also be a var. See also 'as-subclasses'."
                (var-get-maybe p1)
                (var-get-maybe p2)))
 
-(defdontfn
+(defno
   as-subclasses
   {:doc "All classes are given the superclass.
 The first item may be an ontology, followed by options.
@@ -2937,7 +2946,7 @@ The first item may be an ontology, followed by options.
       (add-equivalent o superclass
                       (owl-or subclasses)))))
 
-(defdontfn
+(defno
   as-disjoint-subclasses
   {:doc "Declare all subclasses as disjoint"}
   [o superclass & subclasses]
@@ -3000,7 +3009,7 @@ f to get the neighbours."
          (into (rest frontier) (remove explored neighbours)))))))
 
 ;; predicates
-(defdontfn direct-superclasses
+(defno direct-superclasses
   "Returns the direct superclasses of name.
 Name can be either a class or a string name. Returns a list of class
 expressions."
@@ -3011,7 +3020,7 @@ expressions."
       (EntitySearcher/getSuperClasses clz o)
       ())))
 
-(defdontfn superclasses
+(defno superclasses
   "Return all superclasses of class.
 class is not returned unless it is explicitly stated to be a
 direct or indirect superclass of itself."
@@ -3019,34 +3028,34 @@ direct or indirect superclass of itself."
   (recurse-ontology-tree
    o direct-superclasses class))
 
-(defdontfn superclass?
+(defno superclass?
   "Returns true if name is asserted to be a superclass."
   [o name superclass]
   (let [namecls (ensure-class name)
         superclasscls (ensure-class superclass)]
     (some #(.equals superclasscls %) (superclasses o name))))
 
-(defdontfn direct-subclasses
+(defno direct-subclasses
   "Returns the direct subclasses of name."
   [^OWLOntology o name]
   (let [clz (ensure-class name)]
     (if (t/owl-class? clz)
       (EntitySearcher/getSubClasses clz o) ())))
 
-(defdontfn subclasses
+(defno subclasses
   "Return all subclasses of class."
   [o class]
   (recurse-ontology-tree
    o direct-subclasses class))
 
-(defdontfn subclass?
+(defno subclass?
   "Returns true if name has subclass as a subclass."
   [o name subclass]
   (let [namecls (ensure-class name)
         subclasscls (ensure-class subclass)]
     (some #(.equals subclasscls %) (subclasses o name))))
 
-(defdontfn disjoint?
+(defno disjoint?
   "Returns t iff entities (classes or properties) are asserted to be
   disjoint."
   [^OWLOntology o a b]
@@ -3066,7 +3075,7 @@ direct or indirect superclass of itself."
       (IllegalArgumentException.
        "Cannot determine disjoint for this form of entity")))))
 
-(defdontfn equivalent?
+(defno equivalent?
   "Returns t iff classes are asserted to be equivalent."
   [^OWLOntology o a b]
   (let [type (guess-type-args a b)]
@@ -3083,54 +3092,54 @@ direct or indirect superclass of itself."
       (IllegalArgumentException.
        "Cannot determine equivalence for this type of entity")))))
 
-(defdontfn inverse?
+(defno inverse?
   "Returns t iff properties are asserted to be inverse"
   [^OWLOntology o ^OWLObjectProperty p1 ^OWLObjectProperty p2]
   (contains?
    (EntitySearcher/getInverses p1 o) p2))
 
-(defdontfn direct-superproperties
+(defno direct-superproperties
   "Return all direct superproperties of property."
   [^OWLOntology o property]
   (EntitySearcher/getSuperProperties
    (ensure-property property) o))
 
-(defdontfn superproperties
+(defno superproperties
   "Return all superproperties of a property."
   [o property]
   (recurse-ontology-tree
    o direct-superproperties
    (ensure-property property)))
 
-(defdontfn superproperty?
+(defno superproperty?
   "Return true if superproperty is a superproperty of property."
   [o property superproperty]
   (some #(.equals
           (ensure-property superproperty) %)
         (superproperties o property)))
 
-(defdontfn direct-subproperties
+(defno direct-subproperties
   "Returns all direct subproperties of property."
   [^OWLOntology o
    property]
   (EntitySearcher/getSubProperties
    (ensure-property property) o))
 
-(defdontfn subproperties
+(defno subproperties
   "Returns all subproperties of property."
   [o property]
   (recurse-ontology-tree
    o direct-subproperties
    (ensure-property property)))
 
-(defdontfn subproperty?
+(defno subproperty?
   "Returns true if property is a subproperty of subproperty."
   [o property subproperty]
   (some #(.equals
           (ensure-property subproperty) %)
         (subproperties o property)))
 
-(defdontfn direct-instances
+(defno direct-instances
   "Return all direct instances of NAME class."
   [^OWLOntology o name]
   (let [clz (ensure-class name)]
@@ -3294,7 +3303,7 @@ This is a convenience macro and is lexically scoped."
 
 ;; #+begin_src clojure
 
-(defdontfn
+(defno
   ^:private
   entity-class
   ([o en & _]

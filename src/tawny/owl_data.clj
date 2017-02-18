@@ -16,20 +16,18 @@
 ;; along with this program. If not, see http://www.gnu.org/licenses/.
 (in-ns 'tawny.owl)
 
-(defbdontfn add-data-domain
-  {:doc "Adds a domain to a data property."
-   :arglists '([property & domains] [o property & domains])}
+(defnb2 add-data-domain
+  "Adds a domain to a data property."
   [o property domain]
   (add-axiom o
-   (.getOWLDataPropertyDomainAxiom
-    (owl-data-factory)
-    (ensure-data-property property)
-    (ensure-class domain)
-    (p/as-annotations domain))))
+             (.getOWLDataPropertyDomainAxiom
+              (owl-data-factory)
+              (ensure-data-property property)
+              (ensure-class domain)
+              (p/as-annotations domain))))
 
-(defbdontfn add-data-range
-  {:doc "Adds a range to a data property."
-   :arglists '([property & ranges] [ontology property & ranges])}
+(defnb2 add-data-range
+  "Adds a range to a data property."
   [o property range]
   (add-axiom
    (.getOWLDataPropertyRangeAxiom
@@ -38,7 +36,7 @@
     (ensure-data-range range)
     (p/as-annotations range))))
 
-(defbdontfn add-data-subproperty
+(defnb2 add-data-subproperty
   "Adds a sub property to a data property."
   [o property sub]
   (add-axiom
@@ -49,7 +47,7 @@
     (ensure-data-property property)
     (p/as-annotations sub))))
 
-(defbdontfn add-data-superproperty
+(defnb2 add-data-superproperty
   "Adds a super property to a data property."
   [o property super]
   (add-axiom o
@@ -79,7 +77,7 @@ This is to deprecated the :superproperty frame"}
       (p/as-entity dp)
       (p/as-annotations dp)))})
 
-(defbdontfn add-data-characteristics
+(defnb2 add-data-characteristics
   "Add a list of characteristics to the property."
   [o property characteristic]
   (when-not (get datacharfuncs characteristic)
@@ -89,7 +87,7 @@ This is to deprecated the :superproperty frame"}
              ((get datacharfuncs characteristic)
               (owl-data-factory) (ensure-data-property property))))
 
-(defbdontfn add-data-equivalent
+(defnb2 add-data-equivalent
   "Adds a equivalent data properties axiom."
   [o property equivalent]
   (add-axiom
@@ -110,7 +108,7 @@ This is to deprecated the :superproperty frame"}
         (hset properties)
         (union-annotations properties)))))
 
-(defbdontfn add-data-disjoint
+(defnb2 add-data-disjoint
   {:doc "Adds a disjoint data property axiom to the ontology"}
   [o name disjoint]
   (add-axiom
@@ -148,7 +146,7 @@ This is to deprecated the :superproperty frame"}
    :label #'add-label
    })
 
-(defdontfn datatype-property-explicit
+(defno datatype-property-explicit
   "Define a new datatype property with an explicit map"
   [o name frames]
   (let [property
@@ -167,7 +165,7 @@ This is to deprecated the :superproperty frame"}
       (f o property (get frames k)))
     property))
 
-(defdontfn datatype-property
+(defno datatype-property
   "Define a new datatype property"
   [o name & frames]
   (let [keys
@@ -208,7 +206,7 @@ which is an OWLDatatype object.
      [literal [String Long Double Boolean]]
      (.getOWLLiteral (owl-data-factory) literal))))
 
-(defbdontfn add-datatype-equivalent
+(defnb2 add-datatype-equivalent
   "Adds a datatype equivalent axiom"
   [o datatype equivalent]
   (add-axiom
@@ -225,7 +223,7 @@ which is an OWLDatatype object.
    :equivalent #'add-datatype-equivalent
    })
 
-(defdontfn datatype-explicit
+(defno datatype-explicit
   "Defines a new datatype."
   [o name frames]
   (let [o
@@ -243,7 +241,7 @@ which is an OWLDatatype object.
       (f o datatype (get frames k)))
     datatype))
 
-(defdontfn datatype
+(defno datatype
   "Defines a new datatype."
   [o name & frames]
   (let [keys
@@ -293,15 +291,13 @@ which is an OWLDatatype object.
 
 (util/defmethodf owl-not-one ::data data-not)
 
-(def data-some
+(defnb data-some
   "Returns a data some values from restriction."
-  (broadcast
-   (fn data-some
-     [property data-range]
-     (.getOWLDataSomeValuesFrom
-      (owl-data-factory)
-      (ensure-data-property property)
-      (ensure-data-range data-range)))))
+  [property data-range]
+  (.getOWLDataSomeValuesFrom
+   (owl-data-factory)
+   (ensure-data-property property)
+   (ensure-data-range data-range)))
 
 (util/defmethodf owl-some ::data data-some)
 
