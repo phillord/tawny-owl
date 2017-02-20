@@ -39,7 +39,7 @@ or the current, or generate a new temporary name"
       (str obo-pre-iri "#"
            (java.util.UUID/randomUUID))))
 
-(defdontfn obo-iri-generate
+(defno obo-iri-generate
   "Generator function for numeric style IRIs. New OWLEntities will be given
 an temporary ID, while existing OWLEntities will reuse a numeric, incrementing
 ID. For full usage details see numeric.md documentation.
@@ -71,7 +71,7 @@ in :name-to-iri-current, while IDs loaded from file are stored in
            (clojure.edn/read r))))
 
 ;; pull everything from file
-(defdontfn obo-restore-iri
+(defno obo-restore-iri
   "Read an existing properties file containing identifier to IRI data."
   [o file]
   (let [name-to-iri-map
@@ -113,7 +113,7 @@ IRIs are placed before pre-IRIs, and both are organised alphabetically."
     (clojure.pprint/pprint (flatten (obo-sort map)) w)))
 
 ;; store everything to a file
-(defdontfn obo-store-iri
+(defno obo-store-iri
   "Save both existing and new identifier to IRI mappings into the given file."
   [o file]
   (let [options (deref (tawny.owl/ontology-options o))
@@ -147,7 +147,7 @@ longer exist in the ontology. There are, effectively, obsolete terms."
                        name))]
     (apply dissoc remembered-filtered (keys current))))
 
-(defdontfn obo-report-obsolete
+(defno obo-report-obsolete
   "Print a list of obsolete terms"
   [o]
   (let [options (deref (tawny.owl/ontology-options o))]

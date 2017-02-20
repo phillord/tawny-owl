@@ -301,38 +301,6 @@ ontology"
          ;; so break
          (throw (IllegalStateException. "Current ontology has not been set")))))
 
-(defn- call-f-with-arity
-  "Return a form which calls the function f, n times."
-  [f n]
-  (let [args
-        (repeatedly n #(gensym "arg"))]
-    (list
-     (vec args)
-     (concat f args))))
-
-(defmacro defnwithfn
-  "Define a new var like defn, but compose FUNCTION with BODY before
-rather than just using BODY directly."
-  [name function & body]
-  (let [f (gensym)]
-    `(let [vr# (defn ~name ~@body)]
-       (alter-var-root
-        vr#
-        (fn [~f]
-          ;; 0 to 20 arity
-          (fn
-          ~@(map
-             #(call-f-with-arity
-               [function f] %)
-             (range 20))
-          ;; and fall back
-          ([a# b# c# d# e# f# g# h# i# j# k#
-            l# m# n# o# p# q# r# s# & t#]
-             (apply ~function ~f
-                    a# b# c# d# e# f# g# h# i# j# k#
-                    l# m# n# o# p# q# r# s# t#)))))
-       vr#)))
-
 (defonce
   ^{:doc "Hook called when the default ontology is used"}
   default-ontology-hook (util/make-hook))
@@ -404,9 +372,9 @@ multi-arity as a micro optimization, to avoid a variadic invocation."
           (t/ontology? a)
           (nil? a))
        (apply f a b c d e fa g h i j args)
-       (apply default-ontology-base-dispatcher
-              get-current-ontology
-              f a b c d e fa g h i j args))))
+       (do
+         (util/run-hook default-ontology-hook)
+         (apply f (get-current-ontology) a b c d e fa g h i j args)))))
 
 (defn fontology [f]
   (partial default-ontology f))
@@ -476,127 +444,6 @@ multi-arity as a micro optimization, to avoid a variadic invocation."
 ;; to cope with higher arities. Ontologies such as GO easily exceed this.
 
 ;; #+begin_src clojure
-(defn- broadcast-ontology-int
-  "Implements the broadcast function for up to six arguments. First argument
-is an ontology, the last is th function that we are broadcasting to, and all
-the other arguments are arguments to be passed. At this point o may be either
-an ontology or nil, depending on what calls this, and a-f are definately not
-lists. There was a good reason for putting fnc at the end of the argument
-list, but I cannot remember what it was."
-  ;; at this point o is definately an ontology and a-f are definately not lists
-  ([o a fnc]
-   (fnc o a))
-  ([o a b fnc]
-   ;; dispense with the list for this case when we don't need it and also
-   ;; because it will allow functions operating on the return value of this to
-   ;; also avoid the full flattening broadcast support.
-   (fnc o a b))
-  ([o a b c fnc]
-     (list
-      (fnc o a b)
-      (fnc o a c)))
-  ([o a b c d fnc]
-     (list
-      (fnc o a b)
-      (fnc o a c)
-      (fnc o a d)))
-  ([o a b c d e fnc]
-     (list
-      (fnc o a b)
-      (fnc o a c)
-      (fnc o a d)
-      (fnc o a e)))
-  ([o a b c d e f fnc]
-     (list
-      (fnc o a b)
-      (fnc o a c)
-      (fnc o a d)
-      (fnc o a e)
-      (fnc o a f)))
-  ([o a b c d e f g fnc]
-     (list
-      (fnc o a b)
-      (fnc o a c)
-      (fnc o a d)
-      (fnc o a e)
-      (fnc o a f)
-      (fnc o a g))))
-
-(defn broadcast-ontology-full
-  "Given a function which expects an ontology and two other arguments, ensure
-that the first argument is an ontology (see default-ontology for details),
-then f repeatedly against the second args and all subsequent arguments
-flattened. Where possible, we avoid using this function for the micro-optimisd
-broadcast-ontology."
-  [f & args]
-  (apply default-ontology
-         (fn [o & narg]
-           (doall
-            (map (partial f o (first narg))
-                 (flatten
-                  (rest narg)))))
-         args))
-
-(defmacro ^{:private true}
-  if-not-sequential
-  "If all seqs are not sequential. This is a micro-optimisation, as use of
-every? requires a list at run time when we have an list of arguments." 
-  [seqs & rest]
-  `(if (and
-        ~@(map
-           (fn [seq]
-             `(not (sequential? ~seq)))
-           ;; reverse the seqs because the last argument is often a list, for
-           ;; calls from the named entity functions, such as owl-class. So, we
-           ;; can break early and fail fast in these cases.
-           (reverse seqs)))
-     ~@rest))
-
-(defn broadcast-ontology
-  "Given a function, fnc, and args ensure that the first arg is an ontology
-using default-ontology, and then broadcast the rest, so that the fnc is called
-with the first and second args, first and third args and so on. This function
-is micro-optimised to avoid use of variadic method calls or list operations."
-  ([fnc a b]
-     (if-not-sequential
-      [a b]
-      (default-ontology
-        broadcast-ontology-int
-        a b fnc)
-      (broadcast-ontology-full fnc a b)))
-  ([fnc a b c]
-     (if-not-sequential
-      [a b c]
-      (default-ontology
-        broadcast-ontology-int a b c fnc)
-      (broadcast-ontology-full fnc a b c)))
-  ([fnc a b c d]
-     (if-not-sequential
-      [a b c d]
-      (default-ontology
-        broadcast-ontology-int a b c d fnc)
-      (broadcast-ontology-full fnc a b c d)))
-  ([fnc a b c d e]
-     (if-not-sequential
-      [a b c d e]
-      (default-ontology
-        broadcast-ontology-int a b c d e fnc)
-      (broadcast-ontology-full fnc a b c d e)))
-  ([fnc a b c d e f]
-     (if-not-sequential
-      [a b c d e f]
-      (default-ontology
-        broadcast-ontology-int a b c d e f fnc)
-      (broadcast-ontology-full fnc a b c e f)))
-  ([fnc a b c d e f g]
-     (if-not-sequential
-      [a b c d e f g]
-      (default-ontology
-        broadcast-ontology-int a b c d e f g fnc)
-      (broadcast-ontology-full fnc a b c d e f g)))
-  ([fnc a b c d e f g & args]
-     (apply broadcast-ontology-full
-            fnc a b c d e f g args)))
 
 ;; New broadcast
 (defn- broadcast-full [special f args]
@@ -670,77 +517,6 @@ is micro-optimised to avoid use of variadic method calls or list operations."
      (broadcast-call 2 f x a b c d e f' g h i))
     ([x a b c d e f' g h i & rest]
      (broadcast-full 2 f (list* x a b c d e f' g h i rest)))))
-
-;; #+end_src
-
-;; * Function def forms
-
-;; These ~def~ macros enable definition of functions with support for
-;; broadcasting and default ontology functionality. The difference is the 4 and
-;; 5th letter:
-
-;;  - "d" definately requires the default ontology
-;;  - "m" maybe requires the default ontology
-;;  - "b" broadcasting
-
-;; The reason for the "maybe" is that for some functions, it depends on the
-;; arguments whether an ontology is required or not. So:
-
-;; #+BEGIN_EXAMPLE
-;; (owl-class "a")
-;; #+END_EXAMPLE
-
-;; definately requires an ontology since we need to add ~a~ to the it.
-
-;; #+BEGIN_EXAMPLE
-;; (owl-some r A)
-;; #+END_EXAMPLE
-
-;; Does not if ~r~ and ~A~ are object property and class objects respectively.
-;; However,
-
-;; #+BEGIN_EXAMPLE
-;; (owl-some r "a")
-;; #+END_EXAMPLE
-
-;; will do since it is equivalent to
-
-;; #+BEGIN_EXAMPLE
-;; (owl-some r (owl-class "a"))
-;; #+END_EXAMPLE
-
-;; In this case, ~owl-some~ calls a "definately" ontology function anyway, and it
-;; is this that crashes. Tawny uses a "crash late" strategy -- we should only
-;; require an ontology argument when it is definately needed.
-
-;; One disadvantage of these ~def~ forms is that they make the stack traces a lot
-;; harder to read, since their bodies are actually transformed into numbered
-;; functions. I am not sure how to fix this.
-
-;; #+begin_src clojure
-
-(defmacro defdontfn
-  "Like defn, but automatically adds the current-ontology to the args
-if the first arg is not an ontology. Throws an IllegalStateException
-if there is no current ontology.
-
-The 'd' stands for definitely."
-  [name & body]
-  `(defnwithfn ~name #'default-ontology
-     ~@body))
-
-(defmacro defbdontfn
-  "Like the defn and defdontfn, but broadcasts. That is it expects a three arg
-function, f with ontology, x and y, but defines a new function which takes
-ontology, x and rest, returning a list which is f applied to ontology, x and
-the flattened elements of rest.
-
-Uses the default ontology if not supplied and throws an IllegalStateException
-  if this is not set."
-  [name & body]
-  `(defnwithfn ~name #'broadcast-ontology
-     ~@body))
-
 ;; #+end_src
 
 ;; * OWL (No)thing
