@@ -376,34 +376,83 @@ multi-arity as a micro optimization, to avoid a variadic invocation."
          (util/run-hook default-ontology-hook)
          (apply f (get-current-ontology) a b c d e fa g h i j args)))))
 
-(defn fontology [f]
+(defn fontology
+  "Return a function that always calls f with an ontology as the first
+  argument."
+  [f]
   (partial default-ontology f))
 
-(defmacro defno [& body]
+(defmacro defno
+  "Define a new function, that is always called with an ontology as the first
+  argument. If the ontology is not supplied the default ontology will be used
+  instead."
+  [& body]
   (let [f (gensym)]
     `(let [vr# (defn ~@body)]
        (alter-var-root
         vr#
-        (fn [~f]
-          (fontology ~f)))
+        (fn [f#]
+          (fontology f#)))
+       (alter-meta!
+        vr#
+        (fn [m#]
+          (let [a# (get m# :arglists)]
+            (assoc
+             m#
+             :arglists
+             (conj a#
+                   (into []
+                         (rest (first a#))))))))
        vr#)))
 
-(defmacro defnb [& body]
+
+(defmacro defnb
+  "Defines a new function that broadcasts the first and consecutive
+  arguments."
+  [& body]
   (let [f (gensym)]
     `(let [vr# (defn ~@body)]
        (alter-var-root
         vr#
         (fn [~f]
           (broadcast ~f)))
+       (alter-meta!
+        vr#
+        (fn [m#]
+          (let [a# (get m# :arglists)]
+            (assoc
+             m#
+             :arglists
+             (concat a#
+                     (list
+                      [(first (first a#)) '&
+                       (second (first a#))]))))))
        vr#)))
 
-(defmacro defnb2 [& body]
+(defmacro defnb2
+  "Define a new function that broadcasts over first, second and consecutive
+  arguments."
+  [& body]
   (let [f (gensym)]
     `(let [vr# (defn ~@body)]
        (alter-var-root
         vr#
         (fn [~f]
           (broadcast-2 ~f)))
+       (alter-meta!
+        vr#
+        (fn [m#]
+          (let [a# (get m# :arglists)
+                fs# (first a#)]
+            (assoc
+             m#
+             :arglists
+             (concat a#
+                     (list
+                      [(first fs#)
+                       (second fs#)
+                       '&
+                       (nth fs# 2)]))))))
        vr#)))
 
 ;; #+end_src
@@ -953,8 +1002,7 @@ add-sub-annotation functionality."
     property))
 
 (defno annotation-property
-  {:doc "Creates a new annotation property."
-   :arglists '([ontology name & frames] [name & frames])}
+  {:doc "Creates a new annotation property."}
   [o name & frames]
   (annotation-property-explicit
    o
@@ -1035,11 +1083,22 @@ this macro. This macro also marks the resultant var with :owl metadata.
 The resultant macro takes arguments of the form [name :ontology o :frame1 f].
 The ontology frame is optional."
   [name docstring entity-function]
-  `(defmacro
-     ~name
-     ~docstring
-     [entity# & frames#]
-     (#'tawny.owl/entity-generator entity# frames# ~entity-function)))
+  (let [args '([entity & frames])]
+    `(let [vr#
+           (defmacro
+             ~name
+             ~docstring
+             [entity# & frames#]
+             (#'tawny.owl/entity-generator entity# frames# ~entity-function))]
+       (alter-meta!
+        vr#
+        (fn [m#]
+          (assoc m#
+                 :arglists
+                 (quote ~args))))
+       vr#)))
+
+
 ;; #+end_src
 
 ;; * Last bit of annotation
@@ -1047,7 +1106,6 @@ The ontology frame is optional."
 ;; And, finally, we complete the annotation frame.
 
 ;; #+begin_src clojure
-
 (defentity defaproperty
   "Defines a new annotation property in the current ontology.
 See 'defclass' for more details on the syntax"
@@ -2469,12 +2527,11 @@ All arguments must of an instance of OWLClassExpression"
 
 ;; * Individuals
 
+;; (meta #'add-type)
 ;; #+begin_src clojure
-(defnb2
-  ^{:doc "Adds CLAZZES as a type to individual to current ontology
+(defnb2 add-type
+  "Adds CLAZZES as a type to individual to current ontology
 or ONTOLOGY if present."
-    :arglists '([individual & clazzes] [o individual & clazzes])}
-  add-type
   [o individual clazz]
   (add-axiom
    o
@@ -2486,8 +2543,7 @@ or ONTOLOGY if present."
 
 (defnb2
   ^{:doc "Add FACTS to an INDIVIDUAL in the current ontology or
-  ONTOLOGY if present. Facts are produced with `fact' and `fact-not'."
-   :arglists '([individual & facts] [ontology individual & facts])}
+  ONTOLOGY if present. Facts are produced with `fact' and `fact-not'."}
   add-fact
   [o individual fact]
   (add-axiom
