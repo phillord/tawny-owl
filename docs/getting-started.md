@@ -108,7 +108,7 @@ properties as well.
     (defclass PizzaBase
       ;; the pizza ontology contains some Portuguese labels. The :label keyword
       ;; used above is a shortcut for English
-      :annotation (label "BaseDaPizza" "pt")))
+      :annotation (label "BaseDaPizza" "pt"))
 
 
 Declaring a class in this manner adds it to the current ontology, as well as
