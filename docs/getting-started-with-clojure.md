@@ -89,7 +89,7 @@ plenty of tutorials; for instance I use
 ## Building an ontology
 
 This is the main thing that you may want to do with Tawny, and it is covered
-in its own [documentation](getting-start.md). 
+in its own [documentation](getting-started.md).
 
 ## A main method
 
