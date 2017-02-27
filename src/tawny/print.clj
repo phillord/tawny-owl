@@ -201,10 +201,12 @@
   (.write
    w
    (format
-    "#[%s 0x%x %s]"
+    "#[%s 0x%x %s %s %s:%s]"
     (name-for-class o)
     (System/identityHashCode o)
     (shorten-iri
      (.get
       (.getOntologyIRI
-       (.getOntologyID o)))))))
+       (.getOntologyID o))))
+    (.getAxiomCount o)
+    (.getLogicalAxiomCount o))))
