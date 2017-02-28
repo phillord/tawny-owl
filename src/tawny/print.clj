@@ -30,7 +30,9 @@
    [java.io Writer]))
 
 (defn- shorten-iri [^IRI iri]
-  (str (.getFragment iri)))
+  (str
+   (or (.getFragment iri))
+   iri))
 
 (defmethod print-method IRI [o ^Writer w]
   (.write w (str "#[iri " (shorten-iri o) "]")))
@@ -155,8 +157,6 @@
        (.getSignature o))))
     "]")))
 
-
-
 (defn- print-short [o]
   (if (instance? OWLNamedObject o)
     (shorten-iri (.getIRI ^OWLNamedObject o))
@@ -201,7 +201,7 @@
   (.write
    w
    (format
-    "#[%s 0x%x %s %s %s:%s]"
+    "#[%s 0x%x %s %s:%s]"
     (name-for-class o)
     (System/identityHashCode o)
     (shorten-iri
