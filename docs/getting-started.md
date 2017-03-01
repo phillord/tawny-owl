@@ -108,7 +108,7 @@ properties as well.
     (defclass PizzaBase
       ;; the pizza ontology contains some Portuguese labels. The :label keyword
       ;; used above is a shortcut for English
-      :annotation (label "BaseDaPizza" "pt")))
+      :annotation (label "BaseDaPizza" "pt"))
 
 
 Declaring a class in this manner adds it to the current ontology, as well as
@@ -218,7 +218,7 @@ Tawny-OWL can be considerably more succinct than Manchester OWL.
 As Tawny-OWL is based on Clojure, it is possible to use Tawny-OWL
 interactively, through a REPL (Read-Eval-Print-Loop). In this environment, it
 is possible to add and, also, to remove entities interactively. This can be
-useful for trying out ideas. The `defclass` and other macros shown far work
+useful for trying out ideas. The `defclass` and other macros shown so far work
 perfectly well in this environment. It is also possible to remove statements
 that have been added. For example, consider the following statement:
 

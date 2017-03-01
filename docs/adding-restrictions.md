@@ -37,7 +37,7 @@ which is equivalent to a `Pizza` which `hasTopping` of `CheeseTopping`.
     (defclass CheesyPizza
         :equivalent
         Pizza
-        (owl-some hasTopping CheeseTopping)))
+        (owl-some hasTopping CheeseTopping))
 
 In this case, an existential restriction is created using the `owl-some`
 function. This is semantically equivalent to this form:
