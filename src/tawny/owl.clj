@@ -32,6 +32,7 @@
    [clojure.test :only is]
    [clojure.set]
    [clojure.java.io]
+   [tawny.print]
    [tawny.protocol :as p]
    [tawny.type :as t]
    [tawny.util :as util])
