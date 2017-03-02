@@ -31,11 +31,11 @@
 
 (defn- shorten-iri [^IRI iri]
   (str
-   (or (.getFragment iri))
-   iri))
+   (or (.getFragment iri)
+       iri)))
 
 (defmethod print-method IRI [o ^Writer w]
-  (.write w (str "#[iri " (shorten-iri o) "]")))
+  (.write w (str "#[iri " o "]")))
 
 (defn- name-for-class [o]
   (some
