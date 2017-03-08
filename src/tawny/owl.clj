@@ -1047,15 +1047,15 @@ add-sub-annotation functionality."
 Currently, we define this to be the second value iff the first is an :ontology
 keyword. Returns a map of :ontology and the ontology or nil, and :args with
 the args minus the ontology frame if it exists."
-  [frames]
-  (if (= :ontology (first frames))
+  [ontology-keyword frames]
+  (if (= ontology-keyword (first frames))
     {:ontology (second frames)
      :frames (nthrest frames 2)}
     {:ontology nil
      :frames frames}))
 
-(defn- entity-generator [entity frames entity-function]
-  (let [ontsplit (extract-ontology-frame frames)
+(defn- entity-generator [entity frames entity-function ontology-keyword]
+  (let [ontsplit (extract-ontology-frame ontology-keyword frames)
         ont (:ontology ontsplit)
         frames (:frames ontsplit)
         entity-name (name entity)
@@ -1083,21 +1083,27 @@ this macro. This macro also marks the resultant var with :owl metadata.
 
 The resultant macro takes arguments of the form [name :ontology o :frame1 f].
 The ontology frame is optional."
-  [name docstring entity-function]
-  (let [args '([entity & frames])]
-    `(let [vr#
-           (defmacro
-             ~name
-             ~docstring
-             [entity# & frames#]
-             (#'tawny.owl/entity-generator entity# frames# ~entity-function))]
-       (alter-meta!
-        vr#
-        (fn [m#]
-          (assoc m#
-                 :arglists
-                 (quote ~args))))
-       vr#)))
+  ([name docstring entity-function]
+   `(defentity ~name ~docstring ~entity-function :ontology))
+  ([name docstring entity-function ontology-keyword]
+   (let [args '([entity & frames])]
+     `(let [vr#
+            (defmacro
+              ~name
+              ~docstring
+              [entity# & frames#]
+              (#'tawny.owl/entity-generator
+               entity# frames#
+               ~entity-function
+               ~ontology-keyword
+               ))]
+        (alter-meta!
+         vr#
+         (fn [m#]
+           (assoc m#
+                  :arglists
+                  (quote ~args))))
+        vr#))))
 
 
 ;; #+end_src
@@ -1347,6 +1353,11 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
 ;; ontology support which does not make sense at all.
 
 ;; #+begin_src clojure
+(defn ontology-def-f [name body]
+  `(let [ontology# (ontology :name ~(clojure.core/name name) ~@body)]
+     (ontology-to-namespace ontology#)
+     (intern-owl ~name ontology#)))
+
 (defmacro defontology
   "Define a new ontology with `name'.
 
@@ -1355,12 +1366,7 @@ The following keys must be supplied.
 :prefix -- the prefix used in the serialised version of the ontology
 "
   [name & body]
-  `(do
-     (let [ontology# (ontology :name ~(clojure.core/name name) ~@body)
-           var#
-           (tawny.owl/intern-owl ~name ontology#)]
-       (tawny.owl/ontology-to-namespace ontology#)
-       var#)))
+  (ontology-def-f name body))
 
 ;;; Begin ontology look up functions
 (defn- check-entity-set

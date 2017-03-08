@@ -60,3 +60,14 @@
                      k locale))))))
     (throw (IllegalStateException.
             (format "Cannot find properties file: %s" filename)))))
+
+(defn polyglot-translate-form [f trans-map args]
+  (apply f
+         (map
+          #(or
+            (trans-map %) %)
+          args)))
+
+(defn polyglot-trans [f trans-map]
+  (fn [& args]
+    (polyglot-translate-form f trans-map args)))
