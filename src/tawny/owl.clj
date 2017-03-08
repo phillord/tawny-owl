@@ -2866,7 +2866,8 @@ direct or indirect superclass of itself."
   [o name superclass]
   (let [namecls (ensure-class name)
         superclasscls (ensure-class superclass)]
-    (some #(.equals superclasscls %) (superclasses o name))))
+    (some #{superclasscls}
+          (superclasses o name))))
 
 (defno direct-subclasses
   "Returns the direct subclasses of name."
@@ -2886,7 +2887,9 @@ direct or indirect superclass of itself."
   [o name subclass]
   (let [namecls (ensure-class name)
         subclasscls (ensure-class subclass)]
-    (some #(.equals subclasscls %) (subclasses o name))))
+    (some
+     #{subclasscls}
+     (subclasses o name))))
 
 (defno disjoint?
   "Returns t iff entities (classes or properties) are asserted to be
