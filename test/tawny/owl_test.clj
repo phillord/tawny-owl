@@ -255,7 +255,7 @@
     (is (do (o/save-ontology to "target/test.omn")
             true))
     (is (do (o/save-ontology
-             (o/ontology :name "bob") "target/test2.omn")
+             (o/ontology :prefix "bob") "target/test2.omn")
             true)))
   (testing "turtle format"
     (is (do (o/save-ontology to "target/test.ttl" :ttl)
