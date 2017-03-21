@@ -1473,7 +1473,7 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
    ;; these are not broadcast
    :iri-gen #'set-iri-gen,
    :prefix #'set-prefix,
-   :name #'add-an-ontology-name
+   ::name #'add-an-ontology-name
    :seealso #'add-see-also
    :comment #'add-ontology-comment
    :versioninfo #'add-version-info
@@ -1505,12 +1505,12 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
         ;; this allows me to do "(defontology tmp)"
         options (merge options
                        {:prefix (or (:prefix options)
-                                    (:name options))})
+                                    (::name options))})
         iri (iri (get options :iri
                              (str
                               (java.util.UUID/randomUUID)
                               (if-let [name
-                                       (get options :name)]
+                                       (get options ::name)]
                                 (str "#" name)))))
         viri-str (get options :viri)
         viri (when viri-str (tawny.owl/iri viri-str))
@@ -1560,7 +1560,7 @@ The following keys must be supplied.
 "
   [name & body]
   `(do
-     (let [ontology# (ontology :name ~(clojure.core/name name) ~@body)
+     (let [ontology# (ontology ::name ~(clojure.core/name name) ~@body)
            var#
            (tawny.owl/intern-owl ~name ontology#)]
        (tawny.owl/ontology-to-namespace ontology#)
@@ -2693,12 +2693,12 @@ full details."
    (util/check-keys
     (util/hashify frames)
     (list*
-     :ontology :name
+     :ontology
      (keys owl-class-handlers)))))
 
 (defentity defclass
   "Define a new class. Accepts a set number of frames, each marked
-by a keyword :subclass, :equivalent, :annotation, :name, :comment,
+by a keyword :subclass, :equivalent, :annotation, :comment,
 :label or :disjoint. Each frame can contain an item, a list of items or any
 combination of the two. The class object is stored in a var called classname."
   'tawny.owl/owl-class)
