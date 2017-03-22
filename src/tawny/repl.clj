@@ -22,6 +22,7 @@
             [tawny.lookup]
             [tawny.protocol :as p]
             [tawny.render]
+            [tawny.type :as t]
             [clojure.pprint]
             )
   (:import [java.io StringWriter PrintWriter]
@@ -114,8 +115,9 @@ namespace."
   ([ns]
      (doseq [v
              (vals
-              (tawny.lookup/iri-to-var ns))]
-       (println (fetch-doc (var-get v))))))
+              (tawny.lookup/iri-to-var ns))
+             :when (not (t/ontology? (var-get v)))]
+       (print-doc (var-get v)))))
 
 
 (defn update-var-doc
