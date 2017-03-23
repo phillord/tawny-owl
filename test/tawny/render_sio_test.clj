@@ -1,8 +1,10 @@
 (ns ^:slow
   tawny.render-sio-test
-  (:require [tawny.owl])
+  (:require
+   [clojure.java.io]
+   [tawny owl render])
   (:use [clojure.test])
-  (:require [tawny.render]))
+)
 
 (defn read-sio []
   (tawny.owl/remove-ontology-maybe
@@ -41,7 +43,7 @@
             (tawny.render/as-form n :explicit true))
            "\n")
           :append true))
-  (require 'sio-header)
+  (load-file "dev-resources/sio_header.clj")
   (def sio-rendered (eval 'sio-header/sio-rendered))
   (tests)
   (tawny.owl/remove-ontology-maybe (.getOntologyID sio-rendered))

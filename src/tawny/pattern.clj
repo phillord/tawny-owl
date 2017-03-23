@@ -183,7 +183,7 @@ whose return values are interned."
   entire frames which only have nil arguments. Returns a vector of the name
   and the entity created, a form suitable for feeding to intern-owl-entities
   is necessary."
- [entity-f o name & options]
+  [entity-f o name & options]
   (let
       [options
        (cond
@@ -222,7 +222,7 @@ with other entities that are annotated to the same anonymous individual.")
   pattern-annotator-cache
   (atom {}))
 
-(o/defmontfn pattern-annotator
+(o/defno pattern-annotator
   "Annotates all ENTITIES as part of a pattern.
 
   This associated each entity with an anonymous individual. The individual is
@@ -246,11 +246,11 @@ with other entities that are annotated to the same anonymous individual.")
          o
          (p/as-entity %)
          :annotation
-         (o/annotation o inpattern anon))
+         (o/annotation inpattern anon))
        entities)))
    entities))
 
-(o/defdontfn pattern-annotations
+(o/defno pattern-annotations
   "Returns pattern annotations of ENTITY or the empty list."
   [^OWLOntology o entity]
   (filter
@@ -260,7 +260,7 @@ with other entities that are annotated to the same anonymous individual.")
    (EntitySearcher/getAnnotations
     (p/as-entity entity) o)))
 
-(o/defdontfn which-pattern
+(o/defno which-pattern
   "Returns the OWLAnonymousIndividual(s) describing the pattern(s)
   which ENTITY is part of."
   [o entity]
@@ -268,7 +268,7 @@ with other entities that are annotated to the same anonymous individual.")
    (fn [^OWLAnnotation anon] (.getValue anon))
    (pattern-annotations o entity)))
 
-(o/defdontfn shared-pattern
+(o/defno shared-pattern
   "Return the OWLAnonymousIndividual(s) describing the pattern(s)
 to which all ENTITIES belong."
   [o & entities]
@@ -278,7 +278,7 @@ to which all ENTITIES belong."
             (which-pattern o %))
           entities)))
 
-(o/defdontfn pattern-iris
+(o/defno pattern-iris
   "Return all IRIs that are in pattern annotated with PATTERN,
 an anonymous invididual."
   [^OWLOntology o pattern]
@@ -293,7 +293,7 @@ an anonymous invididual."
      o
      org.semanticweb.owlapi.model.AxiomType/ANNOTATION_ASSERTION))))
 
-(o/defdontfn pattern-entities
+(o/defno pattern-entities
   "Return all entites that are in pattern annotated with PATTERN,
 an anonymous invididual."
   [^OWLOntology o pattern]
@@ -327,17 +327,17 @@ an anonymous invididual."
   involving a specific object property. The object property may also have a
   range which is a superclass of the facet values but is not required to.")
 
-(o/defdontfn as-facet [o oprop & entities]
+(o/defno as-facet [o oprop & entities]
   "Mark entities as facet values for the facet oprop.
 This allows the specification of a set of properties as classes without having
 to explicitly name the object property."
   (doall
    (map
     (fn [e]
-      (o/add-annotation
+      (#'o/add-annotation
        o
        (p/as-entity (#'o/var-get-maybe e))
-       (o/annotation o facetvalue
+       (o/annotation facetvalue
                      (p/as-iri
                       (p/as-entity oprop)))))
     (flatten entities))))
@@ -362,13 +362,14 @@ to explicitly name the object property."
 
 (defn- facet-1 [o clazz]
   (o/owl-some
-   o
-   (facet-property
+   (o/entity-for-iri
     o
-    (#'tawny.owl/ensure-class o clazz))
+    (facet-property
+     o
+     (#'tawny.owl/ensure-class clazz)))
    clazz))
 
-(o/defdontfn facet
+(o/defno facet
   "Return an existential restriction for each of the facetted classes."
   [o & clazz]
   (doall (map (fn [c] (facet-1 o c)) (flatten clazz))))
@@ -382,7 +383,7 @@ to explicitly name the object property."
 ;; rainbow.
 
 ;; #+begin_src clojure
-(o/defmontfn value-partition
+(o/defno value-partition
   "Return the entities for a new value partition.
 
 PARTITION-NAME is the overall name for the partition.
@@ -447,7 +448,7 @@ This returns a list of entity vectors created by the p function."
           `(tawny.util/quote-word-or-head ~@partition-values)
           options)))
 
-(o/defmontfn partition-values
+(o/defno partition-values
   "Given a value partition return the values.
 O is the Ontology, P the value partition."
   [o p]

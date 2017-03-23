@@ -50,7 +50,7 @@
 
 (deftest datatype
   (is (= :XSD_INTEGER
-         (r/as-form (#'o/ensure-datatype to :XSD_INTEGER)))))
+         (r/as-form (#'o/ensure-datatype :XSD_INTEGER)))))
 
 (defn lit-f
   ([val]
@@ -84,7 +84,7 @@
     '(owl-some (iri "http://iri/#rD") :XSD_INTEGER)
     (do (data-ontology)
         (r/as-form
-         (o/owl-some to "rD" :XSD_INTEGER))))))
+         (o/owl-some (o/datatype-property to "rD") :XSD_INTEGER))))))
 
 (deftest datasome-range
   (is
@@ -94,7 +94,7 @@
       [['owl-some d '[span < 1]]
        [:some d [:span :< 1]]]
       (double-as-form
-       (o/owl-some to d (o/span < 1))))))
+       (o/owl-some d (o/span < 1))))))
   (is
    (tawny.owl/with-probe-entities to
      [d (o/datatype-property to "d")]
@@ -102,7 +102,7 @@
       [['owl-some d ['span '>< 1 1]]
        [:some d [:span :>< 1 1]]]
       (double-as-form
-       (o/owl-some to d (o/span >< 1 1))))))
+       (o/owl-some d (o/span >< 1 1))))))
 
 (deftest dataonly-range
   (is
@@ -112,7 +112,7 @@
       [['only d '[span < 1]]
        [:only d [:span :< 1]]]
       (double-as-form
-       (o/owl-only to d (o/span < 1))))))
+       (o/owl-only d (o/span < 1))))))
   (is
    (tawny.owl/with-probe-entities to
      [d (o/datatype-property to "d")]
@@ -120,7 +120,7 @@
       [['only d ['span '>< 1 1]]
        [:only d [:span :>< 1 1]]]
       (double-as-form
-       (o/owl-only to d (o/span >< 1 1))))))))
+       (o/owl-only d (o/span >< 1 1))))))))
 
 
 (deftest individual-fact-1
@@ -131,8 +131,9 @@
                          (iri "http://iri/#I2")))
       (r/as-form
        (o/individual to "I"
-                     :fact (o/fact to (o/object-property to "r")
-                                   (o/individual to "I2")))))))
+                     :fact (o/fact
+                            (o/object-property to "r")
+                            (o/individual to "I2")))))))
 
 (deftest individual-fact-2
   (is
@@ -141,9 +142,11 @@
                    (fact-not (iri "http://iri/#r")
                              (iri "http://iri/#I2")))
       (r/as-form
-       (o/individual to "I"
-                     :fact (o/fact-not to (o/object-property to "r")
-                                   (o/individual to "I2")))))))
+       (o/individual
+        to "I"
+        :fact (o/fact-not
+               (o/object-property to "r")
+               (o/individual to "I2")))))))
 
 
 (deftest individual-3
@@ -158,9 +161,9 @@
     (r/as-form
      (o/individual to "I"
                    :fact
-                   (o/fact to (o/object-property to "r")
+                   (o/fact (o/object-property to "r")
                            (o/individual to "I2"))
-                   (o/fact-not to (o/object-property to "r")
+                   (o/fact-not (o/object-property to "r")
                                (o/individual to "I2")))))))
 
 
@@ -174,7 +177,7 @@
     (r/as-form
      (o/individual to "I"
                    :fact
-                   (o/fact to (o/datatype-property to "d")
+                   (o/fact (o/datatype-property to "d")
                            10))))))
 
 
@@ -189,9 +192,9 @@
       (r/as-form
        (o/individual to "I"
                      :fact
-                     (o/fact to (o/datatype-property to "d")
+                     (o/fact (o/datatype-property to "d")
                              10)
-                     (o/fact to (o/object-property to "r")
+                     (o/fact (o/object-property to "r")
                              (o/individual to "I2")))))))
 
 (deftest oproperty-super-test
@@ -271,7 +274,7 @@
      [a (o/owl-class to "a")]
      (=
       (r/as-form
-       (o/owl-and to a) :terminal :object)
+       (o/owl-and a) :terminal :object)
       ['owl-and a]))))
 
 
@@ -432,7 +435,7 @@
        [:oneof i]
        [:object-oneof i]]
       (multi-as-form
-       (o/oneof to i))))))
+       (o/oneof i))))))
 
 (deftest data-oneof
   (is
@@ -443,7 +446,7 @@
      [:oneof [:literal "10" :type :XSD_INTEGER]]
      [:data-oneof [:literal "10" :type :XSD_INTEGER]]]
     (multi-as-form
-     (o/oneof to (o/literal to 10))))))
+     (o/oneof (o/literal 10))))))
 
 ;; :at-least
 (deftest object-at-least
@@ -458,7 +461,7 @@
        [:at-least 1 p c]
        [:object-at-least 1 p c]]
       (multi-as-form
-       (o/at-least to 1 p c))))))
+       (o/at-least 1 p c))))))
 
 (deftest data-at-least
   (is
@@ -513,7 +516,7 @@
        [:has-value r i]
        [:object-has-value r i]]
       (multi-as-form
-       (o/has-value to r i))))))
+       (o/has-value r i))))))
 
 (deftest data-has-value
   (is
@@ -525,7 +528,7 @@
        [:has-value d [:literal "10" :type :XSD_INTEGER]]
        [:data-has-value d [:literal "10" :type :XSD_INTEGER]]]
       (multi-as-form
-       (o/has-value to d 10))))))
+       (o/has-value d 10))))))
 
 ;; :owl-not
 (deftest object-owl-not
@@ -538,7 +541,7 @@
        [:not c]
        [:object-not c]]
       (multi-as-form
-       (o/owl-not to c))))))
+       (o/owl-not c))))))
 
 (deftest data-owl-not
   (is
@@ -548,7 +551,7 @@
      [:not :XSD_INTEGER]
      [:data-not :XSD_INTEGER]]
     (multi-as-form
-     (o/owl-not to :XSD_INTEGER)))))
+     (o/owl-not :XSD_INTEGER)))))
 
 
 ;; :iri
@@ -651,7 +654,7 @@
        [:has-self r]
        [:has-self r]]
       (multi-as-form
-       (o/has-self to r))))))
+       (o/has-self r))))))
 
 ;; :inverse
 (deftest inverse
@@ -664,7 +667,7 @@
        [:inverse r]
        [:inverse r]]
       (multi-as-form
-       (o/inverse to r))))))
+       (o/inverse r))))))
 
 
 (deftest ontology

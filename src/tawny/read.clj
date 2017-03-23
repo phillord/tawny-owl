@@ -38,25 +38,25 @@
 (defn iri-starts-with-filter
   "Checks e to see if it is an OWLNamedObject and has an IRI starting with
 starts-with. Use this partially applied with a filter for 'read'."
-  [starts-with e]
+  [starts-with _ e]
   (and (t/named? e)
        (.startsWith
         (str
          (.getIRI ^OWLNamedObject e))
         starts-with)))
 
-(tawny.owl/defmontfn default-filter
+(defn default-filter
   "Filter for only named objects with an IRI the same as the ontology IRI."
   [o e]
   (iri-starts-with-filter
-   (str (tawny.protocol/as-iri o)) e))
+   (str (tawny.protocol/as-iri o)) nil e))
 
 (defn default-transform
   "Extract the fragment from each IRI."
-  [^OWLNamedObject e]
+  [_ ^OWLNamedObject e]
   (.. e (getIRI) (getFragment)))
 
-(tawny.owl/defmontfn filter-for-labels
+(defn filter-for-labels
   "Filter annotations on an entity for labels"
   [^OWLOntology o ^OWLEntity e]
   (filter
@@ -65,7 +65,7 @@ starts-with. Use this partially applied with a filter for 'read'."
         (.isLabel))
    (EntitySearcher/getAnnotations e o)))
 
-(tawny.owl/defmontfn label-transform
+(defn label-transform
   "Get text from label annotation"
   [^OWLOntology o ^OWLEntity e]
   (some-> (filter-for-labels o e)
@@ -73,16 +73,15 @@ starts-with. Use this partially applied with a filter for 'read'."
       ^OWLLiteral (.getValue)
       (.getLiteral)))
 
-(tawny.owl/defmontfn noisy-nil-label-transform
+(defn noisy-nil-label-transform
  "Check for empty labels noisily"
  [o e]
  (let [trans (label-transform o e)]
     (when (nil? trans)
       (println "Unable to generate transform for:" e))
-    trans
-    ))
+    trans))
 
-(tawny.owl/defmontfn really-noisy-nil-label-transform
+(defn really-noisy-nil-label-transform
  "Check for empty labels noisily"
  [o e]
  (println e)
@@ -90,10 +89,9 @@ starts-with. Use this partially applied with a filter for 'read'."
     (when (nil? trans)
       (println "Unable to generate transform for:" e))
     (println trans)
-    trans
-    ))
+    trans))
 
-(tawny.owl/defmontfn exception-nil-label-transform
+(defn exception-nil-label-transform
  "Check for empty labels noisily"
  [o e]
   (let [trans (label-transform o e)]
@@ -216,11 +214,13 @@ iri-mapper and resource-iri-mapper.
         ;; current system.
         (intern-entity
          (or namespace *ns*) x
-         (or transform default-transform)))
+         (partial (or transform default-transform)
+                  owlontology)))
       ;; filter this so that it only puts stuff with the given IRI prefix
       (doall
-       (clojure.core/filter (or filter default-filter)
-                            (.getSignature owlontology)))))
+       (clojure.core/filter
+        (partial (or filter default-filter) owlontology)
+        (.getSignature owlontology)))))
     owlontology))
 
 (defn iri-create

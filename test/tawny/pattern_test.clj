@@ -64,7 +64,9 @@
   (is
    (=
     (#'tawny.pattern/p variadic-identity "o" "name")
-    (p/map->Named {:name "name" :entity ["o" "name"]})))
+    (p/map->Named {:name "name" :entity ["o" "name"]})
+
+    ))
 
   (is
    (=
@@ -76,8 +78,7 @@
    (=
     (#'tawny.pattern/p variadic-identity "o" "name" :a 1 :b nil :c 2)
     (p/map->Named
-     {:name "name" :entity ["o" "name" :a 1 :c 2]})
-    ))
+     {:name "name" :entity ["o" "name" :a 1 :c 2]})))
 
   (is
    (=
@@ -120,7 +121,7 @@
          c (o/owl-class to "c")]
      (p/as-facet to o c)
      (=
-      (list (o/owl-some to o c))
+      (list (o/owl-some o c))
       (p/facet to c)))))
 
 (deftest pattern-annotator

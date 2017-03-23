@@ -35,19 +35,19 @@
 (def profile-owl2el
   (OWL2ELProfile.))
 
-(defdontfn violations
+(defno violations
   "Return a list of violations of the given profile,
 for an ontology or the current ontology."
   [^OWLOntology ontology ^OWLProfile profile]
   (.getViolations (.checkOntology profile ontology)))
 
-(defdontfn inprofile?
+(defno inprofile?
   "Returns true if an ontology or the current ontology is
 in the current profile"
   [^OWLOntology ontology ^OWLProfile profile]
   (.isInProfile (.checkOntology profile ontology)))
 
-(defdontfn axiom-violations
+(defno axiom-violations
   "Return a list of axioms that are violation of the given profile,
 in an ontology or the current ontology"
   [ontology profile]

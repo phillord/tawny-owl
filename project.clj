@@ -1,4 +1,4 @@
-(defproject uk.org.russet/tawny-owl "1.6.1-SNAPSHOT"
+(defproject uk.org.russet/tawny-owl "2.0.0-MAYBE"
   :description "tawny-owl enables building OWL ontologies in a programmatic environment."
   :url "http://www.russet.org.uk/blog/tawny-owl"
   :repositories [["maven" "http://repo1.maven.org/maven2"]]
@@ -27,12 +27,11 @@
                    ]
 
   :dependencies [
-
                  ;; owl API
                  [net.sourceforge.owlapi/owlapi-distribution "4.2.8"]
 
                  ;; clojure
-                 [org.clojure/clojure "1.6.0"]
+                 [org.clojure/clojure "1.7.0"]
                  [org.clojure/core.logic "0.8.10"]
 
                  ;; reasoners
@@ -62,10 +61,6 @@
    :1.8
    [:base
     {:dependencies [[org.clojure/clojure "1.8.0"]]}]
-
-   :1.7
-   [:base
-    {:dependencies [[org.clojure/clojure "1.7.0"]]}]
 
    }
 )

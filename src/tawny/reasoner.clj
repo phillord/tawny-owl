@@ -18,7 +18,7 @@
     ^{:doc "Interaction with external reasoners"
       :author "Phillip Lord"}
   tawny.reasoner
-  (:use [tawny.owl :only [defdontfn]])
+  (:use [tawny.owl :only [defno]])
   (:require [tawny.owl :as owl]
             [tawny.util :as util])
   (:import
@@ -188,7 +188,7 @@ the reasoner function is better to use."
 ;; we need to cache these 'cause reasoners listen to changes could just use
 ;; memoized function taking jontology as param Probably need to write a new
 ;; ProgressMonitor to communicate with emacs.
-(defdontfn ^OWLReasoner reasoner
+(defno ^OWLReasoner reasoner
   "Returns a reasoner for the given ontology, creating a new one if necessary
 from the current reasoner-factory."
   [ontology]
@@ -232,7 +232,7 @@ happen automatically."
   (util/add-hook owl/remove-ontology-hook
                  discard-reasoner))
 
-(defdontfn consistent?
+(defno consistent?
   "Returns true if the ontology is consistent.
 
 This method can throw an InconsistentOntologyException
@@ -245,7 +245,7 @@ This method can throw an InconsistentOntologyException
   ;;                                           e/CLASS_HIERARCHY)))
   (.isConsistent (reasoner ontology)))
 
-(defdontfn unsatisfiable
+(defno unsatisfiable
   "Returns all unsatisfiable classes from the current ontology
 
 Throws an org.semanticweb.owlapi.reasoner.InconsistentOntologyException if the
@@ -256,7 +256,7 @@ ontology is inconsistent"
    (.getUnsatisfiableClasses
     (reasoner ontology))))
 
-(defdontfn coherent?
+(defno coherent?
   "Returns true if the ontology is coherent"
   [ontology]
   ;; actually implement this -- satisfiable > 0
@@ -276,18 +276,18 @@ ontology is inconsistent"
                  (= (owl/owl-nothing) %1)))
            coll)))
 
-(defdontfn isuperclasses
+(defno isuperclasses
   "Return all superclasses in ontology for name. Returns a (clojure)
 set and does not return top or bottom."
   [ontology name]
   (no-top-bottom
    (entities
     (.getSuperClasses (reasoner ontology)
-                      (#'tawny.owl/ensure-class ontology name)
+                      (#'tawny.owl/ensure-class name)
                       false))))
 
 ;; move this to using isuperclasses
-(defdontfn isuperclass?
+(defno isuperclass?
   "Returns true if name has superclass as a strict superclass."
   [ontology name superclass]
   (let [superclasses
@@ -295,17 +295,17 @@ set and does not return top or bottom."
     (if (some #{superclass} superclasses)
       true false)))
 
-(defdontfn isubclasses
+(defno isubclasses
   "Returns all infered subclasses of name in ontology o.
 Returns a clojure set, and does not return top or bottom."
   [o name]
   (no-top-bottom
    (entities
     (.getSubClasses (reasoner o)
-                    (#'tawny.owl/ensure-class o name)
+                    (#'tawny.owl/ensure-class name)
                     false))))
 
-(defdontfn isubclass?
+(defno isubclass?
   "Returns true if name has subclass as a strict subclass"
   [ontology name subclass]
   (let [subclasses
@@ -313,15 +313,15 @@ Returns a clojure set, and does not return top or bottom."
     (if (some #{subclass} subclasses)
       true false)))
 
-(defdontfn iequivalent-classes
+(defno iequivalent-classes
   "Returns equivalent classes to name in ontology. Returns a set which
 may include top or bottom."
   [ontology name]
   (.getEntities
    (.getEquivalentClasses (reasoner ontology)
-                          (#'tawny.owl/ensure-class ontology name))))
+                          (#'tawny.owl/ensure-class name))))
 
-(defdontfn iequivalent-class?
+(defno iequivalent-class?
   "Returns true if name and equiv are equivalent in ontology."
   [ontology name equiv]
   (let [equivs
@@ -329,7 +329,7 @@ may include top or bottom."
     (if (some #{equiv} equivs)
       true false)))
 
-(defdontfn instances
+(defno instances
   "Returns all instances of class in ontology."
   [ontology class]
   (entities
