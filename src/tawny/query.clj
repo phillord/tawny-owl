@@ -21,8 +21,87 @@
   (:use [tawny.owl])
   (:use [tawny.render])
   (:require [tawny.util])
-  (:require [clojure.core.logic :as l]))
+  (:require [clojure.core.logic :as l]
+            [clojure.set :as s])
+  (:import [org.semanticweb.owlapi.model
+            HasAnnotationPropertiesInSignature
+            HasAnnotations
+            HasAnonymousIndividuals
+            HasClassesInSignature
+            HasDataPropertiesInSignature
+            HasDatatypesInSignature
+            HasDirectImports
+            HasImportsClosure
+            HasIndividualsInSignature,
+            HasObjectPropertiesInSignature
+            HasSignature
+            OWLOntology]
+           [org.semanticweb.owlapi.model.parameters
+            Imports]))
 
+;; Factor this out into util!
+(defn- ^java.util.Set hset
+  "Same as clojure.core/set with a type hint."
+  [coll]
+  (set coll))
+
+(defn map-imports
+  "Map `f` over the imports closure of `h` and return a set of results."
+  [f ^HasImportsClosure h]
+  (apply s/union
+         (map f (.getImportsClosure h))))
+
+(defn signature
+  "Return the signature of `h` as a set."
+  [^HasSignature h]
+  (hset (.getSignature h)))
+
+(defn ann-props
+  "Return annotation properties in `h` as a set."
+  [^HasAnnotationPropertiesInSignature h]
+  (hset (.getAnnotationPropertiesInSignature h)))
+
+(defn anonymous
+  "Return anonymous individuals of `h` as a set."
+  [^HasAnonymousIndividuals h]
+  (hset (.getAnonymousIndividuals h)))
+
+(defn classes
+  "Return classes in `h` as a set."
+  [^HasClassesInSignature h]
+  (hset (.getClassesInSignature h)))
+
+(defn data-props
+  "Return data properties in `h` as a set."
+  [^HasDataPropertiesInSignature h]
+  (hset (.getDataPropertiesInSignature h)))
+
+(defn data-types
+  "Return data types in `h` as a set."
+  [^HasDatatypesInSignature h]
+  (hset (.getDatatypesInSignature h)))
+
+(defn direct-imports
+  "Return direct imports in `h` as a set."
+  [^HasDirectImports h]
+  (hset (.getDirectImports h)))
+
+(defn imports-closure
+  "Return the whole import closure for `h` as a set."
+  [^HasImportsClosure h]
+  (hset (.getImportsClosure h)))
+
+(defn individuals
+  "Return individuals in `h` as a set."
+  [^HasIndividualsInSignature h]
+  (hset (.getIndividualsInSignature h)))
+
+(defn obj-props
+  "Return object properties in `h` as a set."
+  [^HasObjectPropertiesInSignature h]
+  (hset (.getObjectPropertiesInSignature h)))
+
+;; ** Core Logic Support
 (defn into-map
   "Translates an owl object into a clojure map.
 

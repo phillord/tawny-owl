@@ -23,6 +23,7 @@
   (:require [tawny.protocol])
   (:import (org.semanticweb.owlapi.model
             IRI
+            OWLAnonymousIndividual
             OWLAnnotationProperty
             OWLAnnotationValue
             OWLClass
@@ -57,6 +58,11 @@
   "Return true if `e` is an instance of `OWLAnnotationProperty`."
   [e]
   (entity-instance? OWLAnnotationProperty e))
+
+(defn anonymous?
+  "Return true if `e` is an instance of `OWLAnonymousIndividual`."
+  [e]
+  (entity-instance? OWLAnonymousIndividual e))
 
 (defn owl-class?
   "Return true if `e` is an instance of `OWLClass`."
