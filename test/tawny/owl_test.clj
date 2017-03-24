@@ -347,10 +347,16 @@
       (to-form t)))))
 
 (deftest object-property []
-  (is (instance?
-       org.semanticweb.owlapi.model.OWLObjectProperty
-       (o/object-property to "b")))
-  )
+  (is
+   (instance?
+    org.semanticweb.owlapi.model.OWLObjectProperty
+    (o/object-property to "b"))))
+
+(deftest datatype-explicit []
+  (is
+   (instance?
+    org.semanticweb.owlapi.model.OWLDatatype
+    (o/datatype to "d"))))
 
 (deftest owl-some []
   (is (not (nil? (o/owl-some to (o/object-property to "b") "a"))))
