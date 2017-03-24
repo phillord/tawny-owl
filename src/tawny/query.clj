@@ -25,18 +25,23 @@
 
 (defn into-map
   "Translates an owl object into a clojure map.
-The map is similar to the form used to define an entity. Keys are the keywords
-used by tawny.owl (:subclass, :domain, etc). Value are sets. Each element of
-the set is either an OWL object, or, if it is a restriction, similar to that
-used to define a restriction but with OWLObjects instead of clojure symbols.
-In addition a :type key is added which describes the type of the object."
-  [owlobject]
-  (let [render
-        (as-form owlobject :keyword :object)]
-    (apply hash-map
-           (concat
-            [:type (list (first render))]
-            (drop 2 render)))))
+
+  The map is similar to the form used to define an entity. Keys are the keywords
+  used by tawny.owl (:subclass, :domain, etc). Value are sets. Each element of
+  the set is either an OWL object, or, if it is a restriction, similar to that
+  used to define a restriction but with OWLObjects instead of clojure symbols.
+  In addition a :type key is added which describes the type of the object.  It
+  is also possible to render to OWL API objects using `:object` as the
+  `resolve` argument."
+  ([owlobject terminal]
+   (let [render
+         (as-form owlobject :keyword true :terminal terminal)]
+     (apply hash-map
+            (concat
+             [:type (list (first render))]
+             (drop 2 render)))))
+  ([owlobject]
+   (into-map owlobject :resolve)))
 
 (defn into-map-with
   "As into-map but merges result from other entities retrieved by (f entity).
@@ -51,8 +56,6 @@ present in the final map, however."
               (filter iriable?
                       (conj (f entity)
                             entity)))))
-
-
 
 (defn frameo
   "Searches a specific frame in a rendered OWL entity to see if query matches
