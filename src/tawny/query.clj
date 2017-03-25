@@ -101,7 +101,8 @@
   [^HasObjectPropertiesInSignature h]
   (hset (.getObjectPropertiesInSignature h)))
 
-;; ** Core Logic Support
+
+;; translate to clojure data structures
 (defn into-map
   "Translates an owl object into a clojure map.
 
@@ -136,6 +137,21 @@ present in the final map, however."
                       (conj (f entity)
                             entity)))))
 
+(defn tawny-name [owlobject]
+  "Return the tawny-name for a given `owl-object`."
+  (as-> owlobject c
+    (into-map c :object)
+    (:annotation c)
+    (filter
+     #(=
+       tawny.owl/tawny-name-property
+       (second %)) c)
+    (first c)
+    (nth c 2)
+    (apply hash-map c)
+    (:literal c)))
+
+;; Core logic support
 (defn frameo
   "Searches a specific frame in a rendered OWL entity to see if query matches
 partially. So, for example, we might search the :type frames to see if it
