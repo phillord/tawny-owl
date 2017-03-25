@@ -142,8 +142,8 @@ This requires that the various objects, such as `hasIngredient`, `Pizza` and
 itself.
 
 Annotation properties can be created similarly with `defannotationproperty`.
-Currently, creating datatype properties requires direct use of the OWL API;
-extension of Tawny-OWL to cope is planned, pull requests gratefully accepted.
+
+Datatype properties can be created similarly with `defdproperty`.
 
 ## Disjoints, Inverse and subclasses
 
