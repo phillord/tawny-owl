@@ -17,8 +17,8 @@
 
 (in-ns 'tawny.owl)
 
-;; Self-Annotation capabilities for tawny.
-;; To avoid boot problems, will replicate some code here.
+;; Self-Annotation capabilities for tawny.  To avoid boot problems, will
+;; replicate some code here.
 
 ;; this is much the same as the external annotation but a requires an
 ;; annotation property object
@@ -38,9 +38,7 @@
 (def ^{:private true} tawny-iri
   (iri tawny-base-url))
 
-(def
-  ^{:private true}
-  tawny-name-property
+(def tawny-name-property
   (tawny-annotation-property
    (iri (str tawny-base-url "#name"))))
 
