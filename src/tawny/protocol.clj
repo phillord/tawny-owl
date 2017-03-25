@@ -6,7 +6,7 @@
 
 ;; The contents of this file are subject to the LGPL License, Version 3.0.
 
-;; Copyright (C) 2016, Newcastle University
+;; Copyright (C) 2016, 2017, Newcastle University
 
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU Lesser General Public License as published by
