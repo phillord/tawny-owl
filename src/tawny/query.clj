@@ -18,7 +18,7 @@
     ^{:doc "Enable querying over ontologies."
       :author "Phillip Lord"}
     tawny.query
-  (:use [tawny.owl])
+  (:require [tawny.owl])
   (:use [tawny.render])
   (:require [tawny.util])
   (:require [clojure.core.logic :as l]
@@ -132,7 +132,7 @@ present in the final map, however."
   [f entity]
   (apply merge-with clojure.set/union
          (map #(dissoc (into-map %) :type)
-              (filter iriable?
+              (filter tawny.owl/iriable?
                       (conj (f entity)
                             entity)))))
 
