@@ -1491,7 +1491,7 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
             (if (= 1 (count v))
               [k (first v)]
               (throw (IllegalArgumentException.
-                      (str "Frame " k " accepts only a single argument"))))
+                      (str "Frame " k " can only be referenced once - try broadcasting"))))
             [k v]))))
 
 (defn ontology-explicit
