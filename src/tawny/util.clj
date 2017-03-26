@@ -39,12 +39,11 @@ Values for which pred returns true must be separated by at least other value."
         x))
     (partition-by pred list))))
 
-
-(defn groupify-at
-  "Takes a list and returns all adjacent values which are not in keys into a
-single list. Keys must be separated by at least one value."
-  [keys list]
-  (groupify-by (fn [x] (some #(= x %) keys)) list))
+(defn groupify-except-at [value-keywords list]
+  (groupify-by
+   #(and (keyword? %)
+         (not (get value-keywords %)))
+   list))
 
 (defn- merge-hash-map
   "Give a list turn into a map like apply hash-map, but assumes that the
@@ -57,11 +56,12 @@ values are lists and concats duplicates."
       (apply hash-map n))
     (partition 2 list))))
 
-(defn hashify-at
+(defn hashify-except-at
   "Takes a list with alternating keyword values and returns a hash"
-  [keys list]
+  [value-keywords list]
   (apply
-   merge-hash-map (groupify-at keys list)))
+   merge-hash-map
+   (groupify-except-at value-keywords list)))
 
 (defn groupify
   "Takes a list with keywords and values and turns all adjacent values into a

@@ -734,13 +734,15 @@ signals a hook, and adds :owl true to the metadata. NAME must be a symbol"
 ;; well.
 
 ;; #+begin_src clojure
-(def
-  ^{:doc "A map of keywords to the OWL2Datatypes values"}
-  owl2datatypes
-  (into {}
-        (for [^org.semanticweb.owlapi.vocab.OWL2Datatype
-              k (org.semanticweb.owlapi.vocab.OWL2Datatype/values)]
-          [(keyword (.name k)) (.getDatatype k (owl-data-factory))])))
+(do
+  (def
+    ^{:doc "A map of keywords to the OWL2Datatypes values"}
+    owl2datatypes
+    (into {}
+          (for [^org.semanticweb.owlapi.vocab.OWL2Datatype
+                k (org.semanticweb.owlapi.vocab.OWL2Datatype/values)]
+            [(keyword (.name k)) (.getDatatype k (owl-data-factory))])))
+  (def ^:private keys-owl2datatypes (set (keys owl2datatypes))))
 ;; #+end_src
 
 
@@ -1957,65 +1959,68 @@ and used as the handler for :subpropertychain."
         (set properties)
         (union-annotations properties)))))
 
-(def
-  ^{:private true}
-  charfuncs
-  {:transitive
-   (fn [^OWLDataFactory df
-        ^OWLObjectProperty op
-        ^java.util.Set an]
-     (.getOWLTransitiveObjectPropertyAxiom
-      df
-      op
-      an))
-   :functional
-   (fn [^OWLDataFactory df
-        ^OWLObjectProperty op
-        ^java.util.Set an]
-     (.getOWLFunctionalObjectPropertyAxiom
-      df
-      op
-      an))
-   :inversefunctional
-   (fn [^OWLDataFactory df
-        ^OWLObjectProperty op
-        ^java.util.Set an]
-     (.getOWLInverseFunctionalObjectPropertyAxiom
-      df
-      op
-      an))
-   :symmetric
-   (fn [^OWLDataFactory df
-        ^OWLObjectProperty op
-        ^java.util.Set an]
-     (.getOWLSymmetricObjectPropertyAxiom
-      df
-      op
-      an))
-   :asymmetric
-   (fn [^OWLDataFactory df
-        ^OWLObjectProperty op
-        ^java.util.Set an]
-     (.getOWLAsymmetricObjectPropertyAxiom
-      df
-      op
-      an))
-   :irreflexive
-   (fn [^OWLDataFactory df
-        ^OWLObjectProperty op
-        ^java.util.Set an]
-     (.getOWLIrreflexiveObjectPropertyAxiom
-      df
-      op
-      an))
-   :reflexive
-   (fn [^OWLDataFactory df
-        ^OWLObjectProperty op
-        ^java.util.Set an]
-     (.getOWLReflexiveObjectPropertyAxiom
-      df
-      op
-      an))})
+(do
+  (def
+    ^{:private true}
+    charfuncs
+    {:transitive
+     (fn [^OWLDataFactory df
+          ^OWLObjectProperty op
+          ^java.util.Set an]
+       (.getOWLTransitiveObjectPropertyAxiom
+        df
+        op
+        an))
+     :functional
+     (fn [^OWLDataFactory df
+          ^OWLObjectProperty op
+          ^java.util.Set an]
+       (.getOWLFunctionalObjectPropertyAxiom
+        df
+        op
+        an))
+     :inversefunctional
+     (fn [^OWLDataFactory df
+          ^OWLObjectProperty op
+          ^java.util.Set an]
+       (.getOWLInverseFunctionalObjectPropertyAxiom
+        df
+        op
+        an))
+     :symmetric
+     (fn [^OWLDataFactory df
+          ^OWLObjectProperty op
+          ^java.util.Set an]
+       (.getOWLSymmetricObjectPropertyAxiom
+        df
+        op
+        an))
+     :asymmetric
+     (fn [^OWLDataFactory df
+          ^OWLObjectProperty op
+          ^java.util.Set an]
+       (.getOWLAsymmetricObjectPropertyAxiom
+        df
+        op
+        an))
+     :irreflexive
+     (fn [^OWLDataFactory df
+          ^OWLObjectProperty op
+          ^java.util.Set an]
+       (.getOWLIrreflexiveObjectPropertyAxiom
+        df
+        op
+        an))
+     :reflexive
+     (fn [^OWLDataFactory df
+          ^OWLObjectProperty op
+          ^java.util.Set an]
+       (.getOWLReflexiveObjectPropertyAxiom
+        df
+        op
+        an))})
+
+  (def ^:private keys-charfuncs (set (keys charfuncs))))
 
 (defnb2 add-characteristics
   "Add a list of characteristics to the property."
@@ -2084,7 +2089,8 @@ value for each frame."
     (object-property-explicit
      o name
      (util/check-keys
-      (util/hashify-at keys frames)
+      (util/hashify-except-at
+       keys-charfuncs frames)
       keys))))
 
 (defentity defoproperty

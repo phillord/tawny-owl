@@ -173,8 +173,9 @@ This is to deprecated the :superproperty frame"}
         (keys datatype-property-handlers)
         frames
         (util/check-keys
-         (util/hashify-at
-          keys frames)
+         (util/hashify-except-at
+          (conj keys-owl2datatypes :functional)
+          frames)
          keys)]
     (datatype-property-explicit
      o name frames)))
@@ -250,7 +251,7 @@ which is an OWLDatatype object.
                (keys datatype-handlers))
         frames
         (util/check-keys
-         (util/hashify-at keys frames)
+         (util/hashify-except-at keys-owl2datatypes frames)
          keys)
         o (or (first (get frames :ontology))
               o)]

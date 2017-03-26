@@ -174,8 +174,8 @@ whose return values are interned."
   characteristics."
   [args]
   (nil-strip
-   (u/groupify-at
-    (keys (var-get #'tawny.owl/object-property-handlers))
+   (u/groupify-except-at
+    (var-get #'tawny.owl/keys-charfuncs)
     args)))
 
 (defn p

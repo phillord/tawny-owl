@@ -19,19 +19,6 @@
   [:require [clojure.test :refer :all] [tawny.util :as u]])
 
 
-(deftest groupify-at
-  (is
-   (empty? (u/groupify-at [:a :b :c] [])))
-  (is
-   (= (u/groupify-at [:a :b :c] [:a 1])
-      [:a [1]]))
-  (is
-   (thrown? IllegalArgumentException
-            (u/groupify-at [:a :b :c] '(:a :b))))
-  (is
-   (= (u/groupify-at [:a :c] '(:a :b :c 1 2))
-      [:a [:b] :c [1 2]])))
-
 (deftest groupify
   (is
    (empty? (u/groupify '())))
@@ -50,7 +37,45 @@
    (=
     (u/hashify '(:a 1 :b 2))
     {:a '(1) :b '(2)})))
-  
+
+(deftest except-at
+  (is
+   (=
+    (u/groupify-except-at #{} '(:a 1 :b 2 3 :c 4 5 6))
+    '(:a (1) :b (2 3) :c (4 5 6))))
+  (is
+   (thrown?
+    IllegalArgumentException
+    (u/groupify-except-at #{} '(:a 1 :b 2 3 :d :c 4 5 6))))
+  (is
+   (=
+    (u/groupify-except-at #{:d} '(:a 1 :b 2 3 :d :c 4 5 6))
+    '(:a (1) :b (2 3 :d) :c (4 5 6))))
+  (is
+   (thrown?
+    IllegalArgumentException
+    (u/hashify-except-at #{} '(:a 1 :b 2 3 :d :c 4 5 6))))
+  (is
+   (=
+    (u/hashify-except-at #{:d} '(:a 1 :b 2 3 :d :c 4 5 6))
+    '{:c (4 5 6), :b (2 3 :d), :a (1)}))
+  (is
+   (=
+    (u/hashify-except-at #{} '(1 2 :a 1 :b 2 3))
+    '{(1 2) :a, (1) :b})))
+
+
+(u/groupify-except-at #{:x} '(:a 1))
+;; => (:a (1))
+
+(u/groupify-except-at #{:x} '(:a :x))
+;; => (:a (:x))
+
+(u/hashify-except-at #{:x} '(:a 1))
+;; => {:a (1)}
+
+(u/hashify-except-at #{:x} '(:a :x))
+;; => {:a (:x)}
 
 (deftest check-keys []
   (is
