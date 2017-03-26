@@ -1037,6 +1037,12 @@ Assumes that fixture has been run"
        to
        dp sdp)))))
 
+(deftest add-data-range
+  (is
+   (o/datatype-property
+    to "a"
+    :range :XSD_INTEGER)))
+
 (deftest hasself
   (is
    (instance? org.semanticweb.owlapi.model.OWLObjectHasSelf

@@ -30,6 +30,7 @@
   "Adds a range to a data property."
   [o property range]
   (add-axiom
+   o
    (.getOWLDataPropertyRangeAxiom
     (owl-data-factory)
     (ensure-data-property property)
