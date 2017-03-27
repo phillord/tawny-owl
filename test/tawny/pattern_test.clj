@@ -3,7 +3,11 @@
   (:require
    [tawny.owl :as o]
    [tawny.debug]
-   [tawny.pattern :as p]))
+   [tawny.pattern :as p]
+   [tawny.query :as q]
+   [tawny.util :as u]
+   [tawny.type :as t]
+   [tawny.test-util :refer :all]))
 
 
 (def to nil)
@@ -12,7 +16,7 @@
   (alter-var-root
    #'to
    (fn [x]
-     (o/ontology :iri "http://iri/" :prefix "iri" :noname true))))
+     (o/ontology :iri "http://iri/" :prefix "iri"))))
 
 (defn createandsavefixture[test]
   (let [exp
@@ -110,8 +114,8 @@
    (p/value-partition to "A" ["B" "C" "D"])))
 
 (deftest partition-values
-  (is
-   (let [[p _ & v] (p/value-partition to "A" ["B" "C" "D"])]
+  (let [[p _ & v] (p/value-partition to "A" ["B" "C" "D"])]
+    (is
      (= (sort (p/partition-values to (:entity p)))
         (sort (map :entity v))))))
 
@@ -157,3 +161,42 @@
         (set (p/pattern-entities
               to
               (first (p/which-pattern to c1))))))))
+
+
+
+(deftest tier []
+  (let [s (o/owl-class to "s")
+        t (p/tier
+           to
+           "Tier"
+           ["Tier1" "Tier2"]
+           :super s)]
+    (is
+     (=
+      #{"Tier" "Tier1" "Tier2" "s"}
+      (as-name-set
+       (q/classes to))))
+    (is
+     (o/disjoint?
+      to
+      (o/owl-class to "Tier1")
+      (o/owl-class to "Tier2")))
+    (is
+     (=
+      #{"hasTier"}
+      (as-name-set
+       (q/obj-props to))))
+    (is
+     (t/obj-prop? (second t)))
+    (is
+     (some #{:functional} (:characteristic (q/into-map (second t) :object))))))
+
+
+(deftest tier-non-func
+  (let [s (o/owl-class to "s")
+        t (p/tier to "Tier" ["Tier2" "Tier3"]
+                  :functional false
+                  :super s)]
+    (is
+     (not (some #{:functional}
+                (:characteristic (q/into-map (second t) :object)))))))

@@ -264,3 +264,8 @@ fn should be a function not a function tail as with defmethod."
   `(. ~(with-meta multifn {:tag 'clojure.lang.MultiFn}) addMethod ~dispatch-val ~fn))
 
 (def set-map (comp set map))
+
+(defn fcall-no-nil
+  "Calls f with args removing all nils in args"
+  [f & args]
+  (apply f (remove nil? args)))

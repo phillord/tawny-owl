@@ -376,6 +376,102 @@ to explicitly name the object property."
 ;; #+end_src
 
 
+;; #+begin_src
+(o/defno tier
+  "Return the entities for a new tier.
+
+A tier is an entire level in the hierarchy.
+
+TIER-NAME is the overall name for the partition.
+
+TIER-VALUES is a sequence of the values. The values can either be strings
+representing the name of the value. Or a vector, the head of which is the
+name, and all the other values are additional frames to be passed to
+`tawny.owl/owl-class`.
+
+In addition an `tawny.owl/object-property` is created, forming its name from
+the tier-name.
+
+Keyword arguments are:
+
+:comment for a comment to attach to all entities.
+:super the superclass of the partition.
+:domain is the domain for the object property.
+:disjoint (default: true) if the tier values should be disjoint.
+:cover (default: true) if the tier values should cover the tier.
+:functional (default: true) if the object-property should be functional.
+
+This returns a list of entity vectors created by the p function."
+  [o tier-name tier-values
+   & {:keys [comment super domain disjoint cover functional]
+      :or {disjoint true
+           cover true
+           functional true}}]
+  (let
+      [tier
+       (p o/owl-class
+          o tier-name
+          :comment comment
+          :super super)
+       values
+       (map
+        #(apply
+          p (concat
+             [o/owl-class o]
+             (if (sequential? %)
+               %
+               (list %))
+             [:comment comment
+              :super tier]))
+        tier-values)
+       prop
+       (p o/object-property
+          o  (str "has" tier-name)
+          :characteristic (when functional :functional)
+          :comment comment
+          :range tier
+          :domain domain)]
+    ;; we don't care about the return of this.
+    (as-facet o prop values)
+    (u/fcall-no-nil
+     o/as-subclasses
+     o tier
+     (when disjoint :disjoint)
+     (when cover :cover)
+     values)
+    ;; not too painful a return type -- would be nice to do this automatically,
+    ;; perhaps from a modified let form, although this requires knowledge that
+    ;; props is a list
+    (pattern-annotator
+     o (list* tier prop values))))
+
+(defmacro deftier
+  [tier-name tier-values & options]
+  (tawny.pattern/pattern-generator
+   'tawny.pattern/tier
+   (list* (name tier-name)
+          `(tawny.util/quote-word-or-head ~@tier-values)
+          options)))
+
+(o/defno tier-values
+  "Given a value partition return the values.
+O is the Ontology, P the value partition."
+  [o p]
+  (filter
+   #(and
+     (not (= p %))
+     (instance? OWLClass %)
+     (o/subclass? o p %))
+   ;; We could just check all entities here, but that is hostage to users
+   ;; making subclasses of values. Limiting to those in the same pattern
+   ;; prevents this.
+   (flatten
+    (map
+     (partial pattern-entities o)
+     (which-pattern o p)))))
+;; #+end_src
+
+
 ;; * Value Partition
 
 ;; This is the value partition property that is used to split something
@@ -398,45 +494,19 @@ all entities.
 :super the superclass of the partition.
 :domain is the domain for the object property.
 
-This returns a list of entity vectors created by the p function."
+This returns a list of entity vectors created by the p function.
+
+`value-partition` is a specific version of `tier` and is designed to represent
+a continuous range ontologically, by splitting it into discrete bins: the
+colours of the rainbow would be an example."
   [o partition-name partition-values
    & {:keys [comment super domain]}]
-  (let
-      [
-       partition
-       (p o/owl-class
-          o partition-name
-          :comment comment
-          :super super)
-       values
-       (map
-        #(apply
-          p (concat
-             [o/owl-class o]
-             (if (sequential? %)
-               %
-               (list %))
-             [:comment comment
-              :super partition]))
-        partition-values)
-       prop
-       (p o/object-property
-          o  (str "has" partition-name)
-          :characteristic :functional
-          :comment comment
-          :range partition
-          :domain domain)]
-    ;; we don't care about the return of this.
-    (as-facet o prop values)
-    (o/as-subclasses
-     o partition
-     :disjoint :cover
-     values)
-    ;; not to painful a return type -- would be nice to do this automatically,
-    ;; perhaps from a modified let form, although this requires knowledge that
-    ;; props is a list
-    (pattern-annotator
-     o (list* partition prop values))))
+  (apply
+   tier
+   (concat (list o partition-name partition-values)
+           (nil-strip
+            (u/groupify
+             (list :comment comment :super super :domain domain))))))
 
 (defmacro defpartition
   "As `value-partition` but accepts symbols instead of string and takes the
@@ -448,22 +518,7 @@ This returns a list of entity vectors created by the p function."
           `(tawny.util/quote-word-or-head ~@partition-values)
           options)))
 
-(o/defno partition-values
-  "Given a value partition return the values.
-O is the Ontology, P the value partition."
-  [o p]
-  (filter
-   #(and
-     (not (= p %))
-     (instance? OWLClass %)
-     (o/subclass? o p %))
-   ;; We could just check all entities here, but that is hostage to users
-   ;; making subclasses of values. Limiting to those in the same pattern
-   ;; prevents this.
-   (flatten
-    (map
-     (partial pattern-entities o)
-     (which-pattern o p)))))
+(def partition-values #'tier-values)
 ;; #+end_src
 
 
