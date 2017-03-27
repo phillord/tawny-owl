@@ -35,6 +35,7 @@
             OWLIndividual
             OWLLiteral
             OWLNamedObject
+            OWLObjectProperty
             OWLObjectPropertyExpression
             OWLOntology)))
 
@@ -109,8 +110,13 @@
   [e]
   (entity-instance? OWLNamedObject e))
 
+(defn obj-prop?
+  "Return true if `e` is an instance of `OWLObjectProperty`."
+  [e]
+  (entity-instance? OWLObjectProperty e))
+
 (defn obj-prop-exp?
-  "Return true if `e` is an instance of `OWLPropertyExpression`."
+  "Return true if `e` is an instance of `OWLObjectPropertyExpression`."
   [e]
   (entity-instance? OWLObjectPropertyExpression e))
 
