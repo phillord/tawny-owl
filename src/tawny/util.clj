@@ -262,3 +262,5 @@ thrown."
 fn should be a function not a function tail as with defmethod."
   [multifn dispatch-val fn]
   `(. ~(with-meta multifn {:tag 'clojure.lang.MultiFn}) addMethod ~dispatch-val ~fn))
+
+(def set-map (comp set map))

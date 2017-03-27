@@ -3,7 +3,8 @@
             [tawny.english :as e]
             [tawny.query :as q]
             [clojure.core.logic :as l]
-            [tawny.debug])
+            [tawny.debug]
+            [tawny.test-util :refer :all])
   (:use [clojure.test]))
 
 
@@ -36,21 +37,6 @@
 (use-fixtures :each createandsavefixture)
 
 ;;(createtestontology)
-
-(defmacro is-set= [constructor query]
-  `(let [a# ~constructor]
-     (is
-      (=
-       ~query
-       #{a#}))))
-
-(defmacro is-set-not= [constructor query]
-  `(let [a# ~constructor]
-     (is
-      (not
-       (=
-        ~query
-        #{a#})))))
 
 (deftest sig-1 []
   (is-set=
@@ -233,4 +219,3 @@
          (q/supero
           (fetch-doctor sio) y)
          (l/== [:iri q] y)))))))
-
