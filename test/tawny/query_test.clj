@@ -37,25 +37,33 @@
 
 ;;(createtestontology)
 
-(defmacro set= [constructor query]
+(defmacro is-set= [constructor query]
   `(let [a# ~constructor]
-     (=
-      ~query
-      #{a#})))
+     (is
+      (=
+       ~query
+       #{a#}))))
 
-(defmacro set-not= [constructor query]
-  `(not (set= ~constructor ~query)))
+(defmacro is-set-not= [constructor query]
+  `(let [a# ~constructor]
+     (is
+      (not
+       (=
+        ~query
+        #{a#})))))
 
-(deftest sig []
-  (is
-   (set=
-    (o/owl-class to "A")
-    (q/signature to)))
-  (is
-   (set-not=
-    (do (o/owl-class to "a")
-        (o/owl-class to "b"))
-    (q/signature to)))
+(deftest sig-1 []
+  (is-set=
+   (o/owl-class to "A")
+   (q/signature to)))
+
+(deftest sig-2 []
+  (is-set-not=
+   (do (o/owl-class to "a")
+       (o/owl-class to "b"))
+   (q/signature to)))
+
+(deftest sig-3 []
   (is
    (let [o1 (o/ontology)
          _   (o/owl-import to o1)
@@ -69,47 +77,38 @@
       (get sig a1)))))
 
 (deftest ann-props []
-  (is
-   (let [a
-         (o/annotation-property to "a")]
-     (=
-      (q/ann-props to)
-      #{a})))
-  (is
-   (set=
-    (do
-      (o/owl-class to "b")
-      (o/annotation-property to "a"))
-    (q/ann-props to))))
+  (is-set=
+   (o/annotation-property to "a")
+   (q/ann-props to))
+  (is-set=
+   (do
+     (o/owl-class to "b")
+     (o/annotation-property to "a"))
+   (q/ann-props to)))
 
 (deftest anonymous
   (is
    (q/anonymous (o/anonymous-individual))))
 
 (deftest classes []
-  (is
-   (set=
-    (o/owl-class to "a")
-    (q/classes to)))
-  (is
-   (let [a
-         (o/owl-class to "a")]
+  (is-set=
+   (o/owl-class to "a")
+   (q/classes to))
+  (is-set=
+   (do
      (o/annotation-property to "b")
-     (=
-      (q/classes to)
-      #{a}))))
+     (o/owl-class to "a"))
+   (q/classes to)))
 
 (deftest data-props []
-  (is
-   (set=
-    (o/datatype-property to "a")
-    (q/data-props to)))
-  (is
-   (set=
-    (do
-      (o/owl-class to "b")
-      (o/datatype-property to "a"))
-    (q/data-props to))))
+  (is-set=
+   (o/datatype-property to "a")
+   (q/data-props to))
+  (is-set=
+   (do
+     (o/owl-class to "b")
+     (o/datatype-property to "a"))
+   (q/data-props to)))
 
 (deftest data-types []
   (is
@@ -119,24 +118,24 @@
       (first (q/data-types to))))))
 
 (deftest direct-imports []
-  (is
+  (is-set=
    (let [a (o/ontology)]
      (o/owl-import to a)
-     (=
-      #{a}
-      (q/direct-imports to)))))
+     a)
+   (q/direct-imports to)))
 
 (deftest individuals
-  (is
-   (set=
-    (o/individual to "i")
-    (q/individuals to))))
+  (is-set=
+   (o/individual to "i")
+   (q/individuals to)))
 
 (deftest obj-props
-  (is
-   (set=
-    (o/object-property to "p")
-    (q/obj-props to))))
+  (is-set=
+   (o/object-property to "p")
+   (q/obj-props to)))
+
+
+
 
 ;; Core logic additions
 (defn read-sio []
@@ -234,3 +233,4 @@
          (q/supero
           (fetch-doctor sio) y)
          (l/== [:iri q] y)))))))
+
