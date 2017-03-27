@@ -806,3 +806,13 @@
        (o/annotation-property to "x"
                             :label
                             "test label")))))
+
+(deftest oproperty-characteristic []
+  (let [o (o/object-property to "x" :characteristic :functional)]
+
+    (is
+     (=
+      '(object-property
+        (iri "http://iri/#x")
+        :characteristic :functional)
+      (r/as-form o)))))
