@@ -20,7 +20,7 @@
     tawny.query
   (:require [tawny.owl])
   (:use [tawny.render])
-  (:require [tawny.util])
+  (:require [tawny util protocol])
   (:require [clojure.core.logic :as l]
             [clojure.set :as s])
   (:import [org.semanticweb.owlapi.model
@@ -115,7 +115,8 @@
   `resolve` argument."
   ([owlobject terminal]
    (let [render
-         (as-form owlobject :keyword true :terminal terminal)]
+         (as-form (tawny.protocol/as-entity owlobject)
+                  :keyword true :terminal terminal)]
      (apply hash-map
             (concat
              [:type (list (first render))]
