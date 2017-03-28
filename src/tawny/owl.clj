@@ -1232,23 +1232,20 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
 ;; partly historic.
 
 ;; #+begin_src clojure
-(defn- add-ontology-comment
+(defnb ^:private add-ontology-comment
   "Adds a comment annotation to the ontology"
   [o s]
-  (if s
-    (add-ontology-annotation o (owl-comment s))))
+  (add-ontology-annotation o (owl-comment s)))
 
-(defn- add-see-also
+(defnb ^:private add-see-also
   "Adds a see also annotation to the ontology"
   [o s]
-  (if s
-    (add-ontology-annotation o (see-also s))))
+  (add-ontology-annotation o (see-also s)))
 
-(defn- add-version-info
+(defnb ^:private add-version-info
   "Adds a version info annotation to the ontology."
   [o v]
-  (if v
-    (add-ontology-annotation o (version-info v))))
+  (add-ontology-annotation o (version-info v)))
 
 ;; owl imports
 (defn owl-import
@@ -1274,56 +1271,48 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
 ;; #+begin_src clojure
 (def ^{:private true} ontology-handlers
   {
-   ;; these are not broadcast
-   :iri-gen #'set-iri-gen,
-   :prefix #'set-prefix,
-   ::name #'add-an-ontology-name
    :seealso #'add-see-also
    :comment #'add-ontology-comment
    :versioninfo #'add-version-info
-   ;; these two are specially dealt with and are broadcast
    :annotation #'add-ontology-annotation
    :import #'add-import
    })
 
-(defn- flatten-first-list-values
-  "Flattens the values for keys, except those in noflatten"
-  [mp noflattenkeys]
-  (into {}
-        (for [[k v] mp]
-          (if-not (noflattenkeys k)
-            (if (= 1 (count v))
-              [k (first v)]
-              (throw (IllegalArgumentException.
-                      (str "Frame " k " accepts only a single argument"))))
-            [k v]))))
+(defn- first-single [k [x & r]]
+  (when r
+    (throw (IllegalArgumentException.
+            (str "There can only be one entry for " key))))
+  x)
 
 (defn ontology-explicit
   "Returns a new ontology. See 'defontology' for full description."
   [options]
   (let [
-        ;; having got all values as lists, pull them all apart again
-        options (flatten-first-list-values
-                 options #{:annotation :import})
+        {:keys [iri viri prefix ::name iri-gen noname]} options
+        ;; :iri, :viri, :prefix, ::name, :iri-gen, :noname need to be unique,
+        ;; and unpacked from lists into which we have put them
+        iri (first-single :iri iri)
+        viri (first-single :viri viri)
+        prefix (first-single :prefix prefix)
+        name (first-single ::name name)
+        iri-gen (first-single :iri-gen iri-gen)
+        noname (first-single :noname noname)
         ;; the prefix is specified by the prefix or the name.
         ;; this allows me to do "(defontology tmp)"
-        options (merge options
-                       {:prefix (or (:prefix options)
-                                    (::name options))})
-        iri (iri (get options :iri
-                             (str
-                              (java.util.UUID/randomUUID)
-                              (if-let [name
-                                       (get options ::name)]
-                                (str "#" name)))))
-        viri-str (get options :viri)
-        viri (when viri-str (tawny.owl/iri viri-str))
-        noname (get options :noname false)]
+        prefix (or prefix name)
+        iri (tawny.owl/iri
+             (or iri
+                 (str
+                  (java.util.UUID/randomUUID)
+                  (if-let [name
+                           (get options ::name)]
+                    (str "#" name)))))
+        viri (when viri (tawny.owl/iri viri))]
     (remove-ontology-maybe
      (if viri
        (OWLOntologyID. iri viri)
        (OWLOntologyID. iri)))
-    (let [ontology
+    (let [o
           (if viri
             (.createOntology (owl-ontology-manager)
                              (OWLOntologyID. iri viri))
@@ -1331,22 +1320,28 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
       (if noname
         (dosync
          (alter
-          (tawny.owl/ontology-options ontology)
+          (tawny.owl/ontology-options o)
           merge {:noname true}))
-        (owl-import ontology
+        (owl-import o
                     (tawny-ontology)))
+      ;; These are not handlers because they do not broadcast and have been
+      ;; flattened earlier.
+      (set-prefix o prefix)
+      (set-iri-gen o iri-gen)
+      (add-an-ontology-name o name)
+      ;; Do all the remaining handlers
       (doseq [[k f] ontology-handlers
               :let [opt
                     (get options k)]
               :when opt]
-        (f ontology opt))
-      ontology)))
+        (f o opt))
+      o)))
 
 (defn ontology [& args]
   (ontology-explicit
    (util/check-keys
     (util/hashify args)
-    (list* :iri :noname :viri
+    (list* :iri :viri :prefix ::name :iri-gen :noname
            (keys ontology-handlers)))))
 
 ;; #+end_src

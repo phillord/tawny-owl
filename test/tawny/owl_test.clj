@@ -27,6 +27,7 @@
   (:require [tawny.owl :as o]
             [tawny.render :as r]
             [tawny.protocol :as p]
+            [tawny.query :as q]
             [tawny.util])
   (:require [tawny.debug])
   [:use clojure.test])
@@ -136,6 +137,28 @@
         (.size
          (.getDirectImports o))))))
 
+
+(deftest ontology-errors []
+  (is
+   (thrown?
+    IllegalArgumentException
+    (o/ontology :iri "http://iri" "http://iri2")))
+  (is
+   (thrown?
+    IllegalArgumentException
+    (o/ontology :bob "fred"))))
+
+
+(deftest ontology-multi-comment []
+  (let [o (o/ontology :comment "bob" "fred")
+        m (q/into-map o)]
+    (is (:annotation m))
+    (is (= 2 (count (:annotation m))))
+    (is
+     #{"bob" "fred"}
+     (set
+      (map (comp second second)
+           (:annotation m))))))
 
 (deftest as-iri
   (is (= "http://iri/"
