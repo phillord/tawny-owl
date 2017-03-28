@@ -3,6 +3,55 @@ Release Notes
 
 For future functionality please see [roadmap](roadmap.md)
 
+# 2.0 (SNAPSHOT)
+
+This is a full release. It adds both significant functionality in all areas of
+Tawny, has a significant clean up of the code base, but also includes a number
+of breaking changes.
+
+The biggest change has been a reworking off the "default ontology" and
+"broadcasting" functionality. This results in a cleaner and hopefully in most
+cases faster code base. Many functions (such as `owl-some` and `and`),
+however, no longer have default ontology functionality and, as a result,
+cannot longer accept string arguments; Only the "main" functions (`owl-class`,
+`object-property` etc) are capable of creating new entities, which probably
+better reflects the intentionality.
+
+This release also includes further internationalization code, including full
+support for development of ontologies in Arabic (thanks to Aisha Blfgeh) and
+Italian. Other highlights include a much cleaner print output making Tawny
+easier to use and debug.
+
+## New Features
+
+ - New cleaner implementation of broadcasting, with three new first class
+   functions: `fontology`, `broadcast` and `broadcast-2`
+ - Shorter macro names for definition: `defno`, `defnb` and `defnb2`
+ - `defn*` macros now all add `:arglist` to their var
+ - New shorter, cleaner print output for OWL API functions
+ - Tawny now supports translation into any language
+ - tawny.arabic: support for Arabic ontologies
+ - tawny.italian: support for Italian ontologies
+ - `tawny.query.into-map` now supports `:object` keyword
+ - `tawny.query` adds many new query functions operating on ontologies and owl
+   entities
+ - `tawny-name` extractor function added
+ - `tier` pattern added
+
+## Bug Fixes
+
+ - fetch-doc works on ontologies correctly
+ - `into-map` now supports any Entityable object
+ - `ontology` now accepts multiple values for most frames
+ - `object-property` now parses correctly (and signals an error) when passed a
+   single incorrect keyword
+
+## Breaking Changes
+
+ - Move to Clojure 1.7 because of fix for CLJ-1388
+ - Remove default-ontology functionality from all constructor functions
+   (owl-some, only, and, oor and not)
+ - `:name` frame now namespaced -- this "feature" was never documented.
 
 # 1.6
 

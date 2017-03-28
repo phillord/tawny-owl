@@ -79,9 +79,9 @@ library. It is available from
 
 `[uk.org.russet/tawny-owl]' to your `project.clj' file.
 
-I use Leiningen 2 on the current version 12.04 Ubuntu and, occasionally, on
+I use Leiningen 2 on the current version 16.04 Ubuntu and, occasionally, on
 Windows. Editing of both tawny-owl and the ontologies using it, is with Emacs
-24 using Clojure mode and nrepl, currently both installed from their
+25 using Clojure mode and nrepl, currently both installed from their
 respective versioning systems. The library should not depend on this
 environment, however.
 
