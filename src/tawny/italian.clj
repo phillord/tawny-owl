@@ -57,7 +57,8 @@
 
 (o/defentity defaproprietà
   ""
-  'tawny.italian/annotazione-proprietà)
+  'tawny.italian/annotazione-proprietà
+  :ontologia)
 
 (def oggetto-proprietà
   (italiano o/object-property))
