@@ -70,7 +70,7 @@ elk or jfact."
   (tawny-mode-nrepl-reasoner-eval-string
    (format
     "(do (require 'tawny.emacs)(tawny.emacs/is-coherent \"%s\"))"
-    (clojure-find-ns))))
+    (cider-current-ns))))
 
 (defun tawny-mode-is-consistent ()
   "Prints a message describing consistency of current ontology."
@@ -79,7 +79,7 @@ elk or jfact."
   (tawny-mode-nrepl-reasoner-eval-string
    (format
     "(do (require 'tawny.emacs)(tawny.emacs/is-consistent \"%s\"))"
-    (clojure-find-ns)
+    (cider-current-ns)
     )))
 
 (defun tawny-mode-unsatisfiable ()
@@ -87,15 +87,13 @@ elk or jfact."
   (interactive)
   (tawny-mode-check-for-nrepl-buffer)
   (tawny-mode-display-classes-clear)
-  (nrepl-request:eval
+  (cider-nrepl-request:eval
    (format
     "(do (require 'tawny.emacs)(tawny.emacs/get-unsatisfiable \"%s\"))"
-    (clojure-find-ns))
+    (cider-current-ns))
    (tawny-mode-class-list-response-handler
     (current-buffer)
-    "Unsatisfiable classes for")
-   (cider-current-connection)
-   (cider-current-tooling-session)))
+    "Unsatisfiable classes for")))
 
 (defvar tawny-interaction-buffer
   (get-buffer-create "*tawny-interaction*")
@@ -114,11 +112,9 @@ Optional argument VALUES are the values for the format string."
 
 (defun tawny-mode-nrepl-reasoner-eval-string (string)
   "Eval STRING in clojure."
-  (nrepl-request:eval
+  (cider-nrepl-request:eval
    string
-   (tawny-mode-make-reasoner-response-handler (current-buffer))
-   (cider-current-connection)
-   (cider-current-tooling-session)))
+   (tawny-mode-make-reasoner-response-handler (current-buffer))))
 
 (defun tawny-mode-make-reasoner-response-handler (buffer)
   "Return a messaging response handler for BUFFER."
@@ -130,8 +126,7 @@ Optional argument VALUES are the values for the format string."
      (tawny-message "Output: %s %s" buffer value))
    (lambda (buffer value)
      (tawny-message "Error: %s %s" buffer value))
-   (lambda (buffer)
-     (tawny-message "Complete: %s" buffer))))
+   (lambda (buffer))))
 
 (defvar tawny-mode-class-list-buffer
   "*tawny-classes*"
@@ -175,18 +170,17 @@ Argument MESSAGE is the message."
    (lambda (buffer)
      (tawny-message "Complete: %s" buffer))))
 
-
 (defun tawny-mode-save ()
   "Save the current namespace and open the file if needed."
   (interactive)
   (tawny-mode-check-for-nrepl-buffer)
-  (nrepl-request:eval
+  (cider-nrepl-request:eval
    (format
-    "(do (require 'tawny.emacs)(tawny.emacs/save-namespace-ontology \"%s\"))"
-    (clojure-find-ns))
-   (tawny-mode-save-handler (current-buffer))
-   (cider-current-connection)
-   (cider-current-tooling-session)))
+    "(do (require 'tawny.emacs)
+(tawny.emacs/save-namespace-ontology \"%s\"))"
+     (cider-current-ns))
+   (tawny-mode-save-handler (current-buffer))))
+
 
 (defun tawny-mode-save-handler (buffer)
   "Open the ontology BUFFER after Clojure has saved it."
@@ -213,13 +207,12 @@ Argument MESSAGE is the message."
 (defun tawny-doc-handler (symbol)
   "Return a documentation popup.
 Argument SYMBOL is the symbol to document."
-  (let ((form (format "(do (require 'tawny.repl)(tawny.repl/print-doc %s))" symbol))
+  (let ((form (format "(do (require 'tawny.repl)(tawny.repl/print-doc %s/%s))"
+                      (cider-current-ns)
+                      symbol))
         (doc-buffer (cider-popup-buffer cider-doc-buffer t)))
-    (nrepl-request:eval form
-                       (cider-popup-eval-out-handler doc-buffer)
-                       (cider-current-connection)
-                       (cider-current-tooling-session)
-                       (cider-current-ns))))
+    (cider-nrepl-request:eval form
+                       (cider-popup-eval-out-handler doc-buffer))))
 
 (defun tawny-de-escape (string)
   "Remove escape sequences from STRING."
@@ -239,16 +232,14 @@ Argument SYMBOL is the symbol to document."
 Argument CLASS is the class."
   (tawny-mode-check-for-nrepl-buffer)
   (tawny-mode-display-classes-clear)
-  (nrepl-request:eval
+  (cider-nrepl-request:eval
    (format
     "(do (require 'tawny.emacs)(tawny.emacs/get-inferred-superclasses \"%s\" \"%s\"))"
-    (clojure-find-ns)
+    (cider-current-ns)
     (thing-at-point 'symbol t))
    (tawny-mode-class-list-response-handler
     (current-buffer)
-    "Inferred superclasses for")
-   (cider-current-connection)
-   (cider-current-tooling-session)))
+    "Inferred superclasses for")))
 
 (defun tawny-mode-inferred-subclasses (class)
   "Show the inferred subclasses of CLASS."
@@ -261,16 +252,14 @@ Argument CLASS is the class."
   (interactive)
   (tawny-mode-check-for-nrepl-buffer)
   (tawny-mode-display-classes-clear)
-  (nrepl-request:eval
+  (cider-nrepl-request:eval
    (format
     "(do (require 'tawny.emacs)(tawny.emacs/get-inferred-subclasses \"%s\" \"%s\"))"
-    (clojure-find-ns)
+    (cider-current-ns)
     (thing-at-point 'symbol t))
    (tawny-mode-class-list-response-handler
     (current-buffer)
-    "Inferred subclasses for")
-   (cider-current-connection)
-   (cider-current-tooling-session)))
+    "Inferred subclasses for")))
 
 
 ;; Protege section
@@ -296,15 +285,12 @@ Argument CLASS is the class."
               "(eval '(tawny.protege-nrepl/display-maybe \"%s\" \"%s\"))"
               "(catch Exception exp :not-protege)"
               ")")
-             (clojure-find-ns) thing)))
+             (cider-current-ns) thing)))
       (unless (equal thing tawny-mode-protege-entity-last)
         (setq tawny-mode-protege-entity-last thing)
-        (nrepl-request:eval
+        (cider-nrepl-request:eval
          form
-         (tawny-mode-nrepl-protege-display-handler (current-buffer))
-         (cider-current-connection)
-         (cider-current-tooling-session)
-         cider-buffer-ns)))))
+         (tawny-mode-nrepl-protege-display-handler (current-buffer)))))))
 
 (defun tawny-mode-nrepl-protege-display-handler (buffer)
   "Return a response handler for Protege.

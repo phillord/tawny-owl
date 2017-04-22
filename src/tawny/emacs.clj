@@ -101,7 +101,7 @@ NAMESPACE"
     (if-let [superclasses
              (seq (tawny.reasoner/isuperclasses
                    (tawny.owl/get-current-ontology ns)
-                   class))]
+                   (var-get (ns-resolve ns (symbol class)))))]
       (list-classes superclasses)
       "Ontology has no inferred superclasses.")))
 
@@ -112,7 +112,7 @@ NAMESPACE"
     (if-let [subclasses
              (seq (tawny.reasoner/isubclasses
                    (tawny.owl/get-current-ontology ns)
-                   class))]
+                   (var-get (ns-resolve ns (symbol class)))))]
       (list-classes subclasses)
       "Ontology has no inferred subclasses.")))
 
