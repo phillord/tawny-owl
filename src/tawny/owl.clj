@@ -1304,8 +1304,7 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
              (or iri
                  (str
                   (java.util.UUID/randomUUID)
-                  (if-let [name
-                           (get options ::name)]
+                  (if name
                     (str "#" name)))))
         viri (when viri (tawny.owl/iri viri))]
     (remove-ontology-maybe
