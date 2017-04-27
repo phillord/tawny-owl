@@ -405,57 +405,6 @@ multi-arity as a micro optimization, to avoid a variadic invocation."
                    (into []
                          (rest (first a#))))))))
        vr#)))
-
-
-(defmacro defnb
-  "Defines a new function that broadcasts the first and consecutive
-  arguments."
-  [& body]
-  (let [f (gensym)]
-    `(let [vr# (defn ~@body)]
-       (alter-var-root
-        vr#
-        (fn [~f]
-          (broadcast ~f)))
-       (alter-meta!
-        vr#
-        (fn [m#]
-          (let [a# (get m# :arglists)]
-            (assoc
-             m#
-             :arglists
-             (concat a#
-                     (list
-                      [(first (first a#)) '&
-                       (second (first a#))]))))))
-       vr#)))
-
-(defmacro defnb2
-  "Define a new function that broadcasts over first, second and consecutive
-  arguments."
-  [& body]
-  (let [f (gensym)]
-    `(let [vr# (defn ~@body)]
-       (alter-var-root
-        vr#
-        (fn [~f]
-          (broadcast-2 ~f)))
-       (alter-meta!
-        vr#
-        (fn [m#]
-          (let [a# (get m# :arglists)
-                fs# (first a#)]
-            (assoc
-             m#
-             :arglists
-             (concat a#
-                     (list
-                      [(first fs#)
-                       (second fs#)
-                       '&
-                       (nth fs# 2)]))))))
-       vr#)))
-
 ;; #+end_src
 
 ;; * Broadcasting
@@ -567,6 +516,57 @@ multi-arity as a micro optimization, to avoid a variadic invocation."
      (broadcast-call 2 f x a b c d e f' g h i))
     ([x a b c d e f' g h i & rest]
      (broadcast-full 2 f (list* x a b c d e f' g h i rest)))))
+
+
+
+(defmacro defnb
+  "Defines a new function that broadcasts the first and consecutive
+  arguments."
+  [& body]
+  (let [f (gensym)]
+    `(let [vr# (defn ~@body)]
+       (alter-var-root
+        vr#
+        (fn [~f]
+          (broadcast ~f)))
+       (alter-meta!
+        vr#
+        (fn [m#]
+          (let [a# (get m# :arglists)]
+            (assoc
+             m#
+             :arglists
+             (concat a#
+                     (list
+                      [(first (first a#)) '&
+                       (second (first a#))]))))))
+       vr#)))
+
+(defmacro defnb2
+  "Define a new function that broadcasts over first, second and consecutive
+  arguments."
+  [& body]
+  (let [f (gensym)]
+    `(let [vr# (defn ~@body)]
+       (alter-var-root
+        vr#
+        (fn [~f]
+          (broadcast-2 ~f)))
+       (alter-meta!
+        vr#
+        (fn [m#]
+          (let [a# (get m# :arglists)
+                fs# (first a#)]
+            (assoc
+             m#
+             :arglists
+             (concat a#
+                     (list
+                      [(first fs#)
+                       (second fs#)
+                       '&
+                       (nth fs# 2)]))))))
+       vr#)))
 ;; #+end_src
 
 ;; * OWL (No)thing
