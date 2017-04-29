@@ -522,6 +522,53 @@ colours of the rainbow would be an example."
 ;; #+end_src
 
 
+(defn extend-frameify
+  "Extend an existing `frameify` function with more frames.
+
+  `super-framed` is the existing function created by `frameify`.
+
+  `extended-explicit` is a function which should accept three values: the
+  ontology, the entity created by `super-framed` and the frames as a map.
+
+  As with `frameify`, the returned function only accepts relevant frames and
+  throws an exception otherwise."
+  [super-framed extended-explicit extended-keys]
+  (let [{:keys [:tawny.owl/frame-keys :tawny.owl/hashify :tawny.owl/explicit]}
+        (meta super-framed)
+        all-keys (concat frame-keys extended-keys)]
+    (o/fontology
+     (fn [o name & frames]
+       (let [hashified
+             (u/check-keys
+              (hashify frames)
+              all-keys)
+             super-retn
+             (explicit
+              o name hashified)]
+         (extended-explicit o super-retn hashified))))))
+
+(defn gem-explicit
+  "As `owl-class-explicit` but also accepts a `:facet` frame value"
+  [o clazz frames]
+  (o/refine
+   o clazz :super (facet (:facet frames))))
+
+(def gem
+  "As `owl-class` but also accepts a `:facet` frame value."
+  (extend-frameify
+   o/owl-class
+   [:facet]
+   gem-explicit))
+
+(o/defentity defgem
+  "As `defclass` with an added `:facet` frame
+
+Classes in the `:facet` frame will be added as superclasses
+as if called with the `facet` function."
+  'gem)
+
+;; #+end_src
+
 ;; * Footer
 
 ;; Pattern.clj Ends Here
