@@ -569,6 +569,45 @@ multi-arity as a micro optimization, to avoid a variadic invocation."
        vr#)))
 ;; #+end_src
 
+;; * Frameify
+;; #+begin_src clojure
+
+
+(defn frameify
+  "Return a framified function.
+
+  A frameified function is one that accepts keywords which take any
+  number of arguments. These values are converted into a map.
+
+  EXPLICIT-F is the function that will be called. It should accept arguments
+  of form (ontology name map) where MAP is generated from the arguments to the
+  framified function.
+
+  FRAME-KEYS are the keywords which are valid for this function. Other values
+  will raise an exception.
+
+  HASHIFY is the function used to convert between the flat list of arguments
+  and the map. By default, this will split at every keyword.
+
+  The function returned has 'f-ontology' functionality; that is, if no
+  ontology argument is supplied by the user, it will be provided elsewhere."
+  ([explicit-f frame-keys]
+   (frameify explicit-f frame-keys util/hashify))
+  ([explicit-f frame-keys hashify]
+   (with-meta
+     (fontology
+      (fn [o name & frames]
+        (explicit-f
+         o name
+         (util/check-keys
+          (hashify frames)
+          frame-keys))))
+     {::frame-keys frame-keys
+      ::hashify hashify
+      ::explicit explicit-f})))
+;; #+end_src
+
+
 ;; * OWL (No)thing
 
 ;; #+begin_src clojure
@@ -1004,15 +1043,12 @@ add-sub-annotation functionality."
     ;; return the property
     property))
 
-(defno annotation-property
-  {:doc "Creates a new annotation property."}
-  [o name & frames]
-  (annotation-property-explicit
-   o
-   name
-   (util/check-keys
-    (util/hashify frames)
-    (keys annotation-property-handlers))))
+(def
+  ^{:doc "Creates a new annotation property."
+    :arglists '([o name & frames])}
+  annotation-property
+  (frameify annotation-property-explicit
+            (list* :ontology (keys annotation-property-handlers))))
 
 (defn- get-annotation-property
   "Gets an annotation property with the given name."
@@ -2076,16 +2112,13 @@ value for each frame."
         (f o property (get frames k))))
     property))
 
-(defno object-property
-  "Returns a new object property in the current ontology."
-  [o name & frames]
-  (let [keys (list* :ontology (keys object-property-handlers))]
-    (object-property-explicit
-     o name
-     (util/check-keys
-      (util/hashify-except-at
-       keys-charfuncs frames)
-      keys))))
+(def
+  ^{:doc "Returns a new object property in the current ontology."
+    :arglists '([o name & frames])}
+  object-property
+  (frameify object-property-explicit
+             (keys object-property-handlers)
+             (partial util/hashify-except-at keys-charfuncs)))
 
 (defentity defoproperty
   "Defines a new object property in the current ontology."
@@ -2475,17 +2508,13 @@ slightly faster.
     ;; return the class object
     class))
 
-(defno owl-class
-  "Creates a new class in the current ontology. See 'defclass' for
+(def
+  ^{:doc "Creates a new class in the current ontology. See 'defclass' for
 full details."
-  [o name & frames]
-  (owl-class-explicit
-   o name
-   (util/check-keys
-    (util/hashify frames)
-    (list*
-     :ontology
-     (keys owl-class-handlers)))))
+    :arglists '([o name & frames])}
+  owl-class
+  (frameify owl-class-explicit
+            (list* :ontology (keys owl-class-handlers))))
 
 (defentity defclass
   "Define a new class. Accepts a set number of frames, each marked
@@ -2671,14 +2700,11 @@ or to ONTOLOGY if present."
       (f o individual (get frames k)))
     individual))
 
-(defno individual
-  [o name & frames]
-  (individual-explicit
-   o name
-   (util/check-keys
-    (util/hashify frames)
-    (list* :ontology
-           (keys individual-handlers)))))
+(def
+  ^{:arglists '([o name & frames])}
+  individual
+  (frameify individual-explicit
+            (list* :ontology (keys individual-handlers))))
 
 (defentity defindividual
   "Declare a new individual"

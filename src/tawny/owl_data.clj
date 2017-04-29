@@ -166,19 +166,14 @@ This is to deprecated the :superproperty frame"}
       (f o property (get frames k)))
     property))
 
-(defno datatype-property
-  "Define a new datatype property"
-  [o name & frames]
-  (let [keys
-        (keys datatype-property-handlers)
-        frames
-        (util/check-keys
-         (util/hashify-except-at
-          (conj keys-owl2datatypes :functional)
-          frames)
-         keys)]
-    (datatype-property-explicit
-     o name frames)))
+(def
+  ^{:doc "Define a new datatype property"
+    :arglists '([o name & frames])}
+  datatype-property
+  (frameify datatype-property-explicit
+            (list* :ontology (keys datatype-property-handlers))
+            (partial util/hashify-except-at
+                     (conj keys-owl2datatypes :functional))))
 
 (defentity defdproperty
   "Defines a new datatype property"
@@ -243,20 +238,13 @@ which is an OWLDatatype object.
       (f o datatype (get frames k)))
     datatype))
 
-(defno datatype
-  "Defines a new datatype."
-  [o name & frames]
-  (let [keys
-        (list* :ontology
-               (keys datatype-handlers))
-        frames
-        (util/check-keys
-         (util/hashify-except-at keys-owl2datatypes frames)
-         keys)
-        o (or (first (get frames :ontology))
-              o)]
-    (datatype-explicit
-     o name frames)))
+(def
+  ^{:doc "Defines a new datatype."
+    :arglists '([o name & frames])}
+  datatype
+  (frameify datatype-explicit
+            (list* :ontology (keys datatype-handlers))
+            (partial util/hashify-except-at keys-owl2datatypes)))
 
 (defentity defdatatype
   "Defines a new datatype"
