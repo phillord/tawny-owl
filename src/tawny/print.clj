@@ -26,6 +26,7 @@
     OWLOntology
     OWLNamedObject
     OWLNaryBooleanClassExpression
+    OWLObjectComplementOf
     OWLQuantifiedRestriction]
    [java.io Writer]))
 
@@ -185,6 +186,17 @@
      (map
       #(print-short %)
       (.getOperands o)))
+    "]")))
+
+(defmethod print-method OWLObjectComplementOf
+  [^OWLObjectComplementOf o ^Writer w]
+  (.write
+   w
+   (format
+    "#[%s 0x%x %s]"
+    (name-for-class o)
+    (System/identityHashCode o)
+    (print-short (.getOperand o))
     "]")))
 
 (defmethod print-method OWLNamedObject [^OWLNamedObject o ^Writer w]
