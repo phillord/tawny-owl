@@ -1463,3 +1463,22 @@ Assumes that fixture has been run"
    (instance?
     org.semanticweb.owlapi.model.OWLObjectInverseOf
     (o/inverse (o/object-property to "p")))))
+
+(deftest framification []
+  (is
+   ((o/frameify (fn [o n f] f) [:a :b :c])
+    to "name" :a 1)
+   {:a [1]})
+  (is
+   ((o/frameify (fn [o n f] f) [:a :b :c])
+    to "name" :a 1 2)
+   {:a [1 2]})
+  (is
+   ((o/frameify (fn [o n f] f) [:a :b :c])
+    to "name" :a 1 2 :b 3)
+   {:a [1 2]})
+  (is
+   (thrown?
+    IllegalArgumentException
+    ((o/frameify (fn [o n f] f) [:a :b :c])
+     to "name" :d 1))))

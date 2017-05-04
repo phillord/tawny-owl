@@ -96,7 +96,7 @@ values are lists and concats duplicates."
   (when-not (has-keys hash thekeys)
     (throw
      (IllegalArgumentException.
-      (format "Expected only keys %s; Got %s" thekeys (keys hash)))))
+      (format "Expected only keys %s; Got %s" (into () thekeys) (keys hash)))))
   hash)
 
 ;; this is badly named -- it's a lift from perl, but it doesn't quote

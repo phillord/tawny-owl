@@ -191,7 +191,6 @@
     (is
      (some #{:functional} (:characteristic (q/into-map (second t) :object))))))
 
-
 (deftest tier-non-func
   (let [s (o/owl-class to "s")
         t (p/tier to "Tier" ["Tier2" "Tier3"]
@@ -200,3 +199,28 @@
     (is
      (not (some #{:functional}
                 (:characteristic (q/into-map (second t) :object)))))))
+
+(deftest extended-framification []
+  (is
+   ((p/extend-frameify
+     (o/frameify (fn [o n f] f) [:a :b :c])
+     (fn [o e f] f)
+     nil)
+    to "name" :a 1)
+   {:a [1]})
+
+  (is
+   ((p/extend-frameify
+     (o/frameify (fn [o n f] f) [:a :b :c])
+     (fn [o e f] f)
+     [:d])
+    to "name" :a 1 :d 2)
+   {:a [1] :d [2]})
+  (is
+   (thrown?
+    IllegalArgumentException
+    ((p/extend-frameify
+      (o/frameify (fn [o n f] f) [:a :b :c])
+      (fn [o e f] f)
+      [:d])
+     to "name" :a 1 :d 2 :e 3))))

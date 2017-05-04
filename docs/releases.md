@@ -13,17 +13,26 @@ The biggest change has been a reworking off the "default ontology" and
 "broadcasting" functionality. This results in a cleaner and hopefully in most
 cases faster code base. Many functions (such as `owl-some` and `and`),
 however, no longer have default ontology functionality and, as a result,
-cannot longer accept string arguments; Only the "main" functions (`owl-class`,
+can no longer accept string arguments; only the "main" functions (`owl-class`,
 `object-property` etc) are capable of creating new entities, which probably
-better reflects the intentionality.
+better reflects the original intentionality.
 
 This release also includes further internationalization code, including full
 support for development of ontologies in Arabic (thanks to Aisha Blfgeh) and
 Italian. Other highlights include a much cleaner print output making Tawny
 easier to use and debug.
 
+Support for "frame" functions like `owl-class` has been refactored; this means
+that new frame functions can be easily created, and existing functions can be
+easily extended with new frames. A new function, `defgem` has been added which
+gives additional support for facets. A new pattern called `tier` has been
+added which generalizes `value-partition`.
+
 ## New Features
 
+ - `defgem` provides new support for facets
+ - `frameify` allows easy creation of frame oriented functions
+ - New pattern `tier` added
  - New cleaner implementation of broadcasting, with three new first class
    functions: `fontology`, `broadcast` and `broadcast-2`
  - Shorter macro names for definition: `defno`, `defnb` and `defnb2`
@@ -50,7 +59,7 @@ easier to use and debug.
 
  - Move to Clojure 1.7 because of fix for CLJ-1388
  - Remove default-ontology functionality from all constructor functions
-   (owl-some, only, and, oor and not)
+   (owl-some, only, and, or and not)
  - `:name` frame now namespaced -- this "feature" was never documented.
 
 # 1.6

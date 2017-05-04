@@ -536,29 +536,35 @@ colours of the rainbow would be an example."
   (let [{:keys [:tawny.owl/frame-keys :tawny.owl/hashify :tawny.owl/explicit]}
         (meta super-framed)
         all-keys (concat frame-keys extended-keys)]
-    (o/fontology
-     (fn [o name & frames]
-       (let [hashified
-             (u/check-keys
-              (hashify frames)
-              all-keys)
-             super-retn
-             (explicit
-              o name hashified)]
-         (extended-explicit o super-retn hashified))))))
+    (with-meta
+      (o/fontology
+       (fn [o name & frames]
+         (let [hashified
+               (u/check-keys
+                (hashify frames)
+                all-keys)
+               super-retn
+               (explicit
+                o name hashified)]
+           (extended-explicit o super-retn hashified))))
+      {:tawny.owl/frame-keys all-keys
+       :tawny.owl/hashify hashify
+       :tawny.owl/explicit extended-explicit})))
 
 (defn gem-explicit
   "As `owl-class-explicit` but also accepts a `:facet` frame value"
   [o clazz frames]
-  (o/refine
-   o clazz :super (facet (:facet frames))))
+  (if-let [facet-frame (:facet frames)]
+    (o/refine
+     o clazz :super (facet (:facet frames)))
+    clazz))
 
 (def gem
   "As `owl-class` but also accepts a `:facet` frame value."
   (extend-frameify
    o/owl-class
-   [:facet]
-   gem-explicit))
+   gem-explicit
+   [:facet]))
 
 (o/defentity defgem
   "As `defclass` with an added `:facet` frame
