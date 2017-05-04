@@ -65,59 +65,45 @@
 
 (o/defentity defoproprietà
   ""
-  #'tawny.italian/oggetto-proprietà)
+  #'tawny.italian/oggetto-proprietà
+  :ontologia)
 
 (def individuale
   (italiano o/individual))
 
-;; ontology ontologia
-;; def (as is "define”) definizione
-;; class classe
-;; object oggetto
-;; annotation annotazione
-;; property proprieta’
-;; data dati
-;; some alcuni
-;; only solo
-;; and e
-;; or o
-;; not no
-;; inverse inversa (eg proprieta’ inversa)
-;; label etichetta
-;; comment commento
-;; is defined by (e’ definito da)
-;; see also (vedi anche)
-;; backward compatible with (compatibile con) — perhaps “retro-compatibile"
-;; incompatible with (incompatibile con)
-;; version info (versione)
-;; deprecated deprecato (!!)
-;; super (as in superclass) super (it’s Latin!) o super-classe
-;; sub sotto (as in sotto-classe)
-;; import importate (eg ontologie importate)
-;; prefix prefisso
-;; suffix suffisso
-;; disjoint disgiunta (eg classi disgiunte)
-;; equivalent equivalente
-;; transitive transitiva 
-;; functional funzionale
-;; inverse functional (funzionale inversa)
-;; asymmetric asimmetrica
-;; symmetric simmetrica
-;; irreflexive irriflessiva
-;; reflexive riflessiva
-;; subchain ?? not sure
-;; characteristic caratteristica
-;; domain dominio
-;; range co-dominio
-;; exactly esattamente
-;; at least almeno
-;; at most al piu’
-;; has value ha valore
-;; fact fatto
-;; is e’
-;; type tipo
-;; different diverso/a
-;; axiom assioma
-;; probe ??
-;; refine rifinire / rifinisce
-;; span ??
+(o/defentity defindividuale "" #'tawny.italian/individuale
+  :ontologia)
+
+(def classe (italiano o/owl-class))
+
+(o/defentity defclasse "" #'tawny.italian/classe
+  :ontologia)
+
+(def datiproprietà (italiano o/datatype-property))
+(o/defentity defdproprietà "" #'tawny.italian/datiproprietà
+  :ontologia)
+
+(def datitipo (italiano o/datatype))
+(o/defentity defdatitipo "" #'tawny.italian/datitipo
+  :ontologia)
+
+(def alcuni #'o/owl-some)
+(def solo #'o/only)
+(def e #'o/owl-and)
+(def o #'o/owl-or)
+(def no #'o/owl-not)
+(def inversa #'o/inverse)
+(def etichetta #'o/label)
+(def commento #'o/owl-comment)
+(def è-definito-da #'o/is-defined-by)
+(def vedi-anche #'o/see-also)
+(def retro-compatibile #'o/backward-compatible-with)
+(def versione #'o/version-info)
+(def deprecato #'o/deprecated)
+(def come-disgiunta #'o/as-disjoint)
+(def almeno #'o/at-least)
+(def al-più #'o/at-most)
+(def ha-valore #'o/has-value)
+(def è #'o/is)
+(def refinire #'o/refine)
+(def campata #'o/span)
