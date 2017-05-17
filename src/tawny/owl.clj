@@ -31,6 +31,7 @@
    [clojure.walk :only postwalk]
    [clojure.test :only is]
    [clojure.set]
+   [clojure.string]
    [clojure.java.io]
    [tawny.print]
    [tawny.protocol :as p]
@@ -1465,35 +1466,50 @@ is given."
   "Save the current 'ontology' in the file or `filename' if given.
 If no ontology is given, use the current-ontology"
   ([o filename]
-     (save-ontology o filename (ManchesterSyntaxDocumentFormat.)
-                    (str "## This file was created by Tawny-OWL\n"
-                         "## It should not be edited by hand\n" )))
+   (save-ontology o filename
+                  (let [ext
+                        (last (clojure.string/split filename #"[.]"))]
+                    (case ext
+                      "rdf" :rdf
+                      "omn" :omn
+                      "owl" :owl
+                      "ttl" :ttl
+                      :omn))))
   ([o filename format]
-     (save-ontology o filename format ""))
+   (save-ontology o filename format nil))
   ([^OWLOntology o ^String filename format prepend]
-     (let [file (File. filename)
-           output-stream (new FileOutputStream file)
-           file-writer (new PrintWriter output-stream)
-           ^OWLDocumentFormat
-           this-format
-           (cond
-            (= format :rdf) (RDFXMLDocumentFormat.)
-            (= format :omn) (ManchesterSyntaxDocumentFormat.)
-            (= format :owl) (OWLXMLDocumentFormat.)
-            (= format :ttl) (TurtleDocumentFormat.)
-            :else format)]
-       (when (.isPrefixOWLOntologyFormat this-format)
-         (doseq [ont (vals @ontology-for-namespace)
-                 :when (get-prefix ont)]
-           (.setPrefix
-            (.asPrefixOWLOntologyFormat this-format) (get-prefix ont)
-            (str (p/as-iri ont) "#")))
-         (.setPrefix (.asPrefixOWLOntologyFormat this-format) (get-prefix o)
-                     (str (p/as-iri o) "#")))
-       (.print file-writer prepend)
-       (.flush file-writer)
-       (.saveOntology (owl-ontology-manager) o
-                      this-format output-stream))))
+   (let [file (File. filename)
+         output-stream (new FileOutputStream file)
+         file-writer (new PrintWriter output-stream)
+         ^OWLDocumentFormat
+         format
+         (case format
+           :rdf (RDFXMLDocumentFormat.)
+           :omn (ManchesterSyntaxDocumentFormat.)
+           :owl (OWLXMLDocumentFormat.)
+           :ttl (TurtleDocumentFormat.)
+           format)
+         prepend
+         (or prepend
+             (cond
+               ;; We only do this for Manchester syntax because it's the only
+               ;; one likely to be written by hand.
+               (instance? ManchesterSyntaxDocumentFormat format)
+               (str "## This file was created by Tawny-OWL\n"
+                    "## It should not be edited by hand\n" )
+               :else ""))]
+     (when (.isPrefixOWLOntologyFormat format)
+       (doseq [ont (vals @ontology-for-namespace)
+               :when (get-prefix ont)]
+         (.setPrefix
+          (.asPrefixOWLOntologyFormat format) (get-prefix ont)
+          (str (p/as-iri ont) "#")))
+       (.setPrefix (.asPrefixOWLOntologyFormat format) (get-prefix o)
+                   (str (p/as-iri o) "#")))
+     (.print file-writer prepend)
+     (.flush file-writer)
+     (.saveOntology (owl-ontology-manager) o
+                    format output-stream))))
 ;; #+end_src
 
 ;; * OWL Entity guess/ensure
