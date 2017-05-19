@@ -401,12 +401,25 @@ Keyword arguments are:
 :cover (default: true) if the tier values should cover the tier.
 :functional (default: true) if the object-property should be functional.
 
+:prefix (default: false)
+:suffix (default: false)
+
+if true, use the tier name as a prefix or suffix, if a string use this, if a
+keyword, use the name of the keyword.
+
+:property explicitly name the property, as opposed to deriving it from the
+tier name.
+
 This returns a list of entity vectors created by the p function."
   [o tier-name tier-values
-   & {:keys [comment super domain disjoint cover functional]
+   & {:keys [comment super domain disjoint cover functional
+             prefix suffix property]
       :or {disjoint true
            cover true
-           functional true}}]
+           functional true
+           prefix false
+           suffix false
+           property false}}]
   (let
       [tier
        (p o/owl-class
@@ -415,18 +428,47 @@ This returns a list of entity vectors created by the p function."
           :super super)
        values
        (map
-        #(apply
-          p (concat
-             [o/owl-class o]
-             (if (sequential? %)
-               %
-               (list %))
-             [:comment comment
-              :super tier]))
+        #(as-> % name
+           ;; force name to be a list
+           (if (sequential? name)
+             name (list name))
+           ;; prefix or suffix the first element
+           (let [[f & r] name]
+             (cond
+               prefix
+               (list*
+                (str
+                 (if (or
+                      (string? prefix)
+                      (keyword? prefix))
+                   (clojure.core/name prefix)
+                   tier-name)
+                 f)
+                r)
+               suffix
+               (list*
+                (str
+                 f
+                 (if (or
+                      (string? suffix)
+                      (keyword? suffix))
+                   (clojure.core/name suffix) tier-name))
+                r)
+               true name))
+           ;; turn it into a class
+           (apply
+            p (concat
+               [o/owl-class o]
+               name
+               [:comment comment
+                :super tier])))
         tier-values)
        prop
        (p o/object-property
-          o  (str "has" tier-name)
+          o
+          (if property
+            (str (name property))
+            (str "has" tier-name))
           :characteristic (when functional :functional)
           :comment comment
           :range tier

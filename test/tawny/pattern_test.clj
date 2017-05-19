@@ -200,6 +200,45 @@
      (not (some #{:functional}
                 (:characteristic (q/into-map (second t) :object)))))))
 
+(deftest tier-prefixes []
+  (is
+   (= "Tier2"
+      (nth
+       (map :name
+            (p/tier to "Tier" ["Tier2" "Tier3"]))
+       2)))
+
+  (is
+   (= "TierTier2"
+      (nth
+       (map :name
+            (p/tier to "Tier" ["Tier2" "Tier3"]
+                    :prefix true))
+       2)))
+
+  (is
+   (= "BobTier2"
+      (nth
+       (map :name
+            (p/tier to "Tier" ["Tier2" "Tier3"]
+                    :prefix :Bob))
+       2)))
+
+  (is
+   (= "Tier2Bob"
+      (nth
+       (map :name
+            (p/tier to "Tier" ["Tier2" "Tier3"]
+                    :suffix :Bob))
+       2)))
+
+  (is
+   (= "Bob"
+      (second
+       (map :name
+            (p/tier to "Tier" ["Tier2" "Tier3"]
+                    :property :Bob))))))
+
 (deftest extended-framification []
   (is
    ((p/extend-frameify
