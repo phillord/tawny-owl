@@ -122,9 +122,18 @@ Clojure symbol. Use this composed with a entity transform function"
 
 (defn intern-entity
   "Intern the OWL entity, applying transform to the entity to generate a name
-to intern."
+to intern.
+
+`ns` should be a namespace.
+
+`e` should be the entity to transform
+
+`transform` should be a transform function that expects a single
+  argument, which is the entity and returns a string. By default
+  `default-transform` is used with a nil first argument."
   ([ns e]
-   (intern-entity ns e default-transform))
+   (intern-entity ns e
+                  (partial default-transform nil)))
   ([ns e transform]
      (try
        (when (t/named? e)

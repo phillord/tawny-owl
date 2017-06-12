@@ -26,6 +26,36 @@
   (:import (org.semanticweb.owlapi.model IRI OWLNamedObject OWLOntologyID)
            (org.semanticweb.owlapi.util SimpleIRIMapper)))
 
+
+(def to nil)
+
+(defn createtestontology[]
+  (alter-var-root
+   #'to
+   (fn [x]
+     (o/ontology :iri "http://iri/" :prefix "iri" :noname true))))
+
+(defn createandsavefixture[test]
+  (let [exp
+        #(throw (Exception. "default ontology used"))
+        trace
+        #(tawny.debug/tracing-println "default ontology used")
+        ]
+    (when true
+      (tawny.util/add-hook
+       o/default-ontology-hook exp
+       ))
+    (when false
+      (tawny.util/add-hook
+       o/default-ontology-hook trace))
+    (createtestontology)
+    (test)
+    (tawny.util/remove-hook o/default-ontology-hook exp)
+    (tawny.util/remove-hook o/default-ontology-hook trace)))
+
+(use-fixtures :each createandsavefixture)
+
+
 (def read-test-namespace (find-ns 'tawny.read-test))
 
 (defn get-go-ontology []
@@ -186,3 +216,11 @@
   (is (= "_9bob" (r/stop-characters-transform "9bob")))
   (is (= "_9_bob" (r/stop-characters-transform "9 bob")))
   (is (= "_9_bob" (r/stop-characters-transform " 9 bob"))))
+
+
+(deftest intern-entity-bug57
+  (is
+   (let [A (o/owl-class to "A")]
+     (r/intern-entity
+      *ns*
+      (o/owl-class to "B" :super A)))))
