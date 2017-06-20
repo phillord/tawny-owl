@@ -1081,34 +1081,39 @@ add-sub-annotation functionality."
 ;; We should move this before annotation!
 
 ;; #+begin_src clojure
-(defn- extract-ontology-frame
+(defn- extract-specific-frame
   "Extracts the ontology frames from a list of frames.
-Currently, we define this to be the second value iff the first is an :ontology
-keyword. Returns a map of :ontology and the ontology or nil, and :args with
-the args minus the ontology frame if it exists."
-  [ontology-keyword frames]
-  (if (= ontology-keyword (first frames))
-    {:ontology (second frames)
+
+Currently, we define this to be the second value iff the first is
+`specific-keyword` keyword. Returns a map of :specific and the
+ontology or nil, and :frames with the args minus the ontology frame
+if it exists."
+  [specific-keyword frames]
+  (if (= specific-keyword (first frames))
+    {:specific (second frames)
      :frames (nthrest frames 2)}
-    {:ontology nil
+    {:specific nil
      :frames frames}))
 
-(defn- entity-generator [entity frames entity-function ontology-keyword]
-  (let [ontsplit (extract-ontology-frame ontology-keyword frames)
-        ont (:ontology ontsplit)
-        frames (:frames ontsplit)
-        entity-name (name entity)
-        ]
-    `(let [entity#
+(defn- entity-generator [symbol frames entity-function ontology-keyword]
+  (let [{ont :specific frames :frames}
+        (extract-specific-frame ontology-keyword frames)
+        {iri :specific frames :frames}
+        (extract-specific-frame :iri frames)
+        intern-name (name symbol)
+        entity-name-or-iri (if iri
+                             `(tawny.owl/iri ~iri)
+                             intern-name)]
+    `(let [owl-entity#
            ~(if ont
               `(~entity-function
                 ~ont
-                ~entity-name
+                ~entity-name-or-iri
                 ~@frames)
               `(~entity-function
-               ~entity-name
+               ~entity-name-or-iri
                ~@frames))]
-       (tawny.owl/intern-owl ~entity entity#))))
+       (tawny.owl/intern-owl ~symbol owl-entity#))))
 
 (defmacro defentity
   "Defines a new macro for defining OWL entities.
@@ -3230,7 +3235,7 @@ See also 'refine'
   [symb & args]
   (let [newsymbol#
         (symbol (name symb))
-        ontsplit (extract-ontology-frame args)
+        ontsplit (extract-specific-frame :ontology args)
         ont (:ontology ontsplit)
         frames (:frames ontsplit)
         ]
