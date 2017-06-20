@@ -19,48 +19,32 @@
     ^{:doc "Facilities to find the var of an OWL object."
       :author "Phillip Lord"}
     tawny.lookup
-  (:require [tawny owl util protocol]))
+  (:require [tawny owl util protocol type]))
 
-(defn- iri-for-var-named-entity
-  "Return the IRI for var if it is a OWLNamedObject or nil otherwise.
+(declare all-iri-to-var)
 
-The difference between this and iri-for-var is that this will return nil for a
-var with OWLOntology object."
-  [var]
-  (when (instance?
-         org.semanticweb.owlapi.model.OWLNamedObject (var-get var))
-    (str (tawny.protocol/as-iri (var-get var)))))
+(defn iri-to-var
+  "Given `namespaces` return an iri to var map for
+all vars containing an OWLObject in these namespaces."
+  [& namespaces]
+  (into
+   {}
+   (for [[iri vr] (all-iri-to-var)
+         :when (some
+                #{(:ns (meta vr))}
+                namespaces)]
+     [iri vr])))
 
-(defn- iri-for-var
-  "Return the IRI for var if it is IRIable or nil otherwise."
-  [var]
-  (when (tawny.owl/iriable? (var-get var))
-    (str (tawny.protocol/as-iri (var-get var)))))
-
-(defn- vars-in-namespace
-  "Return all the vars in the given namespace."
-  [namespace]
-  (vals (ns-publics namespace)))
-
-(defn- iri-to-var-map
-  [iri-for-var-function & namespaces]
-  (into {}
-        (for [var
-              ;; flatten down to single list
-              (flatten
-               ;; kill namespaces with no ontology terms
-               (filter (comp not nil?)
-                       ;; list per namespace
-                       (map vars-in-namespace namespaces)))
-              :let [iri (iri-for-var-function var)]
-              :when (not (nil? iri))]
-          [iri var])))
-
-(def iri-to-var-no-ontology
-  (partial #'iri-to-var-map iri-for-var-named-entity))
-
-(def iri-to-var
-  (partial #'iri-to-var-map iri-for-var))
+(defn iri-to-var-no-ontology [& namespaces]
+  (into
+   {}
+   (for [[iri vr]
+         (apply iri-to-var namespaces)
+         :when
+         (not
+          (tawny.type/ontology?
+           (var-get vr)))]
+     [iri vr])))
 
 (defn var-str
   "Given a var, return a string representation of its name"
@@ -91,7 +75,6 @@ space, if it the var is not in the current namespace."
       tawny.protocol/as-iri
       (.toString)))
 
-(declare all-iri-to-var)
 (defn resolve-entity
   "Given an OWLObject return a string representation of the var holding that
 object. The string will be qualified if the var is not in the current
@@ -124,26 +107,30 @@ hold them for the given namespaces."
     :doc "Cached copy of the IRI to var map. Automatically deleted on reload."}
   all-iri-to-var-cache (atom nil))
 
-(defn all-iri-to-var
-  "Returns a map keyed on the IRI of an OWLObject to var that holds that
-OWLObject for all namespaces in which tawny has created an ontology."
-  []
-  (if @all-iri-to-var-cache
-    @all-iri-to-var-cache
-    (reset! all-iri-to-var-cache
-            (apply iri-to-var (namespace-with-ontology)))))
+(defn- var-interned? [var]
+  (let [{:keys [ns name]} (meta var)]
+    (ns-resolve ns name)))
 
-;; this actually gives us the var -- we could build things up as we go?
-;; although this means we also have to cope with uninterns and the like as
-;; they come. ultimately we are duplicating elsewhere?
-(defn- kill-iri-cache
-  "Dump the iri cache each time we add a new owl entity."
-  [var]
-  ;;  (println "blitzing iri-cache")
-  (reset! all-iri-to-var-cache nil))
+(defn all-iri-to-var
+  "Returns a map keyed on the IRI of an OWLObject to var that has been
+  created for any OWLObject."
+  []
+  (swap! all-iri-to-var-cache
+         #(into {}
+                (filter
+                 (fn [[k v]]
+                   (var-interned? v)))
+               %))
+  @all-iri-to-var-cache)
+
+(defn- cache-var-map [var]
+  (swap! all-iri-to-var-cache
+         assoc
+         (named-entity-as-string (var-get var))
+         var))
 
 ;; call back hook added -- we have to do this as a hook as it avoids
 ;; owl referencing lookup.
 (tawny.util/add-hook
  tawny.owl/intern-owl-entity-hook
- #'kill-iri-cache)
+ #'cache-var-map)

@@ -51,9 +51,9 @@ Returns a sorted map."
 
 This function returns a map from the IRI to the var object(s) which hold it"
   ([]
-     (memorise-map *ns*))
+   (memorise-map *ns*))
   ([namespace]
-     (tawny.lookup/iri-to-var-no-ontology namespace)))
+   (tawny.lookup/iri-to-var-no-ontology namespace)))
 
 (defn generate-obsolete-mapping
   "Takes a list of old labels for an OWLEntity, and the var containing that

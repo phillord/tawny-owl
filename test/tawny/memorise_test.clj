@@ -82,13 +82,12 @@
     {"http://iri/#a" #{"a"},
      "http://iri/#b" #{"b"},
      "http://iri/#c" #{"c"}}
-    (let [o (o/ontology)]
+    (let [o (o/ontology :iri "http://iri/")]
         (bind-some-vars o)
         (let [x
               (#'m/change-values-to-string-set (test-memorise-map))]
           (unbind-some-vars)
           x))))
-
 
 (deftest memory-merge []
   (is
@@ -119,9 +118,7 @@
    (= {"iri1" #{"symbol2"}}
       (#'m/find-missing-mappings
        {"iri1" #{"symbol1"}}
-       {"iri1" #{"symbol1" "symbol2"}})))
-
-  )
+       {"iri1" #{"symbol1" "symbol2"}}))))
 
 (deftest change-values-to-string-set
   (is
@@ -142,8 +139,6 @@
    (= {}
       (#'m/change-values-to-string-set
        (m/memorise-map memorise-test-namespace)))))
-
-
 
 (deftest merge-with-distinct
   (is

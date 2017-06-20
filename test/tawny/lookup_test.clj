@@ -34,41 +34,14 @@
         (l/all-iri-to-var)
         true)))
 
-(deftest iri-to-var
-  (is
-   (= 1
-      (let [o
-            (test-ontology)]
-        (try
-          (o/intern-owl-string lookup-test-namespace "a"
-                               (o/owl-class o "a"))
-          (count (l/iri-to-var-no-ontology lookup-test-namespace))
-          (finally
-            (ns-unmap lookup-test-namespace 'a)
-            (.removeOntology (tawny.owl/owl-ontology-manager) o)
-            (ns-unmap lookup-test-namespace 'a-test-ontology)))))))
-
-(deftest iri-to-var-2
-  (is
-   (= 1
-      (let [o (test-ontology)]
-        (try
-          (o/intern-owl-string lookup-test-namespace "a"
-                               (o/owl-class o "a"))
-          (count (l/iri-to-var lookup-test-namespace))
-          (finally
-            (ns-unmap lookup-test-namespace 'a)
-            (.removeOntology (tawny.owl/owl-ontology-manager) o)
-            (ns-unmap lookup-test-namespace 'a-test-ontology)))))))
-
 (deftest resolve-entity
   (is
    (= "tawny.lookup-test-test-namespace/hello"
       (try
         (let [o (test-ontology)]
-          (tawny.owl/intern-owl-string lookup-test-namespace
-                                       "hello" (o/owl-class o "test"))
-          (l/resolve-entity (o/owl-class o "test")
-                            (l/iri-to-var lookup-test-namespace)))
+          (tawny.owl/intern-owl-string
+           lookup-test-namespace
+           "hello" (o/owl-class o "test"))
+          (l/resolve-entity (o/owl-class o "test")))
         (finally
           (ns-unmap lookup-test-namespace 'hello))))))
