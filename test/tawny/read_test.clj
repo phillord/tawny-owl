@@ -206,7 +206,11 @@
                 :prefix "go:"
                 :namespace read-test-namespace)
         (finally
-           (doall (map ns-unmap (vals (l/iri-to-var read-test-namespace))))))))
+          (l/clean-var-cache)
+          (doall
+           (map ns-unmap
+                (repeat read-test-namespace)
+                (vals (l/iri-to-var read-test-namespace))))))))
 
 
 (deftest stop-characters-transform

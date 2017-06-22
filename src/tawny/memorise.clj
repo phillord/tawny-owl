@@ -53,6 +53,9 @@ This function returns a map from the IRI to the var object(s) which hold it"
   ([]
    (memorise-map *ns*))
   ([namespace]
+   ;; Lookup caches in a way which is sensitive to uninterns, so clean
+   ;; it here just in case.
+   (tawny.lookup/clean-var-cache)
    (tawny.lookup/iri-to-var-no-ontology namespace)))
 
 (defn generate-obsolete-mapping

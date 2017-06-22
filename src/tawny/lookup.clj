@@ -113,15 +113,19 @@ hold them for the given namespaces."
 
 (defn all-iri-to-var
   "Returns a map keyed on the IRI of an OWLObject to var that has been
-  created for any OWLObject."
+  created for any OWLObject. This method can return a vars which are
+  no longer interned, perhaps by ns-unmap. Use `clean-var-cache` to
+  clear these out."
   []
+  @all-iri-to-var-cache)
+
+(defn clean-var-cache []
   (swap! all-iri-to-var-cache
          #(into {}
                 (filter
                  (fn [[k v]]
                    (var-interned? v)))
-               %))
-  @all-iri-to-var-cache)
+                %)))
 
 (defn- cache-var-map [var]
   (swap! all-iri-to-var-cache
