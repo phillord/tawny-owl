@@ -22,39 +22,16 @@
    [clojure.set]
    [tawny.read :as r]
    [tawny.owl :as o]
-   [tawny.lookup :as l])
+   [tawny.lookup :as l]
+   [tawny.fixture :as f])
   (:import (org.semanticweb.owlapi.model IRI OWLNamedObject OWLOntologyID)
            (org.semanticweb.owlapi.util SimpleIRIMapper)))
 
-
 (def to nil)
 
-(defn createtestontology[]
-  (alter-var-root
-   #'to
-   (fn [x]
-     (o/ontology :iri "http://iri/" :prefix "iri" :noname true))))
-
-(defn createandsavefixture[test]
-  (let [exp
-        #(throw (Exception. "default ontology used"))
-        trace
-        #(tawny.debug/tracing-println "default ontology used")
-        ]
-    (when true
-      (tawny.util/add-hook
-       o/default-ontology-hook exp
-       ))
-    (when false
-      (tawny.util/add-hook
-       o/default-ontology-hook trace))
-    (createtestontology)
-    (test)
-    (tawny.util/remove-hook o/default-ontology-hook exp)
-    (tawny.util/remove-hook o/default-ontology-hook trace)))
-
-(use-fixtures :each createandsavefixture)
-
+(use-fixtures :each
+  (f/test-ontology-fixture-generator #'to)
+  f/error-on-default-ontology-fixture)
 
 (def read-test-namespace (find-ns 'tawny.read-test))
 

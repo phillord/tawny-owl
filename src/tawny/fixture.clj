@@ -17,7 +17,7 @@
 
 (ns tawny.fixture
   (:use [tawny.owl])
-  (:require [tawny.reasoner :as r])
+  (:require [tawny.reasoner :as r] [tawny.debug])
   (:require [clojure.test]))
 
 ;; not technically a fixture, but make with-probe-axioms print out nice
@@ -56,7 +56,7 @@
        (last form))))
 
 (defn reasoner
-  "Fixture which sets up the reasoner factory to be used, and makes
+  "Fixture which sets up the reasoner factory to be used, and
 turns the progress monitor off."
   [reasoner]
   (fn [tests]
@@ -81,3 +81,36 @@ the reasoner factory to use. ns should be a symbol"
      (fn [tests]
        (let [o (get @ontology-for-namespace (find-ns ns))]
          ((ontology-and-reasoner o reasoner) tests)))))
+
+(defn test-ontology-fixture-generator
+  "Given a var, return a fixture.
+
+  The fixture will alter the var to contain a new, empty ontology
+  before calling the test. This provides a simple way of providing an
+  ontology to be used for a series of tests, just using the var, while
+  ensuring that tests do not share state."
+  ([var]
+   (test-ontology-fixture-generator var false))
+  ([var noname]
+   (fn [test]
+     (alter-var-root
+      var
+      (fn [x]
+        (ontology :iri "http://example.com/" :prefix "iri" :noname noname)))
+     (test))))
+
+(defn error-on-default-ontology-fixture [test]
+  "A fixture that prevents use of the default ontology
+by throwing an exception."
+  (let [f #(throw (Exception. "Default Ontology Used"))]
+    (tawny.util/add-hook default-ontology-hook f)
+    (test)
+    (tawny.util/remove-hook default-ontology-hook f)))
+
+(defn complain-on-default-ontology-fixture [test]
+  "A fixture that prevents use of the default ontology
+by printing a trace."
+  (let [f #(tawny.debug/tracing-println "Default Ontology Used")]
+    (tawny.util/add-hook default-ontology-hook f)
+    (test)
+    (tawny.util/remove-hook default-ontology-hook f)))

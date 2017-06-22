@@ -19,14 +19,17 @@
   (:use [clojure.test])
   (:require
    [tawny.owl :as o]
-   [tawny.lookup :as l]))
+   [tawny.lookup :as l]
+   [tawny.fixture :as f]))
+
+(def to nil)
+
+(use-fixtures :each
+  (f/test-ontology-fixture-generator #'to)
+  f/error-on-default-ontology-fixture)
+
 
 (def lookup-test-namespace (create-ns 'tawny.lookup-test-test-namespace))
-
-(defn test-ontology
-  ([]
-   (let [o (o/ontology :iri "http://iri/" :prefix "test:")]
-     o)))
 
 ;; test it don't crash -- all I can do
 (deftest all-iri-to-var
@@ -38,10 +41,9 @@
   (is
    (= "tawny.lookup-test-test-namespace/hello"
       (try
-        (let [o (test-ontology)]
-          (tawny.owl/intern-owl-string
-           lookup-test-namespace
-           "hello" (o/owl-class o "test"))
-          (l/resolve-entity (o/owl-class o "test")))
+        (tawny.owl/intern-owl-string
+         lookup-test-namespace
+         "hello" (o/owl-class to "test"))
+        (l/resolve-entity (o/owl-class to "test"))
         (finally
           (ns-unmap lookup-test-namespace 'hello))))))

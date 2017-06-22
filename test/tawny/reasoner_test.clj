@@ -19,28 +19,19 @@
 (ns tawny.reasoner-test
   (:refer-clojure :exclude [some only comment])
   (:require [tawny.owl :as o]
-            [tawny.reasoner :as r])
+            [tawny.reasoner :as r]
+            [tawny.fixture :as f])
   [:use clojure.test])
 
 (def to nil)
-(defn createtestontology[]
-  (alter-var-root
-   #'to
-   (fn [x]
-     (o/ontology
-      :iri "http://iri/"
-      :prefix "iri:"))))
 
-(defn createandsavefixture[test]
-  (binding
-      [r/*reasoner-progress-monitor*
-       (atom r/reasoner-progress-monitor-silent)]
-    (createtestontology)
-    (test)
-    ;;(o/save-ontology to "test-reasoner.omn")
-    ))
-
-
+(use-fixtures :each
+  #(binding
+       [r/*reasoner-progress-monitor*
+        (atom r/reasoner-progress-monitor-silent)]
+     (%))
+  (f/test-ontology-fixture-generator #'to)
+  f/error-on-default-ontology-fixture)
 
 ;; this isn't working and I really don't know why
 ;; it seems to work on lein test but kills all tests
@@ -51,12 +42,6 @@
   (binding [r/*reasoner-progress-monitor*
             r/reasoner-progress-monitor-text]
     (tests)))
-
-
-
-(use-fixtures
- ;;:once reasoner-gui-fixture
- :each createandsavefixture)
 
 
 (defn with-ontology []

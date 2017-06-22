@@ -19,20 +19,14 @@
   (:require [tawny.render :as r]
             [tawny.owl :as o]
             [tawny.fixture]
-            ))
+
+            [tawny.fixture :as f]))
 
 (def to nil)
 
-(defn createtestontology[test]
-  (alter-var-root
-   #'to
-   (fn [x]
-     (o/ontology :iri "http://iri/"
-                 :noname true
-                 :prefix "iri")))
-  (test))
-
-(use-fixtures :each createtestontology)
+(use-fixtures :each
+  (f/test-ontology-fixture-generator #'to true)
+  f/error-on-default-ontology-fixture)
 
 (defn double-as-form [entity]
   (vector
@@ -81,7 +75,7 @@
 (deftest datasome-datatype
   (is
    (=
-    '(owl-some (iri "http://iri/#rD") :XSD_INTEGER)
+    '(owl-some (iri "http://example.com/#rD") :XSD_INTEGER)
     (do (data-ontology)
         (r/as-form
          (o/owl-some (o/datatype-property to "rD") :XSD_INTEGER))))))
@@ -125,10 +119,10 @@
 
 (deftest individual-fact-1
   (is
-   (= '(individual (iri "http://iri/#I")
+   (= '(individual (iri "http://example.com/#I")
                    :fact
-                   (fact (iri "http://iri/#r")
-                         (iri "http://iri/#I2")))
+                   (fact (iri "http://example.com/#r")
+                         (iri "http://example.com/#I2")))
       (r/as-form
        (o/individual to "I"
                      :fact (o/fact
@@ -137,10 +131,10 @@
 
 (deftest individual-fact-2
   (is
-   (= '(individual (iri "http://iri/#I")
+   (= '(individual (iri "http://example.com/#I")
                    :fact
-                   (fact-not (iri "http://iri/#r")
-                             (iri "http://iri/#I2")))
+                   (fact-not (iri "http://example.com/#r")
+                             (iri "http://example.com/#I2")))
       (r/as-form
        (o/individual
         to "I"
@@ -152,12 +146,12 @@
 (deftest individual-3
   (is
    (=
-    '(individual (iri "http://iri/#I")
+    '(individual (iri "http://example.com/#I")
                 :fact
-                (fact (iri "http://iri/#r")
-                         (iri "http://iri/#I2"))
-                (fact-not (iri "http://iri/#r")
-                          (iri "http://iri/#I2")))
+                (fact (iri "http://example.com/#r")
+                         (iri "http://example.com/#I2"))
+                (fact-not (iri "http://example.com/#r")
+                          (iri "http://example.com/#I2")))
     (r/as-form
      (o/individual to "I"
                    :fact
@@ -171,8 +165,8 @@
   (is
    (=
     '(individual
-      (iri "http://iri/#I")
-      :fact (fact (iri "http://iri/#d")
+      (iri "http://example.com/#I")
+      :fact (fact (iri "http://example.com/#d")
                   (literal "10" :type :XSD_INTEGER)))
     (r/as-form
      (o/individual to "I"
@@ -183,11 +177,11 @@
 
 (deftest individual-data-2
   (is
-   (= '(individual (iri "http://iri/#I")
+   (= '(individual (iri "http://example.com/#I")
                    :fact
-                   (fact (iri "http://iri/#r")
-                         (iri "http://iri/#I2"))
-                   (fact (iri "http://iri/#d")
+                   (fact (iri "http://example.com/#r")
+                         (iri "http://example.com/#I2"))
+                   (fact (iri "http://example.com/#d")
                          (literal "10" :type :XSD_INTEGER)))
       (r/as-form
        (o/individual to "I"
@@ -200,9 +194,9 @@
 (deftest oproperty-super-test
   (is
    (= '(object-property
-        (iri "http://iri/#r")
+        (iri "http://example.com/#r")
         :super
-        (iri "http://iri/#s"))
+        (iri "http://example.com/#s"))
       (r/as-form
        (o/object-property to "r"
                           :super
@@ -245,9 +239,9 @@
 (deftest dproperty-super-test
   (is
    (= '(datatype-property
-        (iri "http://iri/#g")
+        (iri "http://example.com/#g")
         :super
-        (iri "http://iri/#h"))
+        (iri "http://example.com/#h"))
       (r/as-form
        (o/datatype-property to "g"
                           :super
@@ -256,13 +250,13 @@
 
 (deftest entity-or-iri-as-iri
   (is
-   (= ['owl-class ['iri "http://iri/#a"]]
+   (= ['owl-class ['iri "http://example.com/#a"]]
       (r/as-form
        (o/owl-class to "a")
        :terminal :iri)))
   (is
    (= ['ontology
-       :iri "http://iri/"
+       :iri "http://example.com/"
        :prefix "iri"]
       (r/as-form
        to
@@ -741,12 +735,12 @@
 (deftest ontology-annotation
   (is
    (= '(ontology
-        :iri "http://iri/#x"
+        :iri "http://example.com/#x"
         :prefix "x"
         :annotation
         (label (literal "test label" :lang "en")))
       (r/as-form
-       (o/ontology :iri "http://iri/#x"
+       (o/ontology :iri "http://example.com/#x"
                    :prefix "x"
                    :noname true
                    :annotation
@@ -755,7 +749,7 @@
 (deftest class-annotation
   (is
    (= '(owl-class
-        (iri "http://iri/#x")
+        (iri "http://example.com/#x")
         :annotation
         (label (literal "test label" :lang "en")))
       (r/as-form
@@ -766,7 +760,7 @@
 (deftest individual-annotation
   (is
    (= '(individual
-        (iri "http://iri/#x")
+        (iri "http://example.com/#x")
         :annotation
         (label (literal "test label" :lang "en")))
       (r/as-form
@@ -777,7 +771,7 @@
 (deftest oproperty-annotation
   (is
    (= '(object-property
-        (iri "http://iri/#x")
+        (iri "http://example.com/#x")
         :annotation
         (label (literal "test label" :lang "en")))
       (r/as-form
@@ -788,7 +782,7 @@
 (deftest dproperty-annotation
   (is
    (= '(datatype-property
-        (iri "http://iri/#x")
+        (iri "http://example.com/#x")
         :annotation
         (label (literal "test label" :lang "en")))
       (r/as-form
@@ -799,7 +793,7 @@
 (deftest aproperty-annotation
   (is
    (= '(annotation-property
-        (iri "http://iri/#x")
+        (iri "http://example.com/#x")
         :annotation
         (label (literal "test label" :lang "en")))
       (r/as-form
@@ -813,6 +807,6 @@
     (is
      (=
       '(object-property
-        (iri "http://iri/#x")
+        (iri "http://example.com/#x")
         :characteristic :functional)
       (r/as-form o)))))

@@ -140,7 +140,7 @@ to intern.
          (let [name
                (stop-characters-transform (transform e))]
            (when *noisy-intern*
-             (println "Interning as:" name " entity: " e))
+             (println "Interning as:" name " :entity: " e))
            (tawny.owl/intern-owl-string ns name e)))
        (catch IllegalArgumentException i
          (print "Broken Intern on:" e)

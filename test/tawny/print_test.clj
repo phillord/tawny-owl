@@ -19,21 +19,15 @@
   (:require
    [tawny.owl :as o]
    [tawny.print :as p]
-   [clojure.test :refer :all]))
+   [clojure.test :refer :all]
+   [tawny.fixture :as f]))
 
 
 (def to nil)
 
-(defn createtestontology[test]
-  (alter-var-root
-   #'to
-   (fn [x]
-     (o/ontology :iri "http://iri/"
-                 :noname true
-                 :prefix "iri")))
-  (test))
-
-(use-fixtures :each createtestontology)
+(use-fixtures :each
+  (f/test-ontology-fixture-generator #'to)
+  f/error-on-default-ontology-fixture)
 
 (deftest render-ontology
   (is

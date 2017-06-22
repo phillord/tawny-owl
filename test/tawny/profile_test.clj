@@ -18,35 +18,14 @@
 (ns tawny.profile-test
   (:use [clojure.test])
   (:require [tawny.profile :as p]
-            [tawny.owl :as o]))
+            [tawny.owl :as o]
+            [tawny.fixture :as f]))
 
 (def to nil)
 
-(defn createtestontology[]
-  (alter-var-root
-   #'to
-   (fn [x]
-     (o/ontology :iri "http://example.com"))))
-
-(defn createandsavefixture[test]
-  (let [exp
-        #(throw (Exception. "default ontology used"))
-        trace
-        #(tawny.debug/tracing-println "default ontology used")
-        ]
-    (when true
-      (tawny.util/add-hook
-       o/default-ontology-hook exp
-       ))
-    (when false
-      (tawny.util/add-hook
-       o/default-ontology-hook trace))
-    (createtestontology)
-    (test)
-    (tawny.util/remove-hook o/default-ontology-hook exp)
-    (tawny.util/remove-hook o/default-ontology-hook trace)))
-
-(use-fixtures :each createandsavefixture)
+(use-fixtures :each
+  (f/test-ontology-fixture-generator #'to)
+  f/error-on-default-ontology-fixture)
 
 (deftest inprofile-owl2dl?
   (is

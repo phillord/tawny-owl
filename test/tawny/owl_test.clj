@@ -25,6 +25,7 @@
                                  OWLDataProperty)
    [org.semanticweb.owlapi.search  EntitySearcher])
   (:require [tawny.owl :as o]
+            [tawny.fixture :as f]
             [tawny.render :as r]
             [tawny.protocol :as p]
             [tawny.query :as q]
@@ -35,38 +36,16 @@
 
 (def to nil)
 
-(defn createtestontology[]
-  (alter-var-root
-   #'to
-   (fn [x]
-     (o/ontology :iri "http://iri/" :prefix "iri" :noname true))))
-
-(defn createandsavefixture[test]
-  (let [exp
-        #(throw (Exception. "default ontology used"))
-        trace
-        #(tawny.debug/tracing-println "default ontology used")
-        ]
-    (when true
-      (tawny.util/add-hook
-       o/default-ontology-hook exp
-       ))
-    (when false
-      (tawny.util/add-hook
-       o/default-ontology-hook trace))
-    (createtestontology)
-    (test)
-    (tawny.util/remove-hook o/default-ontology-hook exp)
-    (tawny.util/remove-hook o/default-ontology-hook trace)))
-
-(use-fixtures :each createandsavefixture)
+(use-fixtures :each
+  (f/test-ontology-fixture-generator #'to true)
+  f/error-on-default-ontology-fixture)
 
 (deftest ontology
   (is
    (not
     (nil?
      (o/ontology
-      :iri "http://iri/"
+      :iri "http://example.com/"
       :prefix "iri:"
       :comment "This is a comment"
       :versioninfo "This is some versioninfo")))))
@@ -161,9 +140,9 @@
            (:annotation m))))))
 
 (deftest as-iri
-  (is (= "http://iri/"
-         (.toString (p/as-iri (o/ontology :iri "http://iri/")))))
-  (is (= "http://iri/"
+  (is (= "http://example.com/"
+         (.toString (p/as-iri (o/ontology :iri "http://example.com/")))))
+  (is (= "http://example.com/"
          (.toString (p/as-iri to)))))
 
 
@@ -265,9 +244,9 @@
    (do
      ;; need a clean slate to start with!
      (reset! o/ontology-options-atom {})
-     (o/ontology :iri "http://iri/some-more" :prefix "dfda:" :noname true)
-     (o/ontology :iri "http://iri/some-more" :prefix "dfda:" :noname true)
-     (o/ontology :iri "http://iri/some-more" :prefix "dfda:" :noname true)
+     (o/ontology :iri "http://example.com/some-more" :prefix "dfda:" :noname true)
+     (o/ontology :iri "http://example.com/some-more" :prefix "dfda:" :noname true)
+     (o/ontology :iri "http://example.com/some-more" :prefix "dfda:" :noname true)
      (= 1
           (count @o/ontology-options-atom)))))
 
@@ -287,7 +266,7 @@
 
 (deftest iri-for-name
   (is (= (.toString (#'o/iri-for-name to "test"))
-         "http://iri/#test")))
+         "http://example.com/#test")))
 
 (deftest defoproperty
   (is
@@ -417,9 +396,10 @@
          t (o/object-property to "t" :subchain r s [p q])]
      (=
       ;; the ordering here comes from render and the semantics of set.
-      ;; hopefully it will be consistent, because it is not functionally
-      ;; important, but we do test it.1
-      [:oproperty t :subchain [[r s][p q]]]
+      ;; It unfortunate it seems to be a bit inconsistency and some
+      ;; times changes as a result of apparently unrelated code changes.
+      ;; It is functionality unimportant.
+      [:oproperty t :subchain [[p q][r s]]]
       (to-form t)))))
 
 (deftest object-property []

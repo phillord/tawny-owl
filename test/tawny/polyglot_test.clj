@@ -20,8 +20,6 @@
   (:require [tawny.polyglot :as p]))
 
 (deftest polyglot-read-label
-  (is 
+  (is
    (thrown? IllegalStateException
     (p/polyglot-load-label "abdjsk" "en"))))
-
-

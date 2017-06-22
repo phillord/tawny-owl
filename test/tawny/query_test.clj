@@ -4,39 +4,16 @@
             [tawny.query :as q]
             [clojure.core.logic :as l]
             [tawny.debug]
-            [tawny.test-util :refer :all])
+            [tawny.test-util :refer :all]
+            [tawny.fixture :as f])
   (:use [clojure.test]))
 
 
 (def to nil)
 
-(defn createtestontology[]
-  (alter-var-root
-   #'to
-   (fn [x]
-     (o/ontology :iri "http://iri/" :prefix "iri" :noname true))))
-
-(defn createandsavefixture[test]
-  (let [exp
-        #(throw (Exception. "default ontology used"))
-        trace
-        #(tawny.debug/tracing-println "default ontology used")
-        ]
-    (when true
-      (tawny.util/add-hook
-       o/default-ontology-hook exp
-       ))
-    (when false
-      (tawny.util/add-hook
-       o/default-ontology-hook trace))
-    (createtestontology)
-    (test)
-    (tawny.util/remove-hook o/default-ontology-hook exp)
-    (tawny.util/remove-hook o/default-ontology-hook trace)))
-
-(use-fixtures :each createandsavefixture)
-
-;;(createtestontology)
+(use-fixtures :each
+  (f/test-ontology-fixture-generator #'to true)
+  f/error-on-default-ontology-fixture)
 
 (deftest sig-1 []
   (is-set=
