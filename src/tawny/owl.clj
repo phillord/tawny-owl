@@ -33,7 +33,6 @@
    [clojure.set]
    [clojure.string]
    [clojure.java.io]
-   [tawny.print]
    [tawny.protocol :as p]
    [tawny.type :as t]
    [tawny.util :as util])
@@ -51,7 +50,11 @@
     OWLAnnotationProperty OWLObjectProperty
     OWLDataFactory OWLDocumentFormat
     OWLDataProperty OWLDataRange OWLProperty OWLPropertyExpression
-    OWLDataPropertyExpression OWLLiteral)
+    OWLDataPropertyExpression OWLLiteral
+    OWLNaryBooleanClassExpression
+    OWLObjectComplementOf
+    OWLQuantifiedRestriction
+    )
    (org.semanticweb.owlapi.apibinding OWLManager)
    (org.semanticweb.owlapi.formats ManchesterSyntaxDocumentFormat
                                    TurtleDocumentFormat
@@ -60,7 +63,7 @@
    (org.semanticweb.owlapi.util DefaultPrefixManager OWLEntityRemover)
    [org.semanticweb.owlapi.search
     EntitySearcher]
-   (java.io ByteArrayOutputStream FileOutputStream PrintWriter)
+   (java.io ByteArrayOutputStream FileOutputStream PrintWriter Writer)
    (java.io File)
    (java.util Collections)
    (org.semanticweb.owlapi.model AddAxiom RemoveAxiom AddImport
@@ -3266,4 +3269,8 @@ cases this will have been imported."
           (assoc (meta newsymbol#)
             :owl true))
        (var-get (var ~symb)))))
+;; #+end_src
+
+;; #+begin_src
+(load "owl_print")
 ;; #+end_src

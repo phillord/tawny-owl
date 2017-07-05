@@ -1462,3 +1462,25 @@ Assumes that fixture has been run"
     IllegalArgumentException
     ((o/frameify (fn [o n f] f) [:a :b :c])
      to "name" :d 1))))
+
+
+;; OWL Print functionality
+(deftest print-ontology
+  (is
+   (string?
+    (pr-str to))))
+
+(deftest print-entities
+  (is
+   (string?
+    (pr-str (o/owl-class to "a"))))
+
+  (is
+   (string?
+    (pr-str (o/owl-and (o/owl-class to "a")
+                       (o/owl-class to "b")))))
+
+  (is
+   (string?
+    (pr-str (o/owl-some (o/object-property to "r")
+                        (o/owl-class to "a"))))))
