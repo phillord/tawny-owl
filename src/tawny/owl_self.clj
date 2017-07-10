@@ -38,7 +38,7 @@
 (def ^{:private true} tawny-iri
   (iri tawny-base-url))
 
-(def tawny-name-property
+(def ^OWLAnnotationProperty tawny-name-property
   (tawny-annotation-property
    (iri (str tawny-base-url "#name"))))
 
