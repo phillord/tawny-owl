@@ -794,7 +794,21 @@ of isa?"
   (map #(form % options) s))
 
 (defmethod form Set [s options]
-  (map #(form % options) s))
+  ;; The idea behind this sort is to maintain ordering of the output
+  ;; from render.  Unfortunately, this is very hard to test, as it
+  ;; changes only occasionally during the course of
+  ;; development. Perhaps this will help.
+  (sort
+   (fn [x y]
+     (cond
+       (and (sequential? x)
+            (sequential? y))
+       (compare (first x) (first y))
+       (and (instance? Comparable x)
+            (instance? Comparable y))
+       (compare x y)
+       :default 0))
+   (map #(form % options) s)))
 
 (defmethod form Collection [s options]
   (map #(form % options) s))
