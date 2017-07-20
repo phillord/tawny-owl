@@ -85,15 +85,15 @@
 ;; because it then shows only `false` on failure. So we create an macro here
 ;; which expands these out.
 
-;; #+begin_src
+;; #+begin_src clojure
 (defmacro ^{:private true} say
   "Reporter macro for assertions."
   [& conditions]
   `(do
-    ~@(map
-       (fn [con#]
-         `(clojure.test/is ~con#))
-       conditions)))
+     ~@(map
+        (fn [con#]
+          `(clojure.test/is ~con#))
+        conditions)))
 ;; #+end_src
 
 ;; * Begin resource section
