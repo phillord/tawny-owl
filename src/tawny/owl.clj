@@ -107,7 +107,6 @@
 ;; implementation. They used to be closures but this was a pain to type hint
 
 ;; #+begin_src clojure
-
 (defonce
   ^{:doc "The OWLDataFactory used for Tawny."
     :private true}
@@ -140,7 +139,11 @@
 
 ;; #+end_src
 
-;; * Protocols and Predicates
+;; * Protocols
+
+;; Protocols are defined in `tawny.protocol'. Here we extend them to
+;; various types. `IRIable` are the entities that we want to be able to
+;; turn into IRIs
 
 ;; #+begin_src clojure
 (defn ^IRI iri
@@ -194,7 +197,11 @@ an exception."
   (if (iriable? entity)
     entity
     (throw (IllegalArgumentException. "Expecting a IRIable entity"))))
+;; #+end_src
 
+;; OWL allows annotation on almost anything.
+
+;; #+begin_src clojure
 (defrecord Annotated [entity annotations]
   p/Entityable
   (p/as-entity [this] entity)
