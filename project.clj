@@ -62,5 +62,6 @@
    [:base
     {:dependencies [[org.clojure/clojure "1.8.0"]]}]
 
-   }
-)
+   :1.9
+   [:base
+    {:dependencies [[org.clojure/clojure "1.9.0-alpha20"]]}]})
