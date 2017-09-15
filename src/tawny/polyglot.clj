@@ -20,7 +20,8 @@
     ^{:doc "Support for multi-lingual ontologies"
       :author "Phillip Lord"}
     tawny.polyglot
-  (:require [tawny.lookup] [tawny.owl]))
+  (:require [tawny.lookup] [tawny.owl]
+            [tawny.type :as t]))
 
 ;; function to create empty properties file
 (defn polyglot-create-resource
@@ -48,13 +49,15 @@
             (let [props (java.util.Properties.)]
               (.load props r)
               props))]
-      (doseq [[k v] (tawny.lookup/name-to-var *ns*)]
+      (doseq [[k v] (tawny.lookup/name-to-var *ns*)
+              :when (not (t/ontology? (var-get v)))]
         ;; when there is a label
         (let [label (.getProperty props k)]
           (if (seq label)
-            (#'tawny.owl/add-annotation
+            (tawny.owl/refine
              (var-get v)
-             (list (tawny.owl/label label locale)))
+             :annotation
+             (tawny.owl/label label locale))
             (println
              (format "Missing Label (%s:%s)"
                      k locale))))))

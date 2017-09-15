@@ -17,9 +17,26 @@
 
 (ns tawny.polyglot-test
   (:use [clojure.test])
-  (:require [tawny.polyglot :as p]))
+  (:require
+   [tawny.fixture :as f]
+   [tawny.owl :as o]
+   [tawny.polyglot :as p]))
+
+(def to nil)
+
+(use-fixtures :each
+  (f/test-ontology-fixture-generator #'to true)
+  f/error-on-default-ontology-fixture)
 
 (deftest polyglot-read-label
   (is
    (thrown? IllegalStateException
     (p/polyglot-load-label "abdjsk" "en"))))
+
+(deftest load-a-b
+  (is
+   (do
+     (o/owl-class to "A")
+     (o/owl-class to "B")
+     (p/polyglot-load-label "a-b-trans.props" "en")
+     true)))
