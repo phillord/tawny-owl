@@ -18,3 +18,7 @@ o.*
 /src/tawny/pattern.org
 /emacs/.cask/
 /emacs/dist/
+*.owl
+*.org
+*.html
+.nrepl-port
