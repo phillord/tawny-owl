@@ -50,6 +50,11 @@
       :comment "This is a comment"
       :versioninfo "This is some versioninfo")))))
 
+
+(deftest ontology-label
+  (is
+   (o/ontology :label "test label")))
+
 (defn to-form [entity]
   (r/as-form entity :terminal :object :keyword true))
 

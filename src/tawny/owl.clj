@@ -1299,6 +1299,11 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
   [o v]
   (add-ontology-annotation o (version-info v)))
 
+(defnb ^:private add-ontology-label
+  "Adds a label annotation to the ontology."
+  [o l]
+  (add-ontology-annotation o (label l)))
+
 ;; owl imports
 (defn owl-import
   "Adds a new import to the current ontology. o may be an
@@ -1327,6 +1332,7 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
    :comment #'add-ontology-comment
    :versioninfo #'add-version-info
    :annotation #'add-ontology-annotation
+   :label #'add-ontology-label
    :import #'add-import
    })
 
