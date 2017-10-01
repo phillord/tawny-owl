@@ -77,7 +77,7 @@ Tawny-OWL requires no installation *per se* and is used as any Clojure
 library. It is available from
 [clojars](https://clojars.org/uk.org.russet/tawny-owl), so just add:
 
-`[uk.org.russet/tawny-owl]' to your `project.clj' file.
+`[uk.org.russet/tawny-owl]` to your `project.clj` file.
 
 I use Leiningen 2 on the current version 16.04 Ubuntu and, occasionally, on
 Windows. Editing of both tawny-owl and the ontologies using it, is with Emacs
@@ -93,7 +93,7 @@ http://www.russet.org.uk/blog
 
 ## Mailing List
 
-There is a [mailing list](mailto:tawny-owl@googlegroups.com)
+There is a [mailing list](mailto:tawny-owl@googlegroups.com).
 
 ## Version
 
