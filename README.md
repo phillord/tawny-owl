@@ -65,10 +65,10 @@ Further information on the use of Tawny-OWL is available in the
 ## Motivation
 
 I discuss the development of this code base in my
-[journal](http://www.russet.org.uk/blog). Two recent posts include one on the
-[motivation] (http://www.russet.org.uk/blog/2214) and another on making the
-library more ["lispy"](http://www.russet.org.uk/blog/2254). All revelevant
-posts are
+[journal](http://www.russet.org.uk/blog). Two posts include one on the
+[motivation](http://www.russet.org.uk/blog/2214) and another on making
+the library more ["lispy"](http://www.russet.org.uk/blog/2254). All
+revelevant posts are
 [categorised](http://www.russet.org.uk/blog/category/all/professional/tech/tawny-owl).
 
 ## Installation
