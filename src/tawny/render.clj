@@ -517,13 +517,16 @@
 
      (when (pos? (count subchainaxioms))
        (lst :subchain
-            (form
-             ;; get the all the chains, as vectors
-             (map
-              #(vec
-                (.getPropertyChain
-                 ^OWLSubPropertyChainOfAxiom %)) subchainaxioms)
-             options)))
+            ;; This sort is an attempt to make subchains come out in a
+            ;; predictable order, mostly because it makes testing easier.
+            (sort
+             (form
+              ;; get the all the chains, as vectors
+              (map
+               #(vec
+                 (.getPropertyChain
+                  ^OWLSubPropertyChainOfAxiom %)) subchainaxioms)
+              options))))
      (when (pos? (count domain))
        (lst :domain
             (form domain options)))

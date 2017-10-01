@@ -715,7 +715,14 @@ the moment it is very simple."
   [o name]
   (if-let [iri-gen (:iri-gen (deref (ontology-options o)))]
     (iri-gen o name)
-    (iri (str (p/as-iri o) "#" name))))
+    (let [the-iri (str (p/as-iri o))]
+      (iri (str (p/as-iri o)
+                (when-not
+                    (or
+                     (.endsWith the-iri "/")
+                     (.endsWith the-iri "#"))
+                  "#")
+                name)))))
 ;; #+end_src
 
 ;; * Interning OWL Entities

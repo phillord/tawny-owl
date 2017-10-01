@@ -79,9 +79,9 @@
   ;; reference the vars statically here. change-values-to-string-set is a way
   ;; of doing this.
    (=
-    {"http://iri/#a" #{"a"},
-     "http://iri/#b" #{"b"},
-     "http://iri/#c" #{"c"}}
+    {"http://iri/a" #{"a"},
+     "http://iri/b" #{"b"},
+     "http://iri/c" #{"c"}}
     (let [o (o/ontology :iri "http://iri/")]
         (bind-some-vars o)
         (let [x
@@ -123,9 +123,9 @@
 (deftest change-values-to-string-set
   (is
    (= {
-       "http://iri/#b" #{"b"},
-       "http://iri/#c" #{"c"},
-       "http://iri/#a" #{"a"},
+       "http://iri/b" #{"b"},
+       "http://iri/c" #{"c"},
+       "http://iri/a" #{"a"},
        }
       (let [o (o/ontology :iri "http://iri/")]
         (bind-some-vars o)

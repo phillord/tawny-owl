@@ -271,7 +271,7 @@
 
 (deftest iri-for-name
   (is (= (.toString (#'o/iri-for-name to "test"))
-         "http://example.com/#test")))
+         "http://example.com/test")))
 
 (deftest defoproperty
   (is
@@ -400,10 +400,9 @@
          s (o/object-property to "s")
          t (o/object-property to "t" :subchain r s [p q])]
      (=
-      ;; the ordering here comes from render and the semantics of set.
-      ;; It unfortunate it seems to be a bit inconsistency and some
-      ;; times changes as a result of apparently unrelated code changes.
-      ;; It is functionality unimportant.
+      ;; This ordering has given grief before, since the subchain
+      ;; properties are a set and not ordered. Hopefully, this should
+      ;; be predicatable now (but I might be wrong).
       [:oproperty t :subchain [[p q][r s]]]
       (to-form t)))))
 
