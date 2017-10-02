@@ -125,7 +125,7 @@
         (.setVisible frame false)))))
 
 
-(defn reasoner-progress-monitor-text
+(defn reasoner-progress-monitor-text-debug
   "Return a new text based progress monitor."
   []
   (proxy [org.semanticweb.owlapi.reasoner.ReasonerProgressMonitor] []
@@ -139,6 +139,18 @@
       (println "reasoner task started" name))
     (reasonerTaskStopped []
       (println "reasoner task stopped"))))
+
+(defn reasoner-progress-monitor-text
+  "Return a new text based progress monitor."
+  []
+  (proxy [org.semanticweb.owlapi.reasoner.ReasonerProgressMonitor] []
+    (reasonerTaskBusy[])
+    (reasonerTaskProgressChanged [val max]
+      (print val ":" max " "))
+    (reasonerTaskStarted [name]
+      (print "Reasoning: "))
+    (reasonerTaskStopped []
+      (println "...complete"))))
 
 
 (defn reasoner-progress-monitor-silent
@@ -166,7 +178,7 @@
   ^{:dynamic true
     :doc "The current progress monitor to use."}
   *reasoner-progress-monitor*
-  (atom reasoner-progress-monitor-gui-maybe))
+  (atom reasoner-progress-monitor-text))
 
 (defn reasoner-silent
   "Shut the reasoner up"
