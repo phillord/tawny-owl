@@ -131,8 +131,8 @@ Properties can be created in a similar manner to classes, using the
 example, demonstrates several of these frames:
 
     (defoproperty hasBase
-      :subpropertyof hasIngredient
-      :characteristics functional
+      :super hasIngredient
+      :characteristic :functional
       :range PizzaBase
       :domain Pizza
       )
@@ -155,9 +155,9 @@ defined within it as inverses. For example, `hasIngredient` and
 
     (as-inverse
      (defoproperty hasIngredient
-       :characteristics transitive)
+       :characteristic :transitive)
      (defoproperty isIngredientOf
-       :characteristics transitive
+       :characteristic :transitive
        ))
 
 Likewise, it is possible to add a shared superclass and disjoint statements to
