@@ -429,38 +429,27 @@ This returns a list of entity vectors created by the p function."
           :super super)
        values
        (map
-        #(as-> % name
+        #(as-> % value-name
            ;; force name to be a list
-           (if (sequential? name)
-             name (list name))
+           (if (sequential? value-name)
+             value-name (list value-name))
            ;; prefix or suffix the first element
-           (let [[f & r] name]
-             (cond
-               prefix
-               (list*
-                (str
-                 (if (or
-                      (string? prefix)
-                      (keyword? prefix))
-                   (clojure.core/name prefix)
-                   tier-name)
-                 f)
-                r)
-               suffix
-               (list*
-                (str
-                 f
-                 (if (or
-                      (string? suffix)
-                      (keyword? suffix))
-                   (clojure.core/name suffix) tier-name))
-                r)
-               true name))
+           (let [[f & r] value-name]
+             (cons
+              (str
+               (cond
+                 (true? prefix) tier-name
+                 prefix (name prefix))
+               f
+               (cond
+                 (true? suffix) tier-name
+                 suffix (name suffix)))
+              r))
            ;; turn it into a class
            (apply
             p (concat
                [o/owl-class o]
-               name
+               value-name
                [:comment comment
                 :super tier])))
         tier-values)
