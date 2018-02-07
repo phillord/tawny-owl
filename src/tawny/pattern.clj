@@ -413,13 +413,14 @@ tier name.
 This returns a list of entity vectors created by the p function."
   [o tier-name tier-values
    & {:keys [comment super domain disjoint cover functional
-             prefix suffix property]
+             prefix suffix property superproperty]
       :or {disjoint true
            cover true
            functional true
            prefix false
            suffix false
-           property false}}]
+           property false
+           superproperty false}}]
   (let
       [tier
        (p o/owl-class
@@ -472,7 +473,9 @@ This returns a list of entity vectors created by the p function."
           :characteristic (when functional :functional)
           :comment comment
           :range tier
-          :domain domain)]
+          :domain domain
+          :super superproperty
+          )]
     ;; we don't care about the return of this.
     (as-facet o prop values)
     (u/fcall-no-nil
