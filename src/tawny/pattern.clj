@@ -373,6 +373,15 @@ to explicitly name the object property."
   "Return an existential restriction for each of the facetted classes."
   [o & clazz]
   (doall (map (fn [c] (facet-1 o c)) (flatten clazz))))
+
+
+(o/defno facet-closed
+  [o & clazz]
+  (let [clazz (flatten clazz)
+        props (map #(facet-property o %) clazz)]
+    (assert (apply = props)
+            "All classes must be of the same facet group for `facet-closed`")
+    (o/some-only (o/entity-for-iri o (first props)) clazz)))
 ;; #+end_src
 
 
@@ -553,8 +562,6 @@ colours of the rainbow would be an example."
           options)))
 
 (def partition-values #'tier-values)
-;; #+end_src
-
 
 (defn extend-frameify
   "Extend an existing `frameify` function with more frames.
@@ -586,27 +593,78 @@ colours of the rainbow would be an example."
        :tawny.owl/explicit extended-explicit})))
 
 (defn gem-explicit
-  "As `owl-class-explicit` but also accepts a `:facet` frame value"
+  "Return a class with some property restrictions.
+
+  As `owl-class-explicit` but also accepts a `:facet` frame
+  value. Each class in the facet will be replaced with an existential
+  restriction using its relevant facet property.
+
+  See also `cgem` which returns closed values."
   [o clazz frames]
   (if-let [facet-frame (:facet frames)]
-    (o/refine
-     o clazz :super (facet (:facet frames)))
+    (o/refine o clazz :super (facet o (:facet frames)))
     clazz))
 
 (def gem
-  "As `owl-class` but also accepts a `:facet` frame value."
+  "Return a class with some property restrictions.
+
+  As `owl-class` but also accepts a `:facet` frame
+  value. Each class in the facet will be replaced with an existential
+  restriction using its relevant facet property.
+
+  See also `cgem` which returns closed values."
   (extend-frameify
    o/owl-class
    gem-explicit
    [:facet]))
 
 (o/defentity defgem
-  "As `defclass` with an added `:facet` frame
+  "Defines a new class with some property restrictions.
 
-Classes in the `:facet` frame will be added as superclasses
-as if called with the `facet` function."
+  As `defclass` with an added `:facet` frame. Each class in the facet
+  will be replaced with an existential restriction using its relevant
+  facet property."
   'gem)
 
+(defn cgem-explicit
+  "Return a class defined by some closed property restrictions.
+
+  As `owl-class-explicit` but also accepts a `:facet` frame
+  value. Classes will be replaced with a existential restrictions with
+  a closure axioms.
+
+  All values of `:facet` frame must be from the same facet, as the
+  class will be closed with these facets.
+
+  See also `gem-explicit`."
+  [o clazz frames]
+  (if-let [facet-frame (:facet frames)]
+    (o/refine o clazz :super (facet-closed o (:facet frames)))
+    clazz))
+
+(def cgem
+  "Return a class defined by some closed property restrictions.
+
+  As `owl-class` but also accepts a `:facet` frame value. Classes will
+  be replaced with a existential restrictions with a closure axioms.
+
+  All values of `:facet` frame must be from the same facet, as the
+  class will be closed with these facets.
+
+  See also `gem`."
+  (extend-frameify
+   o/owl-class
+   cgem-explicit
+   [:facet]))
+
+(o/defentity defcgem
+  "Define a new class with some closed properties.
+
+   As `defclass` with an added `:facet` frame. Classes will be
+   replaced with existential restrictions with a closure axiom.
+
+   See also `defgem`."
+  'cgem)
 ;; #+end_src
 
 ;; * Footer

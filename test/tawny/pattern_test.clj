@@ -106,6 +106,15 @@
       (list (o/owl-some o c))
       (p/facet to c)))))
 
+(deftest facet-closed
+  (is
+   (let [o (o/object-property to "o")
+         c (o/owl-class to "c")]
+     (p/as-facet to o c)
+     (=
+      (o/some-only o c)
+      (p/facet-closed to c)))))
+
 (deftest pattern-annotator
   (is
    (=
@@ -241,3 +250,20 @@
       (fn [o e f] f)
       [:d])
      to "name" :a 1 :d 2 :e 3))))
+
+
+(deftest gem-test
+  (is
+   (let [o (o/object-property to "o")
+         c (o/owl-class to "c")]
+     (p/as-facet to o c)
+     (= (o/owl-class to "cl" :super (o/owl-some o c))
+        (p/gem to "cl" :facet c)))))
+
+(deftest cgem-test
+  (is
+   (let [o (o/object-property to "o")
+         c (o/owl-class to "c")]
+     (p/as-facet to o c)
+     (= (o/owl-class to "cl" :super (o/some-only o c))
+        (p/cgem to "cl" :facet c)))))
