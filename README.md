@@ -41,9 +41,10 @@ knowledge such as [genetics](http://www.geneontology.org/) or
 describe anything, including [e-commerce](http://purl.org/goodrelations/). For
 more tutorial information, please see http://ontogenesis.knowledgeblog.org.
 
-A longer [getting started](docs/getting-started.md) document is available. A
-[full-length manual](http://homepages.cs.ncl.ac.uk/phillip.lord/take-wing/) is
-also in [development](http://github.com/phillord/take-wing).
+A [full-length manual](https://phillord.github.io/take-wing/) is also
+[available](http://github.com/phillord/take-wing). The original,
+slightly older [getting started](docs/getting-started.md) document is
+available.
 
 ## For the Clojure developer
 
