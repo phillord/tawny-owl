@@ -124,6 +124,10 @@ values are lists and concats duplicates."
            `(quote-head ~%)
            (name %)) v)))
 
+(defmacro quote-vector [v]
+  "Given a vector, return names as a vector"
+  (mapv name v))
+
 (defmacro quote-tree
   "Given a tree of symbols, return a tree of names."
   [tree]
