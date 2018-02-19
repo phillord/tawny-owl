@@ -15,7 +15,7 @@ env:
  - PROFILE=1.8
  - PROFILE=1.8-direct
 script:
- - lein with-profiles $PROFILE test tawny.owl-test tawny.pattern-test
+ - lein with-profiles $PROFILE test
  - make travis
 jdk:
  - oraclejdk8
