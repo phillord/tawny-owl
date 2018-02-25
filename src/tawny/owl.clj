@@ -1864,7 +1864,7 @@ opposite of this."
            (isa? type ::object)
            (map ensure-object-property propertylist)
            (isa? type ::data)
-           (map (partial ensure-data-property o) propertylist)
+           (map ensure-data-property propertylist)
            :default
            (throw
             (IllegalArgumentException.
