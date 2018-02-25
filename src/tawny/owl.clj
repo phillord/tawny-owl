@@ -1772,6 +1772,17 @@ interpret this as a string and create a new OWLIndividual."
 ;; We start ~OWLClass~ support rather randomly at this point.
 
 ;; #+begin_src clojure
+(defno
+  ^{:doc "Adds one or more subclasses to name in ontology."}
+  gci
+  [o class subclass]
+  (add-axiom o
+             (.getOWLSubClassOfAxiom
+              (owl-data-factory)
+              (ensure-class subclass)
+              (ensure-class class)
+              (p/as-annotations subclass))))
+
 (defnb2
   ^{:doc "Adds one or more superclasses to name in ontology."
    :arglists '([ontology name & superclass])}
