@@ -664,7 +664,7 @@ colours of the rainbow would be an example."
    replaced with existential restrictions with a closure axiom.
 
    See also `defgem`."
-  'cgem)
+  'tawny.pattern/cgem)
 ;; #+end_src
 
 ;; * Footer
