@@ -1488,3 +1488,11 @@ Assumes that fixture has been run"
    (string?
     (pr-str (o/owl-some (o/object-property to "r")
                         (o/owl-class to "a"))))))
+
+(deftest unqualified-cardinality
+  (is
+   (o/exactly 4 (o/object-property to "r")))
+  (is
+   (o/at-most 4 (o/object-property to "r")))
+  (is
+   (o/at-least 4 (o/object-property to "r"))))

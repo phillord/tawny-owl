@@ -2469,7 +2469,7 @@ all values from restrictions."
 (defn object-exactly
   "Returns an OWL exact cardinality restriction."
   ([cardinality property]
-   (object-exactly cardinality property nil))
+   (object-exactly cardinality property (owl-thing)))
   ([cardinality property class]
    (.getOWLObjectExactCardinality
     (owl-data-factory) cardinality
