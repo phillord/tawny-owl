@@ -27,6 +27,7 @@
 (def some #'tawny.owl/owl-some)
 (def class #'tawny.owl/owl-class)
 (def import #'tawny.owl/owl-import)
+(def comment #'tawny.owl/owl-comment)
 (def < #'tawny.owl/owl-max)
 (def > #'tawny.owl/owl-min)
 (def >< #'tawny.owl/min-max)
