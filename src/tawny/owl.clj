@@ -707,6 +707,16 @@ or the current-ontology"
       ontology-options-atom assoc o (ref {}))
      o)))
 
+(defn- ontology-iri-with-terminator [o]
+  (let [the-iri (str (p/as-iri o))]
+    (str
+     the-iri
+     (when-not
+         (or
+          (.endsWith the-iri "/")
+          (.endsWith the-iri "#"))
+       "#"))))
+
 (defn iri-for-name
   "Returns an IRI object for the given name.
 
@@ -715,14 +725,7 @@ the moment it is very simple."
   [o name]
   (if-let [iri-gen (:iri-gen (deref (ontology-options o)))]
     (iri-gen o name)
-    (let [the-iri (str (p/as-iri o))]
-      (iri (str (p/as-iri o)
-                (when-not
-                    (or
-                     (.endsWith the-iri "/")
-                     (.endsWith the-iri "#"))
-                  "#")
-                name)))))
+    (iri (str (ontology-iri-with-terminator o) name))))
 ;; #+end_src
 
 ;; * Interning OWL Entities
@@ -1533,7 +1536,7 @@ If no ontology is given, use the current-ontology"
           (.asPrefixOWLOntologyFormat format) (get-prefix ont)
           (str (p/as-iri ont) "#")))
        (.setPrefix (.asPrefixOWLOntologyFormat format) (get-prefix o)
-                   (str (p/as-iri o) "#")))
+                   (ontology-iri-with-terminator o)))
      (.print file-writer prepend)
      (.flush file-writer)
      (.saveOntology (owl-ontology-manager) o
