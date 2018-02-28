@@ -2792,9 +2792,13 @@ or to ONTOLOGY if present."
 (defn- var-get-maybe
   "Given a var return it's value, given a value return the value."
   [var-maybe]
-  (if (var? var-maybe)
+  (cond
+    (instance? Annotated var-maybe)
+    (Annotated. (var-get-maybe (p/as-entity var-maybe))
+                (p/as-annotations var-maybe))
+    (var? var-maybe)
     (var-get var-maybe)
-    var-maybe))
+    true var-maybe))
 
 (defno as-disjoint
   {:doc "All entities are declared as disjoint. Entities may be
