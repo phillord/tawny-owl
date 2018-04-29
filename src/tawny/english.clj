@@ -21,6 +21,8 @@
   (:require [tawny.owl])
   (:refer-clojure :only []))
 
+(def thing #'tawny.owl/owl-thing)
+(def nothing #'tawny.owl/owl-nothing)
 (def and #'tawny.owl/owl-and)
 (def or #'tawny.owl/owl-or)
 (def not #'tawny.owl/owl-not)
