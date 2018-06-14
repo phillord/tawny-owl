@@ -187,6 +187,14 @@
      (not (some #{:functional}
                 (:characteristic (q/into-map (second t) :object)))))))
 
+(deftest tier-no-property
+  (let [s (o/owl-class to "s")
+        t (p/tier to "Tier" ["Tier2" "Tier3"]
+                  :property false)]
+    (is
+     (not (t/obj-prop? (second t))))
+    (is (t/owl-class? (second t)))))
+
 (deftest tier-prefixes []
   (is
    (= "Tier2"

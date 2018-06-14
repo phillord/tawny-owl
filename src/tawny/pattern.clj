@@ -416,8 +416,12 @@ Keyword arguments are:
 if true, use the tier name as a prefix or suffix, if a string use this, if a
 keyword, use the name of the keyword.
 
-:property explicitly name the property, as opposed to deriving it from the
-tier name.
+:property
+
+if false, do not create a property.
+
+if true, derive the property name from the tier name, else explicitly
+name the property, either as a string or keyword.
 
 This returns a list of entity vectors created by the p function."
   [o tier-name tier-values
@@ -428,7 +432,7 @@ This returns a list of entity vectors created by the p function."
            functional true
            prefix false
            suffix false
-           property false
+           property true
            superproperty false}}]
   (let
       [tier
@@ -463,19 +467,21 @@ This returns a list of entity vectors created by the p function."
                 :super tier])))
         tier-values)
        prop
-       (p o/object-property
-          o
-          (if property
-            (str (name property))
-            (str "has" tier-name))
-          :characteristic (when functional :functional)
-          :comment comment
-          :range tier
-          :domain domain
-          :super superproperty
-          )]
+       (when property
+         (p o/object-property
+            o
+            (if (true? property)
+              (str "has" tier-name)
+              (str (name property)))
+            :characteristic (when functional :functional)
+            :comment comment
+            :range tier
+            :domain domain
+            :super superproperty
+            ))]
     ;; we don't care about the return of this.
-    (as-facet o prop values)
+    (when prop
+      (as-facet o prop values))
     (u/fcall-no-nil
      o/as-subclasses
      o tier
@@ -486,7 +492,7 @@ This returns a list of entity vectors created by the p function."
     ;; perhaps from a modified let form, although this requires knowledge that
     ;; props is a list
     (pattern-annotator
-     o (list* tier prop values))))
+     o (u/fcall-no-nil list* tier prop values))))
 
 (defmacro deftier
   [tier-name tier-values & options]
@@ -624,7 +630,7 @@ colours of the rainbow would be an example."
   As `defclass` with an added `:facet` frame. Each class in the facet
   will be replaced with an existential restriction using its relevant
   facet property."
-  'gem)
+  'tawny.pattern/gem)
 
 (defn cgem-explicit
   "Return a class defined by some closed property restrictions.
