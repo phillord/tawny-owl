@@ -2547,8 +2547,9 @@ slightly faster.
   [o name frames]
   (let [class
         (ensure-class
-         (if (string? name)
-           (iri-for-name o name)
+         (if (string? (p/as-entity name))
+           (iri-for-name o
+                         (p/as-entity name))
            name))]
     ;; add the class
     (add-axiom
