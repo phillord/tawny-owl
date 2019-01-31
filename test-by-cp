@@ -1,0 +1,7 @@
+#!/bin/sh
+
+cd ..
+mkdir copy
+cd copy
+cp -rf ../app/* .
+lein with-profile $1 test

@@ -28,11 +28,11 @@
 
   :dependencies [
                  ;; owl API
-                 [net.sourceforge.owlapi/owlapi-distribution "4.2.8"]
+                 [net.sourceforge.owlapi/owlapi-distribution "4.5.8"]
 
                  ;; clojure
-                 [org.clojure/clojure "1.7.0"]
-                 [org.clojure/core.logic "0.8.10"]
+                 [org.clojure/clojure "1.10.0"]
+                 [org.clojure/core.logic "0.8.11"]
 
                  ;; reasoners
                  [org.semanticweb.elk/elk-owlapi "0.4.3"]
@@ -53,15 +53,7 @@
   ;; dependency adds dev-resources to the path which I need for testing.
   :profiles
   {
-   :1.8-direct
-   [:base
-    {:jvm-opts ["-Dclojure.compiler.direct-linking=true"]
-     :dependencies [[org.clojure/clojure "1.8.0"]]}]
-
-   :1.8
-   [:base
-    {:dependencies [[org.clojure/clojure "1.8.0"]]}]
-
    :1.9
    [:base
-    {:dependencies [[org.clojure/clojure "1.9.0"]]}]})
+    {:dependencies [[org.clojure/clojure "1.9.0"]]}]
+   })

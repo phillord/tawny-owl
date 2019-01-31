@@ -25,4 +25,26 @@ commit-test: travis
 travis:
 	$(EMACS_ENV) $(MAKE) html 2>&1 | grep --invert-match "newer than byte-compiled file"
 
+DOCKER_TAG=openjdk-11-lein
+PROFILE=default
+test-cp:
+	docker run -it --rm --name docker-cp -v $(PWD):/usr/src/app -w /usr/src/app --entrypoint=/bin/bash  clojure:$(DOCKER_TAG) ./test-by-cp $(PROFILE)
+
+multi-test-cp:
+	$(MAKE) test-cp DOCKER_TAG=openjdk-11-lein PROFILE=default
+	$(MAKE) test-cp DOCKER_TAG=openjdk-11-lein PROFILE=1.9
+	$(MAKE) test-cp DOCKER_TAG=openjdk-8-lein PROFILE=default
+	$(MAKE) test-cp DOCKER_TAG=openjdk-8-lein PROFILE=1.9
+
+
+test-git:
+	docker run -it --rm --name docker-cp -v $(PWD):/usr/src/app -w /usr/src/app --entrypoint=/bin/bash  clojure:$(DOCKER_TAG) ./test-by-cp $(PROFILE)
+
+multi-test-git:
+	$(MAKE) test-git DOCKER_TAG=openjdk-11-lein PROFILE=default
+	$(MAKE) test-git DOCKER_TAG=openjdk-11-lein PROFILE=1.9
+	$(MAKE) test-git DOCKER_TAG=openjdk-8-lein PROFILE=default
+	$(MAKE) test-git DOCKER_TAG=openjdk-8-lein PROFILE=1.9
+
+
 .PHONY: test travis commit-test clean-src html
