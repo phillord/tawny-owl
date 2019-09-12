@@ -39,7 +39,7 @@
 
 (defun tawny-mode-check-for-nrepl-buffer ()
   "Error if there is no NREPL buffer."
-  (unless (nrepl-connection-buffer-name)
+  (unless (cider-connected-p)
     (error
      "No nREPL buffer exists. Please use `cider-jack-in'")))
 
