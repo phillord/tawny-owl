@@ -47,7 +47,10 @@
                  ;; Shut up ELK
                  [log4j/log4j "1.2.17"]
                  ;; Shut up OWL API
-                 [org.slf4j/slf4j-nop "1.7.10"]]
+                 [org.slf4j/slf4j-nop "1.7.10"]
+
+                 ;; identitas
+                 [uk.org.russet/identitas-j "0.0.1"]]
 
   ;; multiple profiles for testing against different OWL versions. The :base
   ;; dependency adds dev-resources to the path which I need for testing.
