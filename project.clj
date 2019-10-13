@@ -1,7 +1,7 @@
 (defproject uk.org.russet/tawny-owl "2.0.1-SNAPSHOT"
   :description "tawny-owl enables building OWL ontologies in a programmatic environment."
   :url "http://www.russet.org.uk/blog/tawny-owl"
-  :repositories [["maven" "http://repo1.maven.org/maven2"]]
+  :repositories [["maven" "https://repo1.maven.org/maven2"]]
 
   :scm {:url "https://github.com/phillord/tawny-owl.git"
         :name "git"}
@@ -47,13 +47,16 @@
                  ;; Shut up ELK
                  [log4j/log4j "1.2.17"]
                  ;; Shut up OWL API
-                 [org.slf4j/slf4j-nop "1.7.10"]]
+                 [org.slf4j/slf4j-nop "1.7.10"]
+
+                 ;; identitas
+                 [uk.org.russet/identitas-j "0.0.1"]]
 
   ;; multiple profiles for testing against different OWL versions. The :base
   ;; dependency adds dev-resources to the path which I need for testing.
   :profiles
   {
-   :1.9
+    :1.9
    [:base
     {:dependencies [[org.clojure/clojure "1.9.0"]]}]
    })

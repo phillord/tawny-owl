@@ -209,8 +209,9 @@ iri-mapper and resource-iri-mapper.
       (let [format (.getOntologyFormat (tawny.owl/owl-ontology-manager)
                                        owlontology)]
         (if (.isPrefixOWLOntologyFormat format)
-          (.setPrefix (.asPrefixOWLOntologyFormat format)
-                      prefix (str iri))
+          (.setDefaultPrefix
+           (.asPrefixOWLOntologyFormat format)
+           prefix)
           (throw (IllegalArgumentException.
                   "Attempt to provide a prefix to an ontology that is not using a prefix format")))))
     ;; this is the ontology for the namespace so stuff it place
