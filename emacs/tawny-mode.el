@@ -34,6 +34,7 @@
 (require 'nrepl-client)
 (require 'clojure-mode)
 (require 'easymenu)
+(require 'cl)
 
 ;;; Code:
 
@@ -81,6 +82,32 @@ elk or jfact."
     "(do (require 'tawny.emacs)(tawny.emacs/is-consistent \"%s\"))"
     (cider-current-ns)
     )))
+
+(defun tawny-mode-identitas ()
+  "Prints random prolong (lexical pronounceable string) ID generated
+by the Identitaslibrary."
+  (interactive)
+  (tawny-mode-check-for-nrepl-buffer)
+  (cider-nrepl-request:eval
+   (format
+    "(do (require 'tawny.emacs)(tawny.emacs/identitas \"%s\"))"
+    (cider-current-ns))
+   (tawny-mode-make-into-buffer-response-handler (point-marker))))
+
+(defun tawny-mode-make-into-buffer-response-handler(marker)
+  "Return a messaging response handler into the current BUFFER."
+  (lexical-let
+      ((m marker))
+    (nrepl-make-response-handler
+     (marker-buffer marker)
+     (lambda (buffer value)
+       (save-excursion
+         (set-buffer (marker-buffer m))
+         (goto-char m)
+         (insert (substring value 1 -1))))
+     (lambda (buffer value))
+     (lambda (buffer value))
+     (lambda (buffer)))))
 
 (defun tawny-mode-unsatisfiable ()
   "Prints a message describing unsatisfiability of current ontology."
