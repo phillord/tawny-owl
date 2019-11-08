@@ -72,6 +72,12 @@ NAMESPACE"
         "Ontology is consistent."
         "Ontology is not consistent."))))
 
+(defn identitas
+  "Return a random prolong ID from the identitas library."
+  [id]
+  (let [id (uk.org.russet.identitas.Util/randomProlong)]
+    id))
+
 (defn list-classes
   "Given a set of classes, returns a string representation."
   [classes]
