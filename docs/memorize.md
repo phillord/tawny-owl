@@ -39,7 +39,7 @@ Use of memorise is relatively straight-forward. The upstream ontology needs to
 be read as described [previously](importing). To save the mappings that have
 been made, use the `memorize` function:
 
-    (tawny.memorise/memorise "./src/tawny/obi_memorise.clj")
+    (tawny.memorise/memorise obi "./src/tawny/obi_memorise.clj")
 
 The location for the "memorise" is variable, but I use the same directory as
 the load file because it will be versioned along with other source. If you are
@@ -49,7 +49,7 @@ run every time it is updated.
 To remember the mappings made previously, we use the counter-part `remember`
 function.
 
-    (tawny.memorise/remember "./src/tawny/obi/obi_memorise.clj")
+    (tawny.memorise/remember obi "./src/tawny/obi/obi_memorise.clj")
 
 Memorise generates a print statement for all the obsolete mappings that it
 finds, and will generate another print statement whenever the obsolete term is

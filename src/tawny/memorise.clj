@@ -78,17 +78,17 @@ returns the OWLEntity, while printing a warning message."
 (defn fetch-remembered-entities
   "Fetch the remembered entities. This returns a map between an IRI (as a
 string) and a set of string labels."
-  []
+  [ontology]
   (or
-   (:remember (deref (tawny.owl/ontology-options)))
+   (:remember (deref (tawny.owl/ontology-options ontology)))
    {}))
 
 (defn fetch-old-and-current-entities
   "Fetch all entity mappings. This returns a map "
-  []
+  [ontology]
   (merge-with-distinct
     (change-values-to-string-set (memorise-map))
-    (fetch-remembered-entities)))
+    (fetch-remembered-entities ontology)))
 
 (defn- check-old-mappings
   "Check old mappings that we have remembered against those that we would
@@ -127,15 +127,15 @@ duplicate keys. Returns a single map, with all values as sets."
 
 (defn memorise
    "Save current memorise information in file."
-   [file]
+   [ontology file]
    (with-open [w (clojure.java.io/writer file)]
-     (clojure.pprint/pprint (fetch-old-and-current-entities) w)))
+     (clojure.pprint/pprint (fetch-old-and-current-entities ontology) w)))
 
 (defn remember
   "Restore the current memorise information from file.
 This loads the memorise information, stores this with the ontology. A message
 is printed when obsolete terms are found"
-  [file]
+  [ontology file]
   (let [iri-to-name-mapping
         ;; think this is going to be very dependant on the current directory.
         ;; So it's not going to work if another project imports the OBI
@@ -149,6 +149,6 @@ is printed when obsolete terms are found"
      ;; everything we load.
      (dosync
       (alter
-       (tawny.owl/ontology-options)
+       (tawny.owl/ontology-options ontology)
        merge {:remember iri-to-name-mapping}))
      (check-old-mappings iri-to-name-mapping (memorise-map))))
