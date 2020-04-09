@@ -7,7 +7,6 @@ env:
 script:
  - lein with-profiles $PROFILE test tawny.owl-test tawny.pattern-test
 jdk:
- - oraclejdk9
  - oraclejdk11
 notifications:
    email:
