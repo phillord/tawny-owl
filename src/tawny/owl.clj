@@ -1530,7 +1530,7 @@ If no ontology is given, use the current-ontology"
                     "## It should not be edited by hand\n" )
                :else ""))]
      (when (.isPrefixOWLOntologyFormat format)
-       (doseq [ont (vals @ontology-for-namespace)
+       (doseq [ont (.getOntologies (owl-ontology-manager))
                :when (get-prefix ont)]
          (.setPrefix
           (.asPrefixOWLOntologyFormat format) (get-prefix ont)
