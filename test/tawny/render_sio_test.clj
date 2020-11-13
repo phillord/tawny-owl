@@ -60,13 +60,14 @@
 (deftest signature
   (is
    (=
-
     (do
       (require 'clojure.set)
       (println
        "Difference in Size:"
        (clojure.set/difference (into (hash-set) (.getSignature sio))
                                (into (hash-set) (.getSignature sio-rendered))))
+      (print "sio:" (count (.getSignature sio)))
+      (print "ren:" (count (.getSignature sio-rendered)))
       (count (.getSignature sio)))
     ;; to account for the annotation property
     (count (.getSignature sio-rendered)))))
