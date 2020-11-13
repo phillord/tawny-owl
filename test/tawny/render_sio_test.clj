@@ -59,9 +59,16 @@
 
 (deftest signature
   (is
-   (= (count (.getSignature sio))
-      ;; to account for the annotation property
-      (dec (count (.getSignature sio-rendered))))))
+   (=
+
+    (do
+      (require 'clojure.set)
+      (println
+       (clojure.set/difference (into (hash-set) (.getSignature sio))
+                               (into (hash-set) (.getSignature sio-rendered))))
+      (count (.getSignature sio)))
+    ;; to account for the annotation property
+    (count (.getSignature sio-rendered)))))
 
 (deftest classes
   (is
