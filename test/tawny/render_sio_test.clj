@@ -69,7 +69,7 @@
       (print "sio:" (count (.getSignature sio)))
       (print "ren:" (count (.getSignature sio-rendered)))
       (count (.getSignature sio)))
-    ;; to account for the annotation property
+    ;; to account for the annotation Pproperty
     (count (.getSignature sio-rendered)))))
 
 (deftest classes
