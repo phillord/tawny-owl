@@ -11,15 +11,12 @@ before_install:
   - cask
 lein: lein
 env:
- - PROFILE=1.9
  - PROFILE=default
 script:
  - lein with-profiles $PROFILE test
  - make travis
 jdk:
  - oraclejdk11
- - oraclejdk12
- - oraclejdk13
 notifications:
    email:
      - travis@russet.org.uk
