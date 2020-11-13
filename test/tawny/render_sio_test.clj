@@ -64,6 +64,7 @@
     (do
       (require 'clojure.set)
       (println
+       "Difference in Size:"
        (clojure.set/difference (into (hash-set) (.getSignature sio))
                                (into (hash-set) (.getSignature sio-rendered))))
       (count (.getSignature sio)))
