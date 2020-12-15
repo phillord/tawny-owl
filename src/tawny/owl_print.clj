@@ -235,9 +235,9 @@
     "#[%s 0x%x %s %s:%s]"
     (name-for-class o)
     (System/identityHashCode o)
-    (shorten-iri
-     (.get
-      (.getOntologyIRI
-       (.getOntologyID o))))
+    (let [o-iri (-> o .getOntologyID .getOntologyIRI)]
+      (if (.isPresent o-iri)
+        (shorten-iri (.get o-iri))
+        ""))
     (.getAxiomCount o)
     (.getLogicalAxiomCount o))))
