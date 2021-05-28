@@ -116,6 +116,6 @@ by printing a trace."
     (tawny.util/remove-hook default-ontology-hook f)))
 
 (defmacro reasons [o]
-  `(deftest reasoning
-     (is (tawny.reasoner/coherent? ~o))
-     (is (tawny.reasoner/consistent? ~o))))
+  `(clojure.test/deftest ~(gensym "reasoning")
+     (clojure.test/is (tawny.reasoner/coherent? ~o))
+     (clojure.test/is (tawny.reasoner/consistent? ~o))))
