@@ -19,7 +19,7 @@ clean-src:
 html: gen-src
 	$(EMACS_ENV) $(CASK) emacs --script script/build.el -- gen-html
 
-commit-test: travis
+commit-test:
 	lein test :commit
 
 travis:
