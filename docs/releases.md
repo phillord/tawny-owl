@@ -3,6 +3,11 @@ Release Notes
 
 For future functionality please see [roadmap](roadmap.md)
 
+
+# 2.1/2.2
+
+Small extension releases
+
 # 2.0 (SNAPSHOT)
 
 This is a full release. It adds both significant functionality in all areas of
