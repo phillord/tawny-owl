@@ -263,7 +263,7 @@ thrown."
 ;; It feels to me like this should be in clojure, but it isn't
 (defmacro defmethodf
   "Creates and installs a new method of multimethod associated with dispatch-value.
-fn should be a function not a function tail as with defmethod."
+fn should be a function not a function body as with defmethod."
   [multifn dispatch-val fn]
   `(. ~(with-meta multifn {:tag 'clojure.lang.MultiFn}) addMethod ~dispatch-val ~fn))
 
