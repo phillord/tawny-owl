@@ -114,3 +114,8 @@ by printing a trace."
     (tawny.util/add-hook default-ontology-hook f)
     (test)
     (tawny.util/remove-hook default-ontology-hook f)))
+
+(defmacro reasons [o]
+  `(deftest reasoning
+     (is (tawny.reasoner/coherent? ~o))
+     (is (tawny.reasoner/consistent? ~o))))
