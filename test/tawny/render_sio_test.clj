@@ -62,15 +62,20 @@
    (=
     (do
       (require 'clojure.set)
-      (println
-       "Difference in Size:"
-       (clojure.set/difference (into (hash-set) (.getSignature sio))
-                               (into (hash-set) (.getSignature sio-rendered))))
-      (print "sio:" (count (.getSignature sio)))
-      (print "ren:" (count (.getSignature sio-rendered)))
-      (count (.getSignature sio)))
-    ;; to account for the annotation Pproperty
-    (count (.getSignature sio-rendered)))))
+      ;; (println
+      ;;  "Difference in signature:"
+      ;;  (clojure.set/difference (into (hash-set) (.getSignature sio))
+      ;;                          (into (hash-set) (.getSignature sio-rendered))))
+      ;; (let [s (into (sorted-set) (.getSignature sio))
+      ;;       r (into (sorted-set) (.getSignature sio-rendered))
+      ;;       ]
+      ;;   (doseq [i
+      ;;           (map vector s r)]
+      ;;     (println (get i 0) "\t" (get i 1))))
+      ;; (print "sio:" (count (.getSignature sio)) "\n")
+      ;; (print "ren:" (count (.getSignature sio-rendered)) "\n")
+      (count (remove #(.isBuiltIn %) (.getSignature sio))))
+    (count (remove #(.isBuiltIn %) (.getSignature sio-rendered))))))
 
 (deftest classes
   (is
