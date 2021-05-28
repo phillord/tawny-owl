@@ -218,7 +218,7 @@ an exception."
   SubClassOf axiom will be annotated."
   [entity-or-list & annotation]
   (let [annotation-set (set annotation)]
-    (if (seq? entity-or-list)
+    (if (sequential? entity-or-list)
       (map #(Annotated. % annotation-set)
            (flatten entity-or-list))
       (Annotated. entity-or-list (set annotation)))))
@@ -2586,8 +2586,8 @@ combination of the two. The class object is stored in a var called classname."
   "Makes all elements in list disjoint.
 All arguments must of an instance of OWLClassExpression"
   [o list]
-  {:pre [(sequential? list)
-         (> (count list) 1)]}
+  {:pre [(sequential? (p/as-entity list))
+         (> (count (p/as-entity list)) 1)]}
   (let [classlist
         (util/domap
          (fn [x]
@@ -2598,7 +2598,7 @@ All arguments must of an instance of OWLClassExpression"
      (.getOWLDisjointClassesAxiom
       (owl-data-factory)
       (set classlist)
-      (union-annotations classlist)))))
+      (union-annotations list)))))
 
 (defn equivalent-classes
   "Makes all elements in list equivalent.
@@ -2807,7 +2807,8 @@ any structure and may also be a var. See also 'as-subclasses'."
    :arglists '([ontology & entities] [& entities])}
   [o & entities]
   (let [entities
-        (map var-get-maybe (flatten entities))]
+        (map var-get-maybe
+             (flatten (p/as-entity entities)))]
     (case
         (apply guess-type-args
                (map var-get-maybe
@@ -3292,6 +3293,10 @@ See also 'refine'
            ~symb ~@frames)
           `(tawny.owl/refine
            ~symb ~@frames)))))
+
+(defn mrefine [lo en & args]
+  (doall
+   (map #(apply refine % en args) lo)))
 
 (defmacro defcopy
   "Takes an existing definition from another namespace and copies it into the
