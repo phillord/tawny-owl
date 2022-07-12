@@ -229,7 +229,9 @@ which is an OWLDatatype object.
         datatype
         (.getOWLDatatype
          (owl-data-factory)
-         (iri-for-name o name))]
+         (if (string? name)
+           (iri-for-name o name)
+           name))]
     (add-axiom o
      (.getOWLDeclarationAxiom (owl-data-factory) datatype))
     (add-a-name-annotation o datatype name)
