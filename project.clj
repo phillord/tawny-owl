@@ -45,7 +45,7 @@
                  ;; this make sense?
 
                  ;; Shut up ELK
-                 [log4j/log4j "1.2.17"]
+                 [log4j/log4j "2.21.1"]
                  ;; Shut up OWL API
                  [org.slf4j/slf4j-nop "1.7.10"]
 
