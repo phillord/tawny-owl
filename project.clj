@@ -28,16 +28,16 @@
 
   :dependencies [
                  ;; owl API
-                 [net.sourceforge.owlapi/owlapi-distribution "4.5.19"]
+                 [net.sourceforge.owlapi/owlapi-distribution "4.5.26"]
 
                  ;; clojure
-                 [org.clojure/clojure "1.10.0"]
-                 [org.clojure/core.logic "0.8.11"]
+                 [org.clojure/clojure "1.10.3"]
+                 [org.clojure/core.logic "0.8.12"]
 
                  ;; reasoners
                  [org.semanticweb.elk/elk-owlapi "0.4.3"]
                  [net.sourceforge.owlapi/org.semanticweb.hermit "1.3.8.413"]
-                 [net.sourceforge.owlapi/jfact "4.0.2"
+                 [net.sourceforge.owlapi/jfact "4.0.4"
                   :exclusions [net.sourceforge.owlapi/owlapi-apibinding]]
 
                  ;; I have to explicitly include several dependencies
