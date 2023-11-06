@@ -1,4 +1,4 @@
-(defproject uk.org.russet/tawny-owl "2.3.1-SNAPSHOT"
+(defproject uk.org.russet/tawny-owl "2.3.1"
   :description "tawny-owl enables building OWL ontologies in a programmatic environment."
   :url "http://www.russet.org.uk/blog/tawny-owl"
   :repositories [["maven" "https://repo1.maven.org/maven2"]]
@@ -45,7 +45,7 @@
                  ;; this make sense?
 
                  ;; Shut up ELK
-                 [log4j/log4j "2.21.1"]
+                 [org.apache.logging.log4j/log4j "2.21.1" :extension "pom"]
                  ;; Shut up OWL API
                  [org.slf4j/slf4j-nop "1.7.10"]
 
