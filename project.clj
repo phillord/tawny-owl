@@ -1,4 +1,4 @@
-(defproject uk.org.russet/tawny-owl "2.3.2-SNAPSHOT"
+(defproject uk.org.russet/tawny-owl "2.3.2"
   :description "tawny-owl enables building OWL ontologies in a programmatic environment."
   :url "http://www.russet.org.uk/blog/tawny-owl"
   :repositories [["maven" "https://repo1.maven.org/maven2"]]
