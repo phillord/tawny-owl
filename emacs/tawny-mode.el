@@ -96,7 +96,7 @@ by the Identitaslibrary."
 
 (defun tawny-mode-make-into-buffer-response-handler(marker)
   "Return a messaging response handler into the current BUFFER."
-  (lexical-let
+  (let
       ((m marker))
     (nrepl-make-response-handler
      (marker-buffer marker)
