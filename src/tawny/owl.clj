@@ -174,16 +174,16 @@ string; use 'iri-for-name' to perform ontology specific expansion"
 ;; Extension of ~p/as-iri~ to ~OWLOntology~ is slightly questionable, since an
 ;; Ontology is identified *not* by an IRI but the combination of an IRI and
 ;; version IRI.
+;; Also note that ~p/as-iri~ returns nil for anonymous ontologies.
 
 ;; #+begin_src clojure
 (extend-type
     OWLOntology
   p/IRIable
   (p/as-iri [entity]
-    (-> entity
-        .getOntologyID
-        .getOntologyIRI
-        .get)))
+    (let [o-iri (-> entity .getOntologyID .getOntologyIRI)]
+      (if (.isPresent o-iri)
+        (.get o-iri)))))
 
 (defn iriable?
   "Returns true iff entity is an IRIable."
