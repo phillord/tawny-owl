@@ -106,7 +106,7 @@ There is a [mailing list](mailto:tawny-owl@googlegroups.com).
 
 The contents of this file are subject to the LGPL License, Version 3.0.
 
-Copyright (C) 2012, 2013, Newcastle University
+Copyright (C) 2012-2026 Newcastle University
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU Lesser General Public License as published by the Free
