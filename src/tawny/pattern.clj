@@ -257,8 +257,9 @@ with other entities that are annotated to the same anonymous individual.")
    (fn [^OWLAnnotation anon]
      (= (.getProperty anon)
         inpattern))
-   (EntitySearcher/getAnnotations
-    (p/as-entity entity) o)))
+   (u/stream-seq
+    (EntitySearcher/getAnnotations
+     (p/as-entity entity) o))))
 
 (o/defno which-pattern
   "Returns the OWLAnonymousIndividual(s) describing the pattern(s)
@@ -352,7 +353,7 @@ to explicitly name the object property."
          (fn [^OWLAnnotation anon]
            (= (.getProperty anon)
               facetvalue))
-         (EntitySearcher/getAnnotations cls o)))]
+         (u/stream-seq (EntitySearcher/getAnnotations cls o))))]
     (if (= 1 (count prop))
       ;; there should be only one, and we have no good basis to pick if there
       ;; are more than one.

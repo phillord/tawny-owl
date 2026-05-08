@@ -589,9 +589,8 @@ Assumes that fixture has been run"
    (o/with-probe-entities to
      [c (o/owl-class to "c")
       i (o/individual to "i" :type c)]
-     (contains?
-      (o/direct-instances to c)
-      i))))
+     (some #{i}
+           (o/direct-instances to c)))))
 
 
 (deftest superclasses []
@@ -643,7 +642,7 @@ Assumes that fixture has been run"
    (let [cls (o/owl-class to "cls")
          ind (o/individual to "ind" :type cls)]
      (tawny.util/in?
-      (EntitySearcher/getTypes ind to)
+      (iterator-seq (.iterator (EntitySearcher/getTypes ind to)))
       cls))))
 
 (deftest defindividual []
@@ -815,7 +814,7 @@ Assumes that fixture has been run"
             #(-> %
                  (.getProperty)
                  (.isLabel))
-            (EntitySearcher/getAnnotations b to))))))))))
+            (iterator-seq (.iterator (EntitySearcher/getAnnotations b to))))))))))))
 
 
 (deftest dataproperty
@@ -1024,7 +1023,7 @@ Assumes that fixture has been run"
         i2 (o/individual to "i2")]
      (o/add-different to i1 i2)
      (some #{i2}
-           (EntitySearcher/getDifferentIndividuals i1 to)))))
+           (iterator-seq (.iterator (EntitySearcher/getDifferentIndividuals i1 to)))))))
 
 
 (deftest add-data-super

@@ -29,7 +29,7 @@
    (.getOWLLiteral (owl-data-factory) literal "en")))
 
 (defn- tawny-annotation-property
-  [iri]
+  [^IRI iri]
   (.getOWLAnnotationProperty (owl-data-factory) iri))
 
 (def ^{:private true} tawny-base-url

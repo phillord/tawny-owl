@@ -16,9 +16,29 @@
 ;; along with this program.  If not, see http://www.gnu.org/licenses/.
 
 (ns tawny.util
-  (:import [java.io Writer])
+  (:import [java.io Writer]
+           [java.util.stream Stream])
   (:require [clojure.walk]))
 
+
+;;
+;; Java Stream utilities
+;;
+
+(defn stream-seq
+  "Convert a Java Stream to a Clojure lazy sequence."
+  [^Stream s]
+  (iterator-seq (.iterator s)))
+
+(defn stream-set
+  "Convert a Java Stream to a Clojure set."
+  [^Stream s]
+  (into #{} (stream-seq s)))
+
+(defn stream-contains?
+  "Returns true if stream s contains x."
+  [^Stream s x]
+  (some #{x} (stream-seq s)))
 
 ;;
 ;; Utillity functions for improving syntax

@@ -205,7 +205,7 @@ which is an OWLDatatype object.
 
 (defnb2 add-datatype-equivalent
   "Adds a datatype equivalent axiom"
-  [o datatype equivalent]
+  [o ^OWLDatatype datatype equivalent]
   (add-axiom
    o (.getOWLDatatypeDefinitionAxiom
       (owl-data-factory) datatype
@@ -231,7 +231,7 @@ which is an OWLDatatype object.
          (owl-data-factory)
          (if (string? name)
            (iri-for-name o name)
-           name))]
+           ^IRI name))]
     (add-axiom o
      (.getOWLDeclarationAxiom (owl-data-factory) datatype))
     (add-a-name-annotation o datatype name)

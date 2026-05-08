@@ -32,25 +32,18 @@
       JProgressBar
       WindowConstants)
    (java.awt GraphicsEnvironment)
-   (org.semanticweb.owlapi.model OWLOntology)
+   (org.semanticweb.owlapi.model OWLOntology OWLClassExpression)
    (org.semanticweb.owlapi.reasoner
     OWLReasoner OWLReasonerFactory
     NodeSet)
    (org.semanticweb.elk.owlapi ElkReasonerFactory)
-   (org.apache.log4j
-    Level
-    Logger)
    (org.semanticweb.owlapi.reasoner SimpleConfiguration)
    (org.semanticweb.HermiT Reasoner)))
 
 (defn- reasoner-factory-1 [reasoner-keyword]
   (reasoner-keyword
    {:elk
-    (do
-      ;; ELK is noisy, so shut it up
-      (-> (Logger/getLogger "org.semanticweb.elk")
-          (.setLevel Level/ERROR));
-      (ElkReasonerFactory.))
+    (ElkReasonerFactory.)
     :hermit (org.semanticweb.HermiT.Reasoner$ReasonerFactory.)
     :jfact (uk.ac.manchester.cs.jfact.JFactFactory.)
     :nil nil}))
@@ -295,7 +288,7 @@ set and does not return top or bottom."
   (no-top-bottom
    (entities
     (.getSuperClasses (reasoner ontology)
-                      (#'tawny.owl/ensure-class name)
+                      ^OWLClassExpression (#'tawny.owl/ensure-class name)
                       false))))
 
 ;; move this to using isuperclasses
@@ -314,7 +307,7 @@ Returns a clojure set, and does not return top or bottom."
   (no-top-bottom
    (entities
     (.getSubClasses (reasoner o)
-                    (#'tawny.owl/ensure-class name)
+                    ^OWLClassExpression (#'tawny.owl/ensure-class name)
                     false))))
 
 (defno isubclass?
@@ -346,4 +339,4 @@ may include top or bottom."
   [ontology class]
   (entities
    (.getInstances (reasoner ontology)
-                  class false)))
+                  ^OWLClassExpression class false)))

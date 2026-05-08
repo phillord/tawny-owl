@@ -74,11 +74,11 @@
    (q/data-props to)))
 
 (deftest data-types []
-  (is
-   (do
-     (o/owl-class to "a"  :label "hello")
-     (.isRDFPlainLiteral
-      (first (q/data-types to))))))
+  (let [dt (do (o/owl-class to "a" :label "hello")
+               (first (q/data-types to)))]
+    (is (.isBuiltIn dt))
+    (is (= (.getIRI org.semanticweb.owlapi.vocab.OWL2Datatype/RDF_LANG_STRING)
+           (.getIRI dt)))))
 
 (deftest direct-imports []
   (is-set=
@@ -102,6 +102,7 @@
 
 ;; Core logic additions
 (defn read-sio []
+  (System/setProperty "jdk.xml.totalEntitySizeLimit" "200000")
   (tawny.owl/remove-ontology-maybe
    (org.semanticweb.owlapi.model.OWLOntologyID.
     (tawny.owl/iri "http://semanticscience.org/ontology/sio.owl")))

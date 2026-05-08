@@ -19,7 +19,8 @@
     ^{:doc "Read external OWL files and use them in tawny"
       :author "Phillip Lord"}
   tawny.read
-  (:require [tawny owl util protocol]
+  (:require [tawny owl protocol]
+            [tawny.util :as u]
             [clojure.string :only replace]
             [tawny.type :as t])
   (:refer-clojure :exclude [read])
@@ -30,7 +31,7 @@
    (org.semanticweb.owlapi.model
     OWLAnnotation OWLLiteral
     IRI OWLNamedObject OWLOntologyID
-    OWLOntology OWLEntity)
+    OWLOntology OWLEntity OWLOntologyIRIMapper)
    (org.semanticweb.owlapi.search EntitySearcher)))
 
 (def ^:dynamic *noisy-intern* nil)
@@ -63,7 +64,7 @@ starts-with. Use this partially applied with a filter for 'read'."
    #(some-> ^OWLAnnotation %
         (.getProperty)
         (.isLabel))
-   (EntitySearcher/getAnnotations e o)))
+   (u/stream-seq (EntitySearcher/getAnnotations e o))))
 
 (defn label-transform
   "Get text from label annotation"
@@ -189,12 +190,12 @@ iri-mapper and resource-iri-mapper.
         (do
           (tawny.owl/remove-ontology-maybe ontologyid)
           (when mapper
-            (.addIRIMapper
-             (tawny.owl/owl-ontology-manager)
-             mapper))
+            (.add
+             (.getIRIMappers (tawny.owl/owl-ontology-manager))
+             ^OWLOntologyIRIMapper mapper))
           (try
             ;; use the with types thing!
-            (tawny.util/with-types
+            (u/with-types
               [location [java.io.File java.io.InputStream
                          IRI org.semanticweb.owlapi.io.OWLOntologyDocumentSource]]
               (.loadOntologyFromOntologyDocument
@@ -202,15 +203,15 @@ iri-mapper and resource-iri-mapper.
                location))
             (finally
               (when mapper
-                (.removeIRIMapper
-                 (tawny.owl/owl-ontology-manager)
-                 mapper)))))]
+                (.remove
+                 (.getIRIMappers (tawny.owl/owl-ontology-manager))
+                 ^OWLOntologyIRIMapper mapper)))))]
     (when prefix
       (let [format (.getOntologyFormat (tawny.owl/owl-ontology-manager)
                                        owlontology)]
-        (if (.isPrefixOWLOntologyFormat format)
+        (if (.isPrefixOWLDocumentFormat format)
           (.setDefaultPrefix
-           (.asPrefixOWLOntologyFormat format)
+           (.asPrefixOWLDocumentFormat format)
            prefix)
           (throw (IllegalArgumentException.
                   "Attempt to provide a prefix to an ontology that is not using a prefix format")))))

@@ -183,7 +183,7 @@ string; use 'iri-for-name' to perform ontology specific expansion"
     (-> entity
         .getOntologyID
         .getOntologyIRI
-        .get)))
+        (.orElse nil))))
 
 (defn iriable?
   "Returns true iff entity is an IRIable."
@@ -722,7 +722,7 @@ or the current-ontology"
 
 This is likely to become a property of the ontology at a later date, but at
 the moment it is very simple."
-  [o name]
+  ^IRI [o name]
   (if-let [iri-gen (:iri-gen (deref (ontology-options o)))]
     (iri-gen o name)
     (iri (str (ontology-iri-with-terminator o) name))))
@@ -884,7 +884,7 @@ converting it from an IRI if necessary."
    property
    (t/iri? property)
    (.getOWLAnnotationProperty
-    (owl-data-factory) property)
+    (owl-data-factory) ^IRI property)
    :default
    (throw (IllegalArgumentException.
            (format "Expecting an OWL annotation property: %s" property)))))
@@ -1076,7 +1076,7 @@ add-sub-annotation functionality."
   [o property]
   (.getOWLAnnotationProperty
    (owl-data-factory)
-   (iri-for-name o property)))
+   ^IRI (iri-for-name o property)))
 ;; #+end_src
 
 ;; * Ontology defentity
@@ -1279,7 +1279,7 @@ This calls the relevant hooks, so is better than direct use of the OWL API. "
   [^OWLOntology o ^String p]
   (if p
     (.setDefaultPrefix
-     (.asPrefixOWLOntologyFormat
+     (.asPrefixOWLDocumentFormat
       (.getOntologyFormat
        (owl-ontology-manager) o))
      p)))
@@ -1489,7 +1489,7 @@ is given."
   ;; my assumption here is that there will only ever be one prefix for a given
   ;; ontology. If not, it's all going to go wrong.
   (.getDefaultPrefix
-   (.asPrefixOWLOntologyFormat
+   (.asPrefixOWLDocumentFormat
     (.getOntologyFormat (owl-ontology-manager)
                         o))))
 
@@ -1529,13 +1529,13 @@ If no ontology is given, use the current-ontology"
                (str "## This file was created by Tawny-OWL\n"
                     "## It should not be edited by hand\n" )
                :else ""))]
-     (when (.isPrefixOWLOntologyFormat format)
+     (when (.isPrefixOWLDocumentFormat format)
        (doseq [ont (.getOntologies (owl-ontology-manager))
                :when (get-prefix ont)]
          (.setPrefix
-          (.asPrefixOWLOntologyFormat format) (get-prefix ont)
+          (.asPrefixOWLDocumentFormat format) (get-prefix ont)
           (str (p/as-iri ont) "#")))
-       (.setPrefix (.asPrefixOWLOntologyFormat format) (get-prefix o)
+       (.setPrefix (.asPrefixOWLDocumentFormat format) (get-prefix o)
                    (ontology-iri-with-terminator o)))
      (.print file-writer prepend)
      (.flush file-writer)
@@ -1658,7 +1658,7 @@ or throw an exception if it cannot be converted."
      (t/obj-prop-exp? prop)
      prop
      (t/iri? prop)
-     (.getOWLObjectProperty (owl-data-factory) prop)
+     (.getOWLObjectProperty (owl-data-factory) ^IRI prop)
      :default
      (throw (IllegalArgumentException.
              (str "Expecting an object property. Got: " prop))))))
@@ -1677,7 +1677,7 @@ else if clz is a OWLClassExpression add that."
      (t/class-exp? clz)
      clz
      (t/iri? clz)
-     (.getOWLClass (owl-data-factory) clz)
+     (.getOWLClass (owl-data-factory) ^IRI clz)
      (fn? clz)
      (try
        (ensure-class (clz))
@@ -1696,7 +1696,7 @@ converting it from a string or IRI if necessary."
      property
      (t/iri? property)
      (.getOWLDataProperty
-      (owl-data-factory) property)
+      (owl-data-factory) ^IRI property)
     :default
      (throw (IllegalArgumentException.
              (format "Expecting an OWL data property: %s" property))))))
@@ -1764,7 +1764,7 @@ interpret this as a string and create a new OWLIndividual."
       individual
       (t/iri? individual)
       (.getOWLNamedIndividual (owl-data-factory)
-                              individual)
+                              ^IRI individual)
       :default
       (throw (IllegalArgumentException.
               (str "Expecting an Individual. Got: " individual))))))
@@ -1845,6 +1845,7 @@ opposite of this."
    o
    (.getOWLDisjointClassesAxiom
     (owl-data-factory)
+    ^java.util.Collection
     (hash-set (ensure-class name)
               (ensure-class disjoint))
     (p/as-annotations disjoint))))
@@ -1860,6 +1861,7 @@ opposite of this."
                 (.getOWLDisjointUnionAxiom
                  (owl-data-factory)
                  (ensure-class clazz)
+                 ^java.util.Collection
                  (set
                   (map
                    ensure-class
@@ -2597,6 +2599,7 @@ All arguments must of an instance of OWLClassExpression"
      o
      (.getOWLDisjointClassesAxiom
       (owl-data-factory)
+      ^java.util.Collection
       (set classlist)
       (union-annotations list)))))
 
@@ -2946,7 +2949,7 @@ expressions."
   (let [^OWLClass clz (ensure-class name)]
     ;; general Class expressions return empty
     (if (t/owl-class? clz)
-      (EntitySearcher/getSuperClasses clz o)
+      (util/stream-seq (EntitySearcher/getSuperClasses clz o))
       ())))
 
 (defno superclasses
@@ -2971,7 +2974,7 @@ direct or indirect superclass of itself."
   [^OWLOntology o name]
   (let [clz (ensure-class name)]
     (if (t/owl-class? clz)
-      (EntitySearcher/getSubClasses clz o) ())))
+      (util/stream-seq (EntitySearcher/getSubClasses clz o)) ())))
 
 (defno subclasses
   "Return all subclasses of class."
@@ -2995,13 +2998,16 @@ direct or indirect superclass of itself."
   (let [type (guess-type-args a b)]
     (cond
      (isa? type ::class)
-     (contains?
+     (util/stream-contains?
       (EntitySearcher/getDisjointClasses ^OWLClass a o)
       b)
      ;; works for either data or object properties
      (isa? type ::property)
-     (contains?
-      (EntitySearcher/getDisjointProperties ^OWLProperty a o)
+     (util/stream-contains?
+      (cond
+       (t/obj-prop-exp? a) (EntitySearcher/getDisjointProperties ^OWLObjectPropertyExpression a o)
+       (t/data-prop? a) (EntitySearcher/getDisjointProperties ^OWLDataProperty a o)
+       :else (EntitySearcher/getDisjointProperties ^OWLAnnotationProperty a o))
       b)
      :default
      (throw
@@ -3014,11 +3020,14 @@ direct or indirect superclass of itself."
   (let [type (guess-type-args a b)]
     (cond
      (isa? type ::class)
-     (contains?
+     (util/stream-contains?
       (EntitySearcher/getEquivalentClasses ^OWLClass a o) b)
      (isa? type ::property)
-     (contains?
-      (EntitySearcher/getEquivalentProperties ^OWLProperty a o)
+     (util/stream-contains?
+      (cond
+       (t/obj-prop-exp? a) (EntitySearcher/getEquivalentProperties ^OWLObjectPropertyExpression a o)
+       (t/data-prop? a) (EntitySearcher/getEquivalentProperties ^OWLDataProperty a o)
+       :else (EntitySearcher/getEquivalentProperties ^OWLAnnotationProperty a o))
       b)
      :default
      (throw
@@ -3028,14 +3037,18 @@ direct or indirect superclass of itself."
 (defno inverse?
   "Returns t iff properties are asserted to be inverse"
   [^OWLOntology o ^OWLObjectProperty p1 ^OWLObjectProperty p2]
-  (contains?
+  (util/stream-contains?
    (EntitySearcher/getInverses p1 o) p2))
 
 (defno direct-superproperties
   "Return all direct superproperties of property."
   [^OWLOntology o property]
-  (EntitySearcher/getSuperProperties
-   (ensure-property property) o))
+  (let [prop (ensure-property property)]
+    (util/stream-seq
+     (cond
+      (t/obj-prop-exp? prop) (EntitySearcher/getSuperProperties ^OWLObjectPropertyExpression prop o)
+      (t/data-prop? prop) (EntitySearcher/getSuperProperties ^OWLDataProperty prop o)
+      :else (EntitySearcher/getSuperProperties ^OWLAnnotationProperty prop o)))))
 
 (defno superproperties
   "Return all superproperties of a property."
@@ -3055,8 +3068,12 @@ direct or indirect superclass of itself."
   "Returns all direct subproperties of property."
   [^OWLOntology o
    property]
-  (EntitySearcher/getSubProperties
-   (ensure-property property) o))
+  (let [prop (ensure-property property)]
+    (util/stream-seq
+     (cond
+      (t/obj-prop-exp? prop) (EntitySearcher/getSubProperties ^OWLObjectPropertyExpression prop o)
+      (t/data-prop? prop) (EntitySearcher/getSubProperties ^OWLDataProperty prop o)
+      :else (EntitySearcher/getSubProperties ^OWLAnnotationProperty prop o)))))
 
 (defno subproperties
   "Returns all subproperties of property."
@@ -3077,7 +3094,7 @@ direct or indirect superclass of itself."
   [^OWLOntology o name]
   (let [clz (ensure-class name)]
     (if (t/owl-class? clz)
-      (EntitySearcher/getIndividuals clz o) ())))
+      (util/stream-seq (EntitySearcher/getIndividuals clz o)) ())))
 ;; #+end_src
 
 ;; * Test Support

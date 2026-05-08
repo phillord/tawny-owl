@@ -23,13 +23,15 @@
         ann
         (EntitySearcher/getAnnotationObjects
          iri
-         (.getOntologies
-          (tawny.owl/owl-ontology-manager))
+         (.stream
+          ^java.util.Collection
+          (.getOntologies
+           (tawny.owl/owl-ontology-manager)))
          tawny-name-property)
 
         ^org.semanticweb.owlapi.model.OWLAnnotation
         first-ann
-        (first ann)
+        (.. ann findFirst (orElse nil))
 
         ^org.semanticweb.owlapi.model.OWLAnnotationValue
         val
@@ -236,8 +238,9 @@
     (name-for-class o)
     (System/identityHashCode o)
     (shorten-iri
-     (.get
+     (.orElse
       (.getOntologyIRI
-       (.getOntologyID o))))
+       (.getOntologyID o))
+      nil))
     (.getAxiomCount o)
     (.getLogicalAxiomCount o))))

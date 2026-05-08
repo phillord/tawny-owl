@@ -20,7 +20,7 @@
   tawny.render
   (:require [tawny.owl :as owl]
             [tawny.lookup]
-            [tawny.util]
+            [tawny.util :as u]
             [clojure.set])
   (:import
            (java.util Collection Set)
@@ -333,9 +333,9 @@
        (owl/owl-ontology-manager))))
 
 (defn- setmap
-  "Apply f to list c, union the results."
+  "Apply f to each element of c, collecting and unioning all results."
   [f c]
-  (apply clojure.set/union (map f c)))
+  (into #{} (mapcat #(u/stream-seq (f %))) c))
 
 (declare form)
 
@@ -387,15 +387,15 @@
        (list (form o options)))
 
      (list :iri
-           (.. o getOntologyID getOntologyIRI orNull toString))
+           (str (.. o getOntologyID getOntologyIRI (orElse nil))))
 
-     (let [viri (.. o getOntologyID getVersionIRI orNull)]
+     (let [viri (.. o getOntologyID getVersionIRI (orElse nil))]
        (when viri
          (list :viri (str viri))))
      ;; what to do about noname? guess we pass it in as an option
      ;; or we could check existing options
      (when-let [f (.getOntologyFormat (tawny.owl/owl-ontology-manager) o)]
-       (when (.isPrefixOWLOntologyFormat f)
+       (when (.isPrefixOWLDocumentFormat f)
          (when-let [pre (tawny.owl/get-prefix o)]
            (list :prefix pre))))
      ;; imports
@@ -414,10 +414,10 @@
 
 (defmethod as-form-int OWLClass
   [^OWLClass c options]
-  (let [ont (ontologies options)
-        super (EntitySearcher/getSuperClasses c ont)
-        equiv (EntitySearcher/getEquivalentClasses c ont)
-        disjoint (EntitySearcher/getDisjointClasses c ont)
+  (let [^java.util.Collection ont (ontologies options)
+        super (u/stream-set (EntitySearcher/getSuperClasses c (.stream ont)))
+        equiv (u/stream-set (EntitySearcher/getEquivalentClasses c (.stream ont)))
+        disjoint (u/stream-set (EntitySearcher/getDisjointClasses c (.stream ont)))
         annotation
         (setmap
          (fn [^OWLOntology o]
@@ -455,11 +455,11 @@
 
 (defmethod as-form-int OWLObjectProperty
   [^OWLObjectProperty p options]
-  (let [ont (ontologies options)
-        domain (EntitySearcher/getDomains p ont)
-        range (EntitySearcher/getRanges p ont)
-        inverseof (EntitySearcher/getInverses p ont)
-        superprop (EntitySearcher/getSuperProperties p ont)
+  (let [^java.util.Collection ont (ontologies options)
+        domain (u/stream-set (EntitySearcher/getDomains p (.stream ont)))
+        range (u/stream-set (EntitySearcher/getRanges p (.stream ont)))
+        inverseof (u/stream-set (EntitySearcher/getInverses p (.stream ont)))
+        superprop (u/stream-set (EntitySearcher/getSuperProperties p (.stream ont)))
         subchainaxioms
         ;; only the ones associated with this property
         (filter
@@ -482,25 +482,25 @@
         (filter identity
                 (list
                  (and
-                  (EntitySearcher/isTransitive p ont)
+                  (EntitySearcher/isTransitive p (.stream ont))
                   :transitive)
                  (and
-                  (EntitySearcher/isFunctional p ont)
+                  (EntitySearcher/isFunctional p (.stream ont))
                   :functional)
                  (and
-                  (EntitySearcher/isInverseFunctional p ont)
+                  (EntitySearcher/isInverseFunctional p (.stream ont))
                   :inversefunctional)
                  (and
-                  (EntitySearcher/isSymmetric p ont)
+                  (EntitySearcher/isSymmetric p (.stream ont))
                   :symmetric)
                  (and
-                  (EntitySearcher/isAsymmetric p ont)
+                  (EntitySearcher/isAsymmetric p (.stream ont))
                   :asymmetric)
                  (and
-                  (EntitySearcher/isIrreflexive p ont)
+                  (EntitySearcher/isIrreflexive p (.stream ont))
                   :irreflexive)
                  (and
-                  (EntitySearcher/isReflexive p ont)
+                  (EntitySearcher/isReflexive p (.stream ont))
                   :reflexive)
                  ))
         lst (if (get options :keyword)
@@ -545,8 +545,8 @@
 
 (defmethod as-form-int OWLNamedIndividual
   [^OWLNamedIndividual p options]
-  (let [ont (ontologies options)
-        types (EntitySearcher/getTypes p ont)
+  (let [^java.util.Collection ont (ontologies options)
+        types (u/stream-set (EntitySearcher/getTypes p (.stream ont)))
         same (setmap
               (fn [^OWLOntology o]
                 (EntitySearcher/getSameIndividuals p o)) ont)
@@ -564,28 +564,28 @@
                 (into
                  (sorted-map)
                  (.asMap
-                  (EntitySearcher/getObjectPropertyValues p ont)))]
+                  (EntitySearcher/getObjectPropertyValues p (.stream ont))))]
             (when (seq fs)
               {::type :object-fact :facts fs}))
           (let [fs
                 (into
                  (sorted-map)
                  (.asMap
-                   (EntitySearcher/getDataPropertyValues p ont)))]
+                   (EntitySearcher/getDataPropertyValues p (.stream ont))))]
             (when (seq fs)
               {::type :data-fact :facts fs}))
           (let [fs
                 (into
                  (sorted-map)
                  (.asMap
-                  (EntitySearcher/getNegativeObjectPropertyValues p ont)))]
+                  (EntitySearcher/getNegativeObjectPropertyValues p (.stream ont))))]
             (when (seq fs)
               {::type :object-fact-not :facts fs}))
           (let [fs
                 (into
                  (sorted-map)
                  (.asMap
-                  (EntitySearcher/getNegativeDataPropertyValues p ont)))]
+                  (EntitySearcher/getNegativeDataPropertyValues p (.stream ont))))]
             (when (seq fs)
               {::type :data-fact-not :facts fs}))))
         ind (form p options)
@@ -617,10 +617,10 @@
 
 (defmethod as-form-int OWLDataProperty
   [^OWLDataProperty p options]
-  (let [ont (ontologies options)
-        domain (EntitySearcher/getDomains p ont)
-        range (EntitySearcher/getRanges p ont)
-        superprop (EntitySearcher/getSuperProperties p ont)
+  (let [^java.util.Collection ont (ontologies options)
+        domain (u/stream-set (EntitySearcher/getDomains p (.stream ont)))
+        range (u/stream-set (EntitySearcher/getRanges p (.stream ont)))
+        superprop (u/stream-set (EntitySearcher/getSuperProperties p (.stream ont)))
         annotation
         (setmap
          (fn [^OWLOntology o] (EntitySearcher/getAnnotations p o)) ont)
@@ -628,7 +628,7 @@
         (filter identity
                 (list
                  (and
-                  (EntitySearcher/isFunctional p ont)
+                  (EntitySearcher/isFunctional p (.stream ont))
                   :functional)
                  ))
         prop (form p options)
@@ -657,7 +657,7 @@
 
 (defmethod as-form-int OWLAnnotationProperty
   [^OWLAnnotationProperty p options]
-  (let [ont (ontologies options)
+  (let [^java.util.Collection ont (ontologies options)
         super
         (setmap (fn [^OWLOntology o] (EntitySearcher/getSuperProperties p o)) ont)
         ann

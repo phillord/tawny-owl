@@ -16,6 +16,10 @@
                  ;;:init (require 'tawny.repl)
                  }
 
+  :managed-dependencies [[com.google.guava/guava "33.0.0-jre"]
+                         [com.google.code.findbugs/jsr305 "3.0.2"]
+                         [org.slf4j/slf4j-api "2.0.11"]]
+
   :test-selectors {:slow :slow
                    :commit (complement :slow)}
 
@@ -28,25 +32,19 @@
 
   :dependencies [
                  ;; owl API
-                 [net.sourceforge.owlapi/owlapi-distribution "4.5.26"]
+                 [net.sourceforge.owlapi/owlapi-distribution "5.5.1"]
 
                  ;; clojure
-                 [org.clojure/clojure "1.11.1"]
-                 [org.clojure/core.logic "1.0.1"]
+                 [org.clojure/clojure "1.12.4"]
+                 [org.clojure/core.logic "1.1.1"]
 
                  ;; reasoners
-                 [org.semanticweb.elk/elk-owlapi "0.4.3"]
-                 [net.sourceforge.owlapi/org.semanticweb.hermit "1.3.8.413"]
-                 [net.sourceforge.owlapi/jfact "4.0.2"
+                 [io.github.liveontologies/elk-owlapi "0.6.0"]
+                 [net.sourceforge.owlapi/org.semanticweb.hermit "1.4.5.519"]
+                 [net.sourceforge.owlapi/jfact "5.0.3"
                   :exclusions [net.sourceforge.owlapi/owlapi-apibinding]]
 
-                 ;; I have to explicitly include several dependencies
-                 ;; specifically so I can switch the logging off. How does
-                 ;; this make sense?
-
-                 ;; Shut up ELK
-                 [org.apache.logging.log4j/log4j "2.21.1" :extension "pom"]
-                 ;; Shut up OWL API
+                 ;; Shut up OWL API and ELK
                  [org.slf4j/slf4j-nop "2.0.9"]
 
                  ;; identitas
@@ -56,6 +54,9 @@
   ;; dependency adds dev-resources to the path which I need for testing.
   :profiles
   {
+   :1.12
+   [:base
+    {:dependencies [[org.clojure/clojure "1.12.4"]]}]
    :1.10
    [:base
     {:dependencies [[org.clojure/clojure "1.10.0"]]}]

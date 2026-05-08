@@ -23,6 +23,7 @@
             [tawny.protocol :as p]
             [tawny.render]
             [tawny.type :as t]
+            [tawny.util :as u]
             [clojure.pprint]
             )
   (:import [java.io StringWriter PrintWriter]
@@ -43,8 +44,9 @@ The documentation is generated over the live object (owlobjects are mutable).
 It includes all labels, comments and a rendered version of the owlobject."
   [^OWLEntity owlobject]
   (let [annotation
-        (org.semanticweb.owlapi.search.EntitySearcher/getAnnotationObjects
-         owlobject (.getOntologies (o/owl-ontology-manager)))
+        (u/stream-seq
+         (org.semanticweb.owlapi.search.EntitySearcher/getAnnotationObjects
+          owlobject (.stream ^java.util.Collection (.getOntologies (o/owl-ontology-manager))) nil))
         label
         (filter
          (fn [^OWLAnnotation a]
@@ -157,7 +159,9 @@ once."
       (println "Finished Loading:"
                (-> event
                    (.getOntologyID)
-                   (.getOntologyIRI))
+                   (.getOntologyIRI)
+                   (.orElse nil)
+                   str)
                (if (.isSuccessful event)
                  "...succeeded"))
       (if-not (.isSuccessful event)
@@ -165,10 +169,10 @@ once."
     (startedLoadingOntology
       [^OWLOntologyLoaderListener$LoadingEvent event]
       (println "Started Loading:"
-               (or (-> event
-                       (.getOntologyID)
-                       (.getOntologyIRI))
-                   "unknown")
+               (-> event
+                   (.getOntologyID)
+                   (.getOntologyIRI)
+                   (.orElse "unknown"))
                " from:"
                (.getDocumentIRI event)))))
 
@@ -208,15 +212,15 @@ to file names. Save ontologies in 'root' or the resources directory."
                 [(-> k
                      (.getOntologyID)
                      (.getOntologyIRI)
-                     (.toString))
+                     (.orElse nil)
+                     str)
                  (let
                      [file-maybe
-                      (-> k
-                          (.getOntologyID)
-                          (.getOntologyIRI)
-                          (.orNull)
-                          (p/as-iri)
-                          (.getFragment))
+                      (when-let [^IRI iri (-> k
+                                              (.getOntologyID)
+                                              (.getOntologyIRI)
+                                              (.orElse nil))]
+                        (.getFragment iri))
                       stem
                       (if file-maybe
                         file-maybe
@@ -276,7 +280,7 @@ to file names. Save ontologies in 'root' or the resources directory."
   ([^org.semanticweb.owlapi.model.OWLOntology o]
      (filter
       (fn [axiom]
-        (tawny.util/on-type
+        (u/on-type
          org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom axiom
          (= (var-get #'tawny.owl/tawny-name-property)
             (.getProperty axiom))))

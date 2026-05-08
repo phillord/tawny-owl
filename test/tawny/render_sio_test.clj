@@ -7,6 +7,7 @@
 )
 
 (defn read-sio []
+  (System/setProperty "jdk.xml.totalEntitySizeLimit" "200000")
   (tawny.owl/remove-ontology-maybe
    (org.semanticweb.owlapi.model.OWLOntologyID.
     (tawny.owl/iri "http://semanticscience.org/ontology/sio.owl")))
