@@ -18,7 +18,9 @@
 
   :managed-dependencies [[com.google.guava/guava "33.0.0-jre"]
                          [com.google.code.findbugs/jsr305 "3.0.2"]
-                         [org.slf4j/slf4j-api "2.0.11"]]
+                         [com.google.errorprone/error_prone_annotations "2.23.0"]
+                         [org.slf4j/slf4j-api "2.0.11"]
+                         [org.checkerframework/checker-qual "3.41.0"]]
 
   :test-selectors {:slow :slow
                    :commit (complement :slow)}
@@ -39,8 +41,12 @@
                  [org.clojure/core.logic "1.1.1"]
 
                  ;; reasoners
-                 [io.github.liveontologies/elk-owlapi "0.6.0"]
-                 [net.sourceforge.owlapi/org.semanticweb.hermit "1.4.5.519"]
+                 [io.github.liveontologies/elk-owlapi "0.6.0"
+                  :exclusions [net.sourceforge.owlapi/owlapi-apibinding
+                               net.sourceforge.owlapi/owlapi-api
+                               net.sourceforge.owlapi/owlapi-impl]]
+                 [net.sourceforge.owlapi/org.semanticweb.hermit "1.4.5.519"
+                  :exclusions [net.sourceforge.owlapi/owlapi-distribution]]
                  [net.sourceforge.owlapi/jfact "5.0.3"
                   :exclusions [net.sourceforge.owlapi/owlapi-apibinding]]
 
